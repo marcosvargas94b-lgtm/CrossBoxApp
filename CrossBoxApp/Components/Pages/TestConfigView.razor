@@ -1,0 +1,234 @@
+﻿@page "/test-config"
+@using CrossBoxApp.Models
+@using CrossBoxApp.Models.Services
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject SesionService Sesion
+
+<div class="top-navbar">
+    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
+    <div class="nav-title">CONFIGURACIÓN TESTS</div>
+    <div class="nav-right" @onclick="AbrirModal"><i class="fas fa-plus" style="color:#F8C545; font-size:1.2rem;"></i></div>
+</div>
+
+<div class="config-container">
+    
+    @if (cargando)
+    {
+        <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
+    }
+    else if (listaTests.Count == 0)
+    {
+        <div class="empty-state">
+            <p>No hay Tests configurados en tu Box.</p>
+            <button class="btn btn-outline-warning" @onclick="AbrirModal">Agregar Primero</button>
+        </div>
+    }
+    else
+    {
+        @foreach (var grupo in listaTests)
+        {
+            <div class="group-card">
+                <div class="group-header">
+                    @grupo.CategoriaNombre.ToUpper() </div>
+                <div class="group-body">
+                    @foreach (var item in grupo.Items)
+                    {
+                        <div class="test-item">
+                            <div class="test-info">
+                                <span class="test-name">@item.Nombre</span>
+                                <span class="test-measure">@item.MedidaNombre</span>
+                            </div>
+
+                            <button class="btn-delete" @onclick="() => EliminarTest(item)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@if (mostrarModal)
+{
+    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.9); z-index: 2000;" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: #222; border: 1px solid #F8C545; color: white;">
+                <div class="modal-header">
+                    <h5 class="modal-title" style="color:#F8C545;">NUEVO TEST</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModal"></button>
+                </div>
+                <div class="modal-body">
+                    
+                    <label>Categoría (Grupo):</label>
+                    <select @bind="nuevoTest.TestID" class="form-control input-dark mb-3">
+                        <option value="">-- Seleccionar --</option>
+                        @foreach(var cat in catalogos.Categorias) { <option value="@cat.Id">@cat.Nombre</option> }
+                    </select>
+
+                    <label>Nombre del Test:</label>
+                    <input type="text" @bind="nuevoTest.Descripcion" class="form-control input-dark mb-3" placeholder="Ej: Fran, 1RM Back Squat" />
+
+                    <label>Tipo de Medida:</label>
+                    <select @bind="nuevoTest.MedidaTestID" class="form-control input-dark mb-3">
+                        <option value="">-- Seleccionar --</option>
+                        @foreach(var med in catalogos.Medidas) { <option value="@med.Id">@med.Nombre</option> }
+                    </select>
+
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
+                    <button class="btn btn-warning" @onclick="GuardarTest">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    /* Reutilizamos estilos base */
+    .top-navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #1a1a1a; border-bottom: 2px solid #F8C545; color: white; font-family: 'Oswald'; }
+    .nav-left { color: #F8C545; cursor: pointer; } .nav-title { font-size: 1.1rem; letter-spacing: 1px; } 
+    
+    .config-container { padding: 20px; background: #0d0d0d; min-height: 100vh; color: white; }
+
+    /* Tarjetas de Grupo */
+    .group-card { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; margin-bottom: 20px; overflow: hidden; }
+    .group-header { background: #F8C545; color: black; padding: 8px 15px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; }
+    .group-body { padding: 5px 15px; }
+
+    /* Items */
+    .test-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #333; }
+    .test-item:last-child { border-bottom: none; }
+    .test-name { color: #eee; font-family: 'Roboto'; }
+    .test-measure { color: #888; font-size: 0.9rem; font-style: italic; }
+
+    /* Inputs Modal */
+    .input-dark { background: #333 !important; color: white !important; border: 1px solid #666; }
+    .input-dark:focus { border-color: #F8C545; }
+    .empty-state { text-align: center; margin-top: 50px; color: #666; }
+
+    .test-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center; /* Alineación vertical */
+        padding: 12px 0;
+        border-bottom: 1px solid #333;
+    }
+
+    .test-info {
+        display: flex;
+        flex-direction: column; /* Nombre arriba, medida abajo si quieres, o row */
+        gap: 2px;
+    }
+
+    .test-measure {
+        color: #F8C545;
+        font-size: 0.85rem;
+        font-style: italic;
+    }
+
+    .btn-delete {
+        background: transparent;
+        border: none;
+        color: #d9534f; /* Rojo */
+        font-size: 1rem;
+        padding: 5px 10px;
+    }
+</style>
+
+@code {
+    private List<TestGroupDto> listaTests = new List<TestGroupDto>();
+    private TestConfigCatalogsDto catalogos = new TestConfigCatalogsDto { Categorias = new(), Medidas = new() };
+    private CreateTestBoxDto nuevoTest = new CreateTestBoxDto();
+    
+    private bool cargando = true;
+    private bool mostrarModal = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+        // Cargar catálogos en segundo plano para tenerlos listos
+        try {
+            var response = await Http.GetAsync("api/tests/catalogos");
+            if (response.IsSuccessStatusCode) catalogos = await response.Content.ReadFromJsonAsync<TestConfigCatalogsDto>();
+        } catch {}
+    }
+
+    private async Task CargarDatos()
+    {
+        try
+        {
+            cargando = true;
+            if (Sesion.Usuario == null) return;
+            
+            var response = await Http.GetAsync($"api/tests/configuracion/{Sesion.Usuario.BoxID}");
+            if (response.IsSuccessStatusCode)
+            {
+                listaTests = await response.Content.ReadFromJsonAsync<List<TestGroupDto>>();
+            }
+        }
+        finally { cargando = false; }
+    }
+
+    private void AbrirModal() => mostrarModal = true;
+    private void CerrarModal() => mostrarModal = false;
+
+    private async Task GuardarTest()
+    {
+        if (nuevoTest.TestID == Guid.Empty || nuevoTest.MedidaTestID == Guid.Empty || string.IsNullOrEmpty(nuevoTest.Descripcion))
+        {
+            await App.Current.MainPage.DisplayAlert("Error", "Llena todos los campos", "OK");
+            return;
+        }
+
+        try
+        {
+            nuevoTest.BoxID = Sesion.Usuario.BoxID;
+            var response = await Http.PostAsJsonAsync("api/tests/crear", nuevoTest);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                await App.Current.MainPage.DisplayAlert("Éxito", "Test Creado", "OK");
+                mostrarModal = false;
+                nuevoTest = new CreateTestBoxDto(); // Limpiar
+                await CargarDatos(); // Recargar lista
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
+    }
+
+    private async Task EliminarTest(TestItemDto item)
+    {
+        bool confirmar = await App.Current.MainPage.DisplayAlert("Eliminar", $"¿Seguro que deseas eliminar '{item.Nombre}'?", "Sí", "Cancelar");
+
+        if (!confirmar) return;
+
+        try
+        {
+            var response = await Http.DeleteAsync($"api/tests/eliminar/{item.TestBoxId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Recargar la lista para que desaparezca
+                await CargarDatos();
+            }
+            else
+            {
+                await App.Current.MainPage.DisplayAlert("Error", "No se pudo eliminar.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
+    }
+
+
+    private void Volver() => Nav.NavigateTo("/home");
+}

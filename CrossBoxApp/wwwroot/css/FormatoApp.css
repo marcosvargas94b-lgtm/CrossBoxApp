@@ -1,0 +1,85 @@
+﻿.home-bg {
+    background-color: #0d0d0d; /* Fondo negro suave */
+    min-height: calc(100vh - 50px); /* Resta el navbar */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    text-align: center;
+    position: relative;
+}
+
+.welcome-text {
+    font-family: 'Oswald', sans-serif;
+    font-size: 3.5rem;
+    color: #F8D783; /* Amarillo */
+    margin-bottom: 50px;
+    text-transform: uppercase;
+}
+
+.cards-container {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    max-width: 1200px;
+}
+
+.menu-card {
+    background-color: #F8D783; /* Amarillo fondo */
+    color: #1a1a1a;
+    width: 280px;
+    height: 200px;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    transition: transform 0.3s;
+    box-shadow: 0 5px 15px rgba(248, 215, 131, 0.2);
+    padding: 20px;
+}
+
+    .menu-card:hover {
+        transform: scale(1.05);
+        color: #000;
+        text-decoration: none;
+    }
+
+.card-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.card-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.card-desc {
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.9rem;
+    line-height: 1.2;
+}
+
+.footer-box {
+    position: absolute;
+    bottom: 20px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.5rem;
+    color: #F8D783;
+}
+
+.logo-triangle {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 2rem;
+    color: white;
+}

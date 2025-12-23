@@ -1,0 +1,336 @@
+﻿@page "/agenda-view"
+@using CrossBoxApp.Models
+@using CrossBoxApp.Models.Services
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject SesionService Sesion
+
+<div class="top-navbar">
+    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
+    <div class="nav-title">AGENDA TU CLASE</div>
+    <div class="nav-right"></div>
+</div>
+
+<div class="agenda-container">
+    <h2 class="date-header">@DateTime.Now.ToString("dddd, dd MMMM").ToUpper()</h2>
+
+    <div class="booking-section">
+
+        @if (miReservaActualId == Guid.Empty)
+        {
+            <label>Selecciona tu horario:</label>
+            <div class="input-group">
+                <select @bind="horarioSeleccionado" class="form-control input-dark">
+                    <option value="">-- Elige Hora --</option>
+                    @foreach (var item in agendaData)
+                    {
+                        <option value="@item.HorarioId">@item.HorarioNombre</option>
+                    }
+                </select>
+                <button class="btn btn-warning" @onclick="ReservarClase">RESERVAR</button>
+            </div>
+        }
+        else
+        {
+            <div class="reservation-info text-center">
+                <p style="color: #eee; margin-bottom: 10px;">
+                    <i class="fas fa-check-circle" style="color:#28a745;"></i>
+                    Ya tienes clase reservada.
+                </p>
+                <button class="btn btn-danger w-100" @onclick="CancelarReserva">
+                    CANCELAR MI RESERVACIÓN
+                </button>
+            </div>
+        }
+
+    </div>
+
+    <hr class="divider" />
+
+    @if (cargando)
+    {
+        <div class="text-center mt-4"><div class="spinner-border text-warning"></div></div>
+    }
+    else
+    {
+        <div class="cards-grid">
+            @foreach (var horario in agendaData)
+            {
+                <div class="schedule-card">
+                    <div class="card-header">
+                        <span>@horario.HorarioNombre</span>
+                        <span class="badge-count">@horario.UsuariosInscritos.Count</span>
+                    </div>
+                    <div class="card-body">
+                        @if (horario.UsuariosInscritos.Count == 0)
+                        {
+                            <p class="text-muted small">Sin atletas aún.</p>
+                        }
+                        else
+                        {
+                            <ul class="user-list">
+                                @foreach (var usuario in horario.UsuariosInscritos)
+                                {
+                                    <li><i class="fas fa-user-check"></i> @usuario</li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    /* Reutilizamos estilos base */
+    .top-navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        background: #1a1a1a;
+        border-bottom: 2px solid #F8C545;
+        color: white;
+        font-family: 'Oswald';
+    }
+
+    .nav-left {
+        color: #F8C545;
+        cursor: pointer;
+    }
+
+    .nav-title {
+        font-size: 1.2rem;
+    }
+
+    .nav-right {
+        width: 60px;
+    }
+
+    .agenda-container {
+        padding: 20px;
+        background: #0d0d0d;
+        min-height: 100vh;
+        color: white;
+    }
+
+    .date-header {
+        font-family: 'Oswald';
+        text-align: center;
+        border-bottom: 1px solid #333;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+    }
+
+    /* Estilos Reserva */
+    .booking-section {
+        background: #222;
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid #444;
+        margin-bottom: 20px;
+    }
+
+    .input-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .input-dark {
+        background: #333 !important;
+        color: white !important;
+        border: 1px solid #F8C545;
+        flex: 1;
+    }
+
+    .btn-warning {
+        background: #F8C545;
+        color: black;
+        font-weight: bold;
+        border: none;
+    }
+
+    .divider {
+        border-color: #333;
+        margin: 20px 0;
+    }
+
+    /* Estilos Tarjetas */
+    .cards-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        justify-content: center;
+    }
+
+    .schedule-card {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 8px;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .card-header {
+        background: #F8C545;
+        color: black;
+        padding: 10px 15px;
+        font-family: 'Oswald';
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .badge-count {
+        background: black;
+        color: #F8C545;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.8rem;
+    }
+
+    .card-body {
+        padding: 10px 15px;
+    }
+
+    .user-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+        .user-list li {
+            padding: 5px 0;
+            border-bottom: 1px solid #333;
+            font-size: 0.9rem;
+            color: #eee;
+        }
+
+            .user-list li i {
+                color: #F8C545;
+                margin-right: 8px;
+            }
+</style>
+
+@code {
+    private List<AgendaVisualDto> agendaData = new List<AgendaVisualDto>();
+    private Guid horarioSeleccionado;
+    private bool cargando = true;
+    private Guid miReservaActualId = Guid.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        try
+        {
+            cargando = true;
+            if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+
+            var boxId = Sesion.Usuario.BoxID;
+            var userId = Sesion.Usuario.UsuarioID;
+            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/agendaapi/visual/{boxId}/{userId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                agendaData = await response.Content.ReadFromJsonAsync<List<AgendaVisualDto>>();
+
+                // Lógica para detectar si ya reservé
+                var miHorario = agendaData.FirstOrDefault(x => x.EsMiReserva);
+                if (miHorario != null)
+                {
+                    miReservaActualId = miHorario.HorarioId;
+                    horarioSeleccionado = miReservaActualId; // Opcional: preseleccionar
+                }
+                else
+                {
+                    miReservaActualId = Guid.Empty;
+                    horarioSeleccionado = Guid.Empty;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", "No se pudo cargar la agenda", "OK");
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task ReservarClase()
+    {
+        if (horarioSeleccionado == Guid.Empty)
+        {
+            await App.Current.MainPage.DisplayAlert("Atención", "Selecciona un horario primero.", "OK");
+            return;
+        }
+
+        try
+        {
+            var reserva = new ReservaDto
+            {
+                UsuarioId = Sesion.Usuario.UsuarioID,
+                BoxId = Sesion.Usuario.BoxID,
+                HorarioId = horarioSeleccionado,
+                Fecha = DateTime.Now
+            };
+
+            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/agendaapi/reservar", reserva);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await App.Current.MainPage.DisplayAlert("¡Listo!", "Tu clase ha sido reservada.", "OK");
+                // Recargar datos para ver mi nombre en la lista inmediatamente
+                await CargarDatos();
+            }
+            else
+            {
+                // Leer mensaje de error (ej: "Ya reservaste hoy")
+                var errorMsg = await response.Content.ReadFromJsonAsync<dynamic>();
+                await App.Current.MainPage.DisplayAlert("Aviso", errorMsg.mensaje.ToString(), "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", "Fallo al reservar.", "OK");
+        }
+    }
+
+    private async Task CancelarReserva()
+    {
+        bool confirmar = await App.Current.MainPage.DisplayAlert("Cancelar", "¿Seguro que quieres cancelar tu clase?", "Sí", "No");
+        if (!confirmar) return;
+
+        try
+        {
+            var reserva = new ReservaDto
+            {
+                UsuarioId = Sesion.Usuario.UsuarioID,
+                BoxId = Sesion.Usuario.BoxID,
+                Fecha = DateTime.Now
+                // HorarioId no es estrictamente necesario para borrar por fecha/usuario, pero lo puedes mandar
+            };
+
+            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/agendaapi/cancelar", reserva);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await App.Current.MainPage.DisplayAlert("Listo", "Reserva cancelada.", "OK");
+                await CargarDatos(); // Recargar para mostrar el combo de nuevo
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", "No se pudo cancelar.", "OK");
+        }
+    }
+
+    private void Volver() => Nav.NavigateTo("/home");
+}

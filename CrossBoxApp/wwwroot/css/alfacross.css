@@ -1,0 +1,334 @@
+:root {
+    --bg-color: #000000;
+    --card-color: #FDF5D3;
+    --text-color: #1a1a1a;
+    --font-title: 'Oswald', sans-serif;
+    --font-body: 'Roboto', sans-serif;
+    /* Altura aproximada de la barra de navegación de .NET */
+    --navbar-height: 40px;
+}
+
+/* Ya no aplicamos estilos al body global, sino a nuestro wrapper */
+.dashboard-wrapper {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-body);
+    /* IMPORTANTE: La altura es el 100% de la ventana MENOS la barra de navegación */
+    height: calc(100vh - var(--navbar-height));
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Evita scroll doble */
+    position: relative;
+}
+
+
+.grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    height: 100%;
+    position: relative;
+    z-index: 1;
+    padding-top: 20px; /* Espacio para que el título ALFA no tape las cajas */
+}
+
+/* Resto de tus estilos (iguales que antes) */
+.left-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.right-column {
+    display: grid;
+    grid-template-rows: 40% 1fr;
+    gap: 20px;
+}
+
+.card {
+    background-color: #f0ede1;
+    border-radius: 15px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+h2 {
+    font-family: var(--font-title);
+    font-size: 2rem;
+    margin-top: 0;
+    text-transform: uppercase;
+    color: #444;
+    border-bottom: 2px solid rgba(0,0,0,0.1);
+}
+
+/* ... (MANTÉN EL RESTO DE TUS ESTILOS CSS AQUÍ: .workout-list-container, .timer-box, etc.) ... */
+/* Asegúrate de copiar los estilos de botones, modales y timer del código anterior */
+.workout-list-container {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.black-block {
+    background-color: #1a1a1a;
+    color: #FDF5D3;
+    border-radius: 12px;
+    padding: 10px;
+    padding-right: 50px; 
+    margin-bottom: 15px;
+    position: relative; 
+}
+
+.workout-row {
+    display: flex;    
+    justify-content: flex-start;
+    align-items: flex-start;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+}
+
+.block-controls {
+    position: absolute; 
+    top: 5px; 
+    right: 5px;
+    display: flex;
+    gap: 5px;
+    z-index: 10;
+}
+
+.timer-box {
+    background-color: #000;
+    border-radius: 10px;
+    height: 100%;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.timer-val {
+    font-family: var(--font-title);
+    font-size: 7rem;
+    line-height: 1;
+}
+
+.timer-labels {
+    color: #888;
+    display: flex;
+    gap: 40px;
+    font-size: 1.2rem;
+}
+
+.timer-header {
+    position: absolute;
+    top: 15px;
+    width: 90%;
+    display: flex;
+    justify-content: space-between;
+    color: #ffeb99;
+    font-family: var(--font-title);
+    font-size: 1.5rem;
+}
+
+.timer-controls {
+    position: absolute;
+    bottom: 15px;
+    right: 20px;
+}
+
+.round-indicator {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #FDF5D3;
+    text-align: center;
+    font-family: var(--font-title);
+    display: none;
+}
+
+.athlete-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+   
+}
+
+.athlete-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.athlete-row {
+    display: flex;
+    align-items: center;
+    font-family: var(--font-title);
+    font-size: 1.4rem;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.athlete-time {
+    width: 30%;
+    text-align: right;
+    margin-right: 15px;
+    color: #333;
+}
+
+.athlete-name {
+    flex-grow: 1;
+    text-transform: uppercase;
+}
+
+.athlete-btn {
+    background: white;
+    border: 1px solid #333;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .athlete-btn:hover {
+        background: #333;
+        color: white;
+    }
+
+.fab {
+    background: transparent;
+    border: 2px solid #333;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    position: absolute;
+    bottom: 15px;
+    left: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s;
+}
+
+    .fab:hover {
+        background: #333;
+        color: white;
+    }
+
+.icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    color: inherit;
+}
+
+.icon-btn-edit {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 1.2rem;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: #f0ede1;
+    padding: 25px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 450px;
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.btn-primary {
+    background: #000;
+    color: #fff;
+    padding: 10px;
+    width: 100%;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.row-inputs {
+    display: flex;
+    gap: 5px;
+}
+.w-qty {
+   
+    width: 100px;
+   
+    margin-right: 15px;
+   
+    white-space: nowrap;
+}
+
+
+.w-name {
+
+    flex-grow: 1;
+
+
+}
+
+.navbar {
+    background-color: #444444 !important; /* El color gris oscuro deseado */
+}
+
+/* Estilo para los enlaces de navegación */
+.navbar-nav .nav-link {
+    color: white !important; /* Asegura que el texto siga siendo blanco */
+}
+
+/* Estilo para la marca (el texto "ALFA") */
+.navbar-brand {
+    color: white !important;
+    font-weight: bold;
+}

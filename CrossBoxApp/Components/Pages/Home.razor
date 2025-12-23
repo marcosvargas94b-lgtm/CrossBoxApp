@@ -1,0 +1,441 @@
+﻿@page "/home"
+@using System.Net.Http.Json
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject CrossBoxApp.Models.Services.SesionService Sesion
+@using CrossBoxApp.Models
+
+<div class="top-navbar">
+    <div class="brand">ALFAFIT</div>
+    @if (Sesion.Usuario != null && Sesion.Usuario.TipoUsuarioID == 1)
+    {
+        <div class="menu-items">
+            <span @onclick="AbrirModalWod" class="menu-link">
+                <i class="fas fa-hammer"></i> WOD
+            </span>
+
+            <span class="menu-link" style="color:#d9534f">
+                <i class="fas fa-stopwatch"></i> LIVE
+            </span>
+
+            <div class="dropdown-wrapper">
+                <span class="menu-link" @onclick="ToggleConfigMenu">
+                    <i class="fas fa-cog"></i> MY BOX <i class="fas fa-caret-down" style="font-size:0.8rem;"></i>
+                </span>
+
+                @if (mostrarConfigMenu)
+                {
+                    <div class="dropdown-content">
+                        <div class="dropdown-item" @onclick='() => NavegarA("test")'>
+                            <i class="fas fa-flask"></i> Test
+                        </div>
+                        <div class="dropdown-item" @onclick='() => NavegarA("usuarios")'>
+                            <i class="fas fa-users"></i> Usuarios
+                        </div>
+                        <div class="dropdown-item" @onclick='() => NavegarA("avisos")'>
+                            <i class="fas fa-bullhorn"></i> Avisos
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    <div class="user-info">Hola, @(Sesion.Usuario?.Nombre ?? "ATLETA")</div>
+</div>
+
+<div class="home-container">
+    <div class="welcome-section">
+        <h1>BIENVENIDO @(Sesion.Usuario?.Nombre?.ToUpper() ?? "ATLETA")</h1>
+    </div>
+
+    <div class="cards-grid">
+        <div class="menu-card" @onclick="IrAAgenda">
+            <i class="fas fa-dumbbell card-icon"></i>
+            <h3>AGENDA TU CLASE</h3>
+            <p>Elige tu horario...</p>
+        </div>
+
+        <div class="menu-card" @onclick="IrAWodView"> <i class="fas fa-chalkboard-teacher card-icon"></i>
+        <h3>WOD</h3>
+        <p>@DateTime.Now.ToString("dd/MM/yyyy")</p>
+        </div>
+
+       <div class="menu-card" @onclick="IrAProgreso"> <i class="fas fa-clipboard-list card-icon"></i>
+             <h3>PROGRESO</h3>
+                <p>Consulta tus datos de las<br>evaluaciones previas y actual</p>
+        </div>
+    </div>
+
+    <div class="footer-brand">@@ALFAFIT</div>
+</div>
+
+@if (mostrarModalWod)
+{
+    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.9); z-index: 1000;" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content" style="background-color: #222; border: 1px solid #F8C545; color: white;">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" style="color: #F8C545;">Programación de la Clase (WOD)</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="() => mostrarModalWod = false"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label style="color:#F8C545; font-weight:bold;">Fecha de Programación:</label>
+                        <input type="date" @bind="nuevoWod.FechaProgramacion" class="form-control input-dark" />
+                    </div>
+
+                    @for (int i = 0; i < nuevoWod.Bloques.Count; i++)
+                    {
+                        var indexBloque = i; // Variable local para el closure
+                        var bloque = nuevoWod.Bloques[i];
+
+                        <div class="card p-2 mb-3" style="background-color: #333; border: 1px solid #F8C545;">
+
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span style="color:#F8C545; font-weight:bold;">BLOQUE #@(indexBloque + 1)</span>
+                                <button class="btn btn-sm btn-danger" @onclick="() => EliminarBloque(bloque)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+
+                            <select @bind="bloque.SegmentoClaseID" class="form-control input-dark mb-2">
+                                <option value="">-- Selecciona Segmento --</option>
+                                @foreach (var seg in listaSegmentos)
+                                {
+                                    <option value="@seg.Id">@seg.Nombre</option>
+                                }
+                            </select>
+
+                            @foreach (var ejercicio in bloque.Ejercicios)
+                            {
+                                <div class="input-group mb-2">
+                                    <input type="text" @bind="ejercicio.PesoRepeticiones" class="form-control input-dark" placeholder="Peso/Reps" style="width: 30%;" />
+                                    <input type="text" @bind="ejercicio.Descripcion" class="form-control input-dark" placeholder="Descripción" />
+                                    <button class="btn btn-outline-danger" @onclick="() => EliminarEjercicio(bloque, ejercicio)">X</button>
+                                </div>
+                            }
+
+                            <button class="btn btn-sm btn-outline-light w-100" @onclick="() => AgregarEjercicio(bloque)">
+                                <i class="fas fa-dumbbell"></i> + Ejercicio
+                            </button>
+                        </div>
+                    }
+
+                    <button class="btn btn-outline-warning w-100 py-2" @onclick="AgregarBloque">
+                        <i class="fas fa-plus"></i> Agregar Nuevo Bloque
+                    </button>
+
+                </div>
+
+                <div class="modal-footer justify-content-between">
+                    <button class="btn btn-secondary" @onclick="() => mostrarModalWod = false">Cerrar</button>
+                    <button class="btn btn-warning" style="background-color:#F8C545; font-weight:bold;" @onclick="GuardarProgramacion">
+                        Guardar Programación
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+
+    .dropdown-wrapper {
+    position: relative; /* Para que el menú absoluto se posicione respecto a esto */
+    display: inline-block;
+}
+
+.dropdown-content {
+    position: absolute;
+    top: 100%; /* Justo debajo del botón */
+    left: 0;
+    background-color: #222;
+    border: 1px solid #F8C545;
+    border-radius: 5px;
+    min-width: 150px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
+    z-index: 1000; /* Asegura que esté encima de todo */
+    padding: 5px 0;
+}
+
+.dropdown-item {
+    padding: 10px 15px;
+    color: white;
+    cursor: pointer;
+    font-family: 'Roboto', sans-serif;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dropdown-item:hover {
+    background-color: #F8C545;
+    color: black;
+}
+
+/* Ajuste para que el icono del dropdown se vea bien */
+.dropdown-item i {
+    width: 20px;
+    text-align: center;
+}
+
+    /* Navbar Fijo Arriba */
+    .top-navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 15px;
+        background-color: #1a1a1a;
+        border-bottom: 2px solid #F8C545;
+        color: white;
+        font-family: 'Oswald', sans-serif;
+    }
+
+    .brand {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .menu-items {
+        display: flex;
+        gap: 15px;
+        font-size: 0.9rem;
+    }
+
+    .menu-link {
+        cursor: pointer;
+    }
+
+    /* Layout Home */
+    .home-container {
+        background-color: #0d0d0d;
+        min-height: 90vh;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding-top: 30px;
+    }
+
+    .welcome-section h1 {
+        font-family: 'Oswald', sans-serif;
+        color: #F8C545;
+        font-size: 2rem;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .cards-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px;
+        width: 100%;
+    }
+
+    .menu-card {
+        background-color: #F8D783;
+        color: #1a1a1a;
+        width: 150px;
+        height: 160px; /* Ajustado para móvil */
+        border-radius: 15px;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(248, 215, 131, 0.2);
+    }
+
+    .card-icon {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+
+    .menu-card h3 {
+        font-family: 'Oswald';
+        font-size: 1rem;
+        font-weight: bold;
+        margin: 0;
+    }
+
+    .menu-card p {
+        font-size: 0.7rem;
+        font-family: 'Roboto';
+        line-height: 1.1;
+        margin-top: 5px;
+    }
+
+    .footer-brand {
+        margin-top: auto;
+        padding: 20px;
+        color: #F8C545;
+        font-family: 'Oswald';
+    }
+
+    /* Inputs Oscuros para el Modal */
+    .input-dark {
+        background-color: #444 !important;
+        color: white !important;
+        border: 1px solid #666;
+    }
+
+        .input-dark::placeholder {
+            color: #aaa;
+        }
+
+        .input-dark:focus {
+            border-color: #F8C545;
+            background-color: #555 !important;
+        }
+</style>
+
+@code {
+   private void IrAWodView()
+    {
+        Nav.NavigateTo("/wod-view");
+    }
+
+    private void IrAAgenda()
+    {
+        Nav.NavigateTo("/agenda-view");
+    }
+    private void IrAProgreso()
+    {
+        Nav.NavigateTo("/progreso-view");
+    }
+
+    private bool mostrarModalWod = false;
+
+    // Datos para el WOD
+    private ProgramacionWodViewModel nuevoWod = new ProgramacionWodViewModel();
+    private List<SegmentoDto> listaSegmentos = new List<SegmentoDto>();
+
+    // Variable para el toggle del menú
+    private bool mostrarConfigMenu = false;
+
+    private void ToggleConfigMenu()
+    {
+        mostrarConfigMenu = !mostrarConfigMenu;
+    }
+
+    private void NavegarA(string destino)
+    {
+        mostrarConfigMenu = false; // Cerramos el menú al seleccionar
+        
+        switch (destino)
+        {
+            case "test":
+                Nav.NavigateTo("/test-config"); 
+                break;
+           
+            case "usuarios":
+                Nav.NavigateTo("/usuarios-view");
+                break;
+            case "avisos":
+                // Nav.NavigateTo("/avisos-view");
+                App.Current.MainPage.DisplayAlert("Navegación", "Ir a pantalla Avisos", "OK");
+                break;
+        }
+    }
+
+
+
+    // Inicialización
+    protected override async Task OnInitializedAsync()
+    {
+        if (Sesion.Usuario == null)
+        {
+            // Si se perdió la sesión, mandamos al Login
+            Nav.NavigateTo("/");
+            return;
+        }
+        // Cargar los segmentos desde la API al iniciar
+        try
+        {
+            var response = await Http.GetAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/segmentos");
+            if (response.IsSuccessStatusCode)
+            {
+                listaSegmentos = await response.Content.ReadFromJsonAsync<List<SegmentoDto>>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error cargando segmentos: " + ex.Message);
+        }
+    }
+
+    // --- LÓGICA DEL MODAL ---
+
+    private void AbrirModalWod()
+    {
+        // Reiniciar el modelo o cargar uno existente
+        if (nuevoWod.Bloques.Count == 0)
+        {
+            AgregarBloque(); // Agregar uno por defecto para empezar
+        }
+        mostrarModalWod = true;
+    }
+
+    private void AgregarBloque()
+    {
+        var bloque = new BloqueWodViewModel();
+        bloque.Ejercicios.Add(new EjercicioViewModel()); // Agregar un ejercicio vacío
+        nuevoWod.Bloques.Add(bloque);
+    }
+
+    private void EliminarBloque(BloqueWodViewModel bloque)
+    {
+        nuevoWod.Bloques.Remove(bloque);
+    }
+
+    private void AgregarEjercicio(BloqueWodViewModel bloque)
+    {
+        bloque.Ejercicios.Add(new EjercicioViewModel());
+    }
+
+    private void EliminarEjercicio(BloqueWodViewModel bloque, EjercicioViewModel ejercicio)
+    {
+        bloque.Ejercicios.Remove(ejercicio);
+    }
+
+    private async Task GuardarProgramacion()
+    {
+      
+        try
+        {
+            if (Sesion.Usuario != null)
+            {
+                nuevoWod.BoxID = Sesion.Usuario.BoxID;
+            }
+            else
+            {                
+                await App.Current.MainPage.DisplayAlert("Error", "Sesión no válida. Vuelve a iniciar sesión.", "OK");
+                Nav.NavigateTo("/");
+                return;
+            }
+
+            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/guardar", nuevoWod);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await App.Current.MainPage.DisplayAlert("Éxito", "WOD Guardado correctamente", "OK");
+                mostrarModalWod = false;
+                nuevoWod = new ProgramacionWodViewModel();
+            }
+            else
+            {
+                await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
+    }
+}

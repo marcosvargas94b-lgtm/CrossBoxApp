@@ -1,0 +1,332 @@
+﻿@page "/"
+@using System.Net.Http.Json
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject CrossBoxApp.Models.Services.SesionService Sesion
+@using CrossBoxApp.Models
+
+<div class="login-container-fullscreen">
+    <div class="brand-header">
+        <strong>@DateTime.Now.ToString("dd/MM/yyyy")</strong><br />
+        By ALFAFIT
+    </div>
+
+    <div class="login-wrapper">
+        <h1 class="title-main">MY CROSSBOX</h1>
+        <h2 class="title-sub">INICIO DE SESIÓN</h2>
+
+        <div class="form-group">
+            <input type="text" @bind="loginUsername" class="input-custom" placeholder="Username (Email)" />
+        </div>
+        <div class="form-group">
+            <input type="password" @bind="loginPassword" class="input-custom" placeholder="Password" />
+        </div>
+
+        @if (!string.IsNullOrEmpty(loginError))
+        {
+            <div class="alert-error">@loginError</div>
+        }
+
+        <a href="#" class="forgot-pass">Forgot Password?</a>
+        <button class="btn-login" @onclick="IniciarSesion">Login</button>
+
+        <a href="#" class="forgot-pass" style="margin-top: 30px; color: #F8C545; font-weight: bold;"
+           @onclick="AbrirModalRegistro">
+            ¿No tienes cuenta? ¡Regístrate aquí!
+        </a>
+    </div>
+</div>
+
+@if (mostrarModalRegistro)
+{
+    <div class="modal fade show" style="display: block; background-color: rgba(0, 0, 0, 0.85); z-index: 10000;" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: #1a1a1a; border: 1px solid #F8C545; color: white;">
+
+                <div class="modal-header" style="border-bottom: 1px solid #444;">
+                    <h5 class="modal-title" style="font-family:'Oswald'; color: #F8C545;">NUEVO ATLETA</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModalRegistro"></button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="text" @bind="regNombre" class="input-custom" placeholder="Nombre" />
+                    <input type="text" @bind="regApellidos" class="input-custom" placeholder="Apellidos" />
+                    <input type="email" @bind="regEmail" class="input-custom" placeholder="Email" />
+                    <select @bind="regBoxId" class="input-custom" style="background-color: #333; color: white;">
+                        <option value="">-- Selecciona tu Box --</option>
+                        @foreach (var box in listaBoxes)
+                        {
+                            <option value="@box.Id">@box.Nombre</option>
+                        }
+                    </select>
+                    <input type="password" @bind="regPass" class="input-custom" placeholder="Contraseña" />
+                    <input type="password" @bind="regConfirmPass" class="input-custom" placeholder="Confirmar Contraseña" />
+
+                    @if (!string.IsNullOrEmpty(registroError))
+                    {
+                        <div class="alert-error">@registroError</div>
+                    }
+                </div>
+
+                <div class="modal-footer" style="border-top: none; justify-content: space-between;">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModalRegistro">Cancelar</button>
+                    <button type="button" class="btn btn-warning" style="background-color:#F8C545; font-weight:bold;" @onclick="RegistrarUsuario">Guardar</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+<style>
+    .login-container-fullscreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: url('imagenes/TIMER.png') no-repeat center center;
+        background-size: cover;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10;
+    }
+
+        .login-container-fullscreen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: -1;
+        }
+
+    .login-wrapper {
+        text-align: center;
+        width: 90%;
+        max-width: 400px;
+        padding: 20px;
+        color: white;
+    }
+
+    .title-main {
+        font-family: 'Oswald', sans-serif;
+        font-size: 3rem;
+        color: #F8C545;
+        margin: 0;
+        line-height: 1;
+    }
+
+    .title-sub {
+        font-family: 'Oswald', sans-serif;
+        font-size: 2rem;
+        color: white;
+        margin-bottom: 30px;
+    }
+
+    .input-custom {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid #fff;
+        border-radius: 30px;
+        padding: 12px 20px;
+        color: #fff;
+        margin-bottom: 10px;
+        text-align: center;
+        outline: none;
+    }
+
+        .input-custom:focus {
+            border-color: #F8C545;
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+    .btn-login {
+        background-color: #928453;
+        color: #fff;
+        border: none;
+        padding: 10px 50px;
+        border-radius: 30px;
+        font-size: 1.2rem;
+        font-family: 'Oswald', sans-serif;
+        margin-top: 20px;
+        width: 100%;
+    }
+
+    .brand-header {
+        position: absolute;
+        top: 30px;
+        left: 30px;
+        color: #fff;
+        text-align: left;
+    }
+
+    .alert-error {
+        color: #ff6b6b;
+        background: rgba(0,0,0,0.8);
+        padding: 5px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+
+    .forgot-pass {
+        color: #ccc;
+        text-decoration: none;
+        display: block;
+        margin-top: 10px;
+        cursor: pointer;
+    }
+
+    /* Asegura que los inputs sean visibles y escribibles */
+    .modal-body .input-custom {
+        background-color: #333333 !important; /* Fondo gris oscuro, no transparente */
+        color: white !important; /* Texto blanco */
+        border: 1px solid #666;
+        z-index: 10001; /* Asegura que esté por encima del fondo */
+        position: relative; /* Necesario para que el z-index funcione */
+    }
+
+        .modal-body .input-custom:focus {
+            border-color: #F8C545;
+            background-color: #444 !important;
+        }
+
+</style>
+
+@code {
+    // --- VARIABLES DE LOGIN ---
+    private string loginUsername;
+    private string loginPassword;
+    private string loginError;
+
+    // --- VARIABLES DE REGISTRO ---
+    private bool mostrarModalRegistro = false;
+    private string regNombre;
+    private string regApellidos;
+    private string regEmail;
+    private string regPass;
+    private string regConfirmPass;
+    private string registroError;
+    private Guid regBoxId; 
+    private List<BoxDto> listaBoxes = new List<BoxDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var response = await Http.GetAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/boxes");
+            if (response.IsSuccessStatusCode)
+            {
+                listaBoxes = await response.Content.ReadFromJsonAsync<List<BoxDto>>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error cargando boxes: " + ex.Message);
+        }
+    }
+    // --- FUNCIONES MODAL ---
+    private void AbrirModalRegistro() => mostrarModalRegistro = true;
+    private void CerrarModalRegistro()
+    {
+        mostrarModalRegistro = false;
+        registroError = ""; // Limpiar errores al cerrar
+    }
+
+    // --- LÓGICA LOGIN ---
+    private async Task IniciarSesion()
+    {
+        loginError = "";
+        try
+        {
+            var loginData = new { Username = loginUsername, Password = loginPassword };
+
+           
+            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/login", loginData);
+
+            if (response.IsSuccessStatusCode)
+            {
+               
+                var usuarioRecibido = await response.Content.ReadFromJsonAsync<UsuarioSesionDto>();
+
+               
+                Sesion.Usuario = usuarioRecibido;
+
+              
+                Nav.NavigateTo("/home");
+            }
+            else
+            {
+                loginError = "Credenciales incorrectas.";
+            }
+        }
+        catch (Exception ex)
+        {
+            loginError = "Error de conexión con el servidor.";
+        }
+    }
+
+    // --- LÓGICA REGISTRO ---
+    private async Task RegistrarUsuario()
+    {
+        registroError = "";
+
+        if (regBoxId == Guid.Empty)
+        {
+            registroError = "Por favor selecciona un Box.";
+            return;
+        }
+        
+        if (regPass != regConfirmPass)
+        {
+            registroError = "Las contraseñas no coinciden.";
+            return;
+        }
+        if (string.IsNullOrEmpty(regEmail) || string.IsNullOrEmpty(regPass))
+        {
+            registroError = "Todos los campos son obligatorios.";
+            return;
+        }
+
+       
+
+        try
+        {
+          
+            var nuevoUsuario = new
+            {
+                Nombre = regNombre,
+                Apellidos = regApellidos,
+                CorreoElectronico = regEmail,
+                Password = regPass,
+                ConfirmPass = regConfirmPass,
+                BoxID = regBoxId
+            };
+
+            // 3. Llamar a la API
+            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/registrar", nuevoUsuario);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Éxito: Cerrar modal y avisar
+                mostrarModalRegistro = false;
+                await App.Current.MainPage.DisplayAlert("¡Éxito!", "Usuario creado correctamente. Ahora puedes iniciar sesión.", "OK");
+            }
+            else
+            {
+                // Error que viene de la API (ej: "El correo ya existe")
+                var errorJson = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+                registroError = errorJson?.mensaje ?? "No se pudo registrar.";
+            }
+        }
+        catch (Exception ex)
+        {
+            registroError = "Error al conectar con la API.";
+        }
+    }
+
+    // Clase auxiliar para leer errores simples
+    public class ErrorResponse { public string mensaje { get; set; } }
+}

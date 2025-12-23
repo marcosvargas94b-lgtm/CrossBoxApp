@@ -1,0 +1,221 @@
+﻿@page "/progreso-view"
+@using CrossBoxApp.Models
+@using CrossBoxApp.Models.Services
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject SesionService Sesion
+
+<div class="top-navbar">
+    <div class="nav-left" @onclick="Volver">
+        <i class="fas fa-arrow-left"></i> VOLVER
+    </div>
+    <div class="nav-title">MI PROGRESO</div>
+    <div class="nav-right"></div>
+</div>
+
+<div class="progress-container">
+
+    @if (cargando)
+    {
+        <div class="text-center mt-5">
+            <div class="spinner-border text-warning"></div>
+        </div>
+    }
+    else if (!gruposProgreso.Any())
+    {
+        <div class="empty-state">
+            <i class="fas fa-chart-line"></i>
+            <h3>SIN REGISTROS</h3>
+            <p>Aún no hay datos de progreso disponibles.</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var grupo in gruposProgreso)
+        {
+            <div class="category-section">
+                <div class="category-header">
+                    @grupo.Key.ToUpper()
+                </div>
+
+                <div class="records-list">
+                    @foreach (var item in grupo)
+                    {
+                        <div class="record-item">
+                            <span class="record-name">@item.NombreTest</span>
+
+                            <div class="record-value-wrapper">
+                                <span class="record-num">@item.Valor</span>
+                                <span class="record-unit">@item.Medida</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<style>
+    /* Navbar */
+    .top-navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        background: #1a1a1a;
+        border-bottom: 2px solid #F8C545;
+        color: white;
+        font-family: 'Oswald';
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .nav-left {
+        color: #F8C545;
+        cursor: pointer;
+    }
+
+    .nav-title {
+        font-size: 1.2rem;
+        letter-spacing: 1px;
+    }
+
+    .nav-right {
+        width: 60px;
+    }
+
+    /* Contenedor */
+    .progress-container {
+        padding: 20px;
+        background: #0d0d0d;
+        min-height: 100vh;
+        color: white;
+    }
+
+    /* Sección por Categoría */
+    .category-section {
+        margin-bottom: 30px;
+    }
+
+    .category-header {
+        color: #F8C545;
+        font-family: 'Oswald';
+        font-size: 1.3rem;
+        border-bottom: 1px solid #F8C545;
+        padding-bottom: 5px;
+        margin-bottom: 10px;
+        letter-spacing: 1px;
+    }
+
+    /* Items de la lista */
+    .records-list {
+        background-color: #1a1a1a;
+        border-radius: 10px;
+        padding: 5px 15px;
+        border: 1px solid #333;
+    }
+
+    .record-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #333;
+    }
+
+        .record-item:last-child {
+            border-bottom: none;
+        }
+
+    .record-name {
+        font-family: 'Roboto';
+        font-size: 1rem;
+        color: #eee;
+    }
+
+    .record-value-wrapper {
+        display: flex;
+        align-items: baseline;
+        gap: 5px;
+    }
+
+    .record-num {
+        font-family: 'Oswald';
+        font-size: 1.4rem;
+        color: white;
+        font-weight: bold;
+    }
+
+    .record-unit {
+        font-family: 'Oswald';
+        font-size: 0.9rem;
+        color: #F8C545;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    /* Estado Vacío */
+    .empty-state {
+        text-align: center;
+        margin-top: 60px;
+        color: #666;
+    }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            color: #333;
+        }
+</style>
+
+@code {
+    // Usamos IGrouping para agrupar por categoría
+    private IEnumerable<IGrouping<string, EvaluacionVisualDto>> gruposProgreso = new List<IGrouping<string, EvaluacionVisualDto>>();
+    private bool cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+
+            var boxId = Sesion.Usuario.BoxID;
+            var userId = Sesion.Usuario.UsuarioID;
+
+            // Reutilizamos la API que ya creamos para Evaluaciones
+            var response = await Http.GetAsync($"api/evaluaciones/usuario/{boxId}/{userId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var todosLosTests = await response.Content.ReadFromJsonAsync<List<EvaluacionVisualDto>>();
+
+                // LÓGICA CLAVE:
+                // 1. Filtramos solo los que tienen Valor (.HasValue)
+                // 2. Agrupamos por Categoria
+                gruposProgreso = todosLosTests
+                    .Where(x => x.Valor.HasValue)
+                    .GroupBy(x => x.Categoria)
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", "No se pudo cargar el progreso", "OK");
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void Volver() => Nav.NavigateTo("/home");
+
+    // Atajo para ir a registrar si está vacío
+    private void IrAEvaluaciones()
+    {
+        if (Sesion.Usuario != null)
+            Nav.NavigateTo($"/evaluaciones/{Sesion.Usuario.UsuarioID}/{Sesion.Usuario.Nombre}");
+    }
+}

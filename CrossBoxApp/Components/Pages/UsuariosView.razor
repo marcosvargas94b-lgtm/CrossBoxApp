@@ -1,0 +1,394 @@
+﻿@page "/usuarios-view"
+@using CrossBoxApp.Models
+@using CrossBoxApp.Models.Services
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject SesionService Sesion
+
+<div class="top-navbar">
+    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
+    <div class="nav-title">ATLETAS</div>
+    <div class="nav-right"></div>
+</div>
+
+<div class="users-container">
+    @if (cargando)
+    {
+        <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
+    }
+    else if (listaUsuarios.Count == 0)
+    {
+        <div class="text-center mt-5 text-muted">No hay usuarios registrados.</div>
+    }
+    else
+    {
+        <div class="user-list">
+            @foreach (var usuario in listaUsuarios)
+            {
+                <div class="user-card">
+                    <div class="user-info">
+                        <div class="user-name">@usuario.NombreCompleto</div>
+                        <div class="user-meta">
+                            <span class="badge-role">@usuario.TipoUsuario</span>
+                            <span class="text-date"><i class="far fa-calendar-alt"></i> @usuario.FechaInscripcionTexto</span>
+                        </div>
+                    </div>
+
+                    <div class="action-side">
+
+                        <div class="status-switch @(usuario.Pagado ? "active" : "inactive")">
+                            @(usuario.Pagado ? "ACTIVO" : "VENCIDO")
+                        </div>                   
+                      
+                    </div>
+
+                    <div class="action-menu-wrapper">
+                        <button class="btn-icon" @onclick="() => ToggleMenu(usuario)">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+
+                        @if (usuario.MostrarMenu)
+                        {
+                            <div class="user-dropdown">
+                                <div class="dropdown-item" @onclick="() => PrepararFecha(usuario)">
+                                    <i class="fas fa-clock"></i> Fecha Inscripción
+                                </div>
+                                <div class="dropdown-item" @onclick="() => VerEvaluaciones(usuario)">
+                                    <i class="fas fa-clipboard-check"></i> Evaluaciones
+                                </div>
+                                <div class="dropdown-item" @onclick="() => RestablecerPass(usuario)">
+                                    <i class="fas fa-key"></i> Restablecer Pass
+                                </div>
+                                <div class="dropdown-item text-danger" @onclick="() => EliminarUsuario(usuario)">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </div>
+                            </div>
+                            <div class="menu-overlay" @onclick="() => ToggleMenu(usuario)"></div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@if (mostrarModalFecha)
+{
+    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.9); z-index: 2000;" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: #222; border: 1px solid #F8C545; color: white;">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" style="color:#F8C545;">ASIGNAR INSCRIPCIÓN</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="() => mostrarModalFecha = false"></button>
+                </div>
+
+                <div class="modal-body text-center">
+                    <p>Selecciona la fecha de inicio para: <br><strong>@usuarioSeleccionado?.NombreCompleto</strong></p>
+
+                    <input type="date" @bind="fechaSeleccionada" class="form-control input-dark" style="font-size: 1.2rem; padding: 10px;" />
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => mostrarModalFecha = false">Cancelar</button>
+                    <button class="btn btn-warning" @onclick="GuardarFechaInscripcion">Confirmar</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    /* Estilos Generales */
+    .top-navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        background: #1a1a1a;
+        border-bottom: 2px solid #F8C545;
+        color: white;
+        font-family: 'Oswald';
+    }
+
+    .action-side {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+    }
+
+    /* Estilos del Switch (Indicador) */
+    .status-switch {
+        padding: 4px 8px;
+        border-radius: 15px;
+        font-size: 0.7rem;
+        font-weight: bold;
+        color: black;
+    }
+
+        .status-switch.active {
+            background-color: #28a745; /* Verde */
+            box-shadow: 0 0 5px #28a745;
+        }
+
+        .status-switch.inactive {
+            background-color: #d9534f; /* Rojo */
+            color: white;
+        }
+
+    .input-dark {
+        background: #333 !important;
+        color: white !important;
+        border: 1px solid #F8C545;
+        text-align: center;
+    }
+
+    .nav-left {
+        color: #F8C545;
+        cursor: pointer;
+    }
+
+    .users-container {
+        padding: 15px;
+        background: #0d0d0d;
+        min-height: 100vh;
+        color: white;
+    }
+
+    /* Tarjeta de Usuario */
+    .user-card {
+        background-color: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative; /* Importante para el dropdown absoluto */
+    }
+
+    .user-name {
+        font-family: 'Oswald';
+        font-size: 1.1rem;
+        color: white;
+        margin-bottom: 5px;
+    }
+
+    .user-meta {
+        display: flex;
+        gap: 10px;
+        font-size: 0.85rem;
+        align-items: center;
+    }
+
+    .badge-role {
+        background: #F8C545;
+        color: black;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+    }
+
+    .text-date {
+        color: #aaa;
+        font-family: 'Roboto';
+    }
+
+    /* Botón Icono */
+    .btn-icon {
+        background: transparent;
+        border: none;
+        color: #F8C545;
+        font-size: 1.2rem;
+        padding: 5px 10px;
+    }
+
+    /* Dropdown Menú */
+    .user-dropdown {
+        position: absolute;
+        right: 40px;
+        top: 10px;
+        background-color: #222;
+        border: 1px solid #F8C545;
+        border-radius: 5px;
+        min-width: 180px;
+        z-index: 1000;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+    }
+
+    .dropdown-item {
+        padding: 12px 15px;
+        color: white;
+        border-bottom: 1px solid #333;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Roboto';
+        font-size: 0.9rem;
+    }
+
+        .dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-item:active {
+            background-color: #333;
+        }
+
+        .dropdown-item i {
+            width: 20px;
+            text-align: center;
+            color: #F8C545;
+        }
+
+    .text-danger {
+        color: #ff6b6b !important;
+    }
+
+        .text-danger i {
+            color: #ff6b6b !important;
+        }
+
+    /* Overlay invisible para cerrar */
+    .menu-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 999;
+    }
+</style>
+
+@code {
+    private List<UsuarioListDto> listaUsuarios = new List<UsuarioListDto>();
+    private bool cargando = true;
+    private bool mostrarModalFecha = false;
+    private UsuarioListDto usuarioSeleccionado;
+    private DateTime fechaSeleccionada = DateTime.Now;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarUsuarios();
+    }
+
+    private async Task CargarUsuarios()
+    {
+        try
+        {
+            if (Sesion.Usuario == null) return;
+            cargando = true;
+
+            var response = await Http.GetAsync($"api/usuarios/lista/{Sesion.Usuario.BoxID}");
+            if (response.IsSuccessStatusCode)
+            {
+                listaUsuarios = await response.Content.ReadFromJsonAsync<List<UsuarioListDto>>();
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
+        finally { cargando = false; }
+    }
+
+    private void ToggleMenu(UsuarioListDto usuario)
+    {
+        // Cierra todos los otros menús primero
+        foreach (var u in listaUsuarios) { if (u != usuario) u.MostrarMenu = false; }
+
+        // Alterna el actual
+        usuario.MostrarMenu = !usuario.MostrarMenu;
+    }
+
+    private void PrepararFecha(UsuarioListDto u)
+    {
+        u.MostrarMenu = false; // Cerrar dropdown
+        usuarioSeleccionado = u;
+        fechaSeleccionada = DateTime.Now; // Default hoy
+        mostrarModalFecha = true;
+    }
+
+    // 2. Guardar Fecha
+    private async Task GuardarFechaInscripcion()
+    {
+        bool confirmar = await App.Current.MainPage.DisplayAlert("Confirmar",
+            $"¿Estás seguro de asignar la fecha {fechaSeleccionada.ToShortDateString()} a {usuarioSeleccionado.NombreCompleto}?",
+            "Sí, Asignar", "Cancelar");
+
+        if (!confirmar) return;
+
+        try
+        {
+            var dto = new AsignarFechaDto
+            {
+                UsuarioId = usuarioSeleccionado.UsuarioId,
+                FechaSeleccionada = fechaSeleccionada
+            };
+
+            var response = await Http.PostAsJsonAsync("api/usuarios/asignar-fecha", dto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await App.Current.MainPage.DisplayAlert("Éxito", "Fecha asignada y pago activado.", "OK");
+                mostrarModalFecha = false;
+                await CargarUsuarios(); // Recargar para ver el cambio de fecha y el switch verde
+            }
+            else
+            {
+                await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
+    }
+
+
+    // --- ACCIONES DEL DROPDOWN ---
+
+    private void VerFecha(UsuarioListDto u)
+    {
+        u.MostrarMenu = false;
+        App.Current.MainPage.DisplayAlert("Inscripción", $"Fecha registrada: {u.FechaInscripcionTexto}", "OK");
+    }
+
+    private void VerEvaluaciones(UsuarioListDto u)
+    {
+        u.MostrarMenu = false;
+        Nav.NavigateTo($"/evaluaciones/{u.UsuarioId}/{u.NombreCompleto}");
+    }
+
+    private async Task RestablecerPass(UsuarioListDto u)
+    {
+        u.MostrarMenu = false;
+        bool confirm = await App.Current.MainPage.DisplayAlert("Seguridad", $"¿Resetear contraseña a '123456' para {u.NombreCompleto}?", "Sí", "No");
+        if (confirm)
+        {
+            // Aquí llamarías a tu API para Update Password
+            await App.Current.MainPage.DisplayAlert("Éxito", "Contraseña restablecida.", "OK");
+        }
+    }
+
+    private async Task EliminarUsuario(UsuarioListDto u)
+    {
+        u.MostrarMenu = false;
+        bool confirm = await App.Current.MainPage.DisplayAlert("Eliminar", $"¿Estás seguro de eliminar a {u.NombreCompleto}? Esta acción no se puede deshacer.", "Sí, Eliminar", "Cancelar");
+        if (confirm)
+        {
+            // Aquí llamarías a tu API Delete
+            // await Http.DeleteAsync($"api/usuarios/eliminar/{u.UsuarioId}");
+            await App.Current.MainPage.DisplayAlert("Aviso", "Usuario eliminado (Simulación)", "OK");
+            listaUsuarios.Remove(u); // Quitar de la lista visualmente
+        }
+    }
+
+    private void Volver() => Nav.NavigateTo("/home");
+}
