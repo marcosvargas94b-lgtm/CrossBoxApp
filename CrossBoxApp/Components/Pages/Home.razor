@@ -40,7 +40,10 @@
             </div>
         </div>
     }
-    <div class="user-info">Hola, @(Sesion.Usuario?.Nombre ?? "ATLETA")</div>
+    <div class="user-info" @onclick="IrAPerfil" style="cursor: pointer;">
+        Hola, @(Sesion.Usuario?.Nombre ?? "ATLETA")
+        <i class="fas fa-user-circle" style="margin-left: 5px; color: #F8C545;"></i>
+    </div>
 </div>
 
 <div class="home-container">
@@ -310,6 +313,10 @@
         Nav.NavigateTo("/progreso-view");
     }
 
+    private void IrAPerfil()
+    {
+        Nav.NavigateTo("/mi-perfil");
+    }
     private bool mostrarModalWod = false;
 
     // Datos para el WOD

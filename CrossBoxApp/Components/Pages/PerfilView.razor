@@ -1,0 +1,275 @@
+﻿@page "/mi-perfil"
+@using CrossBoxApp.Models
+@using CrossBoxApp.Models.Services
+@using System.Net.Http.Headers
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject SesionService Sesion
+
+<div class="top-navbar">
+    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
+    <div class="nav-title">MI PERFIL</div>
+    <div class="nav-right"></div>
+</div>
+
+<div class="profile-container">
+
+    <div class="photo-section">
+        <div class="image-wrapper">
+            @if (!string.IsNullOrEmpty(previewImagen))
+            {
+                <img src="@previewImagen" class="profile-img" />
+            }
+            else
+            {
+                <img src="https://via.placeholder.com/150/000000/F8C545?text=ALFA" class="profile-img" />
+            }
+
+            <label class="upload-btn">
+                <InputFile OnChange="CargarImagen" accept=".jpg,.jpeg,.png" style="display:none;" />
+                <i class="fas fa-camera"></i>
+            </label>
+        </div>
+        <p class="username">@(Sesion.Usuario?.Nombre ?? "ATLETA")</p>
+    </div>
+
+    <div class="form-section">
+
+        <label>Acerca de mí (Descripción)</label>
+        <textarea @bind="miPerfil.Descripcion" class="input-dark text-area" placeholder="Ej: Amante del Crossfit, RX en proceso..."></textarea>
+
+        <label>WhatsApp de Contacto</label>
+        <div class="input-group">
+            <span class="input-icon"><i class="fab fa-whatsapp"></i></span>
+            <input type="text" @bind="miPerfil.Whatsapp" class="input-dark" placeholder="Ej: 961 123 4567" />
+        </div>
+
+        <button class="btn-save" @onclick="GuardarPerfil" disabled="@guardando">
+            @(guardando ? "GUARDANDO..." : "GUARDAR CAMBIOS")
+        </button>
+
+    </div>
+</div>
+
+<style>
+    /* Estilos base reutilizados */
+    .top-navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        background: #1a1a1a;
+        border-bottom: 2px solid #F8C545;
+        color: white;
+        font-family: 'Oswald';
+    }
+
+    .nav-left {
+        color: #F8C545;
+        cursor: pointer;
+    }
+
+    .profile-container {
+        padding: 20px;
+        background-color: #0d0d0d;
+        min-height: 90vh;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    /* Foto Circular */
+    .photo-section {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .image-wrapper {
+        position: relative;
+        width: 150px;
+        height: 150px;
+        margin: 0 auto 15px auto;
+    }
+
+    .profile-img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #F8C545;
+        background-color: #222;
+    }
+
+    .upload-btn {
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        background-color: #F8C545;
+        color: black;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+    }
+
+    .username {
+        font-family: 'Oswald';
+        font-size: 1.5rem;
+        color: #F8C545;
+        margin: 0;
+    }
+
+    /* Inputs */
+    .form-section {
+        width: 100%;
+        max-width: 400px;
+    }
+
+    label {
+        color: #aaa;
+        font-size: 0.9rem;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .input-dark {
+        width: 100%;
+        background-color: #222;
+        border: 1px solid #444;
+        color: white;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        outline: none;
+    }
+
+        .input-dark:focus {
+            border-color: #F8C545;
+        }
+
+    .text-area {
+        height: 100px;
+        resize: none;
+    }
+
+    .input-group {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+        .input-group input {
+            padding-left: 45px;
+        }
+    /* Espacio para el icono */
+
+    .input-icon {
+        position: absolute;
+        left: 15px;
+        top: 12px; /* Ajustar según altura del input */
+        color: #25D366; /* Verde WhatsApp */
+        font-size: 1.2rem;
+    }
+
+    .btn-save {
+        width: 100%;
+        background-color: #F8C545;
+        color: black;
+        font-family: 'Oswald';
+        font-size: 1.2rem;
+        border: none;
+        padding: 12px;
+        border-radius: 30px;
+        font-weight: bold;
+        margin-top: 10px;
+    }
+
+        .btn-save:disabled {
+            background-color: #555;
+            color: #888;
+        }
+
+</style>
+
+@code {
+    private PerfilDto miPerfil = new PerfilDto();
+    private string previewImagen = "";
+    private IBrowserFile archivoSeleccionado;
+    private bool guardando = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+
+        // Aquí deberías cargar los datos existentes si ya tiene perfil
+        // try {
+        //    miPerfil = await Http.GetFromJsonAsync<PerfilDto>($"api/perfil/{Sesion.Usuario.UsuarioID}");
+        //    if(!string.IsNullOrEmpty(miPerfil.FotoPerfil)) previewImagen = miPerfil.FotoPerfil;
+        // } catch {}
+    }
+
+    private async Task CargarImagen(InputFileChangeEventArgs e)
+    {
+        var archivo = e.File;
+        if (archivo != null)
+        {
+            archivoSeleccionado = archivo;
+
+            // Crear preview local para que el usuario vea la foto al instante
+            var format = "image/png";
+            var resizedImage = await archivo.RequestImageFileAsync(format, 300, 300);
+            var buffer = new byte[resizedImage.Size];
+            await resizedImage.OpenReadStream().ReadAsync(buffer);
+            previewImagen = $"data:{format};base64,{Convert.ToBase64String(buffer)}";
+        }
+    }
+
+    private async Task GuardarPerfil()
+    {
+        guardando = true;
+        try
+        {
+            // Usamos MultipartFormDataContent para enviar TEXTO + ARCHIVO
+            var contenido = new MultipartFormDataContent();
+
+            contenido.Add(new StringContent(Sesion.Usuario.UsuarioID.ToString()), "UsuarioID");
+            contenido.Add(new StringContent(miPerfil.Descripcion ?? ""), "Descripcion");
+            contenido.Add(new StringContent(miPerfil.Whatsapp ?? ""), "Whatsapp");
+
+            if (archivoSeleccionado != null)
+            {
+                // Limite de tamaño: 5MB
+                var fileContent = new StreamContent(archivoSeleccionado.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024));
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue(archivoSeleccionado.ContentType);
+                contenido.Add(fileContent, "archivoFoto", archivoSeleccionado.Name);
+            }
+
+            // Enviar a la API (Asegúrate de crear este endpoint en tu Controller)
+            var response = await Http.PostAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/perfilapi/guardar", contenido);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await App.Current.MainPage.DisplayAlert("Éxito", "Perfil actualizado correctamente", "OK");
+                Volver();
+            }
+            else
+            {
+                await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar los cambios", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private void Volver() => Nav.NavigateTo("/home");
+}
