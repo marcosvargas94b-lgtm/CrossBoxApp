@@ -211,7 +211,7 @@
 
         try
         {
-            var response = await Http.DeleteAsync($"api/tests/eliminar/{item.TestBoxId}");
+            var response = await Http.PostAsync($"api/tests/eliminar/{item.TestBoxId}",null);
 
             if (response.IsSuccessStatusCode)
             {
@@ -220,12 +220,14 @@
             }
             else
             {
-                await App.Current.MainPage.DisplayAlert("Error", "No se pudo eliminar.", "OK");
+                var cuerpoError = await response.Content.ReadAsStringAsync();
+                await App.Current.MainPage.DisplayAlert("Error", $"Código: {response.StatusCode}\nDetalle: {cuerpoError}", "OK");
             }
         }
         catch (Exception ex)
         {
-            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+            await App.Current.MainPage.DisplayAlert("Detalle del Error", ex.ToString(), "OK");
+            // await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
         }
     }
 

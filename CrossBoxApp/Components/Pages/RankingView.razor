@@ -1,0 +1,247 @@
+﻿@page "/ranking"
+@using CrossBoxApp.Models
+@using CrossBoxApp.Models.Services
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject SesionService Sesion
+
+<div class="top-navbar">
+    <div class="nav-left" @onclick="Volver">
+        <i class="fas fa-arrow-left"></i> VOLVER
+    </div>
+    <div class="nav-title">TOP LIKES</div>
+    <div class="nav-right"></div>
+</div>
+
+<div class="ranking-container">
+
+    @if (rankingList == null)
+    {
+        <div class="loading">
+            <div class="spinner-border text-warning"></div>
+            <p>Calculando líderes...</p>
+        </div>
+    }
+    else if (rankingList.Count == 0)
+    {
+        <div class="empty-state">Nadie tiene likes aún en este Box.</div>
+    }
+    else
+    {
+        <div class="rank-header">
+            <span>#</span>
+            <span>ATLETA</span>
+            <span>LIKES</span>
+        </div>
+
+        <div class="rank-list">
+            @foreach (var item in rankingList)
+            {
+                <div class="rank-item @(item.EsYo ? "active-user" : "")">
+
+                    <div class="rank-pos">
+                        @if (item.Posicion == 1)
+                        {
+                            <i class="fas fa-crown gold"></i>
+                        }
+                        else if (item.Posicion == 2)
+                        {
+
+                            <i class="fas fa-medal silver"></i>
+                        }
+                        else if (item.Posicion == 3)
+                        {
+
+                            <i class="fas fa-medal bronze"></i>
+                        }
+                        else
+                        {
+
+                            <span>@item.Posicion</span>
+                        }
+                    </div>
+
+                    <div class="rank-info">
+                        <img src="@(item.FotoUrl ?? "imagenes/Rhino.png")" class="rank-avatar" />
+                        <span class="rank-name">@item.NombreCompleto</span>
+                        @if (item.EsYo)
+                        {
+                            <span class="me-badge">(Tú)</span>
+                        }
+                    </div>
+
+                    <div class="rank-score">
+                        <i class="fas fa-heart"></i> @item.Likes
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    /* Navbar (Reutilizado) */
+    .top-navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        background: #1a1a1a;
+        border-bottom: 2px solid #F8C545;
+        color: white;
+        font-family: 'Oswald';
+        position: relative;
+    }
+
+    .nav-left {
+        color: #F8C545;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+
+    .nav-title {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: white;
+    }
+
+    /* Contenedor Principal */
+    .ranking-container {
+        background: #0d0d0d;
+        min-height: 100vh;
+        padding: 15px;
+        color: white;
+    }
+
+    .rank-header {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 15px;
+        color: #666;
+        font-size: 0.8rem;
+        font-weight: bold;
+        letter-spacing: 1px;
+        border-bottom: 1px solid #333;
+        margin-bottom: 10px;
+    }
+
+    /* Fila del Ranking */
+    .rank-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #1a1a1a;
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+        border: 1px solid #333;
+    }
+
+        /* ESTILO PARA "MI USUARIO" */
+        .rank-item.active-user {
+            border: 2px solid #F8C545;
+            background: rgba(248, 197, 69, 0.1); /* Fondo amarillento transparente */
+            transform: scale(1.02); /* Un poquito más grande */
+        }
+
+    .rank-pos {
+        width: 30px;
+        text-align: center;
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+
+    .gold {
+        color: #FFD700;
+    }
+
+    .silver {
+        color: #C0C0C0;
+    }
+
+    .bronze {
+        color: #CD7F32;
+    }
+
+    .rank-info {
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-left: 10px;
+    }
+
+    .rank-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #333;
+    }
+
+    .rank-name {
+        font-family: 'Oswald';
+        font-size: 1rem;
+        color: #ddd;
+    }
+
+    .active-user .rank-name {
+        color: #F8C545;
+    }
+    /* Mi nombre en amarillo */
+
+    .me-badge {
+        font-size: 0.7rem;
+        background: #F8C545;
+        color: black;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+        margin-left: 5px;
+    }
+
+    .rank-score {
+        font-weight: bold;
+        color: #F8C545;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .loading {
+        text-align: center;
+        margin-top: 50px;
+        color: #666;
+    }
+</style>
+
+@code {
+    private List<RankingDto> rankingList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+        await CargarRanking();
+    }
+
+    private async Task CargarRanking()
+    {
+        try
+        {
+            var boxId = Sesion.Usuario.BoxID;
+            var miId = Sesion.Usuario.UsuarioID;
+
+            rankingList = await Http.GetFromJsonAsync<List<RankingDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/ranking/{boxId}/{miId}");
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", "No se pudo cargar el ranking", "OK");
+        }
+    }
+
+    private void Volver() => Nav.NavigateTo("/home");
+}

@@ -30,7 +30,7 @@
                 <i class="fas fa-camera"></i>
             </label>
         </div>
-        <p class="username">@(Sesion.Usuario?.Nombre ?? "ATLETA")</p>
+        <p class="username">@(Sesion.Usuario?.Nombre + " " + Sesion.Usuario?.Apellidos ?? "ATLETA")</p>
     </div>
 
     <div class="form-section">
@@ -39,13 +39,29 @@
         <textarea @bind="miPerfil.Descripcion" class="input-dark text-area" placeholder="Ej: Amante del Crossfit, RX en proceso..."></textarea>
 
         <label>WhatsApp de Contacto</label>
-        <div class="input-group">
-            <span class="input-icon"><i class="fab fa-whatsapp"></i></span>
-            <input type="text" @bind="miPerfil.Whatsapp" class="input-dark" placeholder="Ej: 961 123 4567" />
+
+        <div class="wrapper-ws">
+            <i class="fab fa-whatsapp icono-ws"></i>
+
+            <input type="text"
+                   @bind="miPerfil.Whatsapp"
+                   class="input-dark input-con-icono"
+                   placeholder="Ej: 961 123 4567" />
         </div>
 
         <button class="btn-save" @onclick="GuardarPerfil" disabled="@guardando">
-            @(guardando ? "GUARDANDO..." : "GUARDAR CAMBIOS")
+            @if (guardando)
+            {
+                <span>GUARDANDO...</span>
+            }
+            else if (esEdicion)
+            {
+                <span><i class="fas fa-edit"></i> ACTUALIZAR DATOS</span>
+            }
+            else
+            {
+                <span>GUARDAR PERFIL</span>
+            }
         </button>
 
     </div>
@@ -157,10 +173,7 @@
         resize: none;
     }
 
-    .input-group {
-        position: relative;
-        margin-bottom: 20px;
-    }
+    
 
         .input-group input {
             padding-left: 45px;
@@ -170,9 +183,12 @@
     .input-icon {
         position: absolute;
         left: 15px;
-        top: 12px; /* Ajustar según altura del input */
+        top: 50%; /* Lo empuja a la mitad */
+        transform: translateY(-50%); /* Lo ajusta matemáticamente al centro exacto */
         color: #25D366; /* Verde WhatsApp */
-        font-size: 1.2rem;
+        font-size: 1.5rem; /* Un poco más grande para que luzca mejor */
+        pointer-events: none; /* Truco: permite dar clic "a través" del icono para escribir */
+        z-index: 10;
     }
 
     .btn-save {
@@ -193,6 +209,37 @@
             color: #888;
         }
 
+    .wrapper-ws {
+        position: relative;
+        width: 100%;
+        margin-bottom: 20px;
+        display: flex; /* Asegura que el contenedor tenga altura real */
+        align-items: center; /* Ayuda a centrar */
+    }
+
+    /* Estilo del Ícono: Lo pegamos con pegamento industrial */
+    .icono-ws {
+        position: absolute;
+        left: 15px; /* Separación de la orilla izquierda */
+        top: 50%; /* A la mitad de la altura */
+        transform: translateY(-50%); /* Corrección matemática para centro exacto */
+        color: #25D366; /* Verde WhatsApp */
+        font-size: 1.4rem;
+        z-index: 10; /* Que flote ENCIMA del input */
+        pointer-events: none; /* Para que puedas dar clic al input "a través" del ícono */
+        margin: 0 !important; /* Reseteamos márgenes fantasmas */
+        padding: 0 !important;
+        background: none !important; /* Quitamos fondos raros */
+        border: none !important;
+    }
+
+    /* Estilo del Input específico para este caso */
+    .input-con-icono {
+        padding-left: 50px !important; /* Espacio extra a la izquierda para el ícono */
+        height: 50px; /* Forzamos una altura cómoda */
+        display: flex;
+        align-items: center;
+    }
 </style>
 
 @code {
@@ -200,16 +247,50 @@
     private string previewImagen = "";
     private IBrowserFile archivoSeleccionado;
     private bool guardando = false;
+    private bool esEdicion = false; // Variable para saber si estamos editando o creando
 
     protected override async Task OnInitializedAsync()
     {
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
 
-        // Aquí deberías cargar los datos existentes si ya tiene perfil
-        // try {
-        //    miPerfil = await Http.GetFromJsonAsync<PerfilDto>($"api/perfil/{Sesion.Usuario.UsuarioID}");
-        //    if(!string.IsNullOrEmpty(miPerfil.FotoPerfil)) previewImagen = miPerfil.FotoPerfil;
-        // } catch {}
+        await CargarPerfilExistente();
+    }
+
+    private async Task CargarPerfilExistente()
+    {
+        try
+        {
+            var userId = Sesion.Usuario.UsuarioID;
+            // Llamamos al endpoint GET que creamos en la API
+            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/PerfilApi/obtener/{userId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Si responde 200 OK, es que SÍ tiene datos
+                var perfilEncontrado = await response.Content.ReadFromJsonAsync<PerfilDto>();
+
+                if (perfilEncontrado != null)
+                {
+                    miPerfil = perfilEncontrado;
+                    esEdicion = true; // Cambiamos el estado a "Edición"
+
+                    // Si la API nos devolvió una URL de foto, la ponemos en el preview
+                    if (!string.IsNullOrEmpty(miPerfil.FotoPerfil))
+                    {
+                        previewImagen = miPerfil.FotoPerfil;
+                    }
+                }
+            }
+            else
+            {
+                // Si responde 404 NotFound, no hacemos nada (se queda vacío para crear)
+                esEdicion = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al cargar perfil: " + ex.Message);
+        }
     }
 
     private async Task CargarImagen(InputFileChangeEventArgs e)
@@ -233,32 +314,29 @@
         guardando = true;
         try
         {
-            // Usamos MultipartFormDataContent para enviar TEXTO + ARCHIVO
             var contenido = new MultipartFormDataContent();
-
             contenido.Add(new StringContent(Sesion.Usuario.UsuarioID.ToString()), "UsuarioID");
             contenido.Add(new StringContent(miPerfil.Descripcion ?? ""), "Descripcion");
             contenido.Add(new StringContent(miPerfil.Whatsapp ?? ""), "Whatsapp");
 
             if (archivoSeleccionado != null)
             {
-                // Limite de tamaño: 5MB
                 var fileContent = new StreamContent(archivoSeleccionado.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024));
                 fileContent.Headers.ContentType = new MediaTypeHeaderValue(archivoSeleccionado.ContentType);
                 contenido.Add(fileContent, "archivoFoto", archivoSeleccionado.Name);
             }
 
-            // Enviar a la API (Asegúrate de crear este endpoint en tu Controller)
-            var response = await Http.PostAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/perfilapi/guardar", contenido);
+            var response = await Http.PostAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/PerfilApi/guardar", contenido);
 
             if (response.IsSuccessStatusCode)
             {
-                await App.Current.MainPage.DisplayAlert("Éxito", "Perfil actualizado correctamente", "OK");
-                Volver();
+                await App.Current.MainPage.DisplayAlert("¡Listo!", "Tu perfil ha sido actualizado.", "OK");
+                // Recargamos para asegurar que todo esté fresco
+                await CargarPerfilExistente();
             }
             else
             {
-                await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar los cambios", "OK");
+                await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar.", "OK");
             }
         }
         catch (Exception ex)

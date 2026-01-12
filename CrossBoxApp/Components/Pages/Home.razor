@@ -1,48 +1,55 @@
 ﻿@page "/home"
 @using System.Net.Http.Json
+@using CrossBoxApp.Models
+@using CrossBoxApp.Models.Social
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject CrossBoxApp.Models.Services.SesionService Sesion
-@using CrossBoxApp.Models
+@inject IJSRuntime JS
 
-<div class="top-navbar">
-    <div class="brand">ALFAFIT</div>
-    @if (Sesion.Usuario != null && Sesion.Usuario.TipoUsuarioID == 1)
-    {
-        <div class="menu-items">
-            <span @onclick="AbrirModalWod" class="menu-link">
-                <i class="fas fa-hammer"></i> WOD
-            </span>
-
-            <span class="menu-link" style="color:#d9534f">
-                <i class="fas fa-stopwatch"></i> LIVE
-            </span>
-
-            <div class="dropdown-wrapper">
-                <span class="menu-link" @onclick="ToggleConfigMenu">
-                    <i class="fas fa-cog"></i> MY BOX <i class="fas fa-caret-down" style="font-size:0.8rem;"></i>
-                </span>
-
-                @if (mostrarConfigMenu)
-                {
-                    <div class="dropdown-content">
-                        <div class="dropdown-item" @onclick='() => NavegarA("test")'>
-                            <i class="fas fa-flask"></i> Test
-                        </div>
-                        <div class="dropdown-item" @onclick='() => NavegarA("usuarios")'>
-                            <i class="fas fa-users"></i> Usuarios
-                        </div>
-                        <div class="dropdown-item" @onclick='() => NavegarA("avisos")'>
-                            <i class="fas fa-bullhorn"></i> Avisos
-                        </div>
-                    </div>
-                }
-            </div>
+<div class="navbar-container">
+    <div class="brand">@NombreBox</div>
+    <div class="right-actions">
+        <div class="noti-wrapper" @onclick="ToggleNotificaciones">
+            <i class="fas fa-bell noti-icon @(hayNuevas ? "bell-ring" : "")"></i>
+            @if (hayNuevas) { <span class="noti-dot"></span> }
+            @if (mostrarNotis)
+            {
+                <div class="noti-dropdown">
+                    @if (misNotificaciones == null || misNotificaciones.Count == 0) { <div class="noti-item empty">Sin novedades...</div> }
+                    else { @foreach (var n in misNotificaciones) { <div class="noti-item @(n.Leido ? "" : "unread")"><i class="@GetIcono(n.Tipo)"></i> <span class="noti-text">@n.Mensaje</span></div> } }
+                </div>
+            }
         </div>
-    }
-    <div class="user-info" @onclick="IrAPerfil" style="cursor: pointer;">
-        Hola, @(Sesion.Usuario?.Nombre ?? "ATLETA")
-        <i class="fas fa-user-circle" style="margin-left: 5px; color: #F8C545;"></i>
+
+        <div class="main-menu-wrapper" @onclick="ToggleMainMenu">
+            <span class="user-name">Hola, @(Sesion.Usuario?.Nombre ?? "Atleta")</span>
+            <i class="fas fa-bars menu-burger"></i>
+
+            @if (mostrarMenuPrincipal)
+            {
+                <div class="main-dropdown">
+                    <div class="dropdown-header">GENERAL</div>
+                    <div class="dropdown-item" @onclick="IrAPerfil"><i class="fas fa-user-edit"></i> Modificar Perfil</div>
+                    <div class="dropdown-item" style="color:#d9534f !important;"><i class="fas fa-stopwatch" style="color:#d9534f"></i> LIVE</div>
+
+                    @if (EsAdmin)
+                    {
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-header admin-header">ADMINISTRADOR</div>
+                        <div class="dropdown-item" @onclick="AbrirModalWod"><i class="fas fa-hammer"></i> Programar WOD</div>
+                        <div class="dropdown-item" @onclick='() => NavegarA("test")'><i class="fas fa-flask"></i> Configurar Tests</div>
+                        <div class="dropdown-item" @onclick='() => NavegarA("usuarios")'><i class="fas fa-users"></i> Gestionar Usuarios</div>
+                        <div class="dropdown-item" @onclick="AbrirCrearAviso"><i class="fas fa-bullhorn"></i> Publicar Avisos</div>
+                        
+                        <div class="dropdown-item" @onclick="AbrirGestionModulos"><i class="fas fa-toggle-on"></i> Módulos</div>
+                    }
+                    
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-item text-muted" @onclick="CerrarSesion" style="color: #888 !important;"><i class="fas fa-sign-out-alt" style="color: #888;"></i> Cerrar Sesión</div>
+                </div>
+            }
+        </div>
     </div>
 </div>
 
@@ -52,397 +59,318 @@
     </div>
 
     <div class="cards-grid">
-        <div class="menu-card" @onclick="IrAAgenda">
-            <i class="fas fa-dumbbell card-icon"></i>
-            <h3>AGENDA TU CLASE</h3>
-            <p>Elige tu horario...</p>
-        </div>
+        @if (EstaActivo("AGENDA"))
+        {
+            <div class="menu-card" @onclick="IrAAgenda">
+                <i class="fas fa-dumbbell card-icon"></i>
+                <h3>AGENDA TU CLASE</h3><p>Elige tu horario...</p>
+            </div>
+        }
 
-        <div class="menu-card" @onclick="IrAWodView"> <i class="fas fa-chalkboard-teacher card-icon"></i>
-        <h3>WOD</h3>
-        <p>@DateTime.Now.ToString("dd/MM/yyyy")</p>
-        </div>
+        @if (EstaActivo("WOD"))
+        {
+            <div class="menu-card" @onclick="IrAWodView">
+                <i class="fas fa-chalkboard-teacher card-icon"></i>
+                <h3>WOD</h3><p>@DateTime.Now.ToString("dd/MM/yyyy")</p>
+            </div>
+        }
 
-       <div class="menu-card" @onclick="IrAProgreso"> <i class="fas fa-clipboard-list card-icon"></i>
-             <h3>PROGRESO</h3>
-                <p>Consulta tus datos de las<br>evaluaciones previas y actual</p>
-        </div>
+        @if (EstaActivo("PROGRESO"))
+        {
+            <div class="menu-card" @onclick="IrAProgreso">
+                <i class="fas fa-clipboard-list card-icon"></i>
+                <h3>PROGRESO</h3><p>Consulta tus datos</p>
+            </div>
+        }
+
+        @if (EstaActivo("FOTO"))
+        {
+            <div class="menu-card" @onclick="IrASeEntreno">
+                <i class="fas fa-fire-alt card-icon" style="color:#d9534f;"></i>
+                <h3>SE ENTRENÓ</h3><p>Sube tu foto</p>
+            </div>
+        }
+
+        @if (EstaActivo("SOCIAL"))
+        {
+            <div class="menu-card" @onclick="IrACompaneros">
+                <i class="fas fa-users card-icon" style="color:#00BFFF;"></i>
+                <h3>¡HEY! HOLA</h3><p>Compañeros</p>
+            </div>
+        }
+
+        @if (EstaActivo("RANKING"))
+        {
+            <div class="menu-card" @onclick="IrARanking">
+                <i class="fas fa-trophy card-icon" style="color:#FFD700;"></i>
+                <h3>LIKES</h3><p>Líderes</p>
+            </div>
+        }
+
+        @if (EstaActivo("RUNNING"))
+        {
+            <div class="menu-card" @onclick='() => Nav.NavigateTo("/mi-running")'>
+                <i class="fas fa-running card-icon" style="color:white;"></i>
+                <h3>MI PLAN RUNNING</h3><p>Bitácora</p>
+            </div>
+        }
     </div>
 
-    <div class="footer-brand">@@ALFAFIT</div>
+    <div class="footer-brand">@@@NombreBox</div>
 </div>
 
-@if (mostrarModalWod)
+@if (mostrarModalModulos)
 {
-    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.9); z-index: 1000;" tabindex="-1">
-        <div class="modal-dialog modal-dialog-scrollable">
-            <div class="modal-content" style="background-color: #222; border: 1px solid #F8C545; color: white;">
-
-                <div class="modal-header">
-                    <h5 class="modal-title" style="color: #F8C545;">Programación de la Clase (WOD)</h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="() => mostrarModalWod = false"></button>
-                </div>
-
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label style="color:#F8C545; font-weight:bold;">Fecha de Programación:</label>
-                        <input type="date" @bind="nuevoWod.FechaProgramacion" class="form-control input-dark" />
-                    </div>
-
-                    @for (int i = 0; i < nuevoWod.Bloques.Count; i++)
+    <div class="modal-overlay">
+        <div class="modal-content custom-modal" style="max-height: 80vh;">
+            <div class="modal-header">
+                <h5 style="margin:0; color:#F8C545; font-weight:bold;">CONFIGURAR MÓDULOS</h5>
+                <button class="btn-close-custom" @onclick="() => mostrarModalModulos = false"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body" style="overflow-y:auto;">
+                <p style="color:#ccc; font-size:0.8rem; margin-bottom:15px;">Apaga los módulos que no quieras que vean tus atletas.</p>
+                
+                @if (listaConfiguracion != null)
+                {
+                    @foreach (var mod in listaConfiguracion)
                     {
-                        var indexBloque = i; // Variable local para el closure
-                        var bloque = nuevoWod.Bloques[i];
-
-                        <div class="card p-2 mb-3" style="background-color: #333; border: 1px solid #F8C545;">
-
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span style="color:#F8C545; font-weight:bold;">BLOQUE #@(indexBloque + 1)</span>
-                                <button class="btn btn-sm btn-danger" @onclick="() => EliminarBloque(bloque)">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                        <div class="module-row" @onclick="() => ToggleModulo(mod)">
+                            <span class="mod-name">@mod.NombreVisible</span>
+                            <div class="switch-track @(mod.Activo ? "on" : "off")">
+                                <div class="switch-thumb"></div>
                             </div>
-
-                            <select @bind="bloque.SegmentoClaseID" class="form-control input-dark mb-2">
-                                <option value="">-- Selecciona Segmento --</option>
-                                @foreach (var seg in listaSegmentos)
-                                {
-                                    <option value="@seg.Id">@seg.Nombre</option>
-                                }
-                            </select>
-
-                            @foreach (var ejercicio in bloque.Ejercicios)
-                            {
-                                <div class="input-group mb-2">
-                                    <input type="text" @bind="ejercicio.PesoRepeticiones" class="form-control input-dark" placeholder="Peso/Reps" style="width: 30%;" />
-                                    <input type="text" @bind="ejercicio.Descripcion" class="form-control input-dark" placeholder="Descripción" />
-                                    <button class="btn btn-outline-danger" @onclick="() => EliminarEjercicio(bloque, ejercicio)">X</button>
-                                </div>
-                            }
-
-                            <button class="btn btn-sm btn-outline-light w-100" @onclick="() => AgregarEjercicio(bloque)">
-                                <i class="fas fa-dumbbell"></i> + Ejercicio
-                            </button>
                         </div>
                     }
-
-                    <button class="btn btn-outline-warning w-100 py-2" @onclick="AgregarBloque">
-                        <i class="fas fa-plus"></i> Agregar Nuevo Bloque
-                    </button>
-
-                </div>
-
-                <div class="modal-footer justify-content-between">
-                    <button class="btn btn-secondary" @onclick="() => mostrarModalWod = false">Cerrar</button>
-                    <button class="btn btn-warning" style="background-color:#F8C545; font-weight:bold;" @onclick="GuardarProgramacion">
-                        Guardar Programación
-                    </button>
-                </div>
+                }
+                else
+                {
+                    <div class="text-center text-warning">Cargando...</div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="btn-confirm" @onclick="() => mostrarModalModulos = false">LISTO</button>
             </div>
         </div>
     </div>
 }
 
+@if (mostrarModalWod) { /* ... tu codigo de modal wod ... */ <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.9); z-index: 2000;" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content" style="background-color: #222; border: 1px solid #F8C545; color: white;"><div class="modal-header"><h5 class="modal-title" style="color: #F8C545;">Programación WOD</h5><button type="button" class="btn-close btn-close-white" @onclick="() => mostrarModalWod = false"></button></div><div class="modal-body"><input type="date" @bind="nuevoWod.FechaProgramacion" class="form-control input-dark mb-3" />@for (int i = 0; i < nuevoWod.Bloques.Count; i++){var indexBloque = i; var bloque = nuevoWod.Bloques[i];<div class="card p-2 mb-3" style="background-color: #333; border: 1px solid #F8C545;"><div class="d-flex justify-content-between align-items-center mb-2"><span style="color:#F8C545; font-weight:bold;">BLOQUE #@(indexBloque + 1)</span><button class="btn btn-sm btn-danger" @onclick="() => EliminarBloque(bloque)"><i class="fas fa-trash"></i></button></div><select @bind="bloque.SegmentoClaseID" class="form-control input-dark mb-2"><option value="">-- Segmento --</option>@foreach (var seg in listaSegmentos) { <option value="@seg.Id">@seg.Nombre</option> }</select>@foreach (var ejercicio in bloque.Ejercicios){<div class="input-group mb-2"><input type="text" @bind="ejercicio.PesoRepeticiones" class="form-control input-dark" placeholder="Peso/Reps" style="width: 30%;" /><input type="text" @bind="ejercicio.Descripcion" class="form-control input-dark" placeholder="Descripción" /><button class="btn btn-outline-danger" @onclick="() => EliminarEjercicio(bloque, ejercicio)">X</button></div>}<button class="btn btn-sm btn-outline-light w-100" @onclick="() => AgregarEjercicio(bloque)">+ Ejercicio</button></div>}<button class="btn btn-outline-warning w-100 py-2" @onclick="AgregarBloque">+ Bloque</button></div><div class="modal-footer"><button class="btn btn-warning" style="background-color:#F8C545; font-weight:bold;" @onclick="GuardarProgramacion">Guardar</button></div></div></div></div> }
+@if (mostrarModalCrearAviso) { /* ... tu codigo de modal aviso ... */ <div class="modal-overlay"><div class="modal-content custom-modal"><div class="modal-header"><h5 style="margin:0; color: #F8C545; font-weight:bold; font-family:'Oswald';"><i class="fas fa-bullhorn" style="margin-right:8px;"></i> NUEVO AVISO</h5><button class="btn-close-custom" @onclick="() => mostrarModalCrearAviso = false"><i class="fas fa-times"></i></button></div><div class="modal-body"><label style="color: white !important; font-weight: bold; margin-bottom: 5px; display: block;">Título:</label><input type="text" @bind="nuevoAviso.Titulo" class="form-control input-dark mb-3" placeholder="Ej: Horario Festivo" style="color: white;" /><label style="color: white !important; font-weight: bold; margin-bottom: 5px; display: block;">Mensaje:</label><textarea @bind="nuevoAviso.Mensaje" class="form-control input-dark mb-3" rows="5" placeholder="Escribe aquí la información..." style="color: white;"></textarea></div><div class="modal-footer"><button class="btn-cancel" @onclick="() => mostrarModalCrearAviso = false">Cancelar</button><button class="btn-confirm" @onclick="PublicarAviso">PUBLICAR</button></div></div></div> }
+@if (mostrarAvisoPopUp && ultimoAviso != null) { /* ... tu codigo de popup ... */ <div class="modal-overlay pop-up-effect"><div class="modal-content aviso-content"><div class="aviso-icon"><i class="fas fa-bullhorn"></i></div><h3 class="aviso-title">@ultimoAviso.Titulo</h3><div class="aviso-date">@ultimoAviso.FechaCreacion.GetValueOrDefault().ToString("dd/MM/yyyy")</div><div class="aviso-body">@ultimoAviso.Mensaje</div><button class="btn-ok" @onclick="CerrarAviso">ENTERADO</button></div></div> }
+
 <style>
+    /* Estilos del Switch de Módulos */
+    .module-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #333; cursor: pointer; }
+    .module-row:hover { background: #222; }
+    .mod-name { color: white; font-weight: bold; font-family: 'Roboto'; }
+    
+    .switch-track { width: 50px; height: 26px; border-radius: 13px; background: #444; position: relative; transition: background 0.3s; }
+    .switch-track.on { background: #28a745; }
+    .switch-thumb { width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: transform 0.3s; }
+    .switch-track.on .switch-thumb { transform: translateX(24px); }
 
-    .dropdown-wrapper {
-    position: relative; /* Para que el menú absoluto se posicione respecto a esto */
-    display: inline-block;
-}
-
-.dropdown-content {
-    position: absolute;
-    top: 100%; /* Justo debajo del botón */
-    left: 0;
-    background-color: #222;
-    border: 1px solid #F8C545;
-    border-radius: 5px;
-    min-width: 150px;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.5);
-    z-index: 1000; /* Asegura que esté encima de todo */
-    padding: 5px 0;
-}
-
-.dropdown-item {
-    padding: 10px 15px;
-    color: white;
-    cursor: pointer;
-    font-family: 'Roboto', sans-serif;
-    font-size: 0.9rem;
-    transition: background 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.dropdown-item:hover {
-    background-color: #F8C545;
-    color: black;
-}
-
-/* Ajuste para que el icono del dropdown se vea bien */
-.dropdown-item i {
-    width: 20px;
-    text-align: center;
-}
-
-    /* Navbar Fijo Arriba */
-    .top-navbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 15px;
-        background-color: #1a1a1a;
-        border-bottom: 2px solid #F8C545;
-        color: white;
-        font-family: 'Oswald', sans-serif;
-    }
-
-    .brand {
-        font-size: 1.5rem;
-        font-weight: bold;
-    }
-
-    .menu-items {
-        display: flex;
-        gap: 15px;
-        font-size: 0.9rem;
-    }
-
-    .menu-link {
-        cursor: pointer;
-    }
-
-    /* Layout Home */
-    .home-container {
-        background-color: #0d0d0d;
-        min-height: 90vh;
-        color: white;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding-top: 30px;
-    }
-
-    .welcome-section h1 {
-        font-family: 'Oswald', sans-serif;
-        color: #F8C545;
-        font-size: 2rem;
-        margin-bottom: 30px;
-        text-align: center;
-    }
-
-    .cards-grid {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 20px;
-        width: 100%;
-    }
-
-    .menu-card {
-        background-color: #F8D783;
-        color: #1a1a1a;
-        width: 150px;
-        height: 160px; /* Ajustado para móvil */
-        border-radius: 15px;
-        padding: 15px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        box-shadow: 0 4px 10px rgba(248, 215, 131, 0.2);
-    }
-
-    .card-icon {
-        font-size: 2.5rem;
-        margin-bottom: 10px;
-    }
-
-    .menu-card h3 {
-        font-family: 'Oswald';
-        font-size: 1rem;
-        font-weight: bold;
-        margin: 0;
-    }
-
-    .menu-card p {
-        font-size: 0.7rem;
-        font-family: 'Roboto';
-        line-height: 1.1;
-        margin-top: 5px;
-    }
-
-    .footer-brand {
-        margin-top: auto;
-        padding: 20px;
-        color: #F8C545;
-        font-family: 'Oswald';
-    }
-
-    /* Inputs Oscuros para el Modal */
-    .input-dark {
-        background-color: #444 !important;
-        color: white !important;
-        border: 1px solid #666;
-    }
-
-        .input-dark::placeholder {
-            color: #aaa;
-        }
-
-        .input-dark:focus {
-            border-color: #F8C545;
-            background-color: #555 !important;
-        }
+    /* (Resto de tus estilos se mantienen igual) */
+    .navbar-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; font-family: 'Oswald'; position: relative; z-index: 100; }
+    .brand { font-size: 1.5rem; font-weight: bold; }
+    .right-actions { display: flex; align-items: center; gap: 20px; }
+    .main-menu-wrapper { position: relative; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+    .user-name { font-size: 0.9rem; font-weight: bold; display: none; }
+    @@media(min-width: 768px) { .user-name { display: block; } }
+    .menu-burger { font-size: 1.5rem; color: #F8C545; }
+    .main-dropdown { position: absolute; top: 45px; right: 0; width: 260px; background: #1a1a1a; border: 1px solid #F8C545; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); overflow: hidden; z-index: 2000; padding-bottom: 5px; animation: slideDown 0.2s ease-out; }
+    .dropdown-header { font-size: 0.7rem; color: #888; padding: 10px 15px 5px 15px; font-weight: bold; letter-spacing: 1px; }
+    .admin-header { color: #F8C545; text-transform: uppercase; border-top: 1px solid #333; margin-top: 5px; }
+    .dropdown-item { padding: 12px 20px; color: #ffffff !important; cursor: pointer; font-family: 'Roboto', sans-serif; font-size: 0.9rem; display: flex; align-items: center; gap: 12px; transition: background 0.2s; }
+    .dropdown-item:hover { background-color: #333; color: #F8C545 !important; }
+    .dropdown-item i { width: 20px; text-align: center; color: #F8C545; }
+    .dropdown-divider { height: 1px; background: #333; margin: 5px 0; }
+    .home-container { background-color: #0d0d0d; min-height: 90vh; color: white; display: flex; flex-direction: column; align-items: center; padding-top: 30px; }
+    .welcome-section h1 { font-family: 'Oswald'; color: #F8C545; font-size: 2rem; margin-bottom: 30px; text-align: center; }
+    .cards-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; width: 100%; max-width: 1000px; padding-bottom: 40px; }
+    .menu-card { background-color: #F8D783; color: #1a1a1a; width: 150px; height: 160px; border-radius: 15px; padding: 15px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; box-shadow: 0 4px 10px rgba(248, 215, 131, 0.2); cursor: pointer; }
+    .menu-card h3 { font-family: 'Oswald'; font-size: 1rem; font-weight: bold; margin: 0; }
+    .menu-card p { font-size: 0.7rem; font-family: 'Roboto'; line-height: 1.1; margin-top: 5px; }
+    .card-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .footer-brand { margin-top: auto; padding: 20px; color: #F8C545; font-family: 'Oswald'; }
+    .noti-wrapper { position: relative; cursor: pointer; }
+    .noti-icon { font-size: 1.3rem; color: white; }
+    .noti-dot { position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; background: red; border-radius: 50%; border: 2px solid #0d0d0d; }
+    .bell-ring { animation: ring 4s .7s ease-in-out infinite; color: #F8C545; }
+    .noti-dropdown { position: absolute; top: 35px; right: -50px; width: 280px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); overflow: hidden; z-index: 1000; max-height: 300px; overflow-y: auto; }
+    .noti-item { padding: 12px; border-bottom: 1px solid #333; font-size: 0.8rem; display: flex; align-items: center; gap: 10px; color: #ccc; }
+    .noti-item.unread { background: #2a2a2a; color: white; border-left: 3px solid #F8C545; }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+    .custom-modal { background: #1a1a1a; width: 90%; max-width: 400px; border-radius: 12px; border: 1px solid #F8C545; padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+    .aviso-content { width: 90%; max-width: 400px; background: #1a1a1a; border-radius: 12px; text-align: center; border: 2px solid #F8C545; padding-bottom: 20px; box-shadow: 0 0 20px rgba(248, 197, 69, 0.3); animation: bounceIn 0.6s; overflow: hidden; }
+    .aviso-icon { font-size: 3rem; color: #F8C545; margin-top: 20px; animation: pulse 2s infinite; }
+    .aviso-title { font-family: 'Oswald'; color: white; font-size: 1.5rem; margin: 10px 20px; text-transform: uppercase; }
+    .aviso-date { color: #888; font-size: 0.8rem; margin-bottom: 15px; }
+    .aviso-body { padding: 0 25px 20px 25px; color: #ddd; }
+    .btn-ok { width: 80%; margin: 0 auto 25px auto; background: linear-gradient(45deg, #F8C545, #ffb300); border: none; padding: 12px; font-weight: bold; border-radius: 30px; color: black; }
+    .input-dark { background: #333 !important; color: white !important; border: 1px solid #666; }
+    .btn-confirm { background: #F8C545; color: black; border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
+    .btn-cancel { background: #333; color: white; border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
+    .btn-close-custom { background: none; border: none; color: white; font-size: 1.2rem; }
+    @@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    @@keyframes ring { 0% { transform: rotate(0); } 5% { transform: rotate(30deg); } 10% { transform: rotate(-28deg); } 15% { transform: rotate(34deg); } 20% { transform: rotate(-32deg); } 25% { transform: rotate(30deg); } 30% { transform: rotate(-28deg); } 35% { transform: rotate(26deg); } 40% { transform: rotate(-24deg); } 45% { transform: rotate(22deg); } 50% { transform: rotate(-20deg); } 100% { transform: rotate(0); } }
+    @@keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+    @@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 </style>
 
 @code {
-   private void IrAWodView()
-    {
-        Nav.NavigateTo("/wod-view");
-    }
+    private bool mostrarMenuPrincipal = false;
+    private bool EsAdmin = false;
+    private string NombreBox = "MVAPP";
 
-    private void IrAAgenda()
-    {
-        Nav.NavigateTo("/agenda-view");
-    }
-    private void IrAProgreso()
-    {
-        Nav.NavigateTo("/progreso-view");
-    }
-
-    private void IrAPerfil()
-    {
-        Nav.NavigateTo("/mi-perfil");
-    }
+    private bool mostrarNotis = false;
+    private bool hayNuevas = false;
+    private List<NotificacionDto> misNotificaciones;
+    
+    // Modales
     private bool mostrarModalWod = false;
-
-    // Datos para el WOD
+    private bool mostrarModalCrearAviso = false;
+    private bool mostrarAvisoPopUp = false;
+    private bool mostrarModalModulos = false; 
+    
+    // Modelos
     private ProgramacionWodViewModel nuevoWod = new ProgramacionWodViewModel();
     private List<SegmentoDto> listaSegmentos = new List<SegmentoDto>();
+    private Avisos nuevoAviso = new Avisos();
+    private Avisos ultimoAviso;
+    private static bool avisoVistoEnSesion = false;
+    
+    // LISTA DE MÓDULOS (NUEVO)
+    private List<ModuloConfig> listaConfiguracion = new List<ModuloConfig>();
 
-    // Variable para el toggle del menú
-    private bool mostrarConfigMenu = false;
-
-    private void ToggleConfigMenu()
+    protected override async Task OnInitializedAsync()
     {
-        mostrarConfigMenu = !mostrarConfigMenu;
+        if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+        EsAdmin = Sesion.Usuario.TipoUsuarioID == 1; 
+
+        await CargarNombreBox();
+        await CargarNotificaciones();
+        await CargarSegmentos();
+        
+        // --- CARGAR CONFIGURACIÓN DE MÓDULOS ---
+        await CargarConfiguracionModulos();
+
+        if (!avisoVistoEnSesion) await CargarUltimoAviso();
     }
+
+    private async Task CargarNombreBox()
+    {
+        try
+        {
+            // Asegúrate de crear esta clase DTO o usar un objeto dinámico si prefieres
+            var response = await Http.GetFromJsonAsync<BoxDto>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/nombre-box/{Sesion.Usuario.BoxID}");
+            if (response != null && !string.IsNullOrEmpty(response.Nombre))
+            {
+                NombreBox = response.Nombre.ToUpper();
+            }
+        }
+        catch { /* Si falla, se queda el valor por defecto */ }
+    }
+    
+    private void AbrirGestionModulos()
+    {
+        mostrarMenuPrincipal = false;
+        mostrarModalModulos = true;
+    }
+
+    private async Task CargarConfiguracionModulos()
+    {
+        try {
+            // Asegúrate de que este endpoint exista en tu API (Paso 2)
+            listaConfiguracion = await Http.GetFromJsonAsync<List<ModuloConfig>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/modulos/{Sesion.Usuario.BoxID}");
+        } catch { }
+    }
+
+    private async Task ToggleModulo(ModuloConfig mod)
+    {
+        mod.Activo = !mod.Activo; // Cambiar en UI inmediatamente
+        try {
+            await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/actualizar", mod);
+        } catch { /* Manejar error silenciosamente o revertir */ }
+    }
+
+    // Método auxiliar para saber si pintar la tarjeta
+    private bool EstaActivo(string clave)
+    {
+        // Si la lista aún no carga, asumimos todo activo por defecto para no parpadear
+        if (listaConfiguracion == null || listaConfiguracion.Count == 0) return true;
+        
+        var mod = listaConfiguracion.FirstOrDefault(m => m.ModuloClave == clave);
+        // Si no existe la config, mostramos (true). Si existe, devolvemos su estado.
+        return mod == null ? true : mod.Activo;
+    }
+
+    // --------------------------------------------------------
+
+    private void ToggleMainMenu() { mostrarMenuPrincipal = !mostrarMenuPrincipal; if (mostrarMenuPrincipal) mostrarNotis = false; }
+    private void ToggleNotificaciones() { mostrarNotis = !mostrarNotis; if (mostrarNotis) { mostrarMenuPrincipal = false; if (hayNuevas) { hayNuevas = false; _ = Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/notificaciones/leer/{Sesion.Usuario.UsuarioID}", null); } } }
+    private void CerrarSesion() { Sesion.Usuario = null; Nav.NavigateTo("/"); }
+
+    private void IrAPerfil() => Nav.NavigateTo("/mi-perfil");
+    private void IrAAgenda() => Nav.NavigateTo("/agenda-view");
+    private void IrAWodView() => Nav.NavigateTo("/wod-view");
+    private void IrAProgreso() => Nav.NavigateTo("/progreso-view");
+    private void IrASeEntreno() => Nav.NavigateTo("/se-entreno");
+    private void IrACompaneros() => Nav.NavigateTo("/entrenamos-juntos");
+    private void IrARanking() => Nav.NavigateTo("/ranking");
 
     private void NavegarA(string destino)
     {
-        mostrarConfigMenu = false; // Cerramos el menú al seleccionar
-        
-        switch (destino)
-        {
-            case "test":
-                Nav.NavigateTo("/test-config"); 
-                break;
-           
-            case "usuarios":
-                Nav.NavigateTo("/usuarios-view");
-                break;
-            case "avisos":
-                // Nav.NavigateTo("/avisos-view");
-                App.Current.MainPage.DisplayAlert("Navegación", "Ir a pantalla Avisos", "OK");
-                break;
+        mostrarMenuPrincipal = false;
+        switch (destino) {
+            case "test": Nav.NavigateTo("/test-config"); break;
+            case "usuarios": Nav.NavigateTo("/usuarios-view"); break;
+            case "avisos": AbrirCrearAviso(); break;
         }
     }
 
-
-
-    // Inicialización
-    protected override async Task OnInitializedAsync()
+    private void AbrirCrearAviso() { mostrarMenuPrincipal = false; nuevoAviso = new Avisos(); mostrarModalCrearAviso = true; }
+    
+    private async Task PublicarAviso()
     {
-        if (Sesion.Usuario == null)
-        {
-            // Si se perdió la sesión, mandamos al Login
-            Nav.NavigateTo("/");
-            return;
-        }
-        // Cargar los segmentos desde la API al iniciar
-        try
-        {
-            var response = await Http.GetAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/segmentos");
-            if (response.IsSuccessStatusCode)
-            {
-                listaSegmentos = await response.Content.ReadFromJsonAsync<List<SegmentoDto>>();
+        if (string.IsNullOrEmpty(nuevoAviso.Titulo)) return;
+        try {
+            nuevoAviso.BoxID = Sesion.Usuario.BoxID;
+            var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/crear", nuevoAviso);
+            if (r.IsSuccessStatusCode) { mostrarModalCrearAviso = false; await App.Current.MainPage.DisplayAlert("Éxito", "Publicado", "OK"); }
+        } catch {}
+    }
+
+    private async Task CargarUltimoAviso()
+    {
+        try {
+            var r = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/ultimo/{Sesion.Usuario.BoxID}");
+            if (r.StatusCode == System.Net.HttpStatusCode.NoContent) return;
+            if (r.IsSuccessStatusCode) {
+                ultimoAviso = await r.Content.ReadFromJsonAsync<Avisos>();
+                if (ultimoAviso != null) {
+                    var idVisto = await JS.InvokeAsync<string>("localStorage.getItem", "ultimoAvisoVisto");
+                    if (idVisto != ultimoAviso.AvisoID.ToString()) mostrarAvisoPopUp = true;
+                }
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error cargando segmentos: " + ex.Message);
-        }
+        } catch {}
+    }
+    private async Task CerrarAviso() { if(ultimoAviso!=null) await JS.InvokeVoidAsync("localStorage.setItem", "ultimoAvisoVisto", ultimoAviso.AvisoID.ToString()); mostrarAvisoPopUp = false; }
+
+    private void AbrirModalWod() { mostrarMenuPrincipal = false; if (nuevoWod.Bloques.Count == 0) AgregarBloque(); mostrarModalWod = true; }
+    private void AgregarBloque() => nuevoWod.Bloques.Add(new BloqueWodViewModel { Ejercicios = new List<EjercicioViewModel> { new EjercicioViewModel() } });
+    private void EliminarBloque(BloqueWodViewModel b) => nuevoWod.Bloques.Remove(b);
+    private void AgregarEjercicio(BloqueWodViewModel b) => b.Ejercicios.Add(new EjercicioViewModel());
+    private void EliminarEjercicio(BloqueWodViewModel b, EjercicioViewModel e) => b.Ejercicios.Remove(e);
+    
+    private async Task GuardarProgramacion() {
+        try {
+            nuevoWod.BoxID = Sesion.Usuario.BoxID;
+            var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/guardar", nuevoWod);
+            if (r.IsSuccessStatusCode) { mostrarModalWod = false; await App.Current.MainPage.DisplayAlert("Éxito", "Guardado", "OK"); }
+        } catch {}
     }
 
-    // --- LÓGICA DEL MODAL ---
-
-    private void AbrirModalWod()
-    {
-        // Reiniciar el modelo o cargar uno existente
-        if (nuevoWod.Bloques.Count == 0)
-        {
-            AgregarBloque(); // Agregar uno por defecto para empezar
-        }
-        mostrarModalWod = true;
-    }
-
-    private void AgregarBloque()
-    {
-        var bloque = new BloqueWodViewModel();
-        bloque.Ejercicios.Add(new EjercicioViewModel()); // Agregar un ejercicio vacío
-        nuevoWod.Bloques.Add(bloque);
-    }
-
-    private void EliminarBloque(BloqueWodViewModel bloque)
-    {
-        nuevoWod.Bloques.Remove(bloque);
-    }
-
-    private void AgregarEjercicio(BloqueWodViewModel bloque)
-    {
-        bloque.Ejercicios.Add(new EjercicioViewModel());
-    }
-
-    private void EliminarEjercicio(BloqueWodViewModel bloque, EjercicioViewModel ejercicio)
-    {
-        bloque.Ejercicios.Remove(ejercicio);
-    }
-
-    private async Task GuardarProgramacion()
-    {
-      
-        try
-        {
-            if (Sesion.Usuario != null)
-            {
-                nuevoWod.BoxID = Sesion.Usuario.BoxID;
-            }
-            else
-            {                
-                await App.Current.MainPage.DisplayAlert("Error", "Sesión no válida. Vuelve a iniciar sesión.", "OK");
-                Nav.NavigateTo("/");
-                return;
-            }
-
-            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/guardar", nuevoWod);
-
-            if (response.IsSuccessStatusCode)
-            {
-                await App.Current.MainPage.DisplayAlert("Éxito", "WOD Guardado correctamente", "OK");
-                mostrarModalWod = false;
-                nuevoWod = new ProgramacionWodViewModel();
-            }
-            else
-            {
-                await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar", "OK");
-            }
-        }
-        catch (Exception ex)
-        {
-            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
-        }
-    }
+    private async Task CargarSegmentos() { try { var r = await Http.GetAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/segmentos"); if(r.IsSuccessStatusCode) listaSegmentos = await r.Content.ReadFromJsonAsync<List<SegmentoDto>>(); } catch {} }
+    private async Task CargarNotificaciones() { try { misNotificaciones = await Http.GetFromJsonAsync<List<NotificacionDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/notificaciones/{Sesion.Usuario.UsuarioID}"); hayNuevas = misNotificaciones.Any(n => !n.Leido); } catch {} }
+    private string GetIcono(string t) => t == "MATCH_MUTUO" ? "fas fa-heart text-danger" : "fas fa-bell";
 }

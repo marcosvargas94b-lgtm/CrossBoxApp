@@ -14,7 +14,12 @@
 </div>
 
 <div class="progress-container">
-
+    @if (!cargando && gruposProgreso.Any())
+    {
+        <div class="instruction-banner">
+            <i class="fas fa-hand-pointer"></i> Toca una marca para ver tu historial completo
+        </div>
+    }
     @if (cargando)
     {
         <div class="text-center mt-5">
@@ -41,13 +46,14 @@
                 <div class="records-list">
                     @foreach (var item in grupo)
                     {
-                        <div class="record-item">
+                        <div class="record-item" @onclick="() => VerHistorial(item.TestBoxId, item.NombreTest)">
                             <span class="record-name">@item.NombreTest</span>
 
                             <div class="record-value-wrapper">
                                 <span class="record-num">@item.Valor</span>
                                 <span class="record-unit">@item.Medida</span>
                             </div>
+                            <i class="fas fa-history history-icon"></i>
                         </div>
                     }
                 </div>
@@ -56,8 +62,90 @@
     }
 </div>
 
+@if (mostrarHistorial)
+{
+    <div class="modal-overlay" @onclick="CerrarModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h4>@nombreEjercicioSeleccionado</h4>
+                <button class="btn-close" @onclick="CerrarModal"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="history-list">
+                @if (historialCargado == null)
+                {
+                    <div class="text-center p-3"><div class="spinner-border text-warning"></div></div>
+                }
+                else if (historialCargado.Count == 0)
+                {
+                    <div class="text-center p-3 text-muted">Solo tienes un registro.</div>
+                }
+                else
+                {
+                    @foreach (var h in historialCargado)
+                    {
+                        <div class="history-item @(h.EsRecordActual ? "current-pr" : "")">
+                            <div class="h-date">
+                                <i class="far fa-calendar-alt"></i> @h.Fecha.ToString("dd/MM/yyyy")
+                            </div>
+                            <div class="h-value">
+                                @h.Valor <span class="unit-small">@h.Unidad</span>
+                            </div>
+                            @if (h.EsRecordActual)
+                            {
+                                <span class="badge-pr"><i class="fas fa-trophy"></i> PR ACTUAL</span>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+}
+
 <style>
-    /* Navbar */
+    /* ... (TUS ESTILOS ORIGINALES SE MANTIENEN IGUAL) ... */
+
+    .instruction-banner {
+        text-align: center;
+        color: #888; /* Gris sutil */
+        font-size: 0.85rem;
+        margin-bottom: 20px;
+        font-family: 'Roboto', sans-serif;
+        background: rgba(255, 255, 255, 0.05); /* Fondo muy tenue */
+        padding: 8px;
+        border-radius: 20px;
+        border: 1px dashed #444;
+        animation: fadeIn 1s ease-in-out;
+    }
+
+        .instruction-banner i {
+            color: #F8C545; /* Mano amarilla */
+            margin-right: 5px;
+            animation: bounce 2s infinite; /* La manita se mueve suavemente */
+        }
+
+    /* Pequeña animación para la mano */
+    @@keyframes bounce {
+        0%, 100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-3px);
+        }
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
     .top-navbar {
         display: flex;
         justify-content: space-between;
@@ -86,7 +174,6 @@
         width: 60px;
     }
 
-    /* Contenedor */
     .progress-container {
         padding: 20px;
         background: #0d0d0d;
@@ -94,7 +181,6 @@
         color: white;
     }
 
-    /* Sección por Categoría */
     .category-section {
         margin-bottom: 30px;
     }
@@ -109,7 +195,6 @@
         letter-spacing: 1px;
     }
 
-    /* Items de la lista */
     .records-list {
         background-color: #1a1a1a;
         border-radius: 10px;
@@ -117,17 +202,25 @@
         border: 1px solid #333;
     }
 
+    /* Modificación al Item para que parezca botón */
     .record-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding: 12px 0;
         border-bottom: 1px solid #333;
+        cursor: pointer;
+        position: relative;
     }
 
         .record-item:last-child {
             border-bottom: none;
         }
+
+        .record-item:active {
+            background-color: #222;
+        }
+    /* Efecto visual al tocar */
 
     .record-name {
         font-family: 'Roboto';
@@ -139,8 +232,9 @@
         display: flex;
         align-items: baseline;
         gap: 5px;
+        margin-right: 20px;
     }
-
+    /* Espacio para el ícono de historial */
     .record-num {
         font-family: 'Oswald';
         font-size: 1.4rem;
@@ -156,7 +250,13 @@
         text-transform: uppercase;
     }
 
-    /* Estado Vacío */
+    .history-icon {
+        color: #444;
+        font-size: 0.8rem;
+        position: absolute;
+        right: 0;
+    }
+
     .empty-state {
         text-align: center;
         margin-top: 60px;
@@ -168,12 +268,128 @@
             margin-bottom: 15px;
             color: #333;
         }
+
+    /* --- NUEVOS ESTILOS DEL MODAL --- */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.85);
+        z-index: 2000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        backdrop-filter: blur(3px);
+    }
+
+    .modal-content {
+        background: #1a1a1a;
+        width: 90%;
+        max-height: 70vh;
+        border-radius: 15px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #F8C545;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    }
+
+    .modal-header {
+        background: #0d0d0d;
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #333;
+    }
+
+        .modal-header h4 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-family: 'Oswald';
+            color: #F8C545;
+            text-transform: uppercase;
+        }
+
+    .btn-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+    }
+
+    .history-list {
+        padding: 0;
+        overflow-y: auto;
+    }
+
+    .history-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        border-bottom: 1px solid #333;
+        color: #ccc;
+        background: #1a1a1a;
+    }
+
+        .history-item.current-pr {
+            background: rgba(248, 197, 69, 0.15);
+            border-left: 4px solid #F8C545;
+            color: white;
+        }
+
+    .h-date {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        color: #aaa;
+    }
+
+    .current-pr .h-date {
+        color: #F8C545;
+    }
+
+    .h-value {
+        font-family: 'Oswald';
+        font-size: 1.3rem;
+        font-weight: bold;
+    }
+
+    .unit-small {
+        font-size: 0.8rem;
+        color: #888;
+        font-weight: normal;
+        margin-left: 2px;
+    }
+
+    .badge-pr {
+        background: #F8C545;
+        color: black;
+        font-size: 0.7rem;
+        padding: 3px 8px;
+        border-radius: 10px;
+        margin-left: 10px;
+        font-weight: bold;
+        font-family: 'Roboto';
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
 </style>
 
 @code {
-    // Usamos IGrouping para agrupar por categoría
     private IEnumerable<IGrouping<string, EvaluacionVisualDto>> gruposProgreso = new List<IGrouping<string, EvaluacionVisualDto>>();
     private bool cargando = true;
+
+    // Variables para el Modal
+    private bool mostrarHistorial = false;
+    private string nombreEjercicioSeleccionado = "";
+    private List<HistorialDto> historialCargado;
 
     protected override async Task OnInitializedAsync()
     {
@@ -184,16 +400,13 @@
             var boxId = Sesion.Usuario.BoxID;
             var userId = Sesion.Usuario.UsuarioID;
 
-            // Reutilizamos la API que ya creamos para Evaluaciones
-            var response = await Http.GetAsync($"api/evaluaciones/usuario/{boxId}/{userId}");
+         
+            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/evaluaciones/usuario/{boxId}/{userId}");
 
             if (response.IsSuccessStatusCode)
             {
                 var todosLosTests = await response.Content.ReadFromJsonAsync<List<EvaluacionVisualDto>>();
 
-                // LÓGICA CLAVE:
-                // 1. Filtramos solo los que tienen Valor (.HasValue)
-                // 2. Agrupamos por Categoria
                 gruposProgreso = todosLosTests
                     .Where(x => x.Valor.HasValue)
                     .GroupBy(x => x.Categoria)
@@ -210,12 +423,26 @@
         }
     }
 
-    private void Volver() => Nav.NavigateTo("/home");
-
-    // Atajo para ir a registrar si está vacío
-    private void IrAEvaluaciones()
+    // --- NUEVO MÉTODO PARA CARGAR HISTORIAL ---
+    private async Task VerHistorial(Guid testBoxId, string nombreTest)
     {
-        if (Sesion.Usuario != null)
-            Nav.NavigateTo($"/evaluaciones/{Sesion.Usuario.UsuarioID}/{Sesion.Usuario.Nombre}");
+        nombreEjercicioSeleccionado = nombreTest;
+        mostrarHistorial = true;
+        historialCargado = null; // Para que muestre spinner en el modal si tarda
+
+        try
+        {
+            var userId = Sesion.Usuario.UsuarioID;
+            // Llamamos al endpoint nuevo que hicimos para las tablas TestUsuario
+            historialCargado = await Http.GetFromJsonAsync<List<HistorialDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/Evaluaciones/historial/{userId}/{testBoxId}");
+        }
+        catch (Exception ex)
+        {
+            // Opcional: Mostrar alerta
+            Console.WriteLine(ex.Message);
+        }
     }
+
+    private void CerrarModal() => mostrarHistorial = false;
+    private void Volver() => Nav.NavigateTo("/home");
 }

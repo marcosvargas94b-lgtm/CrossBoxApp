@@ -1,0 +1,518 @@
+﻿@page "/mi-running"
+@using CrossBoxApp.Models
+@using CrossBoxApp.Models.Services
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject SesionService Sesion
+
+<div class="top-navbar">
+    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
+    <div class="nav-title">MI BITÁCORA</div>
+    <div class="nav-right"></div>
+</div>
+
+<div class="running-container">
+
+    <div class="month-control">
+        <button class="btn-nav" @onclick="MesAnterior"><i class="fas fa-chevron-left"></i></button>
+        <span class="month-label">@fechaActual.ToString("MMMM yyyy").ToUpper()</span>
+        <button class="btn-nav" @onclick="MesSiguiente"><i class="fas fa-chevron-right"></i></button>
+    </div>
+
+    <div class="calendar-grid">
+        <div class="day-name">DOM</div> <div class="day-name">LUN</div> <div class="day-name">MAR</div>
+        <div class="day-name">MIE</div> <div class="day-name">JUE</div> <div class="day-name">VIE</div>
+        <div class="day-name">SAB</div>
+
+        @for (int i = 0; i < diasVaciosInicio; i++)
+        {
+            <div class="calendar-day empty"></div>
+        }
+
+        @for (int dia = 1; dia <= diasEnMes; dia++)
+        {
+            int diaActual = dia;
+            var log = ObtenerLog(diaActual);
+            bool hayPlan = log != null;
+            bool estaHecho = hayPlan && (log.Realizado == true);
+
+            // Color base del plan (Gris si no se ha hecho, Verde brillante si ya)
+            string colorIcono = estaHecho ? "#00FF00" : (hayPlan ? ObtenerColorTipo(log.Tipo) : "#333");
+
+            <div class="calendar-day"
+                 style="border-color: @(hayPlan? ObtenerColorTipo(log.Tipo) : "#333"); opacity: @(hayPlan ? 1 : 0.5)"
+                 @onclick="() => AbrirModal(diaActual)">
+
+                <span class="day-number">@dia</span>
+
+                @if (hayPlan)
+                {
+                    <div class="day-content">
+                        <i class="fas fa-running running-icon" style="color: @colorIcono"></i>
+                        <span class="day-status">@(estaHecho ? "✔ HECHO" : log.Tipo)</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@if (mostrarModal && logSeleccionado != null)
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header" style="background: @ObtenerColorTipo(logSeleccionado.Tipo)">
+                <h5 style="color:black; font-weight:bold;">@fechaSeleccionada.ToString("dd MMMM") - @logSeleccionado.Tipo</h5>
+                <button class="btn-close-custom" @onclick="CerrarModal"><i class="fas fa-times" style="color:black"></i></button>
+            </div>
+
+            <div class="modal-body scrollable">
+                <div class="coach-section">
+                    <label>📝 PLAN:</label>
+                    <div class="plan-title">@logSeleccionado.Titulo</div>
+                    <div class="plan-desc">@logSeleccionado.Descripcion</div>
+                </div>
+
+                <hr class="divider" />
+
+                <label>✅ ¿LO HICISTE?</label>
+                <div class="switch-container" @onclick="ToggleRealizado">
+                    <div class="switch-track @(logSeleccionado.Realizado == true ? "on" : "off")">
+                        <div class="switch-thumb"></div>
+                    </div>
+                    <span class="switch-label">@(logSeleccionado.Realizado == true ? "¡SÍ, ENTRENAMIENTO COMPLETADO!" : "NO REALIZADO")</span>
+                </div>
+
+                @if (logSeleccionado.Realizado == true)
+                {
+                    <label class="mt-4">🔥 ESCALA DE ESFUERZO (RPE 1-10)</label>
+                    <p class="rpe-helper">1 = Muy Suave | 10 = Máximo Esfuerzo</p>
+
+                    <div class="rpe-grid">
+                        @for (int i = 1; i <= 10; i++)
+                        {
+                            int val = i;
+                            <div class="rpe-item @(logSeleccionado.RPE == val ? "selected" : "")"
+                                 style="background: @ObtenerColorRPE(val)"
+                                 @onclick="() => SeleccionarRPE(val)">
+                                @val
+                            </div>
+                        }
+                    </div>
+
+                    <label class="mt-3">💬 SENSACIONES / COMENTARIOS:</label>
+                    <textarea @bind="logSeleccionado.ComentariosAtleta" class="form-control input-dark" rows="3" placeholder="¿Cómo te sentiste? ¿Dolor? ¿Ritmo?"></textarea>
+                }
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-cancel" @onclick="CerrarModal">Cerrar</button>
+                <button class="btn-confirm" @onclick="GuardarFeedback">GUARDAR MI REPORTE</button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    /* Estilos Base */
+    .top-navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        background: #1a1a1a;
+        border-bottom: 2px solid #F8C545;
+        color: white;
+        font-family: 'Oswald';
+    }
+
+    .nav-left {
+        color: #F8C545;
+        cursor: pointer;
+    }
+
+    .running-container {
+        padding: 15px;
+        background: #0d0d0d;
+        min-height: 100vh;
+        color: white;
+    }
+
+    /* Calendario */
+    .month-control {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        background: #1a1a1a;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #333;
+    }
+
+    .month-label {
+        font-family: 'Oswald';
+        font-size: 1.3rem;
+        color: #F8C545;
+    }
+
+    .btn-nav {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        width: 40px;
+    }
+
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+    }
+
+    .day-name {
+        text-align: center;
+        color: #666;
+        font-size: 0.7rem;
+        font-weight: bold;
+    }
+
+    .calendar-day {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 6px;
+        min-height: 75px;
+        padding: 4px;
+        position: relative;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .calendar-day.empty {
+            background: transparent;
+            border: none;
+            cursor: default;
+        }
+
+    .day-number {
+        font-size: 0.8rem;
+        font-weight: bold;
+        align-self: flex-end;
+        color: #aaa;
+    }
+
+    .day-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        margin-top: -15px;
+    }
+
+    .running-icon {
+        font-size: 1.5rem;
+        filter: drop-shadow(0 0 2px black);
+    }
+
+    .day-status {
+        font-size: 0.5rem;
+        font-weight: bold;
+        margin-top: 2px;
+        text-transform: uppercase;
+        color: white;
+    }
+
+    /* --- MODAL ESTILOS --- */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
+        z-index: 3000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        background: #1a1a1a;
+        width: 90%;
+        border-radius: 12px;
+        border: 1px solid #F8C545;
+        padding: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        max-height: 85vh;
+    }
+
+    .modal-header {
+        padding: 10px 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal-body {
+        padding: 15px;
+        color: white;
+        overflow-y: auto;
+    }
+
+    .modal-footer {
+        padding: 10px 15px;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        border-top: 1px solid #333;
+    }
+
+    /* Sección Coach */
+    .coach-section {
+        background: rgba(255,255,255,0.05);
+        padding: 10px;
+        border-radius: 8px;
+        border-left: 3px solid #F8C545;
+    }
+
+    .plan-title {
+        font-family: 'Oswald';
+        font-size: 1.2rem;
+        color: white;
+        margin-bottom: 5px;
+    }
+
+    .plan-desc {
+        font-size: 0.9rem;
+        color: #ccc;
+        white-space: pre-line;
+    }
+
+    .divider {
+        border-color: #444;
+        margin: 20px 0;
+    }
+
+    /* Switch Realizado */
+    .switch-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        background: #222;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #444;
+        margin-bottom: 10px;
+    }
+
+    .switch-track {
+        width: 50px;
+        height: 26px;
+        border-radius: 13px;
+        background: #444;
+        position: relative;
+        transition: background 0.3s;
+    }
+
+        .switch-track.on {
+            background: #28a745;
+        }
+
+    .switch-thumb {
+        width: 22px;
+        height: 22px;
+        background: white;
+        border-radius: 50%;
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        transition: transform 0.3s;
+    }
+
+    .switch-track.on .switch-thumb {
+        transform: translateX(24px);
+    }
+
+    .switch-label {
+        font-weight: bold;
+        font-size: 0.9rem;
+        color: white;
+    }
+
+    /* Escala RPE (Batería de colores) */
+    .rpe-helper {
+        font-size: 0.7rem;
+        color: #888;
+        margin-top: -5px;
+        margin-bottom: 10px;
+    }
+
+    .rpe-grid {
+        display: flex;
+        gap: 5px;
+        justify-content: space-between;
+    }
+
+    .rpe-item {
+        width: 100%;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: black;
+        border-radius: 4px;
+        cursor: pointer;
+        opacity: 0.3;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+
+        .rpe-item.selected {
+            opacity: 1;
+            transform: scale(1.15);
+            border: 2px solid white;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+    .input-dark {
+        background: #333 !important;
+        color: white !important;
+        border: 1px solid #666;
+    }
+
+    .btn-confirm {
+        background: #F8C545;
+        color: black;
+        border: none;
+        padding: 10px;
+        font-weight: bold;
+        flex: 1;
+        border-radius: 5px;
+    }
+
+    .btn-cancel {
+        background: #333;
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 5px;
+    }
+
+    .btn-close-custom {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+    }
+</style>
+
+@code {
+    private DateTime fechaActual = DateTime.Today;
+    private List<RunningLogs> logsDelMes = new List<RunningLogs>();
+    private int diasEnMes;
+    private int diasVaciosInicio;
+
+    // Modal
+    private bool mostrarModal = false;
+    private RunningLogs logSeleccionado;
+    private DateTime fechaSeleccionada;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarCalendario();
+    }
+
+    private async Task CargarCalendario()
+    {
+        diasEnMes = DateTime.DaysInMonth(fechaActual.Year, fechaActual.Month);
+        var primerDiaMes = new DateTime(fechaActual.Year, fechaActual.Month, 1);
+        diasVaciosInicio = (int)primerDiaMes.DayOfWeek;
+
+        try
+        {
+            if (Sesion.Usuario == null) return;
+            // Usamos el endpoint que hicimos antes para traer mis propios logs
+            logsDelMes = await Http.GetFromJsonAsync<List<RunningLogs>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/runningapi/plan/{Sesion.Usuario.UsuarioID}/{fechaActual.Month}/{fechaActual.Year}");
+        }
+        catch { logsDelMes = new List<RunningLogs>(); }
+    }
+
+    private RunningLogs ObtenerLog(int dia) => logsDelMes.FirstOrDefault(l => l.Fecha.Day == dia);
+
+    // --- INTERACCIÓN MODAL ---
+    private void AbrirModal(int dia)
+    {
+        var log = ObtenerLog(dia);
+        if (log != null)
+        {
+            // Clona o asigna referencia para editar
+            logSeleccionado = log;
+            // Si Realizado es null, lo ponemos en false para empezar
+            if (logSeleccionado.Realizado == null) logSeleccionado.Realizado = false;
+
+            fechaSeleccionada = new DateTime(fechaActual.Year, fechaActual.Month, dia);
+            mostrarModal = true;
+        }
+        else
+        {
+            App.Current.MainPage.DisplayAlert("Descanso", "No hay entrenamiento asignado para este día.", "A descansar");
+        }
+    }
+
+    private void ToggleRealizado()
+    {
+        bool estadoActual = logSeleccionado.Realizado ?? false;
+        logSeleccionado.Realizado = !estadoActual;
+    }
+
+    private void SeleccionarRPE(int valor) => logSeleccionado.RPE = valor;
+
+    private async Task GuardarFeedback()
+    {
+        try
+        {
+            // Usamos el NUEVO endpoint de feedback
+            var resp = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/runningapi/guardar-feedback", logSeleccionado);
+
+            if (resp.IsSuccessStatusCode)
+            {
+                mostrarModal = false;
+                await App.Current.MainPage.DisplayAlert("¡Bien hecho!", "Entrenamiento registrado.", "OK");
+                await CargarCalendario(); // Recargar para ver el cambio de color
+            }
+        }
+        catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }
+    }
+
+    // --- UTILIDADES DE COLOR ---
+    private string ObtenerColorTipo(string tipo) => tipo switch
+    {
+        "Acumulativo" => "#00BFFF",
+        "Intensidad" => "#FF4500",
+        "Tempo" => "#FF8C00",
+        "Cuestas" => "#9370DB",
+        "Fuerza" => "#808080",
+        "Regenerativo" => "#32CD32",
+        _ => "#F8C545"
+    };
+
+    private string ObtenerColorRPE(int valor)
+    {
+        // Gradiente de Verde (1) -> Amarillo (5) -> Rojo (10)
+        if (valor <= 2) return "#32CD32"; // Verde
+        if (valor <= 4) return "#ADFF2F"; // Verde Limón
+        if (valor <= 6) return "#FFD700"; // Amarillo
+        if (valor <= 8) return "#FF8C00"; // Naranja
+        return "#FF0000"; // Rojo
+    }
+
+    private async Task MesAnterior() { fechaActual = fechaActual.AddMonths(-1); await CargarCalendario(); }
+    private async Task MesSiguiente() { fechaActual = fechaActual.AddMonths(1); await CargarCalendario(); }
+    private void CerrarModal() => mostrarModal = false;
+    private void Volver() => Nav.NavigateTo("/home");
+}

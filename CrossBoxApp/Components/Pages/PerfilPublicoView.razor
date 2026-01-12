@@ -1,0 +1,307 @@
+﻿@page "/perfil-publico/{TargetUserId:guid}"
+@using CrossBoxApp.Models
+@using CrossBoxApp.Models.Services
+@using CrossBoxApp.Models.Social
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject SesionService Sesion
+
+<div class="top-navbar">
+    <div class="nav-left" @onclick="Volver">
+        <i class="fas fa-arrow-left"></i> REGRESAR A LISTA
+    </div>
+</div>
+
+<div class="profile-detail-container">
+    @if (perfil == null)
+    {
+        <div class="spinner-border text-warning mt-5" style="align-self:center;"></div>
+    }
+    else
+    {
+        <div class="hero-image-container">
+            <img src="@(perfil.FotoUrl ?? "imagenes/Rhino.png")" class="hero-image" />
+        </div>
+
+        <div class="info-section">
+            <h1 class="user-name">@perfil.NombreCompleto</h1>
+
+            <div class="stats-badge">
+                <i class="fas fa-heart"></i> @perfil.TotalLikes Likes acumulados
+            </div>
+
+            <div class="bio-box">
+                <label>SOBRE MÍ:</label>
+                <p>@(string.IsNullOrEmpty(perfil.Descripcion) ? "Sin descripción..." : perfil.Descripcion)</p>
+            </div>
+
+            @if (perfil.EsMatchMutuo)
+            {
+                <div class="match-success-box">
+                    <h3>¡YA HAN HECHO MATCH!</h3>
+                    <p>Comuníquense para entrenar:</p>
+                    <div class="whatsapp-pill">
+                        <span>WhatsApp: </span>@perfil.WhatsappTarget
+                    </div>
+                </div>
+            }
+            else if (perfil.YaLeDiMatch)
+            {
+                <div class="match-sent-box">
+                    <i class="fas fa-check-circle"></i> Match Enviado
+                    <span>Esperando respuesta...</span>
+                </div>
+            }
+            else
+            {
+                <button class="btn-match" @onclick="HacerMatch">
+                    <i class="fas fa-heart"></i> MATCH
+                </button>
+            }
+
+        </div>
+    }
+</div>
+
+@if (mostrarAnimacionMatch)
+{
+    <div class="match-overlay">
+        <div class="match-content">
+            <h1 class="match-title">IT'S A MATCH!</h1>
+            <div class="hearts-animation">💖 ❤️ 💖</div>
+            <p>¡Tú y @perfil.NombreCompleto se matchearon!</p>
+
+            <div class="whatsapp-box">
+                <i class="fab fa-whatsapp"></i>
+                <span>WA: @whatsappRevelado</span>
+            </div>
+
+            <p class="match-hint">Ahora pueden comunicarse.</p>
+
+            <button class="btn-close-match" @onclick="CerrarMatch">GENIAL</button>
+        </div>
+    </div>
+}
+
+<style>
+
+    .match-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; display: flex; justify-content: center; align-items: center; animation: fadeIn 0.5s; }
+    .match-content { text-align: center; color: white; padding: 20px; }
+    .match-title { font-family: 'Oswald'; font-size: 3rem; color: #F8C545; text-shadow: 0 0 10px orange; animation: popIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+    .whatsapp-box { background: #25D366; color: white; padding: 15px 30px; border-radius: 50px; font-size: 1.5rem; margin: 20px auto; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; width: fit-content; animation: slideUp 1s; }
+    .btn-close-match { background: white; color: black; border: none; padding: 10px 30px; border-radius: 20px; font-weight: bold; margin-top: 20px; }
+    
+    @@keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* --- CAMBIOS EN LA NAVBAR --- */
+    .top-navbar {
+        padding: 15px;
+        background: #1a1a1a; /* Fondo negro sólido */
+        border-bottom: 2px solid #F8C545; /* Línea divisoria amarilla */
+        width: 100%;
+        display: flex;
+        align-items: center;
+        position: relative; /* Ocupa su propio espacio en el flujo */
+        z-index: 10;
+    }
+
+    .nav-left {
+        color: #F8C545;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px; /* Espacio entre flecha y texto */
+        font-family: 'Oswald';
+    }
+
+    /* --- RESTO DEL DISEÑO --- */
+    .profile-detail-container {
+        background: #0d0d0d;
+        min-height: 100vh;
+        color: white;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .hero-image-container {
+        width: 100%;
+        height: 45vh; /* Un poco menos de altura ya que ahora tenemos barra arriba */
+        overflow: hidden;
+        position: relative;
+        background-color: #222; /* Fondo por si la imagen tarda en cargar */
+    }
+
+    .hero-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        /* Mantenemos el degradado inferior para que se funda con el contenido */
+        mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+    }
+
+    .info-section {
+        padding: 20px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: -50px; /* Jala el contenido hacia arriba sobre la foto */
+        position: relative;
+        z-index: 2;
+    }
+
+    .user-name {
+        font-family: 'Oswald';
+        font-size: 2rem;
+        color: #F8C545;
+        text-align: center;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.8); /* Sombra para resaltar sobre cualquier fondo */
+    }
+
+    .stats-badge {
+        background: #333;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        color: #ccc;
+        margin-bottom: 20px;
+        border: 1px solid #555;
+    }
+
+        .stats-badge i {
+            color: #e0245e;
+            margin-right: 5px;
+        }
+
+    .bio-box {
+        width: 100%;
+        background: #1a1a1a;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        border-left: 3px solid #F8C545;
+    }
+
+        .bio-box label {
+            color: #888;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .bio-box p {
+            margin-top: 5px;
+            font-style: italic;
+            color: #eee;
+        }
+
+    .btn-match {
+        background: linear-gradient(45deg, #ff6b6b, #ff4757);
+        border: none;
+        width: 80%;
+        padding: 15px;
+        border-radius: 50px;
+        font-size: 1.5rem;
+        color: white;
+        font-weight: bold;
+        box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
+        transition: transform 0.2s;
+        margin-bottom: 30px;
+    }
+
+        .btn-match:active {
+            transform: scale(0.95);
+        }
+
+    .whatsapp-pill {
+        background: white;
+        color: #075e54; /* Verde oscuro oficial de WhatsApp */
+        font-weight: bold;
+        padding: 8px 25px; /* Un poco menos de padding vertical */
+        border-radius: 30px;
+        font-size: 1.3rem; /* Número grande */
+        margin-top: 10px;
+        display: inline-flex; /* Para alinear bien el texto */
+        align-items: center;
+        gap: 10px; /* Espacio entre "WA:" y el número */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .wa-label {
+        background-color: #25D366; /* Verde brillante */
+        color: white;
+        font-size: 0.9rem;
+        padding: 3px 8px;
+        border-radius: 10px;
+        text-transform: uppercase;
+        font-weight: 900; /* Muy negrita */
+        letter-spacing: 1px;
+    }
+</style>
+
+@code {
+    [Parameter] public Guid TargetUserId { get; set; }
+    private DetallePublicoDto perfil;
+
+    private bool mostrarAnimacionMatch = false;
+    private string whatsappRevelado = "";
+    private bool yaDiMatch = false; // Para deshabilitar botón
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarPerfil();
+    }
+
+    private async Task CargarPerfil()
+    {
+        if (Sesion.Usuario == null) return;
+        try
+        {
+            // OJO: Ahora pasamos también MI ID al final de la URL
+            var miId = Sesion.Usuario.UsuarioID;
+            perfil = await Http.GetFromJsonAsync<DetallePublicoDto>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/detalle-publico/{TargetUserId}/{miId}");
+        }
+        catch { }
+    }
+
+    private async Task HacerMatch()
+    {
+        try
+        {
+            var req = new LikeRequest { LikerID = Sesion.Usuario.UsuarioID, FotoID = TargetUserId };
+            var resp = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/hacer-match", req);
+
+            if (resp.IsSuccessStatusCode)
+            {
+                var result = await resp.Content.ReadFromJsonAsync<MatchResponseDto>();
+
+                if (result.EsMatchMutuo)
+                {
+                    // Recargar perfil para que aparezca la caja verde de WhatsApp automáticamente
+                    await CargarPerfil();
+                    await App.Current.MainPage.DisplayAlert("❤️", "¡IT'S A MATCH!", "OK");
+                }
+                else
+                {
+                    // Recargar perfil para que aparezca el letrero de "Enviado"
+                    await CargarPerfil();
+                    await App.Current.MainPage.DisplayAlert("😉", "Match enviado.", "OK");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
+    }
+
+    
+    private void CerrarMatch() => mostrarAnimacionMatch = false;
+    private void Volver() => Nav.NavigateTo("/entrenamos-juntos");
+}

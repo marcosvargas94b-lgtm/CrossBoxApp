@@ -50,7 +50,7 @@
                                     <i class="fas fa-plus-circle"></i> NUEVA MARCA
                                 </button>
 
-                                <button class="btn-icon delete" @onclick="() => EliminarResultado(item)">
+                                <button class="btn-icon delete" @onclick="() => EliminarRegistro(item.TestUsuarioId)">
                                     <i class="fas fa-trash"></i>
                                 </button>
 
@@ -377,13 +377,32 @@
         }
     }
 
-    private async Task EliminarResultado(EvaluacionVisualDto item)
+    private async Task EliminarRegistro(Guid? testUsuarioId)
     {
-        bool confirm = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Borrar este registro?", "Sí", "No");
-        if (!confirm || item.TestUsuarioId == null) return;
+        bool confirmar = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Seguro que quieres borrar este registro? Volverá a estar vacío.", "Sí, borrar", "Cancelar");
 
-        var response = await Http.DeleteAsync($"api/evaluaciones/eliminar/{item.TestUsuarioId}");
-        if (response.IsSuccessStatusCode) await CargarDatos();
+        if (!confirmar) return;
+
+        try
+        {
+            // Llamamos a la API con la URL completa
+            var response = await Http.PostAsync($"api/evaluaciones/eliminar-registro/{testUsuarioId}", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // ¡Éxito! Recargamos los datos.
+                // Al recargar, como el registro ya no existe, la UI volverá a mostrar el input vacío.
+                await CargarDatos();
+            }
+            else
+            {
+                await App.Current.MainPage.DisplayAlert("Error", "No se pudo eliminar el registro.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
     }
 
     private void Volver() => Nav.NavigateTo("/usuarios-view");
