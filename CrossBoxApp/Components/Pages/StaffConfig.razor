@@ -1,0 +1,529 @@
+﻿@page "/staff-config"
+@using CrossBoxApp.Models
+@using CrossBoxApp.Models.Services
+@inject HttpClient Http
+@inject SesionService Sesion
+@inject NavigationManager Nav
+
+<div class="top-navbar">
+    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
+    <div class="nav-title">GESTIÓN DE EQUIPO</div>
+    <div class="nav-right"></div>
+</div>
+
+<div class="staff-container">
+
+    <div class="header-section">
+        <h3>TU STAFF</h3>
+        <p>Gestiona los permisos de tus entrenadores y encargados.</p>
+    </div>
+
+    @if (listaStaff == null)
+    {
+        <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
+    }
+    else if (listaStaff.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="fas fa-users-slash"></i>
+            <p>Aún no tienes equipo asignado.</p>
+        </div>
+    }
+    else
+    {
+        <div class="staff-grid">
+            @foreach (var s in listaStaff)
+            {
+                <div class="staff-card">
+                    <div class="card-info">
+                        <div class="avatar-placeholder">@s.NombreCompleto.Substring(0, 1)</div>
+                        <div>
+                            <div class="staff-name">@s.NombreCompleto</div>
+                            <div class="staff-role">COACH / STAFF</div>
+                        </div>
+                    </div>
+
+                    <div class="card-actions">
+                        <button class="btn-permisos" @onclick="() => AbrirPermisos(s)">
+                            <i class="fas fa-key"></i> PERMISOS
+                        </button>
+
+                        <button class="btn-remove" @onclick="() => DegradarStaff(s)">
+                            <i class="fas fa-user-minus"></i>
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <button class="btn-add-floating" @onclick="AbrirModalCandidatos">
+        <i class="fas fa-plus"></i> AGREGAR COACH
+    </button>
+
+</div>
+
+@if (mostrarModalPermisos && staffSeleccionado != null)
+{
+    <div class="modal-overlay">
+        <div class="modal-content custom-modal">
+            <div class="modal-header">
+                <h5>PERMISOS: @staffSeleccionado.NombreCompleto.ToUpper()</h5>
+                <button class="btn-close-custom" @onclick="() => mostrarModalPermisos = false"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Activa las funciones que este Coach puede realizar.</p>
+
+                @foreach (var p in catalogoPermisos)
+                {
+                    <div class="permiso-row" @onclick="() => TogglePermiso(staffSeleccionado, p.Clave)">
+                        <span class="permiso-desc">@p.Descripcion</span>
+                        <div class="switch-track @(TieneElPermiso(staffSeleccionado, p.Clave) ? "on" : "off")">
+                            <div class="switch-thumb"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="btn-confirm" @onclick="() => mostrarModalPermisos = false">LISTO</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (mostrarModalCandidatos)
+{
+    <div class="modal-overlay">
+        <div class="modal-content custom-modal">
+            <div class="modal-header">
+                <h5>SELECCIONA UN ATLETA</h5>
+                <button class="btn-close-custom" @onclick="() => mostrarModalCandidatos = false"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="modal-body scrollable-body">
+                @if (listaCandidatos.Count == 0)
+                {
+                    <div class="text-center text-muted mt-4">No hay atletas disponibles para ascender.</div>
+                }
+                else
+                {
+                    @foreach (var atleta in listaCandidatos)
+                    {
+                        <div class="candidate-row">
+                            <div class="candidate-name">@atleta.NombreCompleto</div>
+                            <button class="btn-promote" @onclick="() => AscenderAtleta(atleta)">
+                                ASCENDER <i class="fas fa-level-up-alt"></i>
+                            </button>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    /* Estilos Generales */
+    .top-navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        background: #1a1a1a;
+        border-bottom: 2px solid #F8C545;
+        color: white;
+        font-family: 'Oswald';
+    }
+
+    .nav-left {
+        color: #F8C545;
+        cursor: pointer;
+    }
+
+    .staff-container {
+        padding: 20px;
+        background: #0d0d0d;
+        min-height: 100vh;
+        color: white;
+        padding-bottom: 80px;
+    }
+
+    .header-section h3 {
+        font-family: 'Oswald';
+        color: #F8C545;
+        margin: 0;
+    }
+
+    .header-section p {
+        color: #888;
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+    }
+
+    /* Tarjetas de Staff */
+    .staff-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .staff-card {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 10px;
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: transform 0.2s;
+    }
+
+        .staff-card:hover {
+            border-color: #F8C545;
+        }
+
+    .card-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .avatar-placeholder {
+        width: 40px;
+        height: 40px;
+        background: #333;
+        color: #F8C545;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-family: 'Oswald';
+        font-size: 1.2rem;
+    }
+
+    .staff-name {
+        font-weight: bold;
+        font-size: 1rem;
+        color: white;
+    }
+
+    .staff-role {
+        font-size: 0.7rem;
+        color: #F8C545;
+        letter-spacing: 1px;
+    }
+
+    .card-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-permisos {
+        background: transparent;
+        border: 1px solid #F8C545;
+        color: #F8C545;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: bold;
+    }
+
+    .btn-remove {
+        background: #333;
+        border: none;
+        color: #dc3545;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Botón Flotante */
+    .btn-add-floating {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: #F8C545;
+        color: black;
+        border: none;
+        padding: 15px 25px;
+        border-radius: 30px;
+        font-family: 'Oswald';
+        font-weight: bold;
+        font-size: 1.1rem;
+        box-shadow: 0 5px 20px rgba(248, 197, 69, 0.4);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 100;
+    }
+
+    /* Modal Generico */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
+        z-index: 3000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .custom-modal {
+        background: #1a1a1a;
+        width: 90%;
+        max-width: 400px;
+        border: 1px solid #F8C545;
+        border-radius: 12px;
+        padding: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        max-height: 80vh;
+    }
+
+    .modal-header {
+        padding: 15px;
+        background: #222;
+        border-bottom: 1px solid #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .modal-header h5 {
+            margin: 0;
+            font-family: 'Oswald';
+            color: #F8C545;
+        }
+
+    .modal-body {
+        padding: 20px;
+        overflow-y: auto;
+        color: white;
+    }
+
+    .modal-footer {
+        padding: 15px;
+        border-top: 1px solid #333;
+        background: #222;
+    }
+
+    .btn-close-custom {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+    }
+
+    .btn-confirm {
+        width: 100%;
+        background: #F8C545;
+        border: none;
+        padding: 10px;
+        font-weight: bold;
+        border-radius: 5px;
+        color: black;
+    }
+
+    /* Switches de Permiso */
+    .permiso-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #333;
+        cursor: pointer;
+    }
+
+    .permiso-desc {
+        font-size: 0.9rem;
+    }
+
+    .switch-track {
+        width: 40px;
+        height: 20px;
+        border-radius: 10px;
+        background: #444;
+        position: relative;
+        transition: background 0.3s;
+    }
+
+        .switch-track.on {
+            background: #28a745;
+        }
+
+    .switch-thumb {
+        width: 16px;
+        height: 16px;
+        background: white;
+        border-radius: 50%;
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        transition: transform 0.3s;
+    }
+
+    .switch-track.on .switch-thumb {
+        transform: translateX(20px);
+    }
+
+    /* Lista Candidatos */
+    .candidate-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        border-bottom: 1px solid #333;
+    }
+
+    .candidate-name {
+        font-weight: bold;
+        color: white;
+    }
+
+    .btn-promote {
+        background: #28a745;
+        border: none;
+        color: white;
+        font-size: 0.7rem;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+</style>
+
+@code {
+    // CLASES DTO
+    public class StaffDto
+    {
+        public Guid UsuarioID { get; set; }
+        public string NombreCompleto { get; set; }
+        public string Email { get; set; }
+        public List<string> PermisosActivos { get; set; } = new List<string>();
+    }
+    public class PermisoCatalogo { public string Clave { get; set; } public string Descripcion { get; set; } }
+    public class AsignarPermisoDto { public Guid UsuarioID { get; set; } public string ClavePermiso { get; set; } public bool Activo { get; set; } }
+
+    // VARIABLES
+    private List<StaffDto> listaStaff = new List<StaffDto>();
+    private List<StaffDto> listaCandidatos = new List<StaffDto>();
+    private StaffDto staffSeleccionado;
+
+    private bool mostrarModalPermisos = false;
+    private bool mostrarModalCandidatos = false;
+
+    private List<PermisoCatalogo> catalogoPermisos = new List<PermisoCatalogo>
+    {
+        new PermisoCatalogo { Clave = "MANAGE_WOD", Descripcion = "Crear y Editar WODs" },
+        new PermisoCatalogo { Clave = "MANAGE_USERS", Descripcion = "Aceptar y Gestionar Atletas" },
+        new PermisoCatalogo { Clave = "MANAGE_PAYMENTS", Descripcion = "Ver y Registrar Pagos" },
+        new PermisoCatalogo { Clave = "MANAGE_AVISOS", Descripcion = "Publicar Avisos Generales" },
+        new PermisoCatalogo { Clave = "DELETE_DATA", Descripcion = "Eliminar Registros (Peligroso)" }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarStaff();
+    }
+
+    // --- CARGAS DE DATOS ---
+    private async Task CargarStaff()
+    {
+        try
+        {
+            listaStaff = await Http.GetFromJsonAsync<List<StaffDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/staffapi/lista/{Sesion.Usuario.BoxID}");
+        }
+        catch { }
+    }
+
+    private async Task CargarCandidatos()
+    {
+        try
+        {
+            // Llamamos al nuevo endpoint que trae a los atletas
+            listaCandidatos = await Http.GetFromJsonAsync<List<StaffDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/staffapi/candidatos/{Sesion.Usuario.BoxID}");
+        }
+        catch { listaCandidatos = new List<StaffDto>(); }
+    }
+
+    // --- ACCIONES PRINCIPALES ---
+
+    private async Task AscenderAtleta(StaffDto atleta)
+    {
+        bool confirm = await App.Current.MainPage.DisplayAlert("Confirmar", $"¿Ascender a {atleta.NombreCompleto} a Coach?", "Sí", "Cancelar");
+        if (!confirm) return;
+
+        try
+        {
+            var resp = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/staffapi/ascender/{atleta.UsuarioID}", null);
+            if (resp.IsSuccessStatusCode)
+            {
+                await App.Current.MainPage.DisplayAlert("¡Listo!", "Nuevo miembro del equipo agregado.", "OK");
+                mostrarModalCandidatos = false;
+                await CargarStaff(); // Refrescar lista principal
+            }
+        }
+        catch { await App.Current.MainPage.DisplayAlert("Error", "No se pudo realizar la acción.", "OK"); }
+    }
+
+    private async Task DegradarStaff(StaffDto staff)
+    {
+        bool confirm = await App.Current.MainPage.DisplayAlert("Degradar", $"¿Quitar privilegios de Staff a {staff.NombreCompleto}? Volverá a ser atleta.", "Sí", "Cancelar");
+        if (!confirm) return;
+
+        try
+        {
+            var resp = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/staffapi/degradar/{staff.UsuarioID}", null);
+            if (resp.IsSuccessStatusCode)
+            {
+                await CargarStaff();
+            }
+        }
+        catch { }
+    }
+
+    // --- LÓGICA DE PERMISOS ---
+    private void AbrirPermisos(StaffDto staff)
+    {
+        staffSeleccionado = staff;
+        mostrarModalPermisos = true;
+    }
+
+    private bool TieneElPermiso(StaffDto s, string clave)
+    {
+        if (s.PermisosActivos == null) return false;
+        return s.PermisosActivos.Contains(clave);
+    }
+
+    private async Task TogglePermiso(StaffDto staff, string clave)
+    {
+        bool tieneActualmente = TieneElPermiso(staff, clave);
+        bool nuevoEstado = !tieneActualmente;
+
+        if (staff.PermisosActivos == null) staff.PermisosActivos = new List<string>();
+        if (nuevoEstado) staff.PermisosActivos.Add(clave);
+        else staff.PermisosActivos.Remove(clave);
+
+        try
+        {
+            var req = new AsignarPermisoDto { UsuarioID = staff.UsuarioID, ClavePermiso = clave, Activo = nuevoEstado };
+            await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/staffapi/permiso", req);
+        }
+        catch { /* Revertir si falla */ }
+    }
+
+    private async Task AbrirModalCandidatos()
+    {
+        await CargarCandidatos();
+        mostrarModalCandidatos = true;
+    }
+
+    private void Volver() => Nav.NavigateTo("/home");
+}

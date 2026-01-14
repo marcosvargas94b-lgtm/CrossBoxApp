@@ -37,23 +37,24 @@
                                     <span class="result-value">@item.Valor</span>
                                     <span class="result-unit">@item.Medida</span>
                                 </div>
-
                                 <span class="result-date">@item.Fecha?.ToShortDateString()</span>
                             </div>
+                            
                             <div class="action-buttons">
-
                                 <button class="btn-icon edit" @onclick="() => AbrirModal(item, esNuevaMarca: false)">
                                     <i class="fas fa-edit"></i>
                                 </button>
 
                                 <button class="btn-icon new-record" @onclick="() => AbrirModal(item, esNuevaMarca: true)">
-                                    <i class="fas fa-plus-circle"></i> NUEVA MARCA
+                                    <i class="fas fa-plus-circle"></i> NUEVA
                                 </button>
 
-                                <button class="btn-icon delete" @onclick="() => EliminarRegistro(item.TestUsuarioId)">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-
+                                @if (Sesion.TienePermiso("DELETE_DATA"))
+                                {
+                                    <button class="btn-icon delete" @onclick="() => EliminarRegistro(item.TestUsuarioId)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                }
                             </div>
                         }
                         else
@@ -74,224 +75,55 @@
     <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.9); z-index: 2000;" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content" style="background-color: #222; border: 1px solid #F8C545; color: white;">
-
                 <div class="modal-header">
                     <h5 class="modal-title" style="color:#F8C545;">
                         @(testSeleccionado.Valor.HasValue ? "EDITAR" : "NUEVO") REGISTRO
                     </h5>
                     <button type="button" class="btn-close btn-close-white" @onclick="() => mostrarModal = false"></button>
                 </div>
-
                 <div class="modal-body text-center">
-
-                    <h4 style="color: white; font-family: 'Oswald'; margin-bottom: 20px;">
-                        @testSeleccionado.NombreTest
-                    </h4>
-
+                    <h4 style="color: white; font-family: 'Oswald'; margin-bottom: 20px;">@testSeleccionado.NombreTest</h4>
                     <label style="color: #aaa; margin-bottom: 10px; display: block;">Ingresa tu récord en:</label>
-
                     <div class="input-with-unit">
                         <input type="number" @bind="valorInput" class="form-control input-dark big-input" placeholder="0" />
                         <span class="unit-label">@testSeleccionado.Medida</span>
                     </div>
-
                 </div>
-
                 <div class="modal-footer">
                     <button class="btn btn-secondary" @onclick="() => mostrarModal = false">Cancelar</button>
                     <button class="btn btn-warning" @onclick="GuardarDatos">Guardar</button>
                 </div>
-
             </div>
         </div>
     </div>
 }
 
 <style>
-
-    .input-with-unit {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px; /* Espacio entre el numero y la letra */
-    }
-
-    .big-input {
-        background: #333 !important;
-        color: white !important;
-        border: 1px solid #F8C545;
-        text-align: center;
-        font-size: 2rem; /* Número bien grande */
-        font-weight: bold;
-        width: 120px; /* Ancho fijo para que no se estire demasiado */
-        padding: 10px;
-        border-radius: 10px;
-    }
-
-        .big-input:focus {
-            background-color: #444 !important;
-            box-shadow: 0 0 10px rgba(248, 197, 69, 0.5); /* Brillo amarillo al escribir */
-        }
-
-    /* La etiqueta de la unidad (LB, REPS) */
-    .unit-label {
-        color: #F8C545;
-        font-size: 1.5rem;
-        font-family: 'Oswald', sans-serif;
-        font-weight: bold;
-        text-transform: uppercase;
-    }
-
-    .value-row {
-        display: flex;
-        align-items: baseline; /* Alinea la base del texto */
-        gap: 5px; /* Espacio entre número y medida */
-    }
-
-    /* El número grande */
-    .result-value {
-        color: #F8C545;
-        font-size: 1.5rem;
-        font-weight: bold;
-        line-height: 1;
-    }
-
-    /* La medida (LB, Reps) un poco más chica */
-    .result-unit {
-        color: #F8C545;
-        font-size: 1rem; /* Más pequeño que el valor */
-        font-weight: bold;
-        text-transform: uppercase;
-    }
-
-    .result-date {
-        color: #666;
-        font-size: 0.7rem;
-        margin-top: 2px;
-    }
-
-    .top-navbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 15px;
-        background: #1a1a1a;
-        border-bottom: 2px solid #F8C545;
-        color: white;
-        font-family: 'Oswald';
-    }
-
-    .nav-left {
-        color: #F8C545;
-        cursor: pointer;
-    }
-
-    .eval-container {
-        padding: 15px;
-        background: #0d0d0d;
-        min-height: 100vh;
-    }
-
-    .eval-card {
-        border: 1px solid #333;
-        border-radius: 8px;
-        overflow: hidden;
-        margin-bottom: 15px;
-    }
-
-    .card-header-yellow {
-        background-color: #F8C545;
-        padding: 5px 10px;
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.8rem;
-        font-weight: bold;
-        color: black;
-    }
-
-    .card-body-dark {
-        background-color: #1a1a1a;
-        padding: 15px;
-    }
-
-    .test-name {
-        color: white;
-        font-family: 'Oswald';
-        font-size: 1.2rem;
-        margin-bottom: 10px;
-    }
-
-    .result-area {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        min-height: 40px;
-    }
-
-    .result-display {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .result-value {
-        color: #F8C545;
-        font-size: 1.5rem;
-        font-weight: bold;
-        line-height: 1;
-    }
-
-    .result-date {
-        color: #666;
-        font-size: 0.7rem;
-    }
-
-    .action-buttons {
-        display: flex;
-        gap: 10px;
-    }
-
-    .btn-icon {
-        background: transparent;
-        border: 1px solid #444;
-        color: #aaa;
-        border-radius: 5px;
-        padding: 5px 10px;
-    }
-
-        .btn-icon.edit:hover {
-            color: #F8C545;
-            border-color: #F8C545;
-        }
-
-        .btn-icon.delete:hover {
-            color: #d9534f;
-            border-color: #d9534f;
-        }
-
-    .input-dark {
-        background: #333 !important;
-        color: white !important;
-        border: 1px solid #F8C545;
-        text-align: center;
-        font-size: 1.5rem;
-    }
-
-    .btn-icon.new-record {
-        color: #28a745; /* Verde */
-        border-color: #28a745;
-        font-weight: bold;
-        font-family: 'Oswald';
-        font-size: 0.8rem;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        width: auto; /* Que se adapte al texto */
-    }
-
-        .btn-icon.new-record:hover {
-            background-color: #28a745;
-            color: white;
-        }
+    /* Estilos se mantienen igual */
+    .input-with-unit { display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .big-input { background: #333 !important; color: white !important; border: 1px solid #F8C545; text-align: center; font-size: 2rem; font-weight: bold; width: 120px; padding: 10px; border-radius: 10px; }
+    .big-input:focus { background-color: #444 !important; box-shadow: 0 0 10px rgba(248, 197, 69, 0.5); }
+    .unit-label { color: #F8C545; font-size: 1.5rem; font-family: 'Oswald'; font-weight: bold; text-transform: uppercase; }
+    .value-row { display: flex; align-items: baseline; gap: 5px; }
+    .result-value { color: #F8C545; font-size: 1.5rem; font-weight: bold; line-height: 1; }
+    .result-unit { color: #F8C545; font-size: 1rem; font-weight: bold; text-transform: uppercase; }
+    .result-date { color: #666; font-size: 0.7rem; margin-top: 2px; }
+    .top-navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #1a1a1a; border-bottom: 2px solid #F8C545; color: white; font-family: 'Oswald'; }
+    .nav-left { color: #F8C545; cursor: pointer; }
+    .eval-container { padding: 15px; background: #0d0d0d; min-height: 100vh; }
+    .eval-card { border: 1px solid #333; border-radius: 8px; overflow: hidden; margin-bottom: 15px; }
+    .card-header-yellow { background-color: #F8C545; padding: 5px 10px; display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: bold; color: black; }
+    .card-body-dark { background-color: #1a1a1a; padding: 15px; }
+    .test-name { color: white; font-family: 'Oswald'; font-size: 1.2rem; margin-bottom: 10px; }
+    .result-area { display: flex; justify-content: space-between; align-items: center; min-height: 40px; }
+    .result-display { display: flex; flex-direction: column; }
+    .action-buttons { display: flex; gap: 10px; }
+    .btn-icon { background: transparent; border: 1px solid #444; color: #aaa; border-radius: 5px; padding: 5px 10px; }
+    .btn-icon.edit:hover { color: #F8C545; border-color: #F8C545; }
+    .btn-icon.delete:hover { color: #d9534f; border-color: #d9534f; }
+    .input-dark { background: #333 !important; color: white !important; border: 1px solid #F8C545; text-align: center; font-size: 1.5rem; }
+    .btn-icon.new-record { color: #28a745; border-color: #28a745; font-weight: bold; font-family: 'Oswald'; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; width: auto; }
+    .btn-icon.new-record:hover { background-color: #28a745; color: white; }
 </style>
 
 @code {
@@ -300,31 +132,34 @@
     private bool esModoNuevaMarca = false;
     private List<EvaluacionVisualDto> listaEvaluaciones = new List<EvaluacionVisualDto>();
     private bool cargando = true;
-
-    // Variables Modal
     private bool mostrarModal = false;
     private EvaluacionVisualDto testSeleccionado;
     private float valorInput;
 
     protected override async Task OnInitializedAsync()
     {
+        if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+
+        // --- PROTECCIÓN ---
+        // Debes ser Admin (1) o tener el permiso explícito.
+        // Si no, te regresamos al home o a usuarios-view
+        if (Sesion.Usuario.TipoUsuarioID != 1 && !Sesion.TienePermiso("MANAGE_EVALUATIONS")) 
+        { 
+            await App.Current.MainPage.DisplayAlert("Acceso Denegado", "No tienes permisos para evaluar.", "OK");
+            Nav.NavigateTo("/home"); 
+            return; 
+        }
+
         await CargarDatos();
     }
 
     private async Task CargarDatos()
     {
-        try
-        {
+        try {
             cargando = true;
-            if (Sesion.Usuario == null) return;
-
             var boxId = Sesion.Usuario.BoxID;
-            var response = await Http.GetAsync($"api/evaluaciones/usuario/{boxId}/{UsuarioId}"); // Usamos el ID del parámetro
-
-            if (response.IsSuccessStatusCode)
-            {
-                listaEvaluaciones = await response.Content.ReadFromJsonAsync<List<EvaluacionVisualDto>>();
-            }
+            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/evaluacionesapi/usuario/{boxId}/{UsuarioId}");
+            if (response.IsSuccessStatusCode) listaEvaluaciones = await response.Content.ReadFromJsonAsync<List<EvaluacionVisualDto>>();
         }
         finally { cargando = false; }
     }
@@ -333,76 +168,29 @@
     {
         testSeleccionado = item;
         esModoNuevaMarca = esNuevaMarca;
-
-        if (esNuevaMarca)
-        {           
-            valorInput = 0;
-        }
-        else
-        {           
-            valorInput = item.Valor ?? 0;
-        }
-
+        valorInput = esNuevaMarca ? 0 : (item.Valor ?? 0);
         mostrarModal = true;
     }
 
     private async Task GuardarDatos()
     {
-        try
-        {
-            var dto = new GuardarResultadoDto
-            {
-                TestUsuarioId = testSeleccionado.TestUsuarioId,
-                TestBoxId = testSeleccionado.TestBoxId,
-                UsuarioId = this.UsuarioId,
-                Valor = valorInput,
-                EsNuevaMarca = esModoNuevaMarca // <--- ENVIAMOS LA BANDERA
-            };
-            var response = await Http.PostAsJsonAsync("api/evaluaciones/guardar", dto);
-            
-
-            if (response.IsSuccessStatusCode)
-            {
-                mostrarModal = false;
-                await CargarDatos(); // Refrescar para ver el cambio
-            }
-            else
-            {
-                await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar", "OK");
-            }
-        }
-        catch (Exception ex)
-        {
-            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
-        }
+        try {
+            var dto = new GuardarResultadoDto { TestUsuarioId = testSeleccionado.TestUsuarioId, TestBoxId = testSeleccionado.TestBoxId, UsuarioId = this.UsuarioId, Valor = valorInput, EsNuevaMarca = esModoNuevaMarca };
+            var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/evaluacionesapi/guardar", dto);
+            if (r.IsSuccessStatusCode) { mostrarModal = false; await CargarDatos(); }
+            else { await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar", "OK"); }
+        } catch(Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }
     }
 
     private async Task EliminarRegistro(Guid? testUsuarioId)
     {
-        bool confirmar = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Seguro que quieres borrar este registro? Volverá a estar vacío.", "Sí, borrar", "Cancelar");
-
-        if (!confirmar) return;
-
-        try
-        {
-            // Llamamos a la API con la URL completa
-            var response = await Http.PostAsync($"api/evaluaciones/eliminar-registro/{testUsuarioId}", null);
-
-            if (response.IsSuccessStatusCode)
-            {
-                // ¡Éxito! Recargamos los datos.
-                // Al recargar, como el registro ya no existe, la UI volverá a mostrar el input vacío.
-                await CargarDatos();
-            }
-            else
-            {
-                await App.Current.MainPage.DisplayAlert("Error", "No se pudo eliminar el registro.", "OK");
-            }
-        }
-        catch (Exception ex)
-        {
-            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
-        }
+        bool c = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Seguro que quieres borrar este registro?", "Sí, borrar", "Cancelar");
+        if (!c) return;
+        try {
+            var r = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/evaluacionesapi/eliminar-registro/{testUsuarioId}", null);
+            if (r.IsSuccessStatusCode) await CargarDatos();
+            else await App.Current.MainPage.DisplayAlert("Error", "No se pudo eliminar.", "OK");
+        } catch(Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }
     }
 
     private void Volver() => Nav.NavigateTo("/usuarios-view");

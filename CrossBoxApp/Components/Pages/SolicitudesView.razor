@@ -1,0 +1,218 @@
+﻿@page "/solicitudes"
+@using CrossBoxApp.Models
+@using CrossBoxApp.Models.Services
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject SesionService Sesion
+
+<div class="top-navbar">
+    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
+    <div class="nav-title">SOLICITUDES DE ACCESO</div>
+    <div class="nav-right"></div>
+</div>
+
+<div class="users-container">
+    @if (listaPendientes == null)
+    {
+        <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
+    }
+    else if (listaPendientes.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="fas fa-check-circle"></i>
+            <p>No hay solicitudes pendientes.</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var u in listaPendientes)
+        {
+            <div class="request-card">
+                <div class="info">
+                    <div class="name">@u.NombreCompleto</div>
+                    <div class="email">@u.CorreoElectronico</div>
+                    <div class="date"><i class="far fa-clock"></i> @u.FechaCreacion.ToString("dd/MM/yyyy")</div>
+                </div>
+                <div class="actions">
+                    <button class="btn-reject" @onclick="() => Rechazar(u)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <button class="btn-accept" @onclick="() => Aprobar(u)">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<style>
+    /* Estilos (Sin cambios) */
+    .top-navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        background: #1a1a1a;
+        border-bottom: 2px solid #F8C545;
+        color: white;
+        font-family: 'Oswald';
+    }
+
+    .nav-left {
+        color: #F8C545;
+        cursor: pointer;
+    }
+
+    .users-container {
+        padding: 15px;
+        background: #0d0d0d;
+        min-height: 100vh;
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        margin-top: 50px;
+        color: #666;
+    }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+    .request-card {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        animation: slideIn 0.3s;
+    }
+
+    .name {
+        font-family: 'Oswald';
+        font-size: 1.1rem;
+        color: white;
+    }
+
+    .email {
+        font-size: 0.8rem;
+        color: #aaa;
+    }
+
+    .date {
+        font-size: 0.7rem;
+        color: #666;
+        margin-top: 5px;
+    }
+
+    .actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-accept, .btn-reject {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        cursor: pointer;
+        transition: transform 0.2s;
+        color: white;
+    }
+
+    .btn-accept {
+        background: #28a745;
+        box-shadow: 0 0 10px rgba(40,167,69,0.4);
+    }
+
+    .btn-reject {
+        background: #dc3545;
+        box-shadow: 0 0 10px rgba(220,53,69,0.4);
+    }
+
+        .btn-accept:active, .btn-reject:active {
+            transform: scale(0.9);
+        }
+
+    @@keyframes slideIn {
+        from {
+            transform: translateX(-10px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+</style>
+
+@code {
+    class PendienteDto { public Guid UsuarioID { get; set; } public string NombreCompleto { get; set; } public string CorreoElectronico { get; set; } public DateTime FechaCreacion { get; set; } }
+
+    private List<PendienteDto> listaPendientes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 1. SEGURIDAD: Solo Admin (1) o Staff con permiso
+        if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+
+        if (Sesion.Usuario.TipoUsuarioID != 1 && !Sesion.TienePermiso("MANAGE_USERS"))
+        {
+            await App.Current.MainPage.DisplayAlert("Acceso Denegado", "No tienes permisos para gestionar solicitudes.", "OK");
+            Nav.NavigateTo("/home");
+            return;
+        }
+
+        await CargarPendientes();
+    }
+
+    private async Task CargarPendientes()
+    {
+        try
+        {
+            listaPendientes = await Http.GetFromJsonAsync<List<PendienteDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/usuariosapi/pendientes/{Sesion.Usuario.BoxID}");
+        }
+        catch { listaPendientes = new List<PendienteDto>(); }
+    }
+
+    private async Task Aprobar(PendienteDto u)
+    {
+        try
+        {
+            var r = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/usuariosapi/aprobar/{u.UsuarioID}", null);
+            if (r.IsSuccessStatusCode)
+            {
+                listaPendientes.Remove(u);
+                await App.Current.MainPage.DisplayAlert("Listo", $"{u.NombreCompleto} ahora es miembro activo.", "OK");
+            }
+        }
+        catch { }
+    }
+
+    private async Task Rechazar(PendienteDto u)
+    {
+        bool confirm = await App.Current.MainPage.DisplayAlert("Rechazar", "¿Seguro que quieres rechazar y eliminar esta solicitud?", "Sí", "Cancelar");
+        if (!confirm) return;
+
+        try
+        {
+            var r = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/usuariosapi/rechazar/{u.UsuarioID}", null);
+            if (r.IsSuccessStatusCode) listaPendientes.Remove(u);
+        }
+        catch { }
+    }
+
+    private void Volver() => Nav.NavigateTo("/home");
+}

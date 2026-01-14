@@ -62,7 +62,7 @@
                     </div>
             }
 
-        @if (Sesion.Usuario != null && Sesion.Usuario.TipoUsuarioID == 1)
+        @if (Sesion.Usuario != null && Sesion.Usuario.TipoUsuarioID == 1 || Sesion.Usuario.TipoUsuarioID == 3)
         {
             <div class="admin-actions mt-4 mb-4">
                 <button class="btn btn-danger w-100" @onclick="EliminarWodActual">
@@ -208,7 +208,7 @@
             // Formato seguro para URL: yyyy-MM-dd
             var fechaStr = DateTime.Now.ToString("yyyy-MM-dd");
 
-            var response = await Http.DeleteAsync($"api/wod/eliminar-dia/{boxId}/{fechaStr}");
+            var response = await Http.DeleteAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/eliminar-dia/{boxId}/{fechaStr}");
 
             if (response.IsSuccessStatusCode)
             {

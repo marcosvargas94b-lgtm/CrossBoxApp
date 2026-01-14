@@ -1,0 +1,365 @@
+﻿@page "/live-dashboard"
+@using CrossBoxApp.Models
+@using CrossBoxApp.Models.Services
+@using Microsoft.AspNetCore.SignalR.Client
+@using static CrossBoxApp.Components.Pages.LiveLobby 
+@inject LiveSessionState LiveState
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject SesionService Sesion
+@inject IJSRuntime JS 
+@implements IAsyncDisposable
+
+<div class="dashboard-container">
+    
+    <audio id="audio-beep" src="sonidos/beep.mp3" preload="auto"></audio>
+    <audio id="audio-go" src="sonidos/go.mp3" preload="auto"></audio>
+    <audio id="audio-medio" src="sonidos/medio.mp3" preload="auto"></audio>
+
+    <div class="panel timer-panel @(verTimer ? "" : "collapsed")">
+        @if (verTimer)
+        {
+            <div class="panel-header">
+                <div class="header-left">
+                    <span><i class="fas fa-stopwatch"></i> TIMER</span>
+                    @if (!timerCorriendo)
+                    {
+                        <button class="btn-config ml-2" @onclick="() => modoConfiguracion = !modoConfiguracion">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    }
+                </div>
+                <button class="btn-toggle" @onclick="() => verTimer = false"><i class="fas fa-compress-arrows-alt"></i></button>
+            </div>
+
+            <div class="panel-content center-content">
+                @if (modoConfiguracion && !timerCorriendo)
+                {
+                    <div class="config-box slide-in">
+                        <div class="config-tabs">
+                            <button class="@(tipoTimer == 1 ? "active" : "")" @onclick="() => CambiarTipoTimer(1)">CUENTA ATRÁS</button>
+                            <button class="@(tipoTimer == 2 ? "active" : "")" @onclick="() => CambiarTipoTimer(2)">INTERVALOS</button>
+                        </div>
+                        <div class="inputs-grid">
+                            <div class="input-group">
+                                <label>TIEMPO (TRABAJO)</label>
+                                <div class="time-inputs">
+                                    <input type="number" @bind="inputMinutos" placeholder="00" min="0" /><span>:</span><input type="number" @bind="inputSegundos" placeholder="00" min="0" max="59" />
+                                </div>
+                            </div>
+                            @if (tipoTimer == 2)
+                            {
+                                <div class="input-group"><label>RONDAS</label><input type="number" @bind="inputRondas" class="single-input" min="1" /></div>
+                                <div class="input-group">
+                                    <label>DESCANSO</label>
+                                    <div class="time-inputs"><input type="number" @bind="inputMinDescanso" placeholder="00" min="0" /><span>:</span><input type="number" @bind="inputSegDescanso" placeholder="00" min="0" max="59" /></div>
+                                </div>
+                            }
+                        </div>
+                        <button class="btn-save-timer" @onclick="GuardarConfiguracion"><i class="fas fa-check"></i> LISTO</button>
+                    </div>
+                }
+                else
+                {
+                    @if (enConteoPrevio)
+                    {
+                        <div class="prep-display pulse-animation">
+                            <div class="prep-label">PREPARADOS</div>
+                            <div class="prep-number">@tiempoPrevio</div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="status-badge @(enDescanso ? "rest" : "work")">
+                            @(enDescanso ? "DESCANSO" : "WORK")
+                        </div>
+
+                        <div class="timer-display @(timerCorriendo ? (enDescanso ? "resting" : "running") : "")">
+                            @FormatoTiempo(tiempoRestanteActual)
+                        </div>
+                        
+                        @if (totalRondas > 1)
+                        {
+                            <div class="round-counter @(rondaActual == totalRondas ? "last-round-alert" : "")">
+                                @if(rondaActual == totalRondas) { <span class="warning-icon">⚠️ FINAL </span> }
+                                RONDA <span class="big-round">@rondaActual</span> / @totalRondas
+                            </div>
+                        }
+                    }
+
+                    <div class="timer-controls">
+                        @if (!timerCorriendo) { <button class="btn-control start" @onclick="IniciarSecuencia"><i class="fas fa-play"></i></button> }
+                        else { <button class="btn-control stop" @onclick="PausarTimer"><i class="fas fa-pause"></i></button> }
+                        <button class="btn-control reset" @onclick="ResetTimer"><i class="fas fa-undo"></i></button>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="vertical-bar" @onclick="() => verTimer = true"><span class="v-text">TIMER</span><i class="fas fa-stopwatch v-icon"></i></div>
+        }
+    </div>
+
+    <div class="panel wod-panel @(verWod ? "" : "collapsed")">
+        @if (verWod) {
+            <div class="panel-header"><span>WOD HOY</span><button class="btn-toggle" @onclick="()=>verWod=false"><i class="fas fa-compress-arrows-alt"></i></button></div>
+            <div class="panel-content"> <p style="color:#666;text-align:center">WOD Cargado</p> </div>
+        } else { <div class="vertical-bar" @onclick="()=>verWod=true"><span class="v-text">WORKOUT</span></div> }
+    </div>
+
+    <div class="panel list-panel @(verLista ? "" : "collapsed")">
+        @if (verLista) {
+            <div class="panel-header"><span>CLASE</span><button class="btn-toggle" @onclick="()=>verLista=false"><i class="fas fa-compress-arrows-alt"></i></button></div>
+            <div class="panel-content"> </div>
+            <button class="btn-terminate" @onclick="TerminarClase">TERMINAR CLASE</button>
+        } else { <div class="vertical-bar" @onclick="()=>verLista=true"><span class="v-text">ATLETAS</span></div> }
+    </div>
+
+</div>
+
+<style>
+    /* Estilos nuevos para Preparación */
+    .prep-display { text-align: center; margin-bottom: 20px; }
+    .prep-label { color: #aaa; font-size: 1.5rem; letter-spacing: 5px; font-family: 'Oswald'; margin-bottom: 10px; }
+    .prep-number { font-size: 10rem; color: #F8C545; font-family: 'Oswald'; font-weight: bold; line-height: 1; text-shadow: 0 0 30px rgba(248, 197, 69, 0.5); }
+    .pulse-animation { animation: pulseBig 1s infinite; }
+    
+    @@keyframes pulseBig { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+    /* Estilos Alertas */
+    .last-round-alert { color: #dc3545 !important; animation: pulseRed 1s infinite; }
+    .warning-icon { font-weight: bold; margin-right: 10px; }
+    @@keyframes pulseRed { 0% { transform: scale(1); } 50% { transform: scale(1.05); text-shadow: 0 0 10px red; } 100% { transform: scale(1); } }
+
+    /* (TUS ESTILOS ORIGINALES DEL DASHBOARD AQUÍ - MANTENLOS) */
+    .dashboard-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0d0d0d; color: white; display: flex; overflow: hidden; font-family: 'Roboto', sans-serif; }
+    .panel { flex: 1; border-right: 1px solid #333; display: flex; flex-direction: column; transition: all 0.3s ease; background: #111; overflow: hidden; }
+    .panel.collapsed { flex: 0 0 60px; background: #000; cursor: pointer; }
+    .panel.collapsed:hover { background: #1a1a1a; }
+    .panel-header { height: 50px; background: #1a1a1a; border-bottom: 2px solid #F8C545; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; font-family: 'Oswald'; font-size: 1.2rem; color: #F8C545; white-space: nowrap; }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .btn-config { background: none; border: none; color: #888; font-size: 1rem; cursor: pointer; transition: 0.2s; }
+    .btn-config:hover { color: white; transform: rotate(90deg); }
+    .btn-toggle { background: none; border: none; color: white; cursor: pointer; }
+    .vertical-bar { height: 100%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; }
+    .v-text { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); font-family: 'Oswald'; font-size: 1.5rem; letter-spacing: 3px; white-space: nowrap; }
+    .v-icon { margin-bottom: 20px; font-size: 1.5rem; color: #F8C545; }
+    .vertical-bar:hover .v-text { color: #F8C545; }
+    .panel-content { flex: 1; padding: 20px; overflow-y: auto; }
+    .center-content { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .status-badge { font-family: 'Oswald'; font-size: 1.5rem; padding: 5px 20px; border-radius: 5px; margin-bottom: 10px; letter-spacing: 2px; }
+    .status-badge.work { color: #28a745; border: 1px solid #28a745; background: rgba(40,167,69,0.1); }
+    .status-badge.rest { color: #dc3545; border: 1px solid #dc3545; background: rgba(220,53,69,0.1); }
+    .timer-display { font-size: 8rem; font-family: 'Oswald'; font-weight: bold; color: white; line-height: 1; margin-bottom: 10px; text-shadow: 0 0 20px rgba(255,255,255,0.1); }
+    .timer-display.running { color: #28a745; text-shadow: 0 0 30px rgba(40, 167, 69, 0.4); }
+    .timer-display.resting { color: #dc3545; text-shadow: 0 0 30px rgba(220, 53, 69, 0.4); }
+    .round-counter { font-size: 1.5rem; color: #aaa; margin-bottom: 30px; font-family: 'Oswald'; }
+    .big-round { color: #F8C545; font-size: 2.5rem; font-weight: bold; margin: 0 5px; }
+    .timer-controls { display: flex; gap: 20px; margin-bottom: 40px; }
+    .btn-control { width: 80px; height: 80px; border-radius: 50%; border: none; font-size: 2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s; }
+    .start { background: #28a745; color: white; } .stop { background: #dc3545; color: white; } .reset { background: #333; color: white; }
+    .btn-control:active { transform: scale(0.9); }
+    .config-box { background: #1a1a1a; padding: 25px; border-radius: 15px; border: 2px solid #F8C545; width: 100%; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); animation: slideIn 0.3s; }
+    .config-tabs { display: flex; margin-bottom: 25px; background: #0d0d0d; border-radius: 10px; padding: 5px; }
+    .config-tabs button { flex: 1; background: none; border: none; color: #666; padding: 10px; font-weight: bold; cursor: pointer; border-radius: 8px; transition: all 0.3s; font-family: 'Oswald'; letter-spacing: 1px; }
+    .config-tabs button.active { background: #F8C545; color: black; box-shadow: 0 4px 10px rgba(248, 197, 69, 0.3); }
+    .inputs-grid { display: flex; flex-direction: column; gap: 20px; margin-bottom: 25px; }
+    .input-group label { display: block; color: #F8C545; font-size: 0.9rem; margin-bottom: 8px; text-align: center; font-weight: bold; letter-spacing: 1px; }
+    .time-inputs { display: flex; align-items: center; justify-content: center; gap: 10px; background: #0d0d0d; padding: 10px; border-radius: 12px; border: 1px solid #333; }
+    .time-inputs input { width: 90px; height: 70px; background: transparent; border: none; color: white; font-size: 3rem; font-family: 'Oswald'; text-align: center; border-bottom: 2px solid #333; }
+    .time-inputs input:focus { border-bottom-color: #F8C545; outline: none; }
+    .time-inputs span { font-size: 3rem; font-weight: bold; color: #666; margin-top: -10px; }
+    .single-input { width: 100%; height: 50px; background: #0d0d0d; border: 1px solid #333; color: white; text-align: center; font-size: 1.5rem; font-family: 'Oswald'; border-radius: 8px; }
+    .single-input:focus { border-color: #F8C545; outline: none; }
+    .btn-save-timer { width: 100%; background: linear-gradient(45deg, #F8C545, #ffb300); color: black; border: none; padding: 15px; font-weight: bold; border-radius: 8px; font-family: 'Oswald'; font-size: 1.2rem; cursor: pointer; transition: transform 0.2s; }
+    .btn-save-timer:active { transform: scale(0.98); }
+    .btn-terminate { width: 100%; padding: 20px; background: #dc3545; color: white; font-weight: bold; font-family: 'Oswald'; border: none; cursor: pointer; }
+    @@keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+@code {
+    // VISIBILIDAD
+    private bool verTimer = true;
+    private bool verWod = true;
+    private bool verLista = true;
+    private bool modoConfiguracion = false;
+
+    // CONFIG TIMER
+    private int tipoTimer = 1; 
+    private int inputMinutos = 10; private int inputSegundos = 0;
+    private int inputRondas = 1; private int inputMinDescanso = 0; private int inputSegDescanso = 0;
+
+    // ESTADO DEL TIMER
+    private System.Timers.Timer _timer;
+    private bool timerCorriendo = false;
+    private int tiempoRestanteActual = 0;
+    private int rondaActual = 1;
+    private int totalRondas = 1;
+    private bool enDescanso = false;
+    
+    // PRE-START (7 SEGUNDOS)
+    private bool enConteoPrevio = false;
+    private int tiempoPrevio = 7;
+
+    // VARIABLES PARA LÓGICA
+    private int tiempoTotalSegmentoActual = 0; // Para el sonido "medio"
+    private int tiempoTrabajoConfig = 0;
+    private int tiempoDescansoConfig = 0;
+
+    protected override void OnInitialized()
+    {
+        _timer = new System.Timers.Timer(1000);
+        _timer.Elapsed += (sender, e) => Tick();
+        _timer.AutoReset = true;
+        
+        GuardarConfiguracion(); // Inicializar con valores default
+    }
+
+    // --- SONIDOS ---
+    private async Task Sonar(string idAudio)
+    {
+        try { await JS.InvokeVoidAsync("reproducirSonido", idAudio); } catch { }
+    }
+
+    // --- LÓGICA DE PREPARACIÓN Y TIMER ---
+    private void IniciarSecuencia()
+    {
+        // 1. Activar conteo previo
+        enConteoPrevio = true;
+        tiempoPrevio = 7;
+        
+        // 2. Arrancar el timer real
+        _timer.Start();
+        timerCorriendo = true;
+    }
+
+    private void PausarTimer() { _timer.Stop(); timerCorriendo = false; }
+    
+    private void ResetTimer()
+    {
+        _timer.Stop();
+        timerCorriendo = false;
+        enConteoPrevio = false;
+        rondaActual = 1; enDescanso = false;
+        tiempoRestanteActual = tiempoTrabajoConfig;
+        tiempoTotalSegmentoActual = tiempoTrabajoConfig;
+    }
+
+    private void GuardarConfiguracion()
+    {
+        tiempoTrabajoConfig = (inputMinutos * 60) + inputSegundos;
+        tiempoDescansoConfig = (inputMinDescanso * 60) + inputSegDescanso;
+        totalRondas = (tipoTimer == 1) ? 1 : inputRondas;
+        ResetTimer();
+        modoConfiguracion = false;
+    }
+
+    // --- EL CORAZÓN DEL RELOJ ---
+    private void Tick()
+    {
+        // CASO 1: Estamos en el conteo de PREPARACIÓN (3, 2, 1)
+        if (enConteoPrevio)
+        {
+            if (tiempoPrevio > 0)
+            {
+                tiempoPrevio--;
+                // Sonido en 3, 2, 1
+                if (tiempoPrevio <= 3 && tiempoPrevio > 0) Sonar("audio-beep");
+            }
+            else
+            {
+                // FIN PREPARACIÓN -> ARRANCA EL WORKOUT
+                enConteoPrevio = false;
+                
+                // Reiniciamos el tiempo para empezar el bloque limpio
+                // Esto asegura que el primer segundo del WOD se vea completo
+                tiempoRestanteActual = tiempoTrabajoConfig; 
+                tiempoTotalSegmentoActual = tiempoTrabajoConfig;
+                
+                Sonar("audio-go");
+            }
+        }
+        else
+        {
+            // CASO 2: Timer en Curso
+            if (tiempoRestanteActual > 0)
+            {
+                // 1. PRIMERO RESTAMOS (Para que el audio coincida con lo que ves)
+                tiempoRestanteActual--;
+
+                // 2. LUEGO CHECAMOS SONIDOS
+                
+                // A) Sonido de Mitad de Tiempo 
+                // RESTRICCIÓN: Solo si el bloque dura 10 segundos o más
+                if (!enDescanso && tiempoTotalSegmentoActual >= 10 && tiempoRestanteActual == (tiempoTotalSegmentoActual / 2))
+                {
+                    Sonar("audio-medio");
+                }
+
+                // B) Sonido de 5 segundos finales (5, 4, 3, 2, 1)
+                if (tiempoRestanteActual <= 5 && tiempoRestanteActual > 0)
+                {
+                    Sonar("audio-beep");
+                }
+            }
+            else
+            {
+                // TIEMPO TERMINADO (Llegó a 0)
+                GestionarCambioDeRonda();
+            }
+        }
+        
+        // 3. ACTUALIZAR PANTALLA
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void GestionarCambioDeRonda()
+    {
+        if (!enDescanso) // Terminó el Trabajo
+        {
+            if (tipoTimer == 2 && tiempoDescansoConfig > 0 && rondaActual <= totalRondas)
+            {
+                if(rondaActual < totalRondas) // Hay descanso intermedio
+                {
+                    enDescanso = true; 
+                    tiempoRestanteActual = tiempoDescansoConfig;
+                    tiempoTotalSegmentoActual = tiempoDescansoConfig; 
+                    Sonar("audio-go"); // Sonido cambio
+                }
+                else { TerminarTodo(); }
+            }
+            else { SiguienteRondaOFin(); }
+        }
+        else // Terminó el Descanso
+        {
+            enDescanso = false;
+            SiguienteRondaOFin();
+        }
+    }
+
+    private void SiguienteRondaOFin()
+    {
+        if (rondaActual < totalRondas)
+        {
+            rondaActual++;
+            tiempoRestanteActual = tiempoTrabajoConfig;
+            tiempoTotalSegmentoActual = tiempoTrabajoConfig;
+            enDescanso = false;
+            Sonar("audio-go"); // Sonido inicio ronda
+        }
+        else { TerminarTodo(); }
+    }
+
+    private void TerminarTodo()
+    {
+        _timer.Stop(); timerCorriendo = false;
+        Sonar("audio-go"); // Sonido final
+    }
+
+    // --- HELPERS ---
+    private string FormatoTiempo(int t) => $"{t / 60:00}:{t % 60:00}";
+    private void CambiarTipoTimer(int t) { tipoTimer = t; if (t == 2) { inputMinutos = 0; inputSegundos = 20; inputRondas = 8; inputMinDescanso = 0; inputSegDescanso = 10; } else { inputMinutos = 10; inputSegundos = 0; inputRondas = 1; } }
+    private void TerminarClase() { Nav.NavigateTo("/resumen-clase"); }
+    public async ValueTask DisposeAsync() { if (_timer != null) { _timer.Stop(); _timer.Dispose(); } }
+}

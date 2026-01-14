@@ -29,20 +29,46 @@
             @if (mostrarMenuPrincipal)
             {
                 <div class="main-dropdown">
+                    
                     <div class="dropdown-header">GENERAL</div>
                     <div class="dropdown-item" @onclick="IrAPerfil"><i class="fas fa-user-edit"></i> Modificar Perfil</div>
-                    <div class="dropdown-item" style="color:#d9534f !important;"><i class="fas fa-stopwatch" style="color:#d9534f"></i> LIVE</div>
 
-                    @if (EsAdmin)
+                    @if (Sesion.Usuario != null && (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.Usuario.TipoUsuarioID == 3))
                     {
                         <div class="dropdown-divider"></div>
-                        <div class="dropdown-header admin-header">ADMINISTRADOR</div>
-                        <div class="dropdown-item" @onclick="AbrirModalWod"><i class="fas fa-hammer"></i> Programar WOD</div>
-                        <div class="dropdown-item" @onclick='() => NavegarA("test")'><i class="fas fa-flask"></i> Configurar Tests</div>
-                        <div class="dropdown-item" @onclick='() => NavegarA("usuarios")'><i class="fas fa-users"></i> Gestionar Usuarios</div>
-                        <div class="dropdown-item" @onclick="AbrirCrearAviso"><i class="fas fa-bullhorn"></i> Publicar Avisos</div>
-                        
-                        <div class="dropdown-item" @onclick="AbrirGestionModulos"><i class="fas fa-toggle-on"></i> Módulos</div>
+                        <div class="dropdown-header admin-header">ADMINISTRACIÓN</div>
+                        <div class="dropdown-item" style="color:#d9534f !important;" @onclick='() => Nav.NavigateTo("/live-lobby")'><i class="fas fa-stopwatch" style="color:#d9534f"></i> LIVE</div>
+
+                        @if (Sesion.TienePermiso("MANAGE_WOD"))
+                        {
+                            <div class="dropdown-item" @onclick="AbrirModalWod"><i class="fas fa-hammer"></i> Programar WOD</div>
+                            <div class="dropdown-item" @onclick='() => NavegarA("test")'><i class="fas fa-flask"></i> Configurar Tests</div>
+                        }
+
+                        @if (Sesion.TienePermiso("MANAGE_USERS"))
+                        {
+                            <div class="dropdown-item" @onclick='() => NavegarA("usuarios")'><i class="fas fa-users"></i> Gestionar Usuarios</div>
+                            <div class="dropdown-item" @onclick='() => Nav.NavigateTo("/solicitudes")'><i class="fas fa-user-check"></i> Solicitudes de Acceso</div>
+                        }
+
+                        @if (Sesion.TienePermiso("MANAGE_AVISOS"))
+                        {
+                            <div class="dropdown-item" @onclick="AbrirCrearAviso"><i class="fas fa-bullhorn"></i> Publicar Avisos</div>
+                        }
+
+                        @if (EsAdmin) 
+                        {
+                            <div class="dropdown-divider" style="opacity: 0.3;"></div>
+                            <div class="dropdown-header" style="color:#F8C545; font-size:0.6rem;">DUEÑO</div>
+                            
+                            <div class="dropdown-item" @onclick='() => Nav.NavigateTo("/staff-config")'>
+                                <i class="fas fa-id-badge"></i> Gestión de Equipo
+                            </div>
+                            
+                            <div class="dropdown-item" @onclick="AbrirGestionModulos">
+                                <i class="fas fa-toggle-on"></i> Módulos del Box
+                            </div>
+                        }
                     }
                     
                     <div class="dropdown-divider"></div>
@@ -107,6 +133,16 @@
             </div>
         }
 
+
+        @if (EstaActivo("LEADERBOARD_HOY"))
+        {
+            <div class="menu-card yellow-highlight" @onclick='() => Nav.NavigateTo("/leaderboard-hoy")'>
+                <i class="fas fa-trophy card-icon"></i>
+                <h3>RESULTADOS</h3>
+                <p>Leaderboard de Hoy</p>
+                <div class="live-badge">HOY</div>
+            </div>
+        }
         @if (EstaActivo("RUNNING"))
         {
             <div class="menu-card" @onclick='() => Nav.NavigateTo("/mi-running")'>
@@ -119,57 +155,49 @@
     <div class="footer-brand">@@@NombreBox</div>
 </div>
 
-@if (mostrarModalModulos)
-{
-    <div class="modal-overlay">
-        <div class="modal-content custom-modal" style="max-height: 80vh;">
-            <div class="modal-header">
-                <h5 style="margin:0; color:#F8C545; font-weight:bold;">CONFIGURAR MÓDULOS</h5>
-                <button class="btn-close-custom" @onclick="() => mostrarModalModulos = false"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body" style="overflow-y:auto;">
-                <p style="color:#ccc; font-size:0.8rem; margin-bottom:15px;">Apaga los módulos que no quieras que vean tus atletas.</p>
-                
-                @if (listaConfiguracion != null)
-                {
-                    @foreach (var mod in listaConfiguracion)
-                    {
-                        <div class="module-row" @onclick="() => ToggleModulo(mod)">
-                            <span class="mod-name">@mod.NombreVisible</span>
-                            <div class="switch-track @(mod.Activo ? "on" : "off")">
-                                <div class="switch-thumb"></div>
-                            </div>
-                        </div>
-                    }
-                }
-                else
-                {
-                    <div class="text-center text-warning">Cargando...</div>
-                }
-            </div>
-            <div class="modal-footer">
-                <button class="btn-confirm" @onclick="() => mostrarModalModulos = false">LISTO</button>
-            </div>
-        </div>
-    </div>
-}
-
-@if (mostrarModalWod) { /* ... tu codigo de modal wod ... */ <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.9); z-index: 2000;" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content" style="background-color: #222; border: 1px solid #F8C545; color: white;"><div class="modal-header"><h5 class="modal-title" style="color: #F8C545;">Programación WOD</h5><button type="button" class="btn-close btn-close-white" @onclick="() => mostrarModalWod = false"></button></div><div class="modal-body"><input type="date" @bind="nuevoWod.FechaProgramacion" class="form-control input-dark mb-3" />@for (int i = 0; i < nuevoWod.Bloques.Count; i++){var indexBloque = i; var bloque = nuevoWod.Bloques[i];<div class="card p-2 mb-3" style="background-color: #333; border: 1px solid #F8C545;"><div class="d-flex justify-content-between align-items-center mb-2"><span style="color:#F8C545; font-weight:bold;">BLOQUE #@(indexBloque + 1)</span><button class="btn btn-sm btn-danger" @onclick="() => EliminarBloque(bloque)"><i class="fas fa-trash"></i></button></div><select @bind="bloque.SegmentoClaseID" class="form-control input-dark mb-2"><option value="">-- Segmento --</option>@foreach (var seg in listaSegmentos) { <option value="@seg.Id">@seg.Nombre</option> }</select>@foreach (var ejercicio in bloque.Ejercicios){<div class="input-group mb-2"><input type="text" @bind="ejercicio.PesoRepeticiones" class="form-control input-dark" placeholder="Peso/Reps" style="width: 30%;" /><input type="text" @bind="ejercicio.Descripcion" class="form-control input-dark" placeholder="Descripción" /><button class="btn btn-outline-danger" @onclick="() => EliminarEjercicio(bloque, ejercicio)">X</button></div>}<button class="btn btn-sm btn-outline-light w-100" @onclick="() => AgregarEjercicio(bloque)">+ Ejercicio</button></div>}<button class="btn btn-outline-warning w-100 py-2" @onclick="AgregarBloque">+ Bloque</button></div><div class="modal-footer"><button class="btn btn-warning" style="background-color:#F8C545; font-weight:bold;" @onclick="GuardarProgramacion">Guardar</button></div></div></div></div> }
-@if (mostrarModalCrearAviso) { /* ... tu codigo de modal aviso ... */ <div class="modal-overlay"><div class="modal-content custom-modal"><div class="modal-header"><h5 style="margin:0; color: #F8C545; font-weight:bold; font-family:'Oswald';"><i class="fas fa-bullhorn" style="margin-right:8px;"></i> NUEVO AVISO</h5><button class="btn-close-custom" @onclick="() => mostrarModalCrearAviso = false"><i class="fas fa-times"></i></button></div><div class="modal-body"><label style="color: white !important; font-weight: bold; margin-bottom: 5px; display: block;">Título:</label><input type="text" @bind="nuevoAviso.Titulo" class="form-control input-dark mb-3" placeholder="Ej: Horario Festivo" style="color: white;" /><label style="color: white !important; font-weight: bold; margin-bottom: 5px; display: block;">Mensaje:</label><textarea @bind="nuevoAviso.Mensaje" class="form-control input-dark mb-3" rows="5" placeholder="Escribe aquí la información..." style="color: white;"></textarea></div><div class="modal-footer"><button class="btn-cancel" @onclick="() => mostrarModalCrearAviso = false">Cancelar</button><button class="btn-confirm" @onclick="PublicarAviso">PUBLICAR</button></div></div></div> }
-@if (mostrarAvisoPopUp && ultimoAviso != null) { /* ... tu codigo de popup ... */ <div class="modal-overlay pop-up-effect"><div class="modal-content aviso-content"><div class="aviso-icon"><i class="fas fa-bullhorn"></i></div><h3 class="aviso-title">@ultimoAviso.Titulo</h3><div class="aviso-date">@ultimoAviso.FechaCreacion.GetValueOrDefault().ToString("dd/MM/yyyy")</div><div class="aviso-body">@ultimoAviso.Mensaje</div><button class="btn-ok" @onclick="CerrarAviso">ENTERADO</button></div></div> }
+@if (mostrarModalModulos) { <div class="modal-overlay"><div class="modal-content custom-modal" style="max-height: 80vh;"><div class="modal-header"><h5 style="margin:0; color:#F8C545; font-weight:bold;">CONFIGURAR MÓDULOS</h5><button class="btn-close-custom" @onclick="() => mostrarModalModulos = false"><i class="fas fa-times"></i></button></div><div class="modal-body" style="overflow-y:auto;"><p style="color:#ccc; font-size:0.8rem; margin-bottom:15px;">Apaga los módulos que no quieras que vean tus atletas.</p>@if (listaConfiguracion != null){@foreach (var mod in listaConfiguracion){<div class="module-row" @onclick="() => ToggleModulo(mod)"><span class="mod-name">@mod.NombreVisible</span><div class="switch-track @(mod.Activo ? "on" : "off")"><div class="switch-thumb"></div></div></div>}}else{<div class="text-center text-warning">Cargando...</div>}</div><div class="modal-footer"><button class="btn-confirm" @onclick="() => mostrarModalModulos = false">LISTO</button></div></div></div> }
+@if (mostrarModalWod) { <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.9); z-index: 2000;" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content" style="background-color: #222; border: 1px solid #F8C545; color: white;"><div class="modal-header"><h5 class="modal-title" style="color: #F8C545;">Programación WOD</h5><button type="button" class="btn-close btn-close-white" @onclick="() => mostrarModalWod = false"></button></div><div class="modal-body"><input type="date" @bind="nuevoWod.FechaProgramacion" class="form-control input-dark mb-3" />@for (int i = 0; i < nuevoWod.Bloques.Count; i++){var indexBloque = i; var bloque = nuevoWod.Bloques[i];<div class="card p-2 mb-3" style="background-color: #333; border: 1px solid #F8C545;"><div class="d-flex justify-content-between align-items-center mb-2"><span style="color:#F8C545; font-weight:bold;">BLOQUE #@(indexBloque + 1)</span><button class="btn btn-sm btn-danger" @onclick="() => EliminarBloque(bloque)"><i class="fas fa-trash"></i></button></div><select @bind="bloque.SegmentoClaseID" class="form-control input-dark mb-2"><option value="">-- Segmento --</option>@foreach (var seg in listaSegmentos) { <option value="@seg.Id">@seg.Nombre</option> }</select>@foreach (var ejercicio in bloque.Ejercicios){<div class="input-group mb-2"><input type="text" @bind="ejercicio.PesoRepeticiones" class="form-control input-dark" placeholder="Peso/Reps" style="width: 30%;" /><input type="text" @bind="ejercicio.Descripcion" class="form-control input-dark" placeholder="Descripción" /><button class="btn btn-outline-danger" @onclick="() => EliminarEjercicio(bloque, ejercicio)">X</button></div>}<button class="btn btn-sm btn-outline-light w-100" @onclick="() => AgregarEjercicio(bloque)">+ Ejercicio</button></div>}<button class="btn btn-outline-warning w-100 py-2" @onclick="AgregarBloque">+ Bloque</button></div><div class="modal-footer"><button class="btn btn-warning" style="background-color:#F8C545; font-weight:bold;" @onclick="GuardarProgramacion">Guardar</button></div></div></div></div> }
+@if (mostrarModalCrearAviso) { <div class="modal-overlay"><div class="modal-content custom-modal"><div class="modal-header"><h5 style="margin:0; color: #F8C545; font-weight:bold; font-family:'Oswald';"><i class="fas fa-bullhorn" style="margin-right:8px;"></i> NUEVO AVISO</h5><button class="btn-close-custom" @onclick="() => mostrarModalCrearAviso = false"><i class="fas fa-times"></i></button></div><div class="modal-body"><label style="color: white !important; font-weight: bold; margin-bottom: 5px; display: block;">Título:</label><input type="text" @bind="nuevoAviso.Titulo" class="form-control input-dark mb-3" placeholder="Ej: Horario Festivo" style="color: white;" /><label style="color: white !important; font-weight: bold; margin-bottom: 5px; display: block;">Mensaje:</label><textarea @bind="nuevoAviso.Mensaje" class="form-control input-dark mb-3" rows="5" placeholder="Escribe aquí la información..." style="color: white;"></textarea></div><div class="modal-footer"><button class="btn-cancel" @onclick="() => mostrarModalCrearAviso = false">Cancelar</button><button class="btn-confirm" @onclick="PublicarAviso">PUBLICAR</button></div></div></div> }
+@if (mostrarAvisoPopUp && ultimoAviso != null) { <div class="modal-overlay pop-up-effect"><div class="modal-content aviso-content"><div class="aviso-icon"><i class="fas fa-bullhorn"></i></div><h3 class="aviso-title">@ultimoAviso.Titulo</h3><div class="aviso-date">@ultimoAviso.FechaCreacion.GetValueOrDefault().ToString("dd/MM/yyyy")</div><div class="aviso-body">@ultimoAviso.Mensaje</div><button class="btn-ok" @onclick="CerrarAviso">ENTERADO</button></div></div> }
 
 <style>
+
+    .yellow-highlight {
+        background: #F8C545 !important;
+        color: black !important;
+        border: 2px solid white;
+        animation: pulseBorder 2s infinite; /* Aquí llamamos a la animación */
+        position: relative;
+    }
+
+        .yellow-highlight h3, .yellow-highlight p, .yellow-highlight i {
+            color: black !important;
+        }
+
+    .live-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: red;
+        color: white;
+        font-size: 0.6rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+
+    @@keyframes pulseBorder {0% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(248, 197, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0); }}
+
     /* Estilos del Switch de Módulos */
     .module-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #333; cursor: pointer; }
     .module-row:hover { background: #222; }
     .mod-name { color: white; font-weight: bold; font-family: 'Roboto'; }
-    
     .switch-track { width: 50px; height: 26px; border-radius: 13px; background: #444; position: relative; transition: background 0.3s; }
     .switch-track.on { background: #28a745; }
     .switch-thumb { width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: transform 0.3s; }
     .switch-track.on .switch-thumb { transform: translateX(24px); }
 
-    /* (Resto de tus estilos se mantienen igual) */
+    /* Estilos Generales (Iguales a los anteriores) */
     .navbar-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; font-family: 'Oswald'; position: relative; z-index: 100; }
     .brand { font-size: 1.5rem; font-weight: bold; }
     .right-actions { display: flex; align-items: center; gap: 20px; }
@@ -239,19 +267,20 @@
     private Avisos ultimoAviso;
     private static bool avisoVistoEnSesion = false;
     
-    // LISTA DE MÓDULOS (NUEVO)
+    // LISTA DE MÓDULOS
     private List<ModuloConfig> listaConfiguracion = new List<ModuloConfig>();
 
     protected override async Task OnInitializedAsync()
     {
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+        
+        // Es Admin si es Tipo 1 (Dueño)
         EsAdmin = Sesion.Usuario.TipoUsuarioID == 1; 
 
         await CargarNombreBox();
         await CargarNotificaciones();
         await CargarSegmentos();
         
-        // --- CARGAR CONFIGURACIÓN DE MÓDULOS ---
         await CargarConfiguracionModulos();
 
         if (!avisoVistoEnSesion) await CargarUltimoAviso();
@@ -259,56 +288,20 @@
 
     private async Task CargarNombreBox()
     {
-        try
-        {
-            // Asegúrate de crear esta clase DTO o usar un objeto dinámico si prefieres
-            var response = await Http.GetFromJsonAsync<BoxDto>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/nombre-box/{Sesion.Usuario.BoxID}");
-            if (response != null && !string.IsNullOrEmpty(response.Nombre))
-            {
-                NombreBox = response.Nombre.ToUpper();
-            }
-        }
-        catch { /* Si falla, se queda el valor por defecto */ }
-    }
-    
-    private void AbrirGestionModulos()
-    {
-        mostrarMenuPrincipal = false;
-        mostrarModalModulos = true;
-    }
-
-    private async Task CargarConfiguracionModulos()
-    {
         try {
-            // Asegúrate de que este endpoint exista en tu API (Paso 2)
-            listaConfiguracion = await Http.GetFromJsonAsync<List<ModuloConfig>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/modulos/{Sesion.Usuario.BoxID}");
+            var response = await Http.GetFromJsonAsync<Boxes>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/nombre-box/{Sesion.Usuario.BoxID}");
+            if (response != null && !string.IsNullOrEmpty(response.Nombre)) { NombreBox = response.Nombre.ToUpper(); }
         } catch { }
     }
-
-    private async Task ToggleModulo(ModuloConfig mod)
-    {
-        mod.Activo = !mod.Activo; // Cambiar en UI inmediatamente
-        try {
-            await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/actualizar", mod);
-        } catch { /* Manejar error silenciosamente o revertir */ }
-    }
-
-    // Método auxiliar para saber si pintar la tarjeta
-    private bool EstaActivo(string clave)
-    {
-        // Si la lista aún no carga, asumimos todo activo por defecto para no parpadear
-        if (listaConfiguracion == null || listaConfiguracion.Count == 0) return true;
-        
-        var mod = listaConfiguracion.FirstOrDefault(m => m.ModuloClave == clave);
-        // Si no existe la config, mostramos (true). Si existe, devolvemos su estado.
-        return mod == null ? true : mod.Activo;
-    }
-
-    // --------------------------------------------------------
+    
+    private void AbrirGestionModulos() { mostrarMenuPrincipal = false; mostrarModalModulos = true; }
+    private async Task CargarConfiguracionModulos() { try { listaConfiguracion = await Http.GetFromJsonAsync<List<ModuloConfig>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/modulos/{Sesion.Usuario.BoxID}"); } catch { } }
+    private async Task ToggleModulo(ModuloConfig mod) { mod.Activo = !mod.Activo; try { await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/actualizar", mod); } catch { } }
+    private bool EstaActivo(string clave) { if (listaConfiguracion == null || listaConfiguracion.Count == 0) return true; var mod = listaConfiguracion.FirstOrDefault(m => m.ModuloClave == clave); return mod == null ? true : mod.Activo; }
 
     private void ToggleMainMenu() { mostrarMenuPrincipal = !mostrarMenuPrincipal; if (mostrarMenuPrincipal) mostrarNotis = false; }
     private void ToggleNotificaciones() { mostrarNotis = !mostrarNotis; if (mostrarNotis) { mostrarMenuPrincipal = false; if (hayNuevas) { hayNuevas = false; _ = Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/notificaciones/leer/{Sesion.Usuario.UsuarioID}", null); } } }
-    private void CerrarSesion() { Sesion.Usuario = null; Nav.NavigateTo("/"); }
+    private void CerrarSesion() { Nav.NavigateTo("/", forceLoad: true); Sesion.Usuario = null; }
 
     private void IrAPerfil() => Nav.NavigateTo("/mi-perfil");
     private void IrAAgenda() => Nav.NavigateTo("/agenda-view");
@@ -329,47 +322,15 @@
     }
 
     private void AbrirCrearAviso() { mostrarMenuPrincipal = false; nuevoAviso = new Avisos(); mostrarModalCrearAviso = true; }
-    
-    private async Task PublicarAviso()
-    {
-        if (string.IsNullOrEmpty(nuevoAviso.Titulo)) return;
-        try {
-            nuevoAviso.BoxID = Sesion.Usuario.BoxID;
-            var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/crear", nuevoAviso);
-            if (r.IsSuccessStatusCode) { mostrarModalCrearAviso = false; await App.Current.MainPage.DisplayAlert("Éxito", "Publicado", "OK"); }
-        } catch {}
-    }
-
-    private async Task CargarUltimoAviso()
-    {
-        try {
-            var r = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/ultimo/{Sesion.Usuario.BoxID}");
-            if (r.StatusCode == System.Net.HttpStatusCode.NoContent) return;
-            if (r.IsSuccessStatusCode) {
-                ultimoAviso = await r.Content.ReadFromJsonAsync<Avisos>();
-                if (ultimoAviso != null) {
-                    var idVisto = await JS.InvokeAsync<string>("localStorage.getItem", "ultimoAvisoVisto");
-                    if (idVisto != ultimoAviso.AvisoID.ToString()) mostrarAvisoPopUp = true;
-                }
-            }
-        } catch {}
-    }
+    private async Task PublicarAviso() { if (string.IsNullOrEmpty(nuevoAviso.Titulo)) return; try { nuevoAviso.BoxID = Sesion.Usuario.BoxID; var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/crear", nuevoAviso); if (r.IsSuccessStatusCode) { mostrarModalCrearAviso = false; await App.Current.MainPage.DisplayAlert("Éxito", "Publicado", "OK"); } } catch {} }
+    private async Task CargarUltimoAviso() { try { var r = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/ultimo/{Sesion.Usuario.BoxID}"); if (r.StatusCode == System.Net.HttpStatusCode.NoContent) return; if (r.IsSuccessStatusCode) { ultimoAviso = await r.Content.ReadFromJsonAsync<Avisos>(); if (ultimoAviso != null) { var idVisto = await JS.InvokeAsync<string>("localStorage.getItem", "ultimoAvisoVisto"); if (idVisto != ultimoAviso.AvisoID.ToString()) mostrarAvisoPopUp = true; } } } catch {} }
     private async Task CerrarAviso() { if(ultimoAviso!=null) await JS.InvokeVoidAsync("localStorage.setItem", "ultimoAvisoVisto", ultimoAviso.AvisoID.ToString()); mostrarAvisoPopUp = false; }
-
     private void AbrirModalWod() { mostrarMenuPrincipal = false; if (nuevoWod.Bloques.Count == 0) AgregarBloque(); mostrarModalWod = true; }
     private void AgregarBloque() => nuevoWod.Bloques.Add(new BloqueWodViewModel { Ejercicios = new List<EjercicioViewModel> { new EjercicioViewModel() } });
     private void EliminarBloque(BloqueWodViewModel b) => nuevoWod.Bloques.Remove(b);
     private void AgregarEjercicio(BloqueWodViewModel b) => b.Ejercicios.Add(new EjercicioViewModel());
     private void EliminarEjercicio(BloqueWodViewModel b, EjercicioViewModel e) => b.Ejercicios.Remove(e);
-    
-    private async Task GuardarProgramacion() {
-        try {
-            nuevoWod.BoxID = Sesion.Usuario.BoxID;
-            var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/guardar", nuevoWod);
-            if (r.IsSuccessStatusCode) { mostrarModalWod = false; await App.Current.MainPage.DisplayAlert("Éxito", "Guardado", "OK"); }
-        } catch {}
-    }
-
+    private async Task GuardarProgramacion() { try { nuevoWod.BoxID = Sesion.Usuario.BoxID; var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/guardar", nuevoWod); if (r.IsSuccessStatusCode) { mostrarModalWod = false; await App.Current.MainPage.DisplayAlert("Éxito", "Guardado", "OK"); } } catch {} }
     private async Task CargarSegmentos() { try { var r = await Http.GetAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/segmentos"); if(r.IsSuccessStatusCode) listaSegmentos = await r.Content.ReadFromJsonAsync<List<SegmentoDto>>(); } catch {} }
     private async Task CargarNotificaciones() { try { misNotificaciones = await Http.GetFromJsonAsync<List<NotificacionDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/notificaciones/{Sesion.Usuario.UsuarioID}"); hayNuevas = misNotificaciones.Any(n => !n.Leido); } catch {} }
     private string GetIcono(string t) => t == "MATCH_MUTUO" ? "fas fa-heart text-danger" : "fas fa-bell";

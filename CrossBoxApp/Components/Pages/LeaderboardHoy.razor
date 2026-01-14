@@ -1,0 +1,83 @@
+﻿@page "/leaderboard-hoy"
+@inject HttpClient Http
+@inject NavigationManager Nav
+@using CrossBoxApp.Models.Services
+@inject SesionService Sesion
+
+<div class="top-navbar">
+    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
+    <div class="nav-title">LEADERBOARD DIARIO</div>
+</div>
+
+<div class="leaderboard-container">
+    <div class="date-header">
+        @DateTime.Now.ToString("dddd dd MMMM").ToUpper()
+    </div>
+
+    @if (lista == null)
+    {
+        <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
+    }
+    else if (lista.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="fas fa-clipboard"></i>
+            <p>Aún no hay resultados registrados hoy.</p>
+        </div>
+    }
+    else
+    {
+        <div class="podium-list">
+            @foreach (var item in lista)
+            {
+                <div class="score-row @(item.Posicion == 1 ? "gold" : "")">
+                    <div class="pos">@item.Posicion</div>
+                    <div class="name">@item.Nombre</div>
+                    <div class="reps">
+                        @item.Reps <small>REPS</small>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .top-navbar { display: flex; justify-content: space-between; padding: 15px; background: #1a1a1a; color: #F8C545; font-family: 'Oswald'; }
+    .leaderboard-container { background: #0d0d0d; min-height: 100vh; padding: 20px; color: white; }
+    .date-header { text-align: center; font-family: 'Oswald'; font-size: 1.5rem; color: #F8C545; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+    
+    .score-row {
+        display: flex; align-items: center; justify-content: space-between;
+        background: #1a1a1a; padding: 15px; margin-bottom: 10px;
+        border-radius: 10px; border: 1px solid #333;
+    }
+    .score-row.gold {
+        border: 2px solid #FFD700;
+        background: linear-gradient(90deg, #1a1a1a 0%, rgba(255, 215, 0, 0.1) 100%);
+        transform: scale(1.02);
+    }
+    .pos { font-size: 1.5rem; font-weight: bold; width: 40px; color: #666; font-family: 'Oswald'; }
+    .gold .pos { color: #FFD700; }
+    
+    .name { flex: 1; font-size: 1.1rem; font-family: 'Roboto'; }
+    .reps { font-family: 'Oswald'; font-size: 1.5rem; color: white; font-weight: bold; }
+    .reps small { font-size: 0.7rem; color: #F8C545; }
+    
+    .empty-state { text-align: center; margin-top: 50px; color: #666; }
+    .empty-state i { font-size: 4rem; margin-bottom: 15px; }
+</style>
+
+@code {
+    class LeaderboardItem { public string Nombre { get; set; } public int Reps { get; set; } public int Posicion { get; set; } }
+    private List<LeaderboardItem> lista;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try {
+            lista = await Http.GetFromJsonAsync<List<LeaderboardItem>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/scoresapi/leaderboard-hoy/{Sesion.Usuario.BoxID}");
+        } catch { lista = new List<LeaderboardItem>(); }
+    }
+
+     private void Volver() => Nav.NavigateTo("/home");
+}

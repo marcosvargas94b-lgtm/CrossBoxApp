@@ -30,7 +30,15 @@
     </div>
 
     <script src="_framework/blazor.webview.js" autostart="false"></script>
-
+    <script>
+        window.reproducirSonido = (idElemento) => {
+            var audio = document.getElementById(idElemento);
+            if (audio) {
+                audio.currentTime = 0;
+                audio.play().catch(e => console.log("Error audio:", e));
+            }
+        };
+    </script>
 </body>
 
 </html>

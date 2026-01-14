@@ -41,7 +41,6 @@
             </button>
         </div>
     </div>
-    
 </div>
 
 @if (mostrarModalBox)
@@ -50,40 +49,41 @@
         <div class="modal-content custom-modal">
             <div class="modal-header">
                 <h5 style="color:#F8C545; font-family:'Oswald'; margin:0;">REGISTRA TU LUGAR</h5>
-                <button class="btn-close-custom" @onclick="() => mostrarModalBox = false">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button class="btn-close-custom" @onclick="() => mostrarModalBox = false"><i class="fas fa-times"></i></button>
             </div>
-
             <div class="modal-body scrollable-body">
-
                 <div class="section-title"><i class="fas fa-building"></i> DATOS DEL LUGAR</div>
-
                 <input type="text" @bind="registroBox.NombreBox" class="form-control input-dark mb-2" placeholder="Nombre del Box / Gym" />
                 <input type="text" @bind="registroBox.Ciudad" class="form-control input-dark mb-2" placeholder="Ciudad" />
                 <input type="text" @bind="registroBox.Direccion" class="form-control input-dark mb-4" placeholder="Dirección Completa" />
-
                 <hr class="divider" />
-
                 <div class="section-title"><i class="fas fa-user-shield"></i> DATOS DEL ADMINISTRADOR</div>
                 <p class="small-text">Esta cuenta tendrá acceso total al sistema.</p>
-
                 <div class="row">
-                    <div class="col-6">
-                        <input type="text" @bind="registroBox.NombreAdmin" class="form-control input-dark mb-2" placeholder="Nombre" />
-                    </div>
-                    <div class="col-6">
-                        <input type="text" @bind="registroBox.ApellidosAdmin" class="form-control input-dark mb-2" placeholder="Apellidos" />
-                    </div>
+                    <div class="col-6"><input type="text" @bind="registroBox.NombreAdmin" class="form-control input-dark mb-2" placeholder="Nombre" /></div>
+                    <div class="col-6"><input type="text" @bind="registroBox.ApellidosAdmin" class="form-control input-dark mb-2" placeholder="Apellidos" /></div>
                 </div>
-
                 <input type="email" @bind="registroBox.Email" class="form-control input-dark mb-2" placeholder="Correo Electrónico (Usuario)" />
-
                 <input type="password" @bind="registroBox.Password" class="form-control input-dark mb-2" placeholder="Contraseña" />
                 <input type="password" @bind="confirmarPass" class="form-control input-dark mb-2" placeholder="Confirmar Contraseña" />
-
             </div>
-
+            <div class="section-title"><i class="fas fa-gem"></i> ELIGE TU PLAN</div>
+            <div class="planes-grid mb-4">
+                <div class="plan-card @(registroBox.PlanSeleccionadoID == 1 ? "selected" : "")" @onclick="() => registroBox.PlanSeleccionadoID = 1">
+                    <div class="plan-name">MENSUAL</div><div class="plan-price">$250.00</div><div class="plan-desc">Pago mes a mes</div>
+                    @if (registroBox.PlanSeleccionadoID == 1)
+                    {
+                        <i class="fas fa-check-circle check-icon"></i>
+                    }
+                </div>
+                <div class="plan-card @(registroBox.PlanSeleccionadoID == 2 ? "selected" : "")" @onclick="() => registroBox.PlanSeleccionadoID = 2">
+                    <div class="plan-badge">AHORRA 6 MESES</div><div class="plan-name">ANUAL</div><div class="plan-price">$1,600.00</div><div class="plan-desc">Un solo pago al año</div>
+                    @if (registroBox.PlanSeleccionadoID == 2)
+                    {
+                        <i class="fas fa-check-circle check-icon"></i>
+                    }
+                </div>
+            </div>
             <div class="modal-footer">
                 <button class="btn-cancel" @onclick="() => mostrarModalBox = false">Cancelar</button>
                 <button class="btn-confirm" @onclick="GuardarNuevoBox">REGISTRAR LUGAR</button>
@@ -91,7 +91,6 @@
         </div>
     </div>
 }
-
 
 @if (mostrarModalRegistro)
 {
@@ -107,14 +106,27 @@
                 <div class="modal-body">
                     <input type="text" @bind="regNombre" class="input-custom" placeholder="Nombre" />
                     <input type="text" @bind="regApellidos" class="input-custom" placeholder="Apellidos" />
-                    <input type="email" @bind="regEmail" class="input-custom" placeholder="Email" />
-                    <select @bind="regBoxId" class="input-custom" style="background-color: #333; color: white;">
+                    <input type="email" @bind="regEmail" class="input-custom" placeholder="Email" />                  
+                    <select class="input-custom" style="background-color: #333; color: white;" @onchange="AlSeleccionarBox">
                         <option value="">-- Selecciona tu lugar de entrenamiento --</option>
                         @foreach (var box in listaBoxes)
                         {
-                            <option value="@box.Id">@box.Nombre</option>
+                            <option value="@box.BoxID.ToString()">@box.Nombre</option>
                         }
                     </select>
+
+                    @if (boxSeleccionado != null && boxSeleccionado.CostoInscripcion != null && boxSeleccionado.CostoInscripcion > 0)
+                    {
+                        <div class="costo-alert fade-in">
+                            <i class="fas fa-ticket-alt"></i>
+                            <div>
+                                <strong>COSTO DE INSCRIPCIÓN:</strong>
+                                <span class="precio">$@boxSeleccionado.CostoInscripcion</span>
+                                <div class="small-text-costo">Pago único permanente para @boxSeleccionado.Nombre</div>
+                            </div>
+                        </div>
+                    }
+
                     <input type="password" @bind="regPass" class="input-custom" placeholder="Contraseña" />
                     <input type="password" @bind="regConfirmPass" class="input-custom" placeholder="Confirmar Contraseña" />
 
@@ -133,36 +145,9 @@
         </div>
     </div>
 }
+
 <style>
-
-    .btn-link-gold {
-        background: none; border: none; 
-        color: #F8C545; text-decoration: underline; 
-        font-size: 0.9rem; cursor: pointer;
-        transition: color 0.3s;
-    }
-    .btn-link-gold:hover { color: white; }
-
-    .section-title {
-        color: white; font-weight: bold; font-family: 'Oswald';
-        border-bottom: 1px solid #F8C545; padding-bottom: 5px; margin-bottom: 10px;
-        font-size: 1.1rem;
-    }
-    
-    .divider { border-color: #333; margin: 15px 0; }
-    .small-text { color: #888; font-size: 0.8rem; margin-bottom: 10px; }
-    
-    /* Scroll si el formulario es muy largo en móviles */
-    .scrollable-body { max-height: 70vh; overflow-y: auto; padding: 20px; }
-
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; display: flex; justify-content: center; align-items: center; }
-    .custom-modal { background: #1a1a1a; width: 95%; max-width: 500px; border: 1px solid #F8C545; border-radius: 12px; display: flex; flex-direction: column; }
-    .input-dark { background: #333 !important; color: white !important; border: 1px solid #666; }
-    .btn-confirm { background: #F8C545; color: black; border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
-    .btn-cancel { background: #333; color: white; border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
-    .btn-close-custom { background: none; border: none; color: white; font-size: 1.2rem; }
-    .modal-header, .modal-footer { padding: 15px; }
-
+    /* Estilos Generales Login */
     .login-container-fullscreen {
         position: fixed;
         top: 0;
@@ -264,13 +249,192 @@
         cursor: pointer;
     }
 
-    /* Asegura que los inputs sean visibles y escribibles */
-    .modal-body .input-custom {
-        background-color: #333333 !important; /* Fondo gris oscuro, no transparente */
-        color: white !important; /* Texto blanco */
+    .btn-link-gold {
+        background: none;
+        border: none;
+        color: #F8C545;
+        text-decoration: underline;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: color 0.3s;
+    }
+
+        .btn-link-gold:hover {
+            color: white;
+        }
+
+    /* Modales */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
+        z-index: 3000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .custom-modal {
+        background: #1a1a1a;
+        width: 95%;
+        max-width: 500px;
+        border: 1px solid #F8C545;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
+        overflow: hidden;
+    }
+
+    .scrollable-body {
+        padding: 20px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .section-title {
+        color: white;
+        font-weight: bold;
+        font-family: 'Oswald';
+        border-bottom: 1px solid #F8C545;
+        padding-bottom: 5px;
+        margin-bottom: 10px;
+        font-size: 1.1rem;
+    }
+
+    .divider {
+        border-color: #333;
+        margin: 15px 0;
+    }
+
+    .small-text {
+        color: #888;
+        font-size: 0.8rem;
+        margin-bottom: 10px;
+    }
+
+    .input-dark {
+        background: #333 !important;
+        color: white !important;
         border: 1px solid #666;
-        z-index: 10001; /* Asegura que esté por encima del fondo */
-        position: relative; /* Necesario para que el z-index funcione */
+    }
+
+    .btn-confirm {
+        background: #F8C545;
+        color: black;
+        border: none;
+        padding: 10px;
+        font-weight: bold;
+        flex: 1;
+        border-radius: 5px;
+    }
+
+    .btn-cancel {
+        background: #333;
+        color: white;
+        border: none;
+        padding: 10px;
+        font-weight: bold;
+        flex: 1;
+        border-radius: 5px;
+    }
+
+    .btn-close-custom {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+    }
+
+    .modal-header, .modal-footer {
+        padding: 15px;
+    }
+
+    .modal-footer {
+        border-top: 1px solid #333;
+        background: #1a1a1a;
+        flex-shrink: 0;
+    }
+
+    /* Planes Grid */
+    .planes-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .plan-card {
+        background: #222;
+        border: 1px solid #444;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.3s;
+    }
+
+        .plan-card:hover {
+            border-color: #F8C545;
+        }
+
+        .plan-card.selected {
+            background: rgba(248, 197, 69, 0.1);
+            border: 2px solid #F8C545;
+            transform: scale(1.02);
+        }
+
+    .plan-name {
+        font-family: 'Oswald';
+        color: white;
+        font-size: 1.1rem;
+    }
+
+    .plan-price {
+        font-family: 'Oswald';
+        color: #F8C545;
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin: 5px 0;
+    }
+
+    .plan-desc {
+        font-size: 0.8rem;
+        color: #aaa;
+    }
+
+    .check-icon {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: #28a745;
+        font-size: 1.2rem;
+    }
+
+    .plan-badge {
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #28a745;
+        color: white;
+        font-size: 0.6rem;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    /* Estilos Modal Atleta Inputs */
+    .modal-body .input-custom {
+        background-color: #333333 !important;
+        color: white !important;
+        border: 1px solid #666;
+        z-index: 10001;
+        position: relative;
     }
 
         .modal-body .input-custom:focus {
@@ -278,15 +442,58 @@
             background-color: #444 !important;
         }
 
+    /* NUEVO: ALERTA DE COSTO */
+    .costo-alert {
+        background: rgba(248, 197, 69, 0.1);
+        border: 1px solid #F8C545;
+        border-radius: 8px;
+        padding: 10px;
+        margin: 10px 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        color: white;
+        animation: fadeIn 0.5s;
+    }
+
+        .costo-alert i {
+            font-size: 1.5rem;
+            color: #F8C545;
+        }
+
+    .precio {
+        color: #F8C545;
+        font-weight: bold;
+        font-size: 1.1rem;
+        font-family: 'Oswald';
+        margin-left: 5px;
+    }
+
+    .small-text-costo {
+        font-size: 0.75rem;
+        color: #ccc;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-5px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 </style>
 
 @code {
-    // --- VARIABLES DE LOGIN ---
+    // Login
     private string loginUsername;
     private string loginPassword;
     private string loginError;
 
-    // --- VARIABLES DE REGISTRO ---
+    // Registro Atleta
     private bool mostrarModalRegistro = false;
     private string regNombre;
     private string regApellidos;
@@ -294,11 +501,15 @@
     private string regPass;
     private string regConfirmPass;
     private string registroError;
-    private Guid regBoxId; 
-    private List<BoxDto> listaBoxes = new List<BoxDto>();
 
+    // Lista de Boxes y Selección
+    private List<Boxes> listaBoxes = new List<Boxes>();
+    private Boxes boxSeleccionado;
+    private Guid regBoxId;
+
+    // Registro Dueño (Box)
     private bool mostrarModalBox = false;
-    private RegistroBoxDto registroBox = new RegistroBoxDto();
+    private RegistroBoxes registroBox = new RegistroBoxes();
     private string confirmarPass = "";
 
     protected override async Task OnInitializedAsync()
@@ -306,32 +517,56 @@
         try
         {
             var response = await Http.GetAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/boxes");
-            if (response.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode) listaBoxes = await response.Content.ReadFromJsonAsync<List<Boxes>>();
+        }
+        catch { }
+    }
+
+    private void AlSeleccionarBox(ChangeEventArgs e)
+    {
+        // 1. REINICIO TOTAL: Borramos cualquier selección anterior inmediatamente
+        boxSeleccionado = null;
+        regBoxId = Guid.Empty;
+
+        // 2. Obtenemos el valor del dropdown
+        string idStr = e.Value?.ToString();
+
+        // 3. Si hay un ID válido (no es la opción por defecto "-- Selecciona --")
+        if (!string.IsNullOrEmpty(idStr) && Guid.TryParse(idStr, out Guid id))
+        {
+            regBoxId = id; // Guardamos el ID para el registro
+
+            // 4. Buscamos el box en la lista
+            var encontrado = listaBoxes.FirstOrDefault(b => b.BoxID == id);
+
+            // 5. Solo si el box existe Y tiene un costo mayor a 0, lo asignamos a la variable visual
+            if (encontrado != null)
             {
-                listaBoxes = await response.Content.ReadFromJsonAsync<List<BoxDto>>();
+                // Asignamos el objeto completo para que el HTML pueda leer el precio y el nombre
+                boxSeleccionado = encontrado;
             }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error cargando boxes: " + ex.Message);
-        }
+
+        // 6. Forzamos a la pantalla a redibujarse para quitar/poner el aviso
+        StateHasChanged();
     }
 
     private void AbrirModalRegistroBox()
     {
-        registroBox = new RegistroBoxDto(); // Limpiar
+        registroBox = new RegistroBoxes { PlanSeleccionadoID = 1 };
         confirmarPass = "";
         mostrarModalBox = true;
     }
 
     private void AbrirModalRegistro() => mostrarModalRegistro = true;
+
     private void CerrarModalRegistro()
     {
         mostrarModalRegistro = false;
-        registroError = ""; // Limpiar errores al cerrar
+        registroError = "";
+        boxSeleccionado = null; // Limpiar selección al cerrar
     }
 
-    // --- LÓGICA LOGIN ---
     private async Task IniciarSesion()
     {
         loginError = "";
@@ -339,127 +574,81 @@
         {
             var loginData = new { Username = loginUsername, Password = loginPassword };
 
-           
             var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/login", loginData);
 
             if (response.IsSuccessStatusCode)
             {
-               
+                // LOGIN EXITOSO (200 OK)
                 var usuarioRecibido = await response.Content.ReadFromJsonAsync<UsuarioSesionDto>();
-
-               
                 Sesion.Usuario = usuarioRecibido;
-
-              
                 Nav.NavigateTo("/home");
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.Forbidden) // ⚠️ CÓDIGO 403 (NO VALIDADO)
+            {
+                // AQUÍ ATRAPAMOS AL USUARIO EN ESPERA
+                await App.Current.MainPage.DisplayAlert("⏳ CUENTA EN ESPERA",
+                    "Tu registro fue exitoso, pero debes esperar a que el administrador de tu Box acepte tu solicitud para poder ingresar.",
+                    "Entendido");
             }
             else
             {
-                loginError = "Credenciales incorrectas.";
+                // CUALQUIER OTRO ERROR (401, 404, 500)
+                loginError = "Credenciales incorrectas o error de servidor.";
             }
         }
         catch (Exception ex)
         {
-            loginError = "Error de conexión con el servidor.";
+            loginError = "Error de conexión: " + ex.Message;
         }
     }
 
-    // --- LÓGICA REGISTRO ---
     private async Task RegistrarUsuario()
     {
         registroError = "";
-
-        if (regBoxId == Guid.Empty)
-        {
-            registroError = "Por favor selecciona un Box.";
-            return;
-        }
-        
-        if (regPass != regConfirmPass)
-        {
-            registroError = "Las contraseñas no coinciden.";
-            return;
-        }
-        if (string.IsNullOrEmpty(regEmail) || string.IsNullOrEmpty(regPass))
-        {
-            registroError = "Todos los campos son obligatorios.";
-            return;
-        }
-
-       
+        if (regBoxId == Guid.Empty) { registroError = "Por favor selecciona un Box."; return; }
+        if (regPass != regConfirmPass) { registroError = "Las contraseñas no coinciden."; return; }
+        if (string.IsNullOrEmpty(regEmail) || string.IsNullOrEmpty(regPass)) { registroError = "Campos obligatorios."; return; }
 
         try
         {
-          
-            var nuevoUsuario = new
-            {
-                Nombre = regNombre,
-                Apellidos = regApellidos,
-                CorreoElectronico = regEmail,
-                Password = regPass,
-                ConfirmPass = regConfirmPass,
-                BoxID = regBoxId
-            };
-
-            // 3. Llamar a la API
+            var nuevoUsuario = new { Nombre = regNombre, Apellidos = regApellidos, CorreoElectronico = regEmail, Password = regPass, ConfirmPass = regConfirmPass, BoxID = regBoxId };
             var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/registrar", nuevoUsuario);
 
             if (response.IsSuccessStatusCode)
             {
-                // Éxito: Cerrar modal y avisar
                 mostrarModalRegistro = false;
-                await App.Current.MainPage.DisplayAlert("¡Éxito!", "Usuario creado correctamente. Ahora puedes iniciar sesión.", "OK");
+                await App.Current.MainPage.DisplayAlert("¡Éxito!", "Usuario creado correctamente.", "OK");
             }
             else
             {
-                // Error que viene de la API (ej: "El correo ya existe")
                 var errorJson = await response.Content.ReadFromJsonAsync<ErrorResponse>();
                 registroError = errorJson?.mensaje ?? "No se pudo registrar.";
             }
         }
-        catch (Exception ex)
-        {
-            registroError = "Error al conectar con la API.";
-        }
+        catch { registroError = "Error al conectar con la API."; }
     }
 
     private async Task GuardarNuevoBox()
     {
-        // 1. Validaciones
-        if (string.IsNullOrEmpty(registroBox.NombreBox) || string.IsNullOrEmpty(registroBox.NombreAdmin) || string.IsNullOrEmpty(registroBox.Email))
-        {
-            await App.Current.MainPage.DisplayAlert("Error", "Por favor llena los campos obligatorios.", "OK");
-            return;
-        }
-
-        if (registroBox.Password != confirmarPass)
-        {
-            await App.Current.MainPage.DisplayAlert("Error", "Las contraseñas no coinciden.", "OK");
-            return;
-        }
+        if (string.IsNullOrEmpty(registroBox.NombreBox) || string.IsNullOrEmpty(registroBox.Email)) { await App.Current.MainPage.DisplayAlert("Error", "Llena los campos.", "OK"); return; }
+        if (registroBox.Password != confirmarPass) { await App.Current.MainPage.DisplayAlert("Error", "Contraseñas no coinciden.", "OK"); return; }
 
         try
         {
-            // 2. Enviar a la API
             var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/boxesAPI/registrar-nuevo", registroBox);
-
             if (response.IsSuccessStatusCode)
             {
-                await App.Current.MainPage.DisplayAlert("¡Bienvenido!", "Tu lugar de entrenamiento y tu cuenta de Administrador han sido creados. Ya puedes iniciar sesión.", "OK");
+                await App.Current.MainPage.DisplayAlert("¡Bienvenido!", "Box y Admin creados.", "OK");
                 mostrarModalBox = false;
             }
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                await App.Current.MainPage.DisplayAlert("Error", $"No se pudo registrar: {error}", "OK");
+                await App.Current.MainPage.DisplayAlert("Error", error, "OK");
             }
         }
-        catch (Exception ex)
-        {
-            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
-        }
+        catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }
     }
 
-    // Clase auxiliar para leer errores simples
     public class ErrorResponse { public string mensaje { get; set; } }
 }

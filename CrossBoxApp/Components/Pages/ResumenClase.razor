@@ -1,0 +1,139 @@
+﻿@page "/resumen-clase"
+@using CrossBoxApp.Models.Services
+@inject LiveSessionState LiveState
+@inject NavigationManager Nav
+@inject HttpClient Http
+
+<div class="resumen-container">
+    <div class="resumen-card">
+        
+        <div class="header-resumen">
+            <h2>CLASE FINALIZADA</h2>
+            
+            <div class="score-toggle" @onclick="() => modoScore = !modoScore">
+                <span class="@(!modoScore ? "active" : "")">ASISTENCIA</span>
+                <div class="toggle-track @(modoScore ? "on" : "")">
+                    <div class="toggle-thumb"></div>
+                </div>
+                <span class="@(modoScore ? "active" : "")">RESULTADOS</span>
+            </div>
+        </div>
+
+        <div class="attendance-list">
+            @if (listaLocal.Count == 0)
+            {
+                <div class="text-muted">Nadie hizo check-in.</div>
+            }
+            else
+            {
+                @foreach (var atleta in listaLocal)
+                {
+                    <div class="user-row">
+                        <div class="user-left">
+                            <img src="@(atleta.FotoUrl ?? "imagenes/Rhino.png")" />
+                            <span>@atleta.NombreCompleto</span>
+                        </div>
+
+                        @if (modoScore)
+                        {
+                            <div class="score-input-wrapper">
+                                <input type="number" class="input-reps" placeholder="0" @bind="atleta.Reps" />
+                                <small>REPS</small>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+
+        <button class="btn-close-session" @onclick="GuardarYSalir">
+            @(modoScore ? "GUARDAR PUNTOS Y SALIR" : "CONFIRMAR Y SALIR")
+        </button>
+    </div>
+</div>
+
+<style>
+    /* Estilos base (Mantener los anteriores y agregar estos) */
+    .resumen-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0d0d0d; color: white; display: flex; justify-content: center; align-items: center; z-index: 3000; }
+    .resumen-card { background: #1a1a1a; width: 90%; max-width: 450px; border-radius: 20px; padding: 30px; text-align: center; border: 2px solid #F8C545; box-shadow: 0 0 50px rgba(248, 197, 69, 0.2); }
+    
+    .header-resumen h2 { font-family: 'Oswald'; margin-bottom: 20px; color: white; }
+
+    /* Toggle Switch */
+    .score-toggle { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px; cursor: pointer; }
+    .score-toggle span { font-size: 0.8rem; font-weight: bold; color: #666; transition: color 0.3s; }
+    .score-toggle span.active { color: #F8C545; }
+    .toggle-track { width: 50px; height: 26px; background: #333; border-radius: 13px; position: relative; transition: 0.3s; }
+    .toggle-track.on { background: #F8C545; }
+    .toggle-thumb { width: 20px; height: 20px; background: white; border-radius: 50%; position: absolute; top: 3px; left: 3px; transition: 0.3s; }
+    .toggle-track.on .toggle-thumb { transform: translateX(24px); }
+
+    /* Lista y Rows */
+    .attendance-list { max-height: 300px; overflow-y: auto; margin-bottom: 20px; }
+    .user-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; }
+    .user-left { display: flex; align-items: center; gap: 10px; }
+    .user-row img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+    .user-row span { font-family: 'Oswald'; font-size: 1rem; }
+
+    /* Input Reps */
+    .score-input-wrapper { display: flex; align-items: center; gap: 5px; animation: fadeIn 0.3s; }
+    .input-reps { width: 60px; background: #222; border: 1px solid #F8C545; color: white; text-align: center; padding: 5px; border-radius: 5px; font-weight: bold; font-size: 1.1rem; }
+    .score-input-wrapper small { font-size: 0.6rem; color: #F8C545; font-weight: bold; }
+
+    .btn-close-session { width: 100%; padding: 15px; border-radius: 50px; border: none; background: #F8C545; color: black; font-weight: bold; font-family: 'Oswald'; font-size: 1.2rem; cursor: pointer; }
+    @@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+</style>
+
+@code {
+    // Clase local para manejar el dato "Reps" temporalmente
+    class AtletaResumen
+    {
+        public Guid UsuarioId { get; set; }
+        public Guid BoxId { get; set; } // Necesitamos esto para guardar
+        public string NombreCompleto { get; set; }
+        public string FotoUrl { get; set; }
+        public int Reps { get; set; } // Nuevo campo
+    }
+
+    private List<AtletaResumen> listaLocal = new List<AtletaResumen>();
+    private bool modoScore = false;
+
+    protected override void OnInitialized()
+    {
+        // Convertimos del servicio global a la lista local para poder editar Reps
+        listaLocal = LiveState.AtletasEnClase.Select(a => new AtletaResumen 
+        { 
+            UsuarioId = a.UsuarioId,
+            BoxId = a.BoxId,
+            NombreCompleto = a.NombreCompleto,
+            FotoUrl = a.FotoUrl,
+            Reps = 0
+        }).ToList();
+    }
+
+    private async Task GuardarYSalir()
+    {
+        if (modoScore)
+        {
+            // Enviar a la API
+            try
+            {
+                var payload = listaLocal.Select(a => new 
+                { 
+                    UsuarioID = a.UsuarioId,
+                    BoxID = a.BoxId,
+                    Reps = a.Reps,
+                    NombreAtleta = a.NombreCompleto
+                }).ToList();
+
+                await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/scoresapi/guardar-scores", payload);
+                await App.Current.MainPage.DisplayAlert("Éxito", "Resultados guardados.", "OK");
+            }
+            catch {}
+        }
+
+        // Limpieza y Salida (Igual que antes)
+        LiveState.AtletasEnClase.Clear();
+        Nav.NavigateTo("/home");
+    }
+}

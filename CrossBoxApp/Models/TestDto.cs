@@ -29,7 +29,7 @@ namespace CrossBoxApp.Models
     public class ItemDto { public Guid Id { get; set; } public string Nombre { get; set; } }
 
     // Para Guardar
-    public class CreateTestBoxDto
+    public class CreateTestBoxes
     {
         public Guid BoxID { get; set; }
         public Guid TestID { get; set; }

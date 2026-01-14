@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace CrossBoxApp.Models
 {
-    public class RegistroBoxDto
+    public class RegistroBoxes
     {
         // --- DATOS DEL BOX ---
         public string NombreBox { get; set; }
@@ -18,5 +18,6 @@ namespace CrossBoxApp.Models
         public string ApellidosAdmin { get; set; }
         public string Email { get; set; }
         public string Password { get; set; }
+        public int PlanSeleccionadoID { get; set; }
     }
 }

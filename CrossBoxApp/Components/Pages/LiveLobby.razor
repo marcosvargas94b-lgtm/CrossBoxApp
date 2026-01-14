@@ -1,0 +1,191 @@
+﻿@page "/live-lobby"
+@using Microsoft.AspNetCore.SignalR.Client
+@using CrossBoxApp.Models.Services
+@inject NavigationManager Nav
+@inject SesionService Sesion
+@inject HttpClient Http
+@inject LiveSessionState LiveState
+@implements IAsyncDisposable
+
+<div class="live-container">
+    
+    <div class="split-left">
+        <div class="qr-content">
+            <h2 class="qr-title">ESCANEA PARA ENTRAR</h2>
+            <div class="qr-box">
+                <img src="@($"https://quickchart.io/qr?text={Sesion.Usuario.BoxID}&size=400&dark=000000&light=ffffff")"
+                     class="qr-img"
+                     alt="QR de Acceso" />
+            </div>
+            <p class="qr-instructions">Abre tu App CrossBox y escanea este código</p>
+        </div>
+    </div>
+
+    <div class="split-right">
+        <div class="list-header">
+            <h3>ATLETAS LISTOS <span class="count-badge">@atletasEnSala.Count</span></h3>
+        </div>
+        
+        <div class="live-list">
+            @if (atletasEnSala.Count == 0)
+            {
+                <div class="empty-live">
+                    <i class="fas fa-satellite-dish pulse-icon"></i>
+                    <p>Esperando atletas...</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var atleta in atletasEnSala.AsEnumerable().Reverse()) // Lo más nuevo arriba
+                {
+                    <div class="live-card slide-in">
+                        <img src="@(atleta.FotoUrl ?? "imagenes/Rhino.png")" class="live-avatar" />
+                        <span class="live-name">@atleta.NombreCompleto</span>
+                        <i class="fas fa-check-circle check-icon"></i>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <div class="action-footer">
+        <button class="btn-cancel" @onclick="CancelarClase">CANCELAR</button>
+        <button class="btn-start" @onclick="IniciarClase">INICIAR CLASE (@atletasEnSala.Count)</button>
+    </div>
+
+</div>
+
+<style>
+    /* Layout Global */
+    .live-container {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background-color: #0d0d0d; color: white;
+        display: flex; overflow: hidden; z-index: 2000; /* Encima de todo */
+    }
+
+    /* Izquierda (QR) */
+    .split-left {
+        width: 50%; height: 100%;
+        display: flex; justify-content: center; align-items: center;
+        border-right: 2px solid #F8C545;
+        background: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
+    }
+    .qr-content { text-align: center; animation: fadeIn 1s; }
+    .qr-title { font-family: 'Oswald'; font-size: 3rem; color: white; margin-bottom: 20px; letter-spacing: 2px; }
+    .qr-box { background: white; padding: 20px; border-radius: 20px; display: inline-block; box-shadow: 0 0 50px rgba(248, 197, 69, 0.3); }
+    .qr-img { width: 350px; height: 350px; }
+    .qr-instructions { margin-top: 20px; color: #888; font-size: 1.2rem; }
+
+    /* Derecha (Lista) */
+    .split-right {
+        width: 50%; height: 100%;
+        display: flex; flex-direction: column;
+        background-color: #111;
+        padding-bottom: 100px; /* Espacio para el footer */
+    }
+    .list-header {
+        padding: 30px; border-bottom: 1px solid #333;
+        background: #1a1a1a; display: flex; align-items: center; gap: 20px;
+    }
+    .list-header h3 { font-family: 'Oswald'; font-size: 2rem; margin: 0; color: #F8C545; }
+    .count-badge { background: white; color: black; padding: 5px 15px; border-radius: 20px; font-size: 1.5rem; font-weight: bold; }
+    
+    .live-list { flex: 1; overflow-y: auto; padding: 30px; }
+    
+    /* Tarjeta de Atleta */
+    .live-card {
+        background: #222; border-left: 5px solid #F8C545;
+        padding: 15px 25px; margin-bottom: 15px; border-radius: 8px;
+        display: flex; align-items: center; gap: 20px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    }
+    .live-avatar { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #F8C545; }
+    .live-name { font-family: 'Oswald'; font-size: 1.8rem; flex: 1; text-transform: uppercase; }
+    .check-icon { font-size: 2rem; color: #28a745; }
+
+    /* Estado Vacío */
+    .empty-live { height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #444; }
+    .pulse-icon { font-size: 5rem; margin-bottom: 20px; animation: pulse 2s infinite; }
+
+    /* Footer Botones */
+    .action-footer {
+        position: absolute; bottom: 0; right: 0; width: 50%;
+        height: 100px; background: #000;
+        display: flex; align-items: center; justify-content: space-around;
+        border-top: 1px solid #333;
+    }
+    .btn-cancel { background: #333; color: white; border: none; padding: 15px 40px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; font-family: 'Oswald'; cursor: pointer; }
+    .btn-start { 
+        background: #F8C545; color: black; border: none; 
+        padding: 15px 60px; font-size: 1.5rem; font-weight: bold; 
+        border-radius: 50px; font-family: 'Oswald'; cursor: pointer;
+        box-shadow: 0 0 20px rgba(248, 197, 69, 0.4);
+        transition: transform 0.2s;
+    }
+    .btn-start:active { transform: scale(0.95); }
+
+    /* Animaciones */
+    @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @@keyframes slideIn { from { transform: translateX(50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @@keyframes pulse { 0% { transform: scale(1); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 0.5; } }
+</style>
+
+@code {
+    private HubConnection hubConnection;
+    private List<CheckInDto> atletasEnSala = new List<CheckInDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+
+        // 1. Configurar conexión SignalR
+        // Asegúrate de cambiar la URL por la tuya real
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/livehub") 
+            .WithAutomaticReconnect()
+            .Build();
+
+        // 2. Escuchar el evento "NuevoAtletaEnClase"
+        hubConnection.On<CheckInDto>("NuevoAtletaEnClase", (atleta) =>
+        {
+            // Solo agregamos si no está ya en la lista (evitar duplicados visuales)
+            if (!atletasEnSala.Any(x => x.UsuarioId == atleta.UsuarioId))
+            {
+                atletasEnSala.Add(atleta);
+                StateHasChanged(); // ¡Actualizar UI!
+            }
+        });
+
+        // 3. Iniciar conexión
+        await hubConnection.StartAsync();
+
+        // 4. Unirnos al grupo de nuestro Box
+        // Así solo escuchamos check-ins de NUESTRO gimnasio
+        await hubConnection.SendAsync("JoinBoxGroup", Sesion.Usuario.BoxID.ToString());
+    }
+
+    private void CancelarClase()
+    {
+        // Limpiamos y salimos
+        atletasEnSala.Clear();
+        Nav.NavigateTo("/home");
+    }
+
+    private void IniciarClase()
+    {
+        LiveState.AtletasEnClase = atletasEnSala;
+        LiveState.BoxId = Sesion.Usuario.BoxID;
+
+        // Navegamos al Dashboard
+        Nav.NavigateTo("/live-dashboard");
+    }
+
+    // Desconectar al salir
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}

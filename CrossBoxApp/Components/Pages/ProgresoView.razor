@@ -401,7 +401,7 @@
             var userId = Sesion.Usuario.UsuarioID;
 
          
-            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/evaluaciones/usuario/{boxId}/{userId}");
+            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/evaluacionesapi/usuario/{boxId}/{userId}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -434,7 +434,7 @@
         {
             var userId = Sesion.Usuario.UsuarioID;
             // Llamamos al endpoint nuevo que hicimos para las tablas TestUsuario
-            historialCargado = await Http.GetFromJsonAsync<List<HistorialDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/Evaluaciones/historial/{userId}/{testBoxId}");
+            historialCargado = await Http.GetFromJsonAsync<List<HistorialDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/Evaluacionesapi/historial/{userId}/{testBoxId}");
         }
         catch (Exception ex)
         {

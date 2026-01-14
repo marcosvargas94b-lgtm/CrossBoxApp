@@ -15,5 +15,8 @@ namespace CrossBoxApp.Models
         public string BoxNombre { get; set; }
         public int TipoUsuarioID { get; set; }
         public string Email { get; set; }
+        public bool? Validado { get; set; }
+
+        public List<string> ListaPermisos { get; set; } = new List<string>();
     }
 }
