@@ -1,0 +1,344 @@
+﻿@page "/mis-propositos"
+@using CrossBoxApp.Models
+@using CrossBoxApp.Models.Services
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject SesionService Sesion
+
+<div class="top-navbar">
+    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
+    <div class="nav-title">MIS PROPÓSITOS @DateTime.Now.Year</div>
+    <div class="nav-right"></div>
+</div>
+
+<div class="propositos-container">
+    
+    <div class="chalkboard-header">
+        <p>"Lo que no se define, no se puede medir"</p>
+        <button class="btn-add-goal" @onclick="AbrirModalCrear">
+            <i class="fas fa-plus"></i> AGREGAR META
+        </button>
+    </div>
+
+    @if (misPropositos == null)
+    {
+        <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
+    }
+    else if (misPropositos.Count == 0)
+    {
+        <div class="empty-state">
+            <i class="fas fa-bullseye"></i>
+            <p>Aún no tienes propósitos definidos.</p>
+        </div>
+    }
+    else
+    {
+        <div class="goals-list">
+            @foreach (var p in misPropositos)
+            {
+                <div class="goal-card @(p.Cumplido ? "completed" : "pending")" @onclick="() => AbrirModalEditar(p)">
+                    <div class="goal-text">@p.Descripcion</div>
+                    <div class="goal-status">
+                        @if (p.Cumplido)
+                        {
+                            <i class="fas fa-trophy trophy-icon"></i>
+                        }
+                        else
+                        {
+                            <i class="far fa-circle circle-icon"></i>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@if (mostrarModal)
+{
+    <div class="modal-overlay">
+        <div class="modal-content custom-modal">
+            <div class="modal-header">
+                <h5 style="color:#F8C545; margin:0;">@(editandoID == 0 ? "NUEVA META" : "EDITAR META")</h5>
+                <button class="btn-close-custom" @onclick="() => mostrarModal = false"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <textarea @bind="textoProposito" class="form-control input-dark" rows="3" placeholder="Ej: Sacar mi primer Muscle Up..."></textarea>
+                @if (editandoID != 0)
+                {
+                    <small class="text-muted mt-2 d-block">Nota: No puedes borrar metas, solo editarlas.</small>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="() => mostrarModal = false">Cancelar</button>
+                <button class="btn btn-warning" @onclick="Guardar">GUARDAR</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (mostrarAnimacionLogro)
+{
+    <div class="celebration-overlay" @onclick="CerrarAnimacion">
+        <div class="trophy-animation">🏆</div>
+        <h1>¡FELICIDADES!</h1>
+        <p>Has cumplido tu propósito:</p>
+        <div class="achieved-goal">"@nombreLogroReciente"</div>
+        <small>Toca para continuar</small>
+        
+        </div>
+}
+
+<style>
+    /* Estilos Generales */
+    .propositos-container { padding: 15px; background: #0d0d0d; min-height: 100vh; }
+    .chalkboard-header { 
+        background: #1a1a1a; padding: 20px; border-radius: 10px; border: 1px dashed #666; 
+        text-align: center; margin-bottom: 20px; 
+    }
+    .chalkboard-header p { font-style: italic; color: #aaa; font-family: 'Roboto'; }
+    .btn-add-goal { 
+        background: #F8C545; color: black; border: none; padding: 10px 20px; 
+        border-radius: 30px; font-weight: bold; font-family: 'Oswald'; cursor: pointer; 
+        margin-top: 10px; box-shadow: 0 4px 10px rgba(248,197,69,0.3); 
+    }
+    .empty-state {
+        text-align: center;
+        margin-top: 50px;
+        color: #cccccc; 
+        font-family: 'Roboto';
+        opacity: 0.8;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 15px;
+        color: #444; 
+    }
+    .goals-list { display: flex; flex-direction: column; gap: 10px; }
+    
+    .goal-card { 
+        background: #1a1a1a; padding: 15px; border-radius: 10px; 
+        display: flex; justify-content: space-between; align-items: center;
+        border-left: 5px solid #666; transition: all 0.3s; cursor: pointer;
+    }
+    
+    /* ESTILOS DE ESTADO */
+    .goal-card.pending { border-left-color: #666; }
+    .goal-card.completed { 
+        border-left-color: #FFD700; /* Dorado */
+        background: linear-gradient(90deg, #1a1a1a 0%, rgba(255, 215, 0, 0.1) 100%);
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
+    }
+
+    .goal-text { color: white; font-family: 'Roboto'; font-size: 1rem; flex: 1; padding-right: 10px; }
+    .trophy-icon { color: #FFD700; font-size: 1.5rem; animation: popIn 0.5s; }
+    .circle-icon { color: #666; font-size: 1.2rem; }
+
+    /* Modal */
+    .input-dark { background: #333 !important; color: white !important; border: 1px solid #F8C545; }
+    
+    /* ANIMACIÓN CELEBRACIÓN */
+    .celebration-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.9); z-index: 5000;
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        color: white; text-align: center; animation: fadeIn 0.5s;
+    }
+    .trophy-animation { font-size: 5rem; margin-bottom: 20px; animation: bounce 1s infinite; }
+    .celebration-overlay h1 { font-family: 'Oswald'; color: #F8C545; font-size: 2.5rem; margin-bottom: 10px; }
+    .achieved-goal { font-size: 1.5rem; font-style: italic; margin: 20px 0; color: white; border-bottom: 2px solid #F8C545; display: inline-block; padding-bottom: 5px; }
+    .modal-overlay {
+        position: fixed;
+        top: 0; 
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.85); /* Fondo oscuro transparente */
+        z-index: 4000; /* Encima de todo */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        animation: fadeIn 0.2s;
+    }
+
+    .modal-content.custom-modal {
+        background: #1a1a1a;
+        width: 90%;
+        max-width: 400px;
+        border: 2px solid #F8C545; /* Borde amarillo */
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 0 30px rgba(248, 197, 69, 0.2);
+    }
+
+    .modal-header {
+        background: #222;
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #333;
+    }
+
+    .modal-body {
+        padding: 20px;
+        color: white;
+    }
+
+    .modal-footer {
+        padding: 15px;
+        background: #222;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .btn-close-custom {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
+
+    /* Botones del modal */
+    .btn-secondary {
+        background: #333;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    
+    .btn-warning {
+        background: #F8C545;
+        color: black;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .top-navbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        background: #1a1a1a; /* Fondo gris oscuro, no negro */
+        border-bottom: 2px solid #F8C545; /* Línea amarilla abajo */
+        color: white;
+        font-family: 'Oswald';
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .nav-left {
+        color: #F8C545; /* Texto amarillo para el botón volver */
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 1rem;
+    }
+
+    .nav-title {
+        font-size: 1.2rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+    .nav-right {
+        width: 70px; /* Espacio vacío para centrar el título */
+    }
+
+
+    @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+    @@keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+</style>
+
+@code {
+    class PropositoDto { public int PropositoID { get; set; } public string Descripcion { get; set; } public bool Cumplido { get; set; } public bool EsNuevoLogro { get; set; } }
+    
+    private List<PropositoDto> misPropositos;
+    private bool mostrarModal = false;
+    private string textoProposito = "";
+    private int editandoID = 0; // 0 = Crear
+
+    // Animación
+    private bool mostrarAnimacionLogro = false;
+    private string nombreLogroReciente = "";
+    private int idLogroReciente = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarPropositos();
+    }
+
+    private async Task CargarPropositos()
+    {
+        try 
+        {
+            misPropositos = await Http.GetFromJsonAsync<List<PropositoDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/mis-propositos/{Sesion.Usuario.UsuarioID}");
+            
+            // Detectar si hay un logro nuevo para mostrar animación
+            var nuevoLogro = misPropositos.FirstOrDefault(p => p.EsNuevoLogro);
+            if (nuevoLogro != null)
+            {
+                nombreLogroReciente = nuevoLogro.Descripcion;
+                idLogroReciente = nuevoLogro.PropositoID;
+                mostrarAnimacionLogro = true;
+            }
+        } 
+        catch { misPropositos = new List<PropositoDto>(); }
+    }
+
+    private async Task CerrarAnimacion()
+    {
+        mostrarAnimacionLogro = false;
+        // Marcar como visto en API para que no salga otra vez
+        await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/marcar-visto/{idLogroReciente}", null);
+    }
+
+    private void AbrirModalCrear()
+    {
+        editandoID = 0; textoProposito = ""; mostrarModal = true;
+    }
+
+    private void AbrirModalEditar(PropositoDto p)
+    {
+        if (p.Cumplido) return; // No editar si ya se cumplió (opcional)
+        editandoID = p.PropositoID;
+        textoProposito = p.Descripcion;
+        mostrarModal = true;
+    }
+
+    private async Task Guardar()
+    {
+        if (string.IsNullOrWhiteSpace(textoProposito)) return;
+
+        if (editandoID == 0)
+        {
+            // CREAR
+            var req = new { UsuarioID = Sesion.Usuario.UsuarioID, Descripcion = textoProposito };
+            await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/crear", req);
+        }
+        else
+        {
+            // EDITAR
+            var req = new { PropositoID = editandoID, Descripcion = textoProposito };
+            await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/editar", req);
+        }
+        
+        mostrarModal = false;
+        await CargarPropositos();
+    }
+
+    private void Volver() => Nav.NavigateTo("/home");
+}

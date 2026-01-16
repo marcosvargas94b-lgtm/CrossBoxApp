@@ -1,0 +1,169 @@
+﻿@page "/rutina-admin/{UsuarioId:guid}/{NombreAtleta}"
+@using CrossBoxApp.Models
+@using CrossBoxApp.Models.Services
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject SesionService Sesion
+
+<div class="top-navbar">
+    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
+    <div class="nav-title">RUTINA: @NombreAtleta.ToUpper()</div>
+    <div class="nav-right"></div>
+</div>
+
+<div class="rutina-container">
+    @for (int i = 1; i <= 7; i++)
+    {
+        var diaNum = i;
+        var rutinaDia = ObtenerRutina(diaNum);
+        bool tieneRutina = rutinaDia != null;
+
+        <div class="dia-card @(tieneRutina ? "cargada" : "")">
+            <div class="dia-header">
+                <span class="dia-nombre">@NombreDia(diaNum)</span>
+                @if (tieneRutina)
+                {
+                    <span class="badge-coach">Coach: @rutinaDia.CoachNombre</span>
+                }
+            </div>
+
+            <div class="dia-body">
+                @if (diaEditando == diaNum)
+                {
+                    <textarea @bind="textoEditando" class="form-control input-dark" rows="4" placeholder="Escribe la rutina aquí..."></textarea>
+                    <div class="edit-actions">
+                        <button class="btn-cancel" @onclick="CancelarEdicion">Cancelar</button>
+                        <button class="btn-save" @onclick="() => Guardar(diaNum)">Guardar</button>
+                    </div>
+                }
+                else
+                {
+                    @if (tieneRutina)
+                    {
+                        <div class="rutina-texto">@rutinaDia.Descripcion</div>
+                        <div class="rutina-footer">
+                            <span class="status-label"><i class="fas fa-check-circle"></i> Rutina Cargada</span>
+                            <div class="actions">
+                                <i class="fas fa-pen btn-icon edit" @onclick='() => Editar(diaNum, rutinaDia.Descripcion ?? "")'></i>
+                                <i class="fas fa-trash btn-icon delete" @onclick="() => Eliminar(diaNum)"></i>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-placeholder" @onclick='() => Editar(diaNum, "")'>
+                            <i class="fas fa-plus-circle"></i> Agregar Rutina
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .rutina-container { padding: 15px; background: #0d0d0d; min-height: 100vh; padding-bottom: 50px; }
+    .dia-card { background: #1a1a1a; border: 1px solid #333; border-radius: 10px; margin-bottom: 15px; overflow: hidden; transition: all 0.3s; }
+    .dia-card.cargada { border: 2px solid #28a745; box-shadow: 0 0 10px rgba(40,167,69,0.1); }
+    .dia-header { background: #222; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+    .dia-nombre { font-family: 'Oswald'; color: #F8C545; font-size: 1.1rem; }
+    .badge-coach { font-size: 0.7rem; color: #888; background: #111; padding: 2px 6px; border-radius: 4px; border: 1px solid #444; }
+    .dia-body { padding: 15px; color: white; }
+    .rutina-texto { white-space: pre-wrap; font-family: 'Roboto'; font-size: 0.95rem; line-height: 1.4; color: #ddd; margin-bottom: 10px; }
+    .rutina-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #333; padding-top: 10px; margin-top: 10px; }
+    .status-label { color: #28a745; font-size: 0.8rem; font-weight: bold; }
+    .btn-icon { font-size: 1.1rem; cursor: pointer; padding: 5px; margin-left: 10px; }
+    .edit { color: #F8C545; }
+    .delete { color: #dc3545; }
+    .empty-placeholder { text-align: center; color: #666; cursor: pointer; padding: 20px; border: 2px dashed #333; border-radius: 8px; transition: 0.2s; }
+    .empty-placeholder:hover { border-color: #F8C545; color: #F8C545; }
+    .input-dark { background: #333; color: white; border: 1px solid #555; width: 100%; margin-bottom: 10px; }
+    .edit-actions { display: flex; gap: 10px; }
+    .btn-save { flex: 1; background: #28a745; border: none; color: white; padding: 8px; border-radius: 5px; font-weight: bold; }
+    .btn-cancel { flex: 1; background: #333; border: none; color: white; padding: 8px; border-radius: 5px; }
+    .top-navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #1a1a1a; border-bottom: 2px solid #F8C545; color: white; font-family: 'Oswald'; }
+    .nav-left { color: #F8C545; cursor: pointer; }
+</style>
+
+@code {
+    [Parameter] public Guid UsuarioId { get; set; }
+    [Parameter] public string NombreAtleta { get; set; }
+
+    // Renombramos la clase para evitar conflictos con la otra pantalla
+    public class RutinaAdminDto 
+    { 
+        public int DiaSemana { get; set; } 
+        public string Descripcion { get; set; } 
+        public string CoachNombre { get; set; } 
+    }
+    
+    private List<RutinaAdminDto> rutinas = new List<RutinaAdminDto>();
+    private int diaEditando = 0;
+    private string textoEditando = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarRutinas();
+    }
+
+    private async Task CargarRutinas()
+    {
+        try {
+            rutinas = await Http.GetFromJsonAsync<List<RutinaAdminDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/rutinasapi/semana/{UsuarioId}");
+        } catch { rutinas = new List<RutinaAdminDto>(); }
+    }
+
+    private RutinaAdminDto ObtenerRutina(int dia) => rutinas.FirstOrDefault(r => r.DiaSemana == dia);
+
+    private string NombreDia(int d) => d switch { 1=>"LUNES", 2=>"MARTES", 3=>"MIÉRCOLES", 4=>"JUEVES", 5=>"VIERNES", 6=>"SÁBADO", 7=>"DOMINGO", _=>"" };
+
+    private void Editar(int dia, string actual)
+    {
+        diaEditando = dia;
+        textoEditando = actual;
+    }
+
+    private void CancelarEdicion()
+    {
+        diaEditando = 0;
+        textoEditando = "";
+    }
+
+    private async Task Guardar(int dia)
+    {
+        if (string.IsNullOrWhiteSpace(textoEditando)) return;
+
+        // Usamos un objeto anónimo, asegúrate de que coincida con el DTO del Backend
+        var req = new 
+        { 
+            UsuarioID = UsuarioId, 
+            CoachID = Sesion.Usuario.UsuarioID, 
+            DiaSemana = dia, 
+            Descripcion = textoEditando 
+        };
+
+        var resp = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/rutinasapi/guardar", req);
+        
+        if (resp.IsSuccessStatusCode)
+        {
+            await CargarRutinas();
+            diaEditando = 0;
+        }
+        else
+        {
+            await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar", "OK");
+        }
+    }
+
+    private async Task Eliminar(int dia)
+    {
+        bool confirm = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Borrar rutina de este día?", "Sí", "No");
+        if (confirm)
+        {
+            await Http.DeleteAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/rutinasapi/eliminar/{UsuarioId}/{dia}");
+            await CargarRutinas();
+        }
+    }
+
+    private void Volver() => Nav.NavigateTo("/usuarios-view");
+}

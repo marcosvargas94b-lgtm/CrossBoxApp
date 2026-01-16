@@ -80,6 +80,39 @@
 </div>
 
 <div class="home-container">
+
+
+@if (diasRestantes <= 3)
+{
+    <div class="payment-alert @(diasRestantes <= 0 ? "expired" : "warning")" @onclick="IrAPagar">
+        <div class="alert-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+      <div class="alert-text">
+    @if (diasRestantes > 0)
+    {
+        <strong>¡ATENCIÓN!</strong>
+        <span>Tu plan vence en @diasRestantes días.</span>
+    }
+    else
+    {
+        <strong>¡SERVICIO VENCIDO!</strong>
+       @if (Sesion.Usuario != null && Sesion.Usuario.TipoUsuarioID == 2 && Sesion.Usuario.BoxID != IdCanaHueca)
+        {
+            <span>Acude a tu recepción para pagar.</span>
+        }
+        else
+        {
+            <span>Toca aquí para pagar en línea.</span>           
+        }
+
+    }
+</div>
+        
+    </div>
+}
+
+
     <div class="welcome-section">
         <h1>BIENVENIDO @(Sesion.Usuario?.Nombre?.ToUpper() ?? "ATLETA")</h1>
     </div>
@@ -121,7 +154,7 @@
         {
             <div class="menu-card" @onclick="IrACompaneros">
                 <i class="fas fa-users card-icon" style="color:#00BFFF;"></i>
-                <h3>¡HEY! HOLA</h3><p>Compañeros</p>
+                <h3>¡HEY! HOLA</h3><p>Compañeros y MATCHES</p>
             </div>
         }
 
@@ -143,17 +176,86 @@
                 <div class="live-badge">HOY</div>
             </div>
         }
-        @if (EstaActivo("RUNNING"))
+        @if (EstaActivo("RUNNING") && tieneRunning)
         {
             <div class="menu-card" @onclick='() => Nav.NavigateTo("/mi-running")'>
-                <i class="fas fa-running card-icon" style="color:white;"></i>
-                <h3>MI PLAN RUNNING</h3><p>Bitácora</p>
+                <i class="fas fa-running card-icon"></i>
+                <h3>MI PLAN RUNNING</h3>
+                <p>Bitácora</p>
             </div>
         }
+
+        @if (tieneRutina)
+        {
+            <div class="menu-card" @onclick='() => Nav.NavigateTo("/rutina-cliente")'>
+                <i class="fas fa-dumbbell card-icon"></i>
+                <h3>RUTINA PRO</h3>
+                <p>Tu plan personalizado</p>
+            </div>
+        }
+       
+            <div class="menu-card yellow-highlight" @onclick='() => Nav.NavigateTo("/rutina-ia")'>
+                <i class="fas fa-robot card-icon"></i>
+
+                <h3>ENTRENADOR IA</h3>
+                <p>Crea tu rutina perfecta</p>
+
+                <div class="live-badge" style="background-color: black; color: #F8C545;">NUEVO</div>
+            </div>
+        
+
+
+        @if (EstaActivo("PROPOSITOS")) 
+        {
+            <div class="menu-card" @onclick='() => Nav.NavigateTo("/mis-propositos")'>
+                <i class="fas fa-bullseye card-icon"></i>
+                <h3>MIS RETOS</h3>
+                <p>Propósitos @DateTime.Now.Year</p>
+            </div>
+        }
+
     </div>
 
     <div class="footer-brand">@@@NombreBox</div>
 </div>
+
+@if (mostrarModalPlanesAdmin)
+{
+    <div class="modal-overlay">
+        <div class="modal-content custom-modal">
+            <div class="modal-header">
+                <h5 style="color:#F8C545; margin:0;">ELIGE TU PLAN</h5>
+                <button class="btn-close-custom" @onclick="() => mostrarModalPlanesAdmin = false"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body text-center">
+                <p style="color:#ccc;">Selecciona cómo quieres renovar tu servicio:</p>
+                
+                <div class="planes-selection-grid">
+                    @{ var planMes = listaPlanes.FirstOrDefault(p => p.PlanID == 1); }
+                    @if (planMes != null)
+                    {
+                        <div class="plan-option-card" @onclick='() => ProcesarPago("Renta Mensual", planMes.Precio)'>
+                            <div class="plan-title">MENSUAL</div>
+                            <div class="plan-price">$@planMes.Precio</div>
+                            <div class="plan-note">Pago recurrente</div>
+                        </div>
+                    }
+
+                    @{ var planAnio = listaPlanes.FirstOrDefault(p => p.PlanID == 2); }
+                    @if (planAnio != null)
+                    {
+                        <div class="plan-option-card recommended" @onclick='() => ProcesarPago("Renta Anual (Ahorro)", planAnio.Precio)'>
+                            <div class="badge-save">MEJOR OPCIÓN</div>
+                            <div class="plan-title">ANUAL</div>
+                            <div class="plan-price">$@planAnio.Precio</div>
+                            <div class="plan-note">12 Meses de servicio</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @if (mostrarModalModulos) { <div class="modal-overlay"><div class="modal-content custom-modal" style="max-height: 80vh;"><div class="modal-header"><h5 style="margin:0; color:#F8C545; font-weight:bold;">CONFIGURAR MÓDULOS</h5><button class="btn-close-custom" @onclick="() => mostrarModalModulos = false"><i class="fas fa-times"></i></button></div><div class="modal-body" style="overflow-y:auto;"><p style="color:#ccc; font-size:0.8rem; margin-bottom:15px;">Apaga los módulos que no quieras que vean tus atletas.</p>@if (listaConfiguracion != null){@foreach (var mod in listaConfiguracion){<div class="module-row" @onclick="() => ToggleModulo(mod)"><span class="mod-name">@mod.NombreVisible</span><div class="switch-track @(mod.Activo ? "on" : "off")"><div class="switch-thumb"></div></div></div>}}else{<div class="text-center text-warning">Cargando...</div>}</div><div class="modal-footer"><button class="btn-confirm" @onclick="() => mostrarModalModulos = false">LISTO</button></div></div></div> }
 @if (mostrarModalWod) { <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.9); z-index: 2000;" tabindex="-1"><div class="modal-dialog modal-dialog-scrollable"><div class="modal-content" style="background-color: #222; border: 1px solid #F8C545; color: white;"><div class="modal-header"><h5 class="modal-title" style="color: #F8C545;">Programación WOD</h5><button type="button" class="btn-close btn-close-white" @onclick="() => mostrarModalWod = false"></button></div><div class="modal-body"><input type="date" @bind="nuevoWod.FechaProgramacion" class="form-control input-dark mb-3" />@for (int i = 0; i < nuevoWod.Bloques.Count; i++){var indexBloque = i; var bloque = nuevoWod.Bloques[i];<div class="card p-2 mb-3" style="background-color: #333; border: 1px solid #F8C545;"><div class="d-flex justify-content-between align-items-center mb-2"><span style="color:#F8C545; font-weight:bold;">BLOQUE #@(indexBloque + 1)</span><button class="btn btn-sm btn-danger" @onclick="() => EliminarBloque(bloque)"><i class="fas fa-trash"></i></button></div><select @bind="bloque.SegmentoClaseID" class="form-control input-dark mb-2"><option value="">-- Segmento --</option>@foreach (var seg in listaSegmentos) { <option value="@seg.Id">@seg.Nombre</option> }</select>@foreach (var ejercicio in bloque.Ejercicios){<div class="input-group mb-2"><input type="text" @bind="ejercicio.PesoRepeticiones" class="form-control input-dark" placeholder="Peso/Reps" style="width: 30%;" /><input type="text" @bind="ejercicio.Descripcion" class="form-control input-dark" placeholder="Descripción" /><button class="btn btn-outline-danger" @onclick="() => EliminarEjercicio(bloque, ejercicio)">X</button></div>}<button class="btn btn-sm btn-outline-light w-100" @onclick="() => AgregarEjercicio(bloque)">+ Ejercicio</button></div>}<button class="btn btn-outline-warning w-100 py-2" @onclick="AgregarBloque">+ Bloque</button></div><div class="modal-footer"><button class="btn btn-warning" style="background-color:#F8C545; font-weight:bold;" @onclick="GuardarProgramacion">Guardar</button></div></div></div></div> }
@@ -161,6 +263,24 @@
 @if (mostrarAvisoPopUp && ultimoAviso != null) { <div class="modal-overlay pop-up-effect"><div class="modal-content aviso-content"><div class="aviso-icon"><i class="fas fa-bullhorn"></i></div><h3 class="aviso-title">@ultimoAviso.Titulo</h3><div class="aviso-date">@ultimoAviso.FechaCreacion.GetValueOrDefault().ToString("dd/MM/yyyy")</div><div class="aviso-body">@ultimoAviso.Mensaje</div><button class="btn-ok" @onclick="CerrarAviso">ENTERADO</button></div></div> }
 
 <style>
+    .planes-selection-grid { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
+    
+    .plan-option-card {
+        background: #222; border: 1px solid #444; border-radius: 10px; padding: 20px; width: 45%;
+        cursor: pointer; transition: 0.2s; position: relative;
+    }
+    .plan-option-card:active { transform: scale(0.95); border-color: #F8C545; }
+    
+    .plan-option-card.recommended { border: 2px solid #F8C545; background: rgba(248, 197, 69, 0.1); }
+    
+    .plan-title { font-family: 'Oswald'; font-size: 1.2rem; color: white; }
+    .plan-price { font-size: 1.5rem; font-weight: bold; color: #F8C545; margin: 10px 0; }
+    .plan-note { font-size: 0.8rem; color: #aaa; }
+    
+    .badge-save {
+        position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+        background: #28a745; color: white; font-size: 0.6rem; padding: 2px 8px; border-radius: 10px; font-weight: bold;
+    }
 
     .yellow-highlight {
         background: #F8C545 !important;
@@ -215,7 +335,22 @@
     .home-container { background-color: #0d0d0d; min-height: 90vh; color: white; display: flex; flex-direction: column; align-items: center; padding-top: 30px; }
     .welcome-section h1 { font-family: 'Oswald'; color: #F8C545; font-size: 2rem; margin-bottom: 30px; text-align: center; }
     .cards-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; width: 100%; max-width: 1000px; padding-bottom: 40px; }
-    .menu-card { background-color: #F8D783; color: #1a1a1a; width: 150px; height: 160px; border-radius: 15px; padding: 15px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; box-shadow: 0 4px 10px rgba(248, 215, 131, 0.2); cursor: pointer; }
+
+    .menu-card {
+        background-color: #F8C545;
+        color: black;
+        width: 150px;
+        height: 160px;
+        border-radius: 15px;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(248, 215, 131, 0.2);
+        cursor: pointer;
+    }
     .menu-card h3 { font-family: 'Oswald'; font-size: 1rem; font-weight: bold; margin: 0; }
     .menu-card p { font-size: 0.7rem; font-family: 'Roboto'; line-height: 1.1; margin-top: 5px; }
     .card-icon { font-size: 2.5rem; margin-bottom: 10px; }
@@ -243,47 +378,101 @@
     @@keyframes ring { 0% { transform: rotate(0); } 5% { transform: rotate(30deg); } 10% { transform: rotate(-28deg); } 15% { transform: rotate(34deg); } 20% { transform: rotate(-32deg); } 25% { transform: rotate(30deg); } 30% { transform: rotate(-28deg); } 35% { transform: rotate(26deg); } 40% { transform: rotate(-24deg); } 45% { transform: rotate(22deg); } 50% { transform: rotate(-20deg); } 100% { transform: rotate(0); } }
     @@keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
     @@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+    .payment-alert {
+    margin-bottom: 20px;
+    padding: 15px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    animation: slideDown 0.5s;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .payment-alert.warning {
+    background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%); /* Amarillo/Naranja */
+    color: black;
+    }
+
+    .payment-alert.expired {
+    background: linear-gradient(90deg, #dc3545 0%, #c82333 100%); /* Rojo */
+    color: white;
+    }
+
+    .alert-icon { font-size: 1.5rem; }
+    .alert-text { flex: 1; display: flex; flex-direction: column; font-size: 0.9rem; }
+    .alert-action { font-size: 1.2rem; }
+    
+    @@keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
 </style>
 
 @code {
     private bool mostrarMenuPrincipal = false;
     private bool EsAdmin = false;
     private string NombreBox = "MVAPP";
-
+    private bool tieneRutina = false;
     private bool mostrarNotis = false;
     private bool hayNuevas = false;
     private List<NotificacionDto> misNotificaciones;
-    
+    private bool tieneRunning = false;
+    private int diasRestantes = 99;
+    private readonly Guid IdCanaHueca = Guid.Parse("39BE552A-4A34-4EF5-9351-193F1D0B1340");
+
     // Modales
     private bool mostrarModalWod = false;
     private bool mostrarModalCrearAviso = false;
     private bool mostrarAvisoPopUp = false;
     private bool mostrarModalModulos = false; 
-    
+
     // Modelos
     private ProgramacionWodViewModel nuevoWod = new ProgramacionWodViewModel();
     private List<SegmentoDto> listaSegmentos = new List<SegmentoDto>();
     private Avisos nuevoAviso = new Avisos();
     private Avisos ultimoAviso;
     private static bool avisoVistoEnSesion = false;
-    
+
+    public class PlanDto { public int PlanID { get; set; } public string Nombre { get; set; } public decimal Precio { get; set; } }
+    private List<PlanDto> listaPlanes = new List<PlanDto>();
+    private bool mostrarModalPlanesAdmin = false;
+
     // LISTA DE MÓDULOS
     private List<ModuloConfig> listaConfiguracion = new List<ModuloConfig>();
 
     protected override async Task OnInitializedAsync()
     {
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
-        
+
         // Es Admin si es Tipo 1 (Dueño)
         EsAdmin = Sesion.Usuario.TipoUsuarioID == 1; 
 
         await CargarNombreBox();
         await CargarNotificaciones();
         await CargarSegmentos();
-        
+
         await CargarConfiguracionModulos();
 
         if (!avisoVistoEnSesion) await CargarUltimoAviso();
+
+        try
+        { tieneRutina = await Http.GetFromJsonAsync<bool>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/rutinasapi/tiene-rutina/{Sesion.Usuario.UsuarioID}"); } catch { tieneRutina = false; }
+        try 
+        { tieneRunning = await Http.GetFromJsonAsync<bool>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/runningapi/tiene-plan/{Sesion.Usuario.UsuarioID}"); } catch { tieneRunning = false; }
+
+        if (Sesion.Usuario != null)
+        {
+            try 
+            {              
+                var estado = await Http.GetFromJsonAsync<int>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/pagosapi/dias-restantes/{Sesion.Usuario.UsuarioID}");
+                diasRestantes = estado;
+            }
+            catch { /* Ignorar errores de red */ }
+        }
+
+        try { listaPlanes = await Http.GetFromJsonAsync<List<PlanDto>>("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/pagosapi/planes");} catch { }
+
     }
 
     private async Task CargarNombreBox()
@@ -301,7 +490,14 @@
 
     private void ToggleMainMenu() { mostrarMenuPrincipal = !mostrarMenuPrincipal; if (mostrarMenuPrincipal) mostrarNotis = false; }
     private void ToggleNotificaciones() { mostrarNotis = !mostrarNotis; if (mostrarNotis) { mostrarMenuPrincipal = false; if (hayNuevas) { hayNuevas = false; _ = Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/notificaciones/leer/{Sesion.Usuario.UsuarioID}", null); } } }
-    private void CerrarSesion() { Nav.NavigateTo("/", forceLoad: true); Sesion.Usuario = null; }
+    // private void CerrarSesion() { Nav.NavigateTo("/", forceLoad: true); Sesion.Usuario = null; }
+    private void CerrarSesion()
+    {
+        diasRestantes = 99;
+        SecureStorage.Default.Remove("auth_token"); // Borrar del cel
+        Sesion.Usuario = null; // Borrar de memoria
+        Nav.NavigateTo("/"); // Ir al Login
+    }
 
     private void IrAPerfil() => Nav.NavigateTo("/mi-perfil");
     private void IrAAgenda() => Nav.NavigateTo("/agenda-view");
@@ -321,6 +517,66 @@
         }
     }
 
+    private async Task IrAPagar()
+    {
+        if (Sesion.Usuario == null) return;
+
+        // CASO 1: ATLETA DE GIMNASIO (NO Admin, NO Caña Hueca) -> PAGO PRESENCIAL
+        if (Sesion.Usuario.TipoUsuarioID == 2 && Sesion.Usuario.BoxID != IdCanaHueca)
+        {
+            await App.Current.MainPage.DisplayAlert("Pago Presencial", "Pasa a recepción para pagar.", "Entendido");
+            return;
+        }
+
+        // CASO 2: CAÑA HUECA -> PAGO ÚNICO (PlanID 3 en tu tabla)
+        if (Sesion.Usuario.BoxID == IdCanaHueca)
+        {
+            var planPublico = listaPlanes.FirstOrDefault(p => p.PlanID == 3); // O busca por nombre "Plan Público"
+            if (planPublico != null)
+            {
+                await ProcesarPago(planPublico.Nombre, planPublico.Precio);
+            }
+            return;
+        }
+
+        // CASO 3: ADMINISTRADOR -> ELEGIR PLAN (Mensual o Anual)
+        if (Sesion.Usuario.TipoUsuarioID == 1)
+        {
+            mostrarModalPlanesAdmin = true; // Abrimos el modal para que elija
+        }
+    }
+
+    // Método auxiliar para no repetir código de MercadoPago
+    private async Task ProcesarPago(string titulo, decimal precio)
+    {
+        try
+        {
+            var datosPago = new { Titulo = titulo, Precio = precio, UsuarioID = Sesion.Usuario.UsuarioID };
+            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/mercadopago/crear-preferencia", datosPago);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var resultado = await response.Content.ReadFromJsonAsync<RespuestaMercadoPago>();
+                if (resultado != null && !string.IsNullOrEmpty(resultado.url))
+                {
+                    await Browser.Default.OpenAsync(resultado.url, BrowserLaunchMode.SystemPreferred);
+                    mostrarModalPlanesAdmin = false; // Cerramos modal si estaba abierto
+                }
+            }
+            else
+            {
+                await App.Current.MainPage.DisplayAlert("Error", "No se pudo conectar con MercadoPago.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
+    }
+
+
+
+
     private void AbrirCrearAviso() { mostrarMenuPrincipal = false; nuevoAviso = new Avisos(); mostrarModalCrearAviso = true; }
     private async Task PublicarAviso() { if (string.IsNullOrEmpty(nuevoAviso.Titulo)) return; try { nuevoAviso.BoxID = Sesion.Usuario.BoxID; var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/crear", nuevoAviso); if (r.IsSuccessStatusCode) { mostrarModalCrearAviso = false; await App.Current.MainPage.DisplayAlert("Éxito", "Publicado", "OK"); } } catch {} }
     private async Task CargarUltimoAviso() { try { var r = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/ultimo/{Sesion.Usuario.BoxID}"); if (r.StatusCode == System.Net.HttpStatusCode.NoContent) return; if (r.IsSuccessStatusCode) { ultimoAviso = await r.Content.ReadFromJsonAsync<Avisos>(); if (ultimoAviso != null) { var idVisto = await JS.InvokeAsync<string>("localStorage.getItem", "ultimoAvisoVisto"); if (idVisto != ultimoAviso.AvisoID.ToString()) mostrarAvisoPopUp = true; } } } catch {} }
@@ -334,4 +590,9 @@
     private async Task CargarSegmentos() { try { var r = await Http.GetAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/segmentos"); if(r.IsSuccessStatusCode) listaSegmentos = await r.Content.ReadFromJsonAsync<List<SegmentoDto>>(); } catch {} }
     private async Task CargarNotificaciones() { try { misNotificaciones = await Http.GetFromJsonAsync<List<NotificacionDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/notificaciones/{Sesion.Usuario.UsuarioID}"); hayNuevas = misNotificaciones.Any(n => !n.Leido); } catch {} }
     private string GetIcono(string t) => t == "MATCH_MUTUO" ? "fas fa-heart text-danger" : "fas fa-bell";
+
+    public class RespuestaMercadoPago
+    {
+        public string url { get; set; }
+    }
 }

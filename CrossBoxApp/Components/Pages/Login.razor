@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using System.Net.Http.Json
+@using Microsoft.Maui.Storage 
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject CrossBoxApp.Models.Services.SesionService Sesion
@@ -15,31 +16,39 @@
         <h1 class="title-main">MY CROSSBOX</h1>
         <h2 class="title-sub">INICIO DE SESIÓN</h2>
 
-        <div class="form-group">
-            <input type="text" @bind="loginUsername" class="input-custom" placeholder="Username (Email)" />
-        </div>
-        <div class="form-group">
-            <input type="password" @bind="loginPassword" class="input-custom" placeholder="Password" />
-        </div>
-
-        @if (!string.IsNullOrEmpty(loginError))
+        @if (cargando)
         {
-            <div class="alert-error">@loginError</div>
+            <div class="spinner-border text-warning" style="width: 3rem; height: 3rem; border-width: 0.3em;" role="status"></div>
+            <p class="mt-3 text-white" style="font-family:'Oswald'; letter-spacing: 1px;">CARGANDO SESIÓN...</p>
         }
+        else
+        {
+            <div class="form-group">
+                <input type="text" @bind="loginUsername" class="input-custom" placeholder="Username (Email)" />
+            </div>
+            <div class="form-group">
+                <input type="password" @bind="loginPassword" class="input-custom" placeholder="Password" />
+            </div>
 
-        <a href="#" class="forgot-pass">Forgot Password?</a>
-        <button class="btn-login" @onclick="IniciarSesion">Login</button>
+            @if (!string.IsNullOrEmpty(loginError))
+            {
+                <div class="alert-error">@loginError</div>
+            }
 
-        <a href="#" class="forgot-pass" style="margin-top: 30px; color: #F8C545; font-weight: bold;"
-           @onclick="AbrirModalRegistro">
-            ¿No tienes cuenta? ¡Regístrate aquí!
-        </a>
+            <a href="#" class="forgot-pass">Forgot Password?</a>
+            <button class="btn-login" @onclick="IniciarSesion">Login</button>
 
-        <div class="mt-4 text-center">
-            <button class="btn-link-gold" @onclick="AbrirModalRegistroBox">
-                <i class="fas fa-store-alt"></i> ¡Registra tu lugar de entrenamiento!
-            </button>
-        </div>
+            <a href="#" class="forgot-pass" style="margin-top: 30px; color: #F8C545; font-weight: bold;"
+               @onclick="AbrirModalRegistro">
+                ¿No tienes cuenta? ¡Regístrate aquí!
+            </a>
+
+            <div class="mt-4 text-center">
+                <button class="btn-link-gold" @onclick="AbrirModalRegistroBox">
+                    <i class="fas fa-store-alt"></i> ¡Registra tu lugar de entrenamiento!
+                </button>
+            </div>
+        }
     </div>
 </div>
 
@@ -70,14 +79,14 @@
             <div class="section-title"><i class="fas fa-gem"></i> ELIGE TU PLAN</div>
             <div class="planes-grid mb-4">
                 <div class="plan-card @(registroBox.PlanSeleccionadoID == 1 ? "selected" : "")" @onclick="() => registroBox.PlanSeleccionadoID = 1">
-                    <div class="plan-name">MENSUAL</div><div class="plan-price">$250.00</div><div class="plan-desc">Pago mes a mes</div>
+                    <div class="plan-name">MENSUAL</div><div class="plan-price">$700.00</div><div class="plan-desc">Pago mes a mes</div>
                     @if (registroBox.PlanSeleccionadoID == 1)
                     {
                         <i class="fas fa-check-circle check-icon"></i>
                     }
                 </div>
                 <div class="plan-card @(registroBox.PlanSeleccionadoID == 2 ? "selected" : "")" @onclick="() => registroBox.PlanSeleccionadoID = 2">
-                    <div class="plan-badge">AHORRA 6 MESES</div><div class="plan-name">ANUAL</div><div class="plan-price">$1,600.00</div><div class="plan-desc">Un solo pago al año</div>
+                    <div class="plan-badge">AHORRA 2 MESES</div><div class="plan-name">ANUAL</div><div class="plan-price">$7,000.00</div><div class="plan-desc">Un solo pago al año</div>
                     @if (registroBox.PlanSeleccionadoID == 2)
                     {
                         <i class="fas fa-check-circle check-icon"></i>
@@ -492,6 +501,7 @@
     private string loginUsername;
     private string loginPassword;
     private string loginError;
+    private bool cargando = true; // NUEVO: Para el auto-login
 
     // Registro Atleta
     private bool mostrarModalRegistro = false;
@@ -520,6 +530,42 @@
             if (response.IsSuccessStatusCode) listaBoxes = await response.Content.ReadFromJsonAsync<List<Boxes>>();
         }
         catch { }
+        
+        // Ejecutar Auto-Login
+        await IntentarLoginAutomatico();
+    }
+
+    private async Task IntentarLoginAutomatico()
+    {
+        try
+        {
+            // 1. Buscamos si hay algo guardado
+            var guardado = await SecureStorage.Default.GetAsync("auth_token");
+
+            if (!string.IsNullOrEmpty(guardado))
+            {
+                // 2. Si hay ID, intentamos loguear silenciosamente con la API
+                var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/login-por-id/{guardado}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var usuario = await response.Content.ReadFromJsonAsync<UsuarioSesionDto>();
+                    if (usuario != null)
+                    {
+                        Sesion.Usuario = usuario; // Llenamos el servicio
+                        Nav.NavigateTo("/home");  // ¡Adentro!
+                        return; // Salimos para mantener el loading activo mientras navega
+                    }
+                }
+            }
+        }
+        catch 
+        {
+            // Si falla (token vencido, sin internet, etc), se queda en el Login normal
+            SecureStorage.Default.Remove("auth_token"); // Limpiamos basura
+        }
+        
+        cargando = false; // Mostramos el formulario de login
     }
 
     private void AlSeleccionarBox(ChangeEventArgs e)
@@ -569,6 +615,7 @@
 
     private async Task IniciarSesion()
     {
+        cargando = true; // Mostramos spinner mientras procesa
         loginError = "";
         try
         {
@@ -581,11 +628,22 @@
                 // LOGIN EXITOSO (200 OK)
                 var usuarioRecibido = await response.Content.ReadFromJsonAsync<UsuarioSesionDto>();
                 Sesion.Usuario = usuarioRecibido;
+
+                // GUARDAR SESIÓN EN EL CELULAR
+                try { await SecureStorage.Default.SetAsync("auth_token", usuarioRecibido.UsuarioID.ToString());} catch {}
+                
                 Nav.NavigateTo("/home");
+            }
+            else if (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired) // Error 402 💸
+            {
+                // MENSAJE CLARO PARA EL ATLETA
+                loginError = "⛔ El servicio de tu Gimnasio está suspendido temporalmente. Por favor avisa a tu administrador.";
+                cargando = false;
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.Forbidden) // ⚠️ CÓDIGO 403 (NO VALIDADO)
             {
                 // AQUÍ ATRAPAMOS AL USUARIO EN ESPERA
+                cargando = false;
                 await App.Current.MainPage.DisplayAlert("⏳ CUENTA EN ESPERA",
                     "Tu registro fue exitoso, pero debes esperar a que el administrador de tu Box acepte tu solicitud para poder ingresar.",
                     "Entendido");
@@ -593,11 +651,14 @@
             else
             {
                 // CUALQUIER OTRO ERROR (401, 404, 500)
+                cargando = false;
                 loginError = "Credenciales incorrectas o error de servidor.";
+                // loginError = $"Error: {response.StatusCode}";
             }
         }
         catch (Exception ex)
         {
+            cargando = false;
             loginError = "Error de conexión: " + ex.Message;
         }
     }

@@ -1,0 +1,71 @@
+﻿@page "/rutina-cliente"
+@using CrossBoxApp.Models.Services
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject SesionService Sesion
+
+<div class="top-navbar">
+    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
+    <div class="nav-title">MI RUTINA</div>
+</div>
+
+<div class="rutina-container">
+    @if (rutinas == null)
+    {
+        <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
+    }
+    else if (rutinas.Count == 0)
+    {
+        <div class="empty-state">No tienes rutina asignada esta semana.</div>
+    }
+    else
+    {
+        @foreach (var rutina in rutinas.OrderBy(r => r.DiaSemana))
+        {
+            <div class="dia-card cargada">
+                <div class="dia-header">
+                    <span class="dia-nombre">@NombreDia(rutina.DiaSemana)</span>
+                    <span class="badge-coach">@rutina.CoachNombre</span>
+                </div>
+                <div class="dia-body">
+                    <div class="rutina-texto">@rutina.Descripcion</div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<style>
+    .rutina-container { padding: 15px; background: #0d0d0d; min-height: 100vh; padding-bottom: 50px; }    
+    .dia-card { background: #1a1a1a; border: 1px solid #333; border-radius: 10px; margin-bottom: 15px; overflow: hidden; transition: all 0.3s; }       
+    .dia-card.cargada { border: 2px solid #28a745; box-shadow: 0 0 10px rgba(40,167,69,0.1); }
+    .dia-header { background: #222; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+    .dia-nombre { font-family: 'Oswald'; color: #F8C545; font-size: 1.1rem; }
+    .badge-coach { font-size: 0.7rem; color: #888; background: #111; padding: 2px 6px; border-radius: 4px; border: 1px solid #444; }
+    .dia-body { padding: 15px; color: white; }
+    .rutina-texto { white-space: pre-wrap; font-family: 'Roboto'; font-size: 0.95rem; line-height: 1.4; color: #ddd; margin-bottom: 10px; }    
+    .rutina-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #333; padding-top: 10px; margin-top: 10px; }
+    .status-label { color: #28a745; font-size: 0.8rem; font-weight: bold; }
+    .rutina-container { padding: 15px; background: #0d0d0d; min-height: 100vh; }
+    .dia-card { background: #1a1a1a; border: 2px solid #28a745; border-radius: 10px; margin-bottom: 15px; }
+    .dia-header { background: #222; padding: 10px 15px; display: flex; justify-content: space-between; border-bottom: 1px solid #333; }
+    .dia-nombre { font-family: 'Oswald'; color: #F8C545; }
+    .badge-coach { color: #888; font-size: 0.8rem; }
+    .dia-body { padding: 15px; color: white; white-space: pre-wrap; font-family: 'Roboto'; }
+    .empty-state { text-align: center; margin-top: 50px; color: #666; }
+    .top-navbar { display: flex; justify-content: space-between; padding: 15px; background: #1a1a1a; color: #F8C545; font-family: 'Oswald'; }
+</style>
+
+@code {
+    class RutinaDiaDto { public int DiaSemana { get; set; } public string Descripcion { get; set; } public string CoachNombre { get; set; } }
+    private List<RutinaDiaDto> rutinas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try {
+            rutinas = await Http.GetFromJsonAsync<List<RutinaDiaDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/rutinasapi/semana/{Sesion.Usuario.UsuarioID}");
+        } catch { rutinas = new List<RutinaDiaDto>(); }
+    }
+    private string NombreDia(int d) => d switch { 1=>"LUNES", 2=>"MARTES", 3=>"MIÉRCOLES", 4=>"JUEVES", 5=>"VIERNES", 6=>"SÁBADO", 7=>"DOMINGO", _=>"" };
+    private void Volver() => Nav.NavigateTo("/home");
+}

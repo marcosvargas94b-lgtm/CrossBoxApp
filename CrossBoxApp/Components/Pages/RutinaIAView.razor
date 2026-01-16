@@ -1,0 +1,247 @@
+﻿@page "/rutina-ia"
+@using System.Net.Http.Json
+@using System.Text.Json.Serialization
+@using static CrossBoxApp.Models.IA.RutinaIA_Dtos
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject CrossBoxApp.Models.Services.SesionService Sesion
+
+<div class="navbar-container">
+    <div class="left-action" @onclick='() => Nav.NavigateTo("/home")'>
+        <i class="fas fa-arrow-left"></i>
+    </div>
+    <div class="brand">ENTRENADOR IA</div>
+    <div class="right-actions"></div> </div>
+
+<div class="rutina-container">
+
+    @if (rutinaGenerada == null)
+    {
+            <div class="welcome-section">
+                <h1>DISEÑA TU RUTINA</h1>
+                <p style="color:#ccc; font-size:0.9rem; text-align:center;">Define tus metas y deja que la IA cree el plan perfecto.</p>
+            </div>
+
+            <div class="form-card">
+            
+                <label class="form-label">Nivel de Experiencia</label>
+                <select class="form-control input-dark mb-3" @bind="perfil.Nivel">
+                    <option value="Principiante">Principiante (0-6 meses)</option>
+                    <option value="Intermedio">Intermedio (6m - 2 años)</option>
+                    <option value="Avanzado">Avanzado (+2 años)</option>
+                </select>
+
+                <label class="form-label">Objetivo Principal</label>
+                <select class="form-control input-dark mb-3" @bind="perfil.Objetivo">
+                    <option value="Hipertrofia">Ganar Músculo (Hipertrofia)</option>
+                    <option value="Fuerza">Ganar Fuerza</option>
+                    <option value="Perder Grasa">Perder Grasa / Definición</option>
+                    <option value="Resistencia">Resistencia Cardiovascular</option>
+                </select>
+
+                <label class="form-label">Días por Semana: <span style="color:#F8C545">@perfil.DiasPorSemana</span></label>
+                <input type="range" class="form-range w-100" min="2" max="6" step="1" @bind="perfil.DiasPorSemana" />
+            
+                <label class="form-label mt-3">Equipo Disponible</label>
+                <select class="form-control input-dark mb-4" @bind="perfil.Equipo">
+                    <option value="Gym Comercial Completo">Gym Comercial Completo</option>
+                    <option value="Mancuernas y Banco">Solo Mancuernas y Banco</option>
+                    <option value="Peso Corporal">Casa / Sin Equipo</option>
+                    <option value="Calistenia">Parque / Calistenia</option>
+                </select>
+
+                <button class="btn-confirm w-100 py-3" @onclick="GenerarRutina" disabled="@cargando">
+                    @if (cargando)
+                    {
+                            <span><i class="fas fa-spinner fa-spin"></i> PENSANDO...</span>
+                    }
+                    else
+                    {
+                            <span><i class="fas fa-robot"></i> GENERAR RUTINA</span>
+                    }
+                </button>
+
+                @if (!string.IsNullOrEmpty(errorMensaje))
+                {
+                        <div class="alert alert-danger mt-3" style="font-size:0.8rem;">@errorMensaje</div>
+                }
+            </div>
+    }
+    else
+    {
+            <div class="resultado-header">
+                <h2 style="color:#F8C545; font-family:'Oswald'; margin-bottom:5px;">@rutinaGenerada.NombreRutina</h2>
+                <p style="color:#ccc; font-size:0.8rem;">@rutinaGenerada.Explicacion</p>
+            </div>
+
+            <div class="week-selector">
+                @foreach (var sem in rutinaGenerada.Semanas)
+                {
+                        <div class="week-btn @(semanaActiva == sem.NumeroSemana ? "active" : "")" 
+                             @onclick="() => semanaActiva = sem.NumeroSemana">
+                            SEM @sem.NumeroSemana
+                        </div>
+                }
+            </div>
+
+            <div class="days-list">
+                @foreach (var dia in GetSemanaActual().Dias)
+                {
+                        <div class="day-card">
+                            <div class="day-header">
+                                <span class="day-title">@dia.Dia.ToUpper()</span>
+                                <span class="day-muscle">@dia.GrupoMuscular</span>
+                            </div>
+
+                            @if (dia.Ejercicios.Count == 0)
+                            {
+                                    <div class="rest-day">🏖️ DÍA DE DESCANSO</div>
+                            }
+                            else
+                            {
+                                    @foreach (var ej in dia.Ejercicios)
+                                    {
+                                            <div class="exercise-item">
+                                                <div class="ex-image">
+                                                    <img src="@(string.IsNullOrEmpty(ej.GifUrl) || ej.GifUrl.Contains("ERROR") ? "https://media.giphy.com/media/3o7TKSjRrfIPjeiVyM/giphy.gif" : ej.GifUrl)" />
+                                                </div>
+                                                <div class="ex-details">
+                                                    <div class="ex-name">@ej.NombreEspanol</div>
+                                                    <div class="ex-sets">
+                                                        <i class="fas fa-layer-group" style="color:#F8C545"></i> @ej.Series series 
+                                                        <span style="color:#666">|</span> 
+                                                        <i class="fas fa-redo" style="color:#F8C545"></i> @ej.Repeticiones reps
+                                                    </div>
+                                                    @if (!string.IsNullOrEmpty(ej.NotaTecnica))
+                                                    {
+                                                            <div class="ex-note"><i class="fas fa-info-circle"></i> @ej.NotaTecnica</div>
+                                                    }
+                                                </div>
+                                            </div>
+                                    }
+                            }
+                        </div>
+                }
+            </div>
+
+            <div class="bottom-actions">
+                <button class="btn-cancel w-100" @onclick="Reiniciar">CREAR NUEVA</button>
+            </div>
+    }
+
+</div>
+
+<style>
+    /* Estilos base heredados del Home */
+    .navbar-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; font-family: 'Oswald'; position: relative; z-index: 100; }
+    .brand { font-size: 1.2rem; font-weight: bold; letter-spacing: 1px; }
+    .left-action { font-size: 1.2rem; color: #F8C545; cursor: pointer; }
+    
+    .rutina-container { background-color: #0d0d0d; min-height: 90vh; color: white; padding: 20px; padding-bottom: 50px; font-family: 'Roboto'; }
+    
+    /* Formulario */
+    .welcome-section h1 { font-family: 'Oswald'; color: #F8C545; font-size: 1.8rem; text-align: center; margin-bottom: 10px; }
+    .form-card { background: #1a1a1a; padding: 25px; border-radius: 15px; border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.5); margin-top: 20px; }
+    .form-label { color: #F8C545; font-weight: bold; font-size: 0.9rem; margin-bottom: 5px; display: block; }
+    .input-dark { background: #333 !important; color: white !important; border: 1px solid #555; padding: 10px; border-radius: 8px; }
+    .btn-confirm { background: #F8C545; color: black; border: none; padding: 12px; font-weight: bold; border-radius: 8px; font-size: 1rem; cursor: pointer; transition: 0.2s; }
+    .btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-cancel { background: #333; color: white; border: 1px solid #555; padding: 12px; font-weight: bold; border-radius: 8px; font-size: 1rem; margin-top: 20px; }
+
+    /* Resultados */
+    .resultado-header { text-align: center; margin-bottom: 20px; animation: fadeIn 0.5s; }
+    
+    .week-selector { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 15px; justify-content: center; }
+    .week-btn { background: #333; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; cursor: pointer; border: 1px solid #555; white-space: nowrap; }
+    .week-btn.active { background: #F8C545; color: black; border-color: #F8C545; }
+
+    .day-card { background: #1a1a1a; border-radius: 10px; border: 1px solid #333; margin-bottom: 20px; overflow: hidden; animation: slideUp 0.5s; }
+    .day-header { background: #222; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+    .day-title { color: #F8C545; font-family: 'Oswald'; font-weight: bold; }
+    .day-muscle { font-size: 0.8rem; background: #333; padding: 2px 8px; border-radius: 4px; color: #ccc; }
+    
+    .rest-day { padding: 30px; text-align: center; color: #666; font-style: italic; }
+
+    .exercise-item { display: flex; padding: 15px; border-bottom: 1px solid #2a2a2a; gap: 15px; align-items: center; }
+    .exercise-item:last-child { border-bottom: none; }
+    
+    .ex-image { width: 70px; height: 70px; border-radius: 8px; overflow: hidden; flex-shrink: 0; background: #000; border: 1px solid #444; }
+    .ex-image img { width: 100%; height: 100%; object-fit: cover; }
+    
+    .ex-details { flex: 1; }
+    .ex-name { font-weight: bold; color: white; margin-bottom: 5px; font-size: 0.95rem; }
+    .ex-sets { font-size: 0.85rem; color: #ccc; margin-bottom: 5px; }
+    .ex-note { font-size: 0.75rem; color: #888; font-style: italic; }
+
+    @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+</style>
+
+@code {
+    // 1. VARIABLES DE ESTADO
+    private PerfilAtletaDto perfil = new PerfilAtletaDto
+    {
+        Nivel = "Intermedio",
+        Objetivo = "Hipertrofia",
+        DiasPorSemana = 4,
+        Lesiones = "Ninguna",
+        Equipo = "Gym Comercial Completo"
+    };
+
+    private RutinaGeneradaDto rutinaGenerada;
+    private bool cargando = false;
+    private string errorMensaje;
+    private int semanaActiva = 1;
+
+    // 2. MÉTODOS
+    private async Task GenerarRutina()
+    {
+        cargando = true;
+        errorMensaje = null;
+        rutinaGenerada = null;
+
+        try
+        {
+            // URL DE TU CONTROLADOR BACKEND (Asegúrate que coincida con tu API publicada o Localhost)
+            // Usamos la misma base URL que en Home.razor pero apuntando a tu controlador nuevo
+            string urlApi = "https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/IAEntrenador/generar-rutina";
+            
+            // Si estás probando LOCAL, descomenta esta línea y pon tu puerto local:
+            // string urlApi = "https://localhost:7123/api/IAEntrenador/generar-rutina";
+
+            var response = await Http.PostAsJsonAsync(urlApi, perfil);
+
+            if (response.IsSuccessStatusCode)
+            {
+                rutinaGenerada = await response.Content.ReadFromJsonAsync<RutinaGeneradaDto>();
+                semanaActiva = 1;
+            }
+            else
+            {
+                errorMensaje = "Error en el servidor. Intenta de nuevo.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMensaje = $"Error de conexión: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void Reiniciar()
+    {
+        rutinaGenerada = null;
+        perfil = new PerfilAtletaDto { Nivel = "Intermedio", Objetivo = "Hipertrofia", DiasPorSemana = 4, Equipo = "Gym Comercial Completo" };
+    }
+
+    private SemanaDto GetSemanaActual()
+    {
+        if (rutinaGenerada == null || rutinaGenerada.Semanas == null) return new SemanaDto();
+        return rutinaGenerada.Semanas.FirstOrDefault(s => s.NumeroSemana == semanaActiva) ?? new SemanaDto();
+    }
+
+    
+}

@@ -8,22 +8,50 @@
 <div class="top-navbar">
     <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
     <div class="nav-title">ATLETAS</div>
-    <div class="nav-right"></div>
+    
+    <div class="nav-right">
+        @if (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.TienePermiso("MANAGE_USERS"))
+        {
+            <div class="btn-add-header" @onclick="AbrirModalCrear">
+                <i class="fas fa-user-plus"></i>
+            </div>
+        }
+    </div>
 </div>
 
 <div class="users-container">
+    <div class="search-bar-container">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" 
+               class="search-input" 
+               placeholder="Buscar atleta por nombre..." 
+               @bind="textoBusqueda" 
+               @bind:event="oninput" />
+        @if (!string.IsNullOrEmpty(textoBusqueda))
+        {
+            <i class="fas fa-times clear-icon" @onclick="() => textoBusqueda = string.Empty"></i>
+        }
+    </div>
+
     @if (cargando)
     {
         <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
     }
     else if (listaUsuarios.Count == 0)
     {
-        <div class="text-center mt-5 text-muted">No hay atletas registrados.</div>
+        <div class="text-center mt-5 text-muted">No hay atletas registrados aún.</div>
+    }
+    else if (UsuariosFiltrados.Count == 0)
+    {
+        <div class="text-center mt-5 text-muted">
+            <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 10px; color: #444;"></i>
+            <p>No se encontró a "@textoBusqueda"</p>
+        </div>
     }
     else
     {
         <div class="user-list">
-            @foreach (var usuario in listaUsuarios)
+            @foreach (var usuario in UsuariosFiltrados)
             {
                 <div class="user-card">
                     <div class="user-info">
@@ -55,41 +83,50 @@
                             @if (usuario.MostrarMenu)
                             {
                                 <div class="user-dropdown">
-                                    
-                                    @if (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.TienePermiso("MANAGE_PAYMENTS"))
+                                    @if (PermisoPago)
                                     {
                                         <div class="dropdown-item" @onclick="() => AbrirModalRenovacion(usuario)">
                                             <i class="fas fa-calendar-check"></i> Registrar Pago
                                         </div>
                                     }
-
-                                    @if (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.TienePermiso("MANAGE_EVALUATIONS"))
+                                    @if (PermisoEvaluacion)
                                     {
                                         <div class="dropdown-item" @onclick="() => VerEvaluaciones(usuario)">
                                             <i class="fas fa-clipboard-check"></i> Evaluaciones
                                         </div>
+
                                     }
 
-                                    @if (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.TienePermiso("MANAGE_WOD"))
+                                    @if (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.Usuario.TipoUsuarioID == 3)
+                                    {
+                                        <div class="dropdown-item" @onclick="() => IrAGestionPropositos(usuario)">
+                                            <i class="fas fa-bullseye" style="color: #F8C545;"></i> Gestionar Retos
+                                        </div>
+                                    }
+
+                                    @if (PermisoWod)
                                     {
                                         <div class="dropdown-item" @onclick="() => IrARunning(usuario)">
                                             <i class="fas fa-running"></i> Running Plan
                                         </div>
+
+                                        <div class="dropdown-item" @onclick="() => IrRutinaPersonalizada(usuario)">
+                                           <i class="fas fa-dumbbell"></i> Rutina Personalizada
+                                        </div>
                                     }
-                                    
-                                    @if (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.TienePermiso("MANAGE_USERS"))
+
+                                    @if (PermisoUsers)
                                     {
                                         <div class="dropdown-item" @onclick="() => RestablecerPass(usuario)">
                                             <i class="fas fa-key"></i> Restablecer Pass
                                         </div>
-                                    }
-
-                                    @if (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.TienePermiso("DELETE_DATA"))
-                                    {
                                         <div class="dropdown-item text-danger" @onclick="() => EliminarUsuario(usuario)">
                                             <i class="fas fa-trash"></i> Eliminar
                                         </div>
                                     }
+
+
+
                                 </div>
                                 <div class="menu-overlay" @onclick="() => ToggleMenu(usuario)"></div>
                             }
@@ -101,10 +138,95 @@
     }
 </div>
 
+@if (mostrarModalCrear)
+{
+    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.9); z-index: 2000;" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: #222; border: 1px solid #F8C545; color: white;">
+                <div class="modal-header">
+                    <h5 class="modal-title" style="color:#F8C545; font-family:'Oswald'; margin:0;">ALTA RÁPIDA</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="() => mostrarModalCrear = false"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label text-warning">Nombre *</label>
+                        <input type="text" @bind="nuevoAtleta.Nombre" class="form-control input-dark" placeholder="Ej: Pedro" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-warning">Apellidos *</label>
+                        <input type="text" @bind="nuevoAtleta.Apellidos" class="form-control input-dark" placeholder="Ej: Picapiedra" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-warning">Correo (Opcional)</label>
+                        <input type="email" @bind="nuevoAtleta.Email" class="form-control input-dark" placeholder="Dejar vacío si no usará la App" />
+                        <small class="text-muted d-block mt-1" style="font-size:0.75rem;">
+                            <i class="fas fa-info-circle"></i> Si lo dejas vacío, se creará un usuario interno.
+                        </small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-warning">Fecha de Inicio (Pago)</label>
+                        <input type="date" @bind="nuevoAtleta.FechaInicio" class="form-control input-dark" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="() => mostrarModalCrear = false">Cancelar</button>
+                    <button class="btn btn-warning fw-bold" @onclick="GuardarAtletaManual"><i class="fas fa-save"></i> GUARDAR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @if (mostrarModalPago) { <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.9); z-index: 2000;" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" style="background-color: #222; border: 1px solid #F8C545; color: white;"><div class="modal-header"><h5 class="modal-title" style="color:#F8C545;">REGISTRAR PAGO</h5><button type="button" class="btn-close btn-close-white" @onclick="() => mostrarModalPago = false"></button></div><div class="modal-body text-center"><p>Renovar suscripción para: <br><strong style="font-size:1.2rem">@usuarioSeleccionado?.NombreCompleto</strong></p><div class="info-vencimiento mb-3"><small class="text-muted">Vencimiento actual:</small><br><span style="color:#F8C545; font-weight:bold;">@(usuarioSeleccionado.FechaVencimiento == DateTime.MinValue ? "Nunca ha pagado" : usuarioSeleccionado.FechaVencimiento.ToString("dd/MM/yyyy"))</span></div><label class="mb-2">Nueva Fecha de Inicio:</label><input type="date" @bind="fechaPagoSeleccionada" class="form-control input-dark" style="font-size: 1.2rem; padding: 10px;" /><small class="text-muted">Se sumará 1 mes a partir de esta fecha.</small></div><div class="modal-footer"><button class="btn btn-secondary" @onclick="() => mostrarModalPago = false">Cancelar</button><button class="btn btn-warning" @onclick="ConfirmarRenovacion">Confirmar Pago</button></div></div></div></div> }
 
 <style>
-    /* ... (TUS ESTILOS ORIGINALES SE MANTIENEN IGUAL) ... */
+    /* --- ESTILOS DEL BUSCADOR --- */
+    .search-bar-container {
+        position: relative;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .search-input {
+        width: 100%;
+        background-color: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 30px;
+        padding: 12px 40px; /* Espacio para los iconos */
+        color: white;
+        outline: none;
+        font-family: 'Roboto';
+        font-size: 1rem;
+        transition: border-color 0.3s;
+    }
+
+    .search-input:focus {
+        border-color: #F8C545;
+        box-shadow: 0 0 8px rgba(248, 197, 69, 0.2);
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 15px;
+        color: #666;
+    }
+
+    .clear-icon {
+        position: absolute;
+        right: 15px;
+        color: #666;
+        cursor: pointer;
+        padding: 5px;
+    }
+    .clear-icon:hover { color: #ccc; }
+
+    /* (RESTO DE ESTILOS SE MANTIENEN IGUAL) */
+    .btn-add-header { font-size: 1.5rem; color: #F8C545; cursor: pointer; padding: 0 10px; transition: transform 0.2s; }
+    .btn-add-header:active { transform: scale(0.8); }
+    .input-dark { background: #333 !important; color: white !important; border: 1px solid #555; }
+    .input-dark:focus { border-color: #F8C545; box-shadow: 0 0 5px rgba(248,197,69,0.5); }
+    .text-warning { color: #F8C545 !important; }
     .top-navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #1a1a1a; border-bottom: 2px solid #F8C545; color: white; font-family: 'Oswald'; }
     .nav-left { color: #F8C545; cursor: pointer; }
     .users-container { padding: 15px; background: #0d0d0d; min-height: 100vh; color: white; }
@@ -117,37 +239,63 @@
     .text-date i { color: #F8C545; margin-right: 3px; }
     .action-side { display: flex; align-items: center; gap: 15px; }
     .btn-renovar { background-color: #28a745; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px rgba(40, 167, 69, 0.6); animation: pulse 2s infinite; }
-    @@keyframes pulse {0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);} 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);} 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);}}
     .btn-icon { background: transparent; border: none; color: #F8C545; font-size: 1.2rem; padding: 5px; }
     .user-dropdown { position: absolute; right: 40px; top: 10px; background-color: #222; border: 1px solid #F8C545; border-radius: 5px; min-width: 180px; z-index: 1000; box-shadow: 0 5px 15px rgba(0,0,0,0.8); }
     .dropdown-item { padding: 12px 15px; color: white; border-bottom: 1px solid #333; cursor: pointer; display: flex; align-items: center; gap: 10px; font-family: 'Roboto'; font-size: 0.9rem; }
-    .dropdown-item:last-child { border-bottom: none; }
     .dropdown-item:active { background-color: #333; }
-    .dropdown-item i { width: 20px; text-align: center; color: #F8C545; }
     .text-danger { color: #ff6b6b !important; } .text-danger i { color: #ff6b6b !important; }
     .menu-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 999; }
-    .input-dark { background: #333 !important; color: white !important; border: 1px solid #F8C545; text-align: center; }
+    @@keyframes pulse {0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);} 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);} 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);}}
 </style>
 
 @code {
+    // Variable para el texto del buscador
+    private string textoBusqueda = "";
+
+    // LISTA MAESTRA (Todos los descargados)
     private List<AtletaConEstadoDto> listaUsuarios = new List<AtletaConEstadoDto>();
+    
+    // PROPIEDAD INTELIGENTE (Filtra en tiempo real)
+    private List<AtletaConEstadoDto> UsuariosFiltrados => 
+        string.IsNullOrWhiteSpace(textoBusqueda) 
+            ? listaUsuarios 
+            : listaUsuarios.Where(u => u.NombreCompleto.Contains(textoBusqueda, StringComparison.OrdinalIgnoreCase)).ToList();
+
     private bool cargando = true;
+    private bool PermisoUsers = false;
+    private bool PermisoPago = false;
+    private bool PermisoWod = false;
+    private bool PermisoEvaluacion = false;
+
+    // MODAL PAGO
     private bool mostrarModalPago = false;
     private AtletaConEstadoDto usuarioSeleccionado;
     private DateTime fechaPagoSeleccionada = DateTime.Today;
 
+    // MODAL CREAR MANUAL
+    private bool mostrarModalCrear = false;
+    private CrearAtletaManualDto nuevoAtleta = new CrearAtletaManualDto();
+
+    public class CrearAtletaManualDto
+    {
+        public Guid BoxID { get; set; }
+        public string Nombre { get; set; }
+        public string Apellidos { get; set; }
+        public string Email { get; set; }
+        public DateTime FechaInicio { get; set; } = DateTime.Today;
+    }
+
     protected override async Task OnInitializedAsync()
     {
-        // 1. SEGURIDAD DE NIVEL ALTO
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+        
+        bool esAdmin = Sesion.Usuario.TipoUsuarioID == 1;
+        PermisoUsers = esAdmin || Sesion.TienePermiso("MANAGE_USERS");
+        PermisoPago = esAdmin || Sesion.TienePermiso("MANAGE_PAYMENTS");
+        PermisoWod = esAdmin || Sesion.TienePermiso("MANAGE_WOD");
+        PermisoEvaluacion = esAdmin || Sesion.TienePermiso("MANAGE_EVALUATIONS");
 
-        // Si no eres Admin (1) y no tienes permiso de gestionar usuarios... FUERA.
-        if (Sesion.Usuario.TipoUsuarioID != 1 && !Sesion.TienePermiso("MANAGE_USERS"))
-        {
-            await App.Current.MainPage.DisplayAlert("Acceso Denegado", "No tienes permisos de gestión.", "OK");
-            Nav.NavigateTo("/home");
-            return;
-        }
+        if (!PermisoUsers) { await App.Current.MainPage.DisplayAlert("Acceso Denegado", "No tienes permisos.", "OK"); Nav.NavigateTo("/home"); return; }
 
         await CargarUsuarios();
     }
@@ -158,25 +306,33 @@
             cargando = true;
             var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/pagosapi/atletas-status/{Sesion.Usuario.BoxID}");
             if (response.IsSuccessStatusCode) listaUsuarios = await response.Content.ReadFromJsonAsync<List<AtletaConEstadoDto>>();
-        } catch(Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } finally { cargando = false; }
+        } catch { } finally { cargando = false; }
     }
 
-    private void ToggleMenu(AtletaConEstadoDto usuario)
+    private void ToggleMenu(AtletaConEstadoDto u) { foreach (var x in listaUsuarios) if (x != u) x.MostrarMenu = false; u.MostrarMenu = !u.MostrarMenu; }
+    private void IrRutinaPersonalizada(AtletaConEstadoDto u)
     {
-        foreach (var u in listaUsuarios) { if (u != usuario) u.MostrarMenu = false; }
-        usuario.MostrarMenu = !usuario.MostrarMenu;
+        u.MostrarMenu = false;
+        Nav.NavigateTo($"/rutina-admin/{u.UsuarioID}/{u.NombreCompleto}");
     }
-
+    // --- PAGO ---
     private void AbrirModalRenovacion(AtletaConEstadoDto u)
     {
-        // Verificación extra por si acaso
-        if(Sesion.Usuario.TipoUsuarioID != 1 && !Sesion.TienePermiso("MANAGE_PAYMENTS")) return;
-
+        if (!PermisoPago) return;
         u.MostrarMenu = false;
         usuarioSeleccionado = u;
         if (u.DiasRestantes > 0 && u.FechaVencimiento > DateTime.MinValue) fechaPagoSeleccionada = u.FechaVencimiento;
         else fechaPagoSeleccionada = DateTime.Today;
         mostrarModalPago = true;
+    }
+
+    private void IrAGestionPropositos(AtletaConEstadoDto u)
+    {
+        // Cerramos el menú para que no se quede abierto al volver
+        u.MostrarMenu = false;
+        
+        // Navegamos a la pantalla de gestión pasando ID y Nombre
+        Nav.NavigateTo($"/gestion-propositos/{u.UsuarioID}/{u.NombreCompleto}");
     }
 
     private async Task ConfirmarRenovacion()
@@ -189,23 +345,46 @@
         } catch(Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }
     }
 
+    // --- CREAR MANUAL ---
+    private void AbrirModalCrear()
+    {
+        nuevoAtleta = new CrearAtletaManualDto { FechaInicio = DateTime.Today };
+        mostrarModalCrear = true;
+    }
+
+    private async Task GuardarAtletaManual()
+    {
+        if (string.IsNullOrWhiteSpace(nuevoAtleta.Nombre) || string.IsNullOrWhiteSpace(nuevoAtleta.Apellidos))
+        {
+            await App.Current.MainPage.DisplayAlert("Error", "Nombre y Apellidos son obligatorios", "OK"); return;
+        }
+        try
+        {
+            nuevoAtleta.BoxID = Sesion.Usuario.BoxID;
+            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/usuariosapi/crear-manual", nuevoAtleta);
+            if (response.IsSuccessStatusCode) {
+                await App.Current.MainPage.DisplayAlert("¡Listo!", "Atleta creado.", "OK");
+                mostrarModalCrear = false; await CargarUsuarios();
+            } else {
+                var msg = await response.Content.ReadFromJsonAsync<dynamic>();
+                await App.Current.MainPage.DisplayAlert("Error", msg.mensaje.ToString(), "OK");
+            }
+        } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }
+    }
+
+    // --- OTROS ---
     private void VerEvaluaciones(AtletaConEstadoDto u) { u.MostrarMenu = false; Nav.NavigateTo($"/evaluaciones/{u.UsuarioID}/{u.NombreCompleto}"); }
     private void IrARunning(AtletaConEstadoDto u) { u.MostrarMenu = false; Nav.NavigateTo($"/running-plan/{u.UsuarioID}/{u.NombreCompleto}"); }
-    private async Task RestablecerPass(AtletaConEstadoDto u) { u.MostrarMenu = false; await App.Current.MainPage.DisplayAlert("Seguridad", "¿Resetear contraseña?", "Sí", "No"); }
-
-    private async Task EliminarUsuario(AtletaConEstadoDto u)
-    {
-        // Verificación extra
-        if(Sesion.Usuario.TipoUsuarioID != 1 && !Sesion.TienePermiso("DELETE_DATA")) return;
-
-        u.MostrarMenu = false;
-        bool confirm = await App.Current.MainPage.DisplayAlert("⚠️ ELIMINAR", $"Se borrarán datos de {u.NombreCompleto}. ¿Seguro?", "SÍ, BORRAR", "Cancelar");
-        if (!confirm) return;
-        try {
-            var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/usuariosapi/eliminar-definitivo/{u.UsuarioID}", null);
-            if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("Hecho", "Eliminado.", "OK"); listaUsuarios.Remove(u); }
-            else await App.Current.MainPage.DisplayAlert("Error", "No se pudo borrar.", "OK");
-        } catch(Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }
+    private async Task RestablecerPass(AtletaConEstadoDto u) { u.MostrarMenu = false; await App.Current.MainPage.DisplayAlert("Seguridad", "Función pendiente", "OK"); }
+    private async Task EliminarUsuario(AtletaConEstadoDto u) { 
+        u.MostrarMenu = false; 
+        bool confirm = await App.Current.MainPage.DisplayAlert("⚠️ ELIMINAR", $"Se borrarán datos de {u.NombreCompleto}. ¿Seguro?", "SÍ, BORRAR", "Cancelar"); 
+        if (!confirm) return; 
+        try { 
+            var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/usuariosapi/eliminar-definitivo/{u.UsuarioID}", null); 
+            if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("Hecho", "Eliminado.", "OK"); listaUsuarios.Remove(u); } 
+            else await App.Current.MainPage.DisplayAlert("Error", "No se pudo borrar.", "OK"); 
+        } catch(Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } 
     }
 
     private void Volver() => Nav.NavigateTo("/home");
