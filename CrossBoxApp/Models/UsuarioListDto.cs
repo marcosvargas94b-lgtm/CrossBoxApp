@@ -19,6 +19,7 @@ namespace CrossBoxApp.Models
         // Propiedad auxiliar para la interfaz (controlar menú abierto/cerrado)
         public bool MostrarMenu { get; set; }
         public bool Pagado { get; set; }
+        public string FotoUrl { get; set; }
 
     }
 

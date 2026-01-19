@@ -75,5 +75,13 @@ namespace CrossBoxApp.Models.IA
             public string IdExerciseDB { get; set; }
         }
 
+        public class EjercicioYuhonas
+        {
+            public string id { get; set; }
+            public string name { get; set; } // Nombre en Inglés
+            public List<string> images { get; set; } // URLs de las imágenes
+            public List<string> primaryMuscles { get; set; }
+        }
+
     }
 }
