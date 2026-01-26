@@ -1,0 +1,247 @@
+﻿@page "/admin/config-box"
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject CrossBoxApp.Models.Services.SesionService Sesion
+
+<div class="config-page fade-in">
+    <button class="btn-back" @onclick='() => Nav.NavigateTo("/home")'>
+        <i class="fas fa-arrow-left"></i> Regresar
+    </button>
+
+    <div class="header-section text-center">
+        <i class="fas fa-cogs brand-icon"></i>
+        <h2>TU NEGOCIO</h2>
+        <p>Gestiona tus cobros y precios.</p>
+    </div>
+
+    <div class="tabs-container">
+        <button class="tab-btn @(tabActiva == 1 ? "active" : "")" @onclick="() => tabActiva = 1">
+            <i class="fas fa-hand-holding-usd"></i> MERCADO PAGO
+        </button>
+        <button class="tab-btn @(tabActiva == 2 ? "active" : "")" @onclick="() => tabActiva = 2">
+            <i class="fas fa-tag"></i> PRECIOS
+        </button>
+    </div>
+
+    <div class="content-area">
+        
+        @if (tabActiva == 1)
+        {
+            <div class="mp-card text-center fade-in">
+                <img src="https://http2.mlstatic.com/frontend-assets/ui-navigation/5.19.1/mercadopago/logo__small.png" alt="Mercado Pago" width="100" class="mb-3"/>
+                
+               @if (datosBox.EstaVinculadoMP)
+            {
+                <div class="status-connected fade-in">
+                    <i class="fas fa-check-circle fa-3x mb-2"></i>
+                    <h4>¡CUENTA VINCULADA!</h4>
+                    <p>Tu gimnasio ya está listo para recibir pagos.</p>
+                </div>
+
+                <button class="btn-mp-connect outline mt-3" @onclick="VincularMercadoPago">
+                    Cambiar cuenta vinculada
+                </button>
+
+                <button class="btn-unlink mt-3" @onclick="DesvincularCuenta">
+                <i class="fas fa-trash-alt"></i> Desconectar Cuenta
+                 </button>
+                }   
+                else
+                {
+                    <h5 class="section-title">RECIBIR PAGOS</h5>
+                    <p class="text-white small mb-4">
+                        Para que los atletas te paguen directo a ti, conecta tu cuenta.
+                    </p>
+
+                    <div class="mp-status-box">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span>Estado: <strong>Sin conexión</strong></span>
+                    </div>
+
+                    <button class="btn-mp-connect mt-4" @onclick="VincularMercadoPago">
+                        <b>CONECTAR CUENTA AHORA</b>
+                    </button>
+                    
+                    <p class="text-muted x-small mt-3">
+                        Al hacer clic, serás redirigido a Mercado Pago.
+                    </p>
+                }
+            </div>
+        }
+
+        @if (tabActiva == 2)
+        {
+            <div class="prices-card text-center fade-in">
+                <h5 class="section-title">PRECIOS DE TU BOX</h5>
+                <p class="text-muted small">Define cuánto cobrará la App a tus atletas.</p>
+
+                <div class="form-group mt-3 text-start">
+                    <label class="text-warning">Mensualidad ($)</label>
+                    <input type="number" @bind="datosBox.PrecioMensualidad" class="form-control input-dark" />
+                </div>
+
+                <div class="form-group mt-3 text-start">
+                    <label class="text-warning">Inscripción ($)</label>
+                    <input type="number" @bind="datosBox.PrecioInscripcion" class="form-control input-dark" />
+                    <small class="text-muted">Pon 0 si no cobras inscripción.</small>
+                </div>
+
+                <button class="btn-save mt-4" @onclick="GuardarPrecios">
+                    @if(guardando) { <i class="fas fa-spinner fa-spin"></i> } else { <i class="fas fa-save"></i> } 
+                    GUARDAR CAMBIOS
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .config-page { min-height: 100vh; padding: 20px; color: white; max-width: 600px; margin: 0 auto; padding-top: 60px; }
+    .btn-back { background: none; border: none; color: #aaa; font-size: 1rem; position: absolute; top: 20px; left: 10px; cursor: pointer; z-index: 10; }
+    .brand-icon { font-size: 3rem; color: #F8C545; margin-bottom: 10px; }
+    .header-section h2 { font-family: 'Oswald'; color: white; margin: 0; }
+    .header-section p { color: #888; font-size: 0.9rem; }
+
+    /* TABS */
+    .tabs-container { display: flex; justify-content: center; margin-top: 20px; border-bottom: 1px solid #333; }
+    .tab-btn { flex: 1; background: none; border: none; color: #666; padding: 15px; font-weight: bold; border-bottom: 2px solid transparent; transition: 0.3s; }
+    .tab-btn.active { color: #F8C545; border-bottom: 2px solid #F8C545; }
+    .tab-btn i { margin-right: 5px; }
+
+    /* ESTILOS PRECIOS & MP */
+    .prices-card, .mp-card { background: #1a1a1a; border-radius: 15px; padding: 25px; margin-top: 20px; border: 1px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+    .section-title { font-family: 'Oswald'; color: #F8C545; letter-spacing: 1px; }
+    
+    .input-dark { background: #333 !important; color: white !important; border: 1px solid #555; padding: 10px; font-size: 1.1rem; }
+    .input-dark:focus { border-color: #F8C545; box-shadow: 0 0 5px rgba(248, 197, 69, 0.5); }
+
+    .btn-save { width: 100%; background-color: #F8C545; color: black; font-weight: bold; padding: 12px; border: none; border-radius: 8px; font-family: 'Oswald'; font-size: 1.1rem; transition: 0.2s; }
+    .btn-save:active { transform: scale(0.98); }
+
+    /* ESTILOS MERCADO PAGO */
+    .mp-status-box { background: rgba(255, 0, 0, 0.1); border: 1px solid #ff4444; padding: 10px; border-radius: 8px; color: #ff4444; display: inline-block; width: 100%; }
+    .status-connected { color: #00c853; border: 1px solid #00c853; background: rgba(0, 200, 83, 0.1); padding: 20px; border-radius: 10px; }
+    .status-connected h4 { margin: 0; font-family: 'Oswald'; }
+    
+    .btn-mp-connect { display: block; width: 100%; padding: 15px; background-color: #009EE3; color: white; border-radius: 50px; border: none; text-decoration: none; font-weight: bold; box-shadow: 0 4px 15px rgba(0, 158, 227, 0.4); margin-top: 20px; transition: transform 0.2s; }
+    .btn-mp-connect.outline { background: transparent; border: 1px solid #009EE3; color: #009EE3; box-shadow: none; }
+    .btn-mp-connect:active { transform: scale(0.98); }
+    .x-small { font-size: 0.7rem; }
+    .btn-unlink {
+    background: transparent;
+    border: 1px solid #ff4444;
+    color: #ff4444;
+    width: 100%;
+    padding: 10px;
+    border-radius: 50px;
+    font-weight: bold;
+    margin-top: 10px; }
+    .btn-unlink:active { background: #ff4444; color: white;}
+    .fade-in { animation: fadeIn 0.5s ease; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+@code {
+    private int tabActiva = 1; 
+    private bool guardando = false;
+    
+    // Objeto principal para almacenar los datos
+    private BoxConfigDTO datosBox = new BoxConfigDTO();
+
+    // --- DATOS MERCADO PAGO ---
+    private string appId = "3844219986795201"; 
+    private string redirectUri = "https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/marketplace/oauth/callback"; 
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        try
+        {
+            // Llamamos a la API para obtener precios y estado de MP
+            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
+            if (response.IsSuccessStatusCode)
+            {
+                var resultado = await response.Content.ReadFromJsonAsync<BoxConfigDTO>();
+                if (resultado != null) datosBox = resultado;
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", "No se pudo cargar la configuración: " + ex.Message, "OK");
+        }
+    }
+
+    private async Task GuardarPrecios()
+    {
+        guardando = true;
+        try
+        {
+            datosBox.BoxID = Sesion.Usuario.BoxID; // Aseguramos el ID
+            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/boxesAPI/actualizar-precios", datosBox);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await App.Current.MainPage.DisplayAlert("¡Éxito!", "Precios actualizados correctamente.", "OK");
+            }
+            else 
+            {
+                await App.Current.MainPage.DisplayAlert("Error", "No se pudieron guardar los cambios.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private async Task DesvincularCuenta()
+{
+    bool confirmar = await App.Current.MainPage.DisplayAlert("¿Desconectar?", 
+        "Si te desconectas, tus atletas ya no podrán pagarte en la App hasta que te vincules de nuevo.", 
+        "Sí, desconectar", "Cancelar");
+
+    if (confirmar)
+    {
+        try
+        {
+            var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/boxesAPI/desvincular/{Sesion.Usuario.BoxID}", null);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                await CargarDatos(); // Recargamos para que salga el botón azul
+            }
+            else
+            {
+                await App.Current.MainPage.DisplayAlert("Error", "No se pudo desconectar.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
+    }
+}
+
+    private async Task VincularMercadoPago()
+    {
+        string url = $"https://auth.mercadopago.com.mx/authorization?client_id={appId}&response_type=code&platform_id=mp&state={Sesion.Usuario.BoxID}&redirect_uri={redirectUri}";
+        await Browser.Default.OpenAsync(url, BrowserLaunchMode.SystemPreferred);
+    }
+
+    public class BoxConfigDTO
+    {
+        public Guid BoxID { get; set; }
+        public decimal? PrecioMensualidad { get; set; }
+        public decimal? PrecioInscripcion { get; set; }
+        public bool EstaVinculadoMP { get; set; } // <--- Esto controla si sale verde o rojo
+    }
+}

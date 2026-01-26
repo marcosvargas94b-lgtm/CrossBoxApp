@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.Maui.Controls"
+             x:Class="CrossBoxApp.EscanerPage"
+             Title="Escanear QR"
+             BackgroundColor="Black">
+
+    <Grid>
+        <zxing:CameraBarcodeReaderView x:Name="cameraView"
+                                       BarcodesDetected="Camera_BarcodesDetected"
+                                       IsDetecting="True" />
+
+        <Frame BorderColor="#F8C545" BackgroundColor="Transparent"
+               HorizontalOptions="Center" VerticalOptions="Center"
+               HeightRequest="250" WidthRequest="250" CornerRadius="10" />
+
+        <Button Text="Cancelar" 
+                VerticalOptions="End" 
+                Margin="20" 
+                BackgroundColor="#333" 
+                TextColor="White"
+                Clicked="Button_Clicked" />
+    </Grid>
+</ContentPage>

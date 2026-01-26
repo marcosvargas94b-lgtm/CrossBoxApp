@@ -31,7 +31,8 @@ namespace CrossBoxApp.Models
 
         public string? EstadoSuscripcion { get; set; }
         public decimal? CostoInscripcion { get; set; }
-
+        public bool? WhatsappActivo { get; set; }
+        public virtual ICollection<UsuarioSesionDto>? Usuarios { get; set; }
         public virtual Planes? Plan { get; set; }
     }
 }

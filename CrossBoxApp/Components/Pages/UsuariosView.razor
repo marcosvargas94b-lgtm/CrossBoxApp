@@ -33,6 +33,23 @@
         }
     </div>
 
+    <div class="filter-tabs">
+        <button class="tab-btn @(filtroEstado == "TODOS" ? "active" : "")" 
+                @onclick='() => CambiarFiltro("TODOS")'>
+            TODOS
+        </button>
+        
+        <button class="tab-btn @(filtroEstado == "POR_VENCER" ? "active" : "")" 
+                @onclick='() => CambiarFiltro("POR_VENCER")'>
+            ⚠ POR VENCER
+        </button>
+
+        <button class="tab-btn @(filtroEstado == "VENCIDOS" ? "active" : "")" 
+                @onclick='() => CambiarFiltro("VENCIDOS")'>
+            ⛔ VENCIDOS
+        </button>
+    </div>
+
     @if (cargando)
     {
         <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
@@ -44,8 +61,8 @@
     else if (UsuariosFiltrados.Count == 0)
     {
         <div class="text-center mt-5 text-muted">
-            <i class="fas fa-search" style="font-size: 2rem; margin-bottom: 10px; color: #444;"></i>
-            <p>No se encontró a "@textoBusqueda"</p>
+            <i class="fas fa-filter" style="font-size: 2rem; margin-bottom: 10px; color: #444;"></i>
+            <p>No hay resultados con estos filtros.</p>
         </div>
     }
     else
@@ -60,7 +77,16 @@
                             <span class="badge-status" style="background-color: @usuario.ColorEstatus">
                                 @usuario.Estatus
                             </span>
-                            @if (usuario.DiasRestantes >= 0 && usuario.DiasRestantes <= 30)
+                            
+                            @if (usuario.DiasRestantes <= 0)
+                            {
+                                <span class="text-date text-danger"><i class="fas fa-exclamation-circle"></i> Vencido hace @(Math.Abs(usuario.DiasRestantes)) días</span>
+                            }
+                            else if (usuario.DiasRestantes <= 5)
+                            {
+                                <span class="text-date text-warning"><i class="fas fa-clock"></i> Quedan @usuario.DiasRestantes días</span>
+                            }
+                            else if (usuario.DiasRestantes <= 30)
                             {
                                 <span class="text-date"><i class="far fa-clock"></i> @usuario.DiasRestantes días</span>
                             }
@@ -94,39 +120,31 @@
                                         <div class="dropdown-item" @onclick="() => VerEvaluaciones(usuario)">
                                             <i class="fas fa-clipboard-check"></i> Evaluaciones
                                         </div>
-
                                     }
-
                                     @if (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.Usuario.TipoUsuarioID == 3)
                                     {
                                         <div class="dropdown-item" @onclick="() => IrAGestionPropositos(usuario)">
                                             <i class="fas fa-bullseye" style="color: #F8C545;"></i> Gestionar Retos
                                         </div>
                                     }
-
                                     @if (PermisoWod)
                                     {
                                         <div class="dropdown-item" @onclick="() => IrARunning(usuario)">
                                             <i class="fas fa-running"></i> Running Plan
                                         </div>
-
                                         <div class="dropdown-item" @onclick="() => IrRutinaPersonalizada(usuario)">
                                            <i class="fas fa-dumbbell"></i> Rutina Personalizada
                                         </div>
                                     }
-
                                     @if (PermisoUsers)
                                     {
-                                        <div class="dropdown-item" @onclick="() => RestablecerPass(usuario)">
+                                       @*  <div class="dropdown-item" @onclick="() => RestablecerPass(usuario)">
                                             <i class="fas fa-key"></i> Restablecer Pass
-                                        </div>
+                                        </div> *@
                                         <div class="dropdown-item text-danger" @onclick="() => EliminarUsuario(usuario)">
                                             <i class="fas fa-trash"></i> Eliminar
                                         </div>
                                     }
-
-
-
                                 </div>
                                 <div class="menu-overlay" @onclick="() => ToggleMenu(usuario)"></div>
                             }
@@ -180,10 +198,41 @@
 @if (mostrarModalPago) { <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.9); z-index: 2000;" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" style="background-color: #222; border: 1px solid #F8C545; color: white;"><div class="modal-header"><h5 class="modal-title" style="color:#F8C545;">REGISTRAR PAGO</h5><button type="button" class="btn-close btn-close-white" @onclick="() => mostrarModalPago = false"></button></div><div class="modal-body text-center"><p>Renovar suscripción para: <br><strong style="font-size:1.2rem">@usuarioSeleccionado?.NombreCompleto</strong></p><div class="info-vencimiento mb-3"><small class="text-muted">Vencimiento actual:</small><br><span style="color:#F8C545; font-weight:bold;">@(usuarioSeleccionado.FechaVencimiento == DateTime.MinValue ? "Nunca ha pagado" : usuarioSeleccionado.FechaVencimiento.ToString("dd/MM/yyyy"))</span></div><label class="mb-2">Nueva Fecha de Inicio:</label><input type="date" @bind="fechaPagoSeleccionada" class="form-control input-dark" style="font-size: 1.2rem; padding: 10px;" /><small class="text-muted">Se sumará 1 mes a partir de esta fecha.</small></div><div class="modal-footer"><button class="btn btn-secondary" @onclick="() => mostrarModalPago = false">Cancelar</button><button class="btn btn-warning" @onclick="ConfirmarRenovacion">Confirmar Pago</button></div></div></div></div> }
 
 <style>
+    /* --- ESTILOS DE TABS (NUEVO) --- */
+    .filter-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        background: #1a1a1a;
+        padding: 5px;
+        border-radius: 10px;
+        border: 1px solid #333;
+    }
+
+    .tab-btn {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: #888;
+        padding: 10px 5px;
+        font-family: 'Oswald';
+        font-size: 0.9rem;
+        border-radius: 8px;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .tab-btn.active {
+        background: #F8C545;
+        color: black;
+        font-weight: bold;
+        box-shadow: 0 2px 10px rgba(248, 197, 69, 0.3);
+    }
+
     /* --- ESTILOS DEL BUSCADOR --- */
     .search-bar-container {
         position: relative;
-        margin-bottom: 20px;
+        margin-bottom: 10px; /* Reduje el margen para que pegue con los tabs */
         display: flex;
         align-items: center;
     }
@@ -193,7 +242,7 @@
         background-color: #1a1a1a;
         border: 1px solid #333;
         border-radius: 30px;
-        padding: 12px 40px; /* Espacio para los iconos */
+        padding: 12px 40px; 
         color: white;
         outline: none;
         font-family: 'Roboto';
@@ -236,7 +285,7 @@
     .user-meta { display: flex; gap: 10px; font-size: 0.85rem; align-items: center; }
     .badge-status { color: white; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 0.7rem; text-transform: uppercase; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
     .text-date { color: #aaa; font-family: 'Roboto'; font-size: 0.8rem; }
-    .text-date i { color: #F8C545; margin-right: 3px; }
+    .text-date i { margin-right: 3px; }
     .action-side { display: flex; align-items: center; gap: 15px; }
     .btn-renovar { background-color: #28a745; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px rgba(40, 167, 69, 0.6); animation: pulse 2s infinite; }
     .btn-icon { background: transparent; border: none; color: #F8C545; font-size: 1.2rem; padding: 5px; }
@@ -249,17 +298,47 @@
 </style>
 
 @code {
-    // Variable para el texto del buscador
+    // --- VARIABLES DE FILTRO Y BÚSQUEDA ---
+    private string filtroEstado = "TODOS";
     private string textoBusqueda = "";
 
-    // LISTA MAESTRA (Todos los descargados)
+    // LISTA MAESTRA (Descargada de API)
     private List<AtletaConEstadoDto> listaUsuarios = new List<AtletaConEstadoDto>();
     
-    // PROPIEDAD INTELIGENTE (Filtra en tiempo real)
-    private List<AtletaConEstadoDto> UsuariosFiltrados => 
-        string.IsNullOrWhiteSpace(textoBusqueda) 
-            ? listaUsuarios 
-            : listaUsuarios.Where(u => u.NombreCompleto.Contains(textoBusqueda, StringComparison.OrdinalIgnoreCase)).ToList();
+    // LISTA COMPUTADA (Se actualiza sola cuando cambias filtro o texto)
+    private List<AtletaConEstadoDto> UsuariosFiltrados
+    {
+        get
+        {
+            // 1. Empezamos con todos
+            IEnumerable<AtletaConEstadoDto> query = listaUsuarios;
+
+            // 2. Filtramos por Texto (Nombre)
+            if (!string.IsNullOrWhiteSpace(textoBusqueda))
+            {
+                query = query.Where(u => u.NombreCompleto.Contains(textoBusqueda, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // 3. Filtramos por Pestaña (Estado)
+            switch (filtroEstado)
+            {
+                case "POR_VENCER":
+                    // Días entre 1 y 5
+                    query = query.Where(u => u.DiasRestantes > 0 && u.DiasRestantes <= 5);
+                    break;
+                case "VENCIDOS":
+                    // Días 0 o negativos (ya venció)
+                    query = query.Where(u => u.DiasRestantes <= 0);
+                    break;
+                case "TODOS":
+                default:
+                    // No hacemos nada, pasan todos
+                    break;
+            }
+
+            return query.ToList();
+        }
+    }
 
     private bool cargando = true;
     private bool PermisoUsers = false;
@@ -267,12 +346,10 @@
     private bool PermisoWod = false;
     private bool PermisoEvaluacion = false;
 
-    // MODAL PAGO
+    // MODALES
     private bool mostrarModalPago = false;
     private AtletaConEstadoDto usuarioSeleccionado;
     private DateTime fechaPagoSeleccionada = DateTime.Today;
-
-    // MODAL CREAR MANUAL
     private bool mostrarModalCrear = false;
     private CrearAtletaManualDto nuevoAtleta = new CrearAtletaManualDto();
 
@@ -309,12 +386,21 @@
         } catch { } finally { cargando = false; }
     }
 
+    // --- LÓGICA DE TABS ---
+    private void CambiarFiltro(string nuevoEstado)
+    {
+        filtroEstado = nuevoEstado;
+        // Al cambiar variable, 'UsuariosFiltrados' se recalcula solo en el HTML
+    }
+
     private void ToggleMenu(AtletaConEstadoDto u) { foreach (var x in listaUsuarios) if (x != u) x.MostrarMenu = false; u.MostrarMenu = !u.MostrarMenu; }
+    
     private void IrRutinaPersonalizada(AtletaConEstadoDto u)
     {
         u.MostrarMenu = false;
         Nav.NavigateTo($"/rutina-admin/{u.UsuarioID}/{u.NombreCompleto}");
     }
+
     // --- PAGO ---
     private void AbrirModalRenovacion(AtletaConEstadoDto u)
     {
@@ -328,10 +414,7 @@
 
     private void IrAGestionPropositos(AtletaConEstadoDto u)
     {
-        // Cerramos el menú para que no se quede abierto al volver
         u.MostrarMenu = false;
-        
-        // Navegamos a la pantalla de gestión pasando ID y Nombre
         Nav.NavigateTo($"/gestion-propositos/{u.UsuarioID}/{u.NombreCompleto}");
     }
 

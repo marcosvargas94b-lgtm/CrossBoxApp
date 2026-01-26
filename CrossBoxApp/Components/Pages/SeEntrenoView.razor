@@ -22,7 +22,7 @@
             <h3>¡Presume tu entreno!</h3>
             <p>Sube tu foto de hoy para ganar Likes.</p>
 
-            <label class="image-preview-area">
+            @* <label class="image-preview-area">
                 <InputFile OnChange="CargarPreview" accept=".jpg,.jpeg,.png" style="display:none;" />
 
                 @if (string.IsNullOrEmpty(previewLocal))
@@ -34,7 +34,18 @@
                 {
                     <img src="@previewLocal" class="img-fluid rounded" style="max-height: 100%; max-width: 100%; object-fit: contain;" />
                 }
-            </label>
+            </label> *@
+            <div class="image-preview-area" @onclick="SeleccionarFotoFeed">
+             @if (string.IsNullOrEmpty(previewLocal))
+             {
+                 <i class="fas fa-camera camera-icon"></i>
+                 <span>Toca aquí para subir foto</span>
+             }
+             else
+             {
+                 <img src="@previewLocal" class="img-fluid rounded" ... />
+             }
+            </div>
 
             <input type="text" @bind="descripcion" class="input-dark mt-2" placeholder="Comentario (opcional)..." />
 
@@ -278,9 +289,55 @@
     private string previewLocal;
     private string descripcion;
     private bool subiendo = false;
+    private FileResult fotoFeedNativa;
+
+    private async Task SeleccionarFotoFeed()
+    {
+        if (!await VerificarPermisosGaleria()) return;
+
+        try
+        {
+            var foto = await MediaPicker.Default.PickPhotoAsync();
+            if (foto != null)
+            {
+                using var stream = await foto.OpenReadAsync();
+                var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                
+                // Preview
+                previewLocal = $"data:image/jpeg;base64,{Convert.ToBase64String(ms.ToArray())}";
+                
+                // Guardar referencia
+                fotoFeedNativa = foto;
+            }
+        }
+        catch { }
+    }
+
+    private async Task<bool> VerificarPermisosGaleria()
+    {
+        // 1. Verificamos el estado actual
+        var estado = await Permissions.CheckStatusAsync<Permissions.Photos>();
+
+        // 2. Si no tenemos permiso, lo pedimos
+        if (estado != PermissionStatus.Granted)
+        {
+            estado = await Permissions.RequestAsync<Permissions.Photos>();
+        }
+
+        // 3. Si el usuario dijo que NO
+        if (estado != PermissionStatus.Granted)
+        {
+            await App.Current.MainPage.DisplayAlert("Permiso Requerido", "Necesitamos acceso a tus fotos para subir tu evidencia.", "Entendido");
+            return false;
+        }
+
+        return true;
+    }
 
     protected override async Task OnInitializedAsync()
     {
+        await VerificarPermisosGaleria();
         await CargarFeed();
     }
 
@@ -326,9 +383,13 @@
             content.Add(new StringContent(Sesion.Usuario.UsuarioID.ToString()), "UsuarioID");
             content.Add(new StringContent(descripcion ?? ""), "Descripcion");
 
-            var fileContent = new StreamContent(archivoSeleccionado.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024));
-            fileContent.Headers.ContentType = new MediaTypeHeaderValue(archivoSeleccionado.ContentType);
-            content.Add(fileContent, "archivoFoto", archivoSeleccionado.Name);
+           if (fotoFeedNativa != null)
+        {
+            using var stream = await fotoFeedNativa.OpenReadAsync();
+            var fileContent = new StreamContent(stream);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(fotoFeedNativa.ContentType);
+            content.Add(fileContent, "archivoFoto", fotoFeedNativa.FileName);
+        }
 
             var resp = await Http.PostAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/subir", content);
             if (resp.IsSuccessStatusCode)

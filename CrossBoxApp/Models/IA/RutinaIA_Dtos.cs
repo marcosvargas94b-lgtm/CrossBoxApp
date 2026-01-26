@@ -18,10 +18,12 @@ namespace CrossBoxApp.Models.IA
             public string Equipo { get; set; }
         }
 
-        // LO QUE RECIBES (Blindado con JsonPropertyName)
         public class RutinaGeneradaDto
         {
-            [JsonPropertyName("nombreRutina")] // Forzamos camelCase
+            // Este campo NO viene del JSON de la IA, lo llenamos nosotros manualmente en el servicio
+            public Guid IdBaseDatos { get; set; }
+
+            [JsonPropertyName("nombreRutina")]
             public string NombreRutina { get; set; }
 
             [JsonPropertyName("explicacion")]
@@ -36,6 +38,9 @@ namespace CrossBoxApp.Models.IA
             [JsonPropertyName("numeroSemana")]
             public int NumeroSemana { get; set; }
 
+            [JsonPropertyName("enfoque")]
+            public string Enfoque { get; set; }
+
             [JsonPropertyName("dias")]
             public List<DiaEntrenoDto> Dias { get; set; } = new List<DiaEntrenoDto>();
         }
@@ -43,7 +48,7 @@ namespace CrossBoxApp.Models.IA
         public class DiaEntrenoDto
         {
             [JsonPropertyName("dia")]
-            public string Dia { get; set; } // "Lunes", "Martes"...
+            public string Dia { get; set; }
 
             [JsonPropertyName("grupoMuscular")]
             public string GrupoMuscular { get; set; }
@@ -54,9 +59,6 @@ namespace CrossBoxApp.Models.IA
 
         public class EjercicioDto
         {
-            [JsonPropertyName("nombre")]
-            public string Nombre { get; set; } // Nombre en Inglés
-
             [JsonPropertyName("nombreEspanol")]
             public string NombreEspanol { get; set; }
 
@@ -68,20 +70,25 @@ namespace CrossBoxApp.Models.IA
 
             [JsonPropertyName("notaTecnica")]
             public string NotaTecnica { get; set; }
-
-            // Estos son opcionales en el JSON de Gemini, los llenamos nosotros o vienen null
-            public string Alternativa { get; set; }
-            public string GifUrl { get; set; }
-            public string IdExerciseDB { get; set; }
         }
 
-        public class EjercicioYuhonas
+        public class ResumenCierreDto
         {
-            public string id { get; set; }
-            public string name { get; set; } // Nombre en Inglés
-            public List<string> images { get; set; } // URLs de las imágenes
-            public List<string> primaryMuscles { get; set; }
+            public string Titulo { get; set; } // Ej: "¡Excelente Trabajo!" o "Mes Difícil..."
+            public string AnalisisAdherencia { get; set; } // Opinión sobre cuántos días fuiste
+            public string AnalisisRendimiento { get; set; } // Opinión sobre tus cargas/cansancio
+            public string EstrategiaSiguiente { get; set; } // Qué haremos en el próximo mes
+            public int CalificacionGeneral { get; set; } // 1 a 100
         }
 
+        public class FeedbackInputDto
+        {
+            public Guid RutinaID { get; set; }
+      
+            public string DiaSemana { get; set; }
+            public int NivelCansancio { get; set; }
+            public string DolorLesion { get; set; }
+            public string Comentarios { get; set; }
+        }
     }
 }

@@ -1,537 +1,317 @@
 ﻿@page "/"
 @using System.Net.Http.Json
-@using Microsoft.Maui.Storage 
+@using Microsoft.Maui.Storage
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject CrossBoxApp.Models.Services.SesionService Sesion
 @using CrossBoxApp.Models
 
 <div class="login-container-fullscreen">
-    <div class="brand-header">
+    <div class="background-overlay"></div>
+    
+    <div class="brand-header fade-in-down">
         <strong>@DateTime.Now.ToString("dd/MM/yyyy")</strong><br />
-        By ALFAFIT
+        <span style="color: #F8C545; letter-spacing: 2px;">BY ALFAFIT</span>
     </div>
 
-    <div class="login-wrapper">
-        <h1 class="title-main">MY CROSSBOX</h1>
-        <h2 class="title-sub">INICIO DE SESIÓN</h2>
+    <div class="login-wrapper glass-panel fade-in-up">
+        <div class="logo-area">
+            <h1 class="title-main">AFTRACK</h1>
+            <div class="title-bar"></div>
+            <h2 class="title-sub">TU LUGAR DE ENTRENAMIENTO EN TUS MANOS</h2>
+        </div>
 
         @if (cargando)
         {
-            <div class="spinner-border text-warning" style="width: 3rem; height: 3rem; border-width: 0.3em;" role="status"></div>
-            <p class="mt-3 text-white" style="font-family:'Oswald'; letter-spacing: 1px;">CARGANDO SESIÓN...</p>
+            <div class="loading-container">
+                <div class="spinner-border text-warning" style="width: 3rem; height: 3rem; border-width: 0.2em;" role="status"></div>
+                <p class="mt-3 text-white tracking-text">INICIANDO SESIÓN...</p>
+            </div>
         }
         else
         {
-            <div class="form-group">
-                <input type="text" @bind="loginUsername" class="input-custom" placeholder="Username (Email)" />
+            <div class="input-group-animated">
+                <i class="fas fa-user input-icon"></i>
+                <input type="text" @bind="loginUsername" class="input-custom" placeholder="Usuario / Email" />
             </div>
-            <div class="form-group">
-                <input type="password" @bind="loginPassword" class="input-custom" placeholder="Password" />
+            
+            <div class="input-group-animated">
+                <i class="fas fa-lock input-icon"></i>
+                <input type="password" @bind="loginPassword" class="input-custom" placeholder="Contraseña" />
             </div>
 
             @if (!string.IsNullOrEmpty(loginError))
             {
-                <div class="alert-error">@loginError</div>
+                <div class="alert-error shake-animation">
+                    <i class="fas fa-exclamation-circle"></i> @loginError
+                </div>
             }
 
-            <a href="#" class="forgot-pass">Forgot Password?</a>
-            <button class="btn-login" @onclick="IniciarSesion">Login</button>
+            <div class="actions-row">
+                <a class="forgot-pass" @onclick="AbrirModalRecuperar">¿Olvidaste tu contraseña?</a>
+            </div>
 
-            <a href="#" class="forgot-pass" style="margin-top: 30px; color: #F8C545; font-weight: bold;"
-               @onclick="AbrirModalRegistro">
-                ¿No tienes cuenta? ¡Regístrate aquí!
-            </a>
+            <button class="btn-login glow-effect" @onclick="IniciarSesion">
+                INGRESAR <i class="fas fa-arrow-right" style="margin-left:10px;"></i>
+            </button>
 
-            <div class="mt-4 text-center">
-                <button class="btn-link-gold" @onclick="AbrirModalRegistroBox">
-                    <i class="fas fa-store-alt"></i> ¡Registra tu lugar de entrenamiento!
+            <div class="divider">
+                <span>O</span>
+            </div>
+
+            <button class="btn-register-link" @onclick="AbrirModalRegistro">
+                CREAR CUENTA DE ATLETA
+            </button>
+
+            <div class="mt-4 text-center box-register-area">
+                <p class="small-text">¿Eres dueño de un Gimnasio?</p>
+                <button class="btn-link-gold pulse-animation" @onclick="AbrirModalRegistroBox">
+                    <i class="fas fa-store-alt"></i> REGISTRA TU LUGAR AQUÍ
                 </button>
             </div>
         }
     </div>
 </div>
 
-@if (mostrarModalBox)
+@* --- MODAL RECUPERAR CONTRASEÑA (CORREGIDO) --- *@
+@if (mostrarModalRecuperar)
 {
-    <div class="modal-overlay">
-        <div class="modal-content custom-modal">
+    <div class="modal-overlay fade-in">
+        <div class="modal-content custom-modal slide-in-up" style="max-height: 450px;">
             <div class="modal-header">
-                <h5 style="color:#F8C545; font-family:'Oswald'; margin:0;">REGISTRA TU LUGAR</h5>
-                <button class="btn-close-custom" @onclick="() => mostrarModalBox = false"><i class="fas fa-times"></i></button>
+                <h5 class="modal-title-custom">RECUPERAR ACCESO</h5>
+                <button class="btn-close-custom" @onclick="() => mostrarModalRecuperar = false"><i class="fas fa-times"></i></button>
             </div>
-            <div class="modal-body scrollable-body">
-                <div class="section-title"><i class="fas fa-building"></i> DATOS DEL LUGAR</div>
-                <input type="text" @bind="registroBox.NombreBox" class="form-control input-dark mb-2" placeholder="Nombre del Box / Gym" />
-                <input type="text" @bind="registroBox.Ciudad" class="form-control input-dark mb-2" placeholder="Ciudad" />
-                <input type="text" @bind="registroBox.Direccion" class="form-control input-dark mb-4" placeholder="Dirección Completa" />
-                <hr class="divider" />
-                <div class="section-title"><i class="fas fa-user-shield"></i> DATOS DEL ADMINISTRADOR</div>
-                <p class="small-text">Esta cuenta tendrá acceso total al sistema.</p>
-                <div class="row">
-                    <div class="col-6"><input type="text" @bind="registroBox.NombreAdmin" class="form-control input-dark mb-2" placeholder="Nombre" /></div>
-                    <div class="col-6"><input type="text" @bind="registroBox.ApellidosAdmin" class="form-control input-dark mb-2" placeholder="Apellidos" /></div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <i class="fas fa-comment-dots fa-3x" style="color: #25D366;"></i>
+                    <p style="color: #ccc; margin-top: 10px; font-size: 0.9rem;">
+                        Ingresa tu número de celular registrado. Te enviaremos tu contraseña por WhatsApp.
+                    </p>
                 </div>
-                <input type="email" @bind="registroBox.Email" class="form-control input-dark mb-2" placeholder="Correo Electrónico (Usuario)" />
-                <input type="password" @bind="registroBox.Password" class="form-control input-dark mb-2" placeholder="Contraseña" />
-                <input type="password" @bind="confirmarPass" class="form-control input-dark mb-2" placeholder="Confirmar Contraseña" />
-            </div>
-            <div class="section-title"><i class="fas fa-gem"></i> ELIGE TU PLAN</div>
-            <div class="planes-grid mb-4">
-                <div class="plan-card @(registroBox.PlanSeleccionadoID == 1 ? "selected" : "")" @onclick="() => registroBox.PlanSeleccionadoID = 1">
-                    <div class="plan-name">MENSUAL</div><div class="plan-price">$700.00</div><div class="plan-desc">Pago mes a mes</div>
-                    @if (registroBox.PlanSeleccionadoID == 1)
-                    {
-                        <i class="fas fa-check-circle check-icon"></i>
-                    }
+
+                <div class="input-group-animated">
+                    <input type="tel" @bind="telefonoRecuperar" class="input-dark" placeholder="Número (10 dígitos)" />
                 </div>
-                <div class="plan-card @(registroBox.PlanSeleccionadoID == 2 ? "selected" : "")" @onclick="() => registroBox.PlanSeleccionadoID = 2">
-                    <div class="plan-badge">AHORRA 2 MESES</div><div class="plan-name">ANUAL</div><div class="plan-price">$7,000.00</div><div class="plan-desc">Un solo pago al año</div>
-                    @if (registroBox.PlanSeleccionadoID == 2)
-                    {
-                        <i class="fas fa-check-circle check-icon"></i>
-                    }
-                </div>
+
+                @if (!string.IsNullOrEmpty(mensajeRecuperacion))
+                {
+                    <div class="alert-error mt-3" style="@(esExitoRecuperacion ? "border-color: #25D366; background-color: rgba(37, 211, 102, 0.1); color: #25D366;" : "")">
+                        @if(esExitoRecuperacion) { <i class="fas fa-check-circle mr-2"></i> } else { <i class="fas fa-times-circle mr-2"></i> }
+                        @mensajeRecuperacion
+                    </div>
+                }
             </div>
             <div class="modal-footer">
-                <button class="btn-cancel" @onclick="() => mostrarModalBox = false">Cancelar</button>
-                <button class="btn-confirm" @onclick="GuardarNuevoBox">REGISTRAR LUGAR</button>
+                <button class="btn-cancel" @onclick="() => mostrarModalRecuperar = false">Cancelar</button>
+                <button class="btn-confirm" @onclick="EnviarRecuperacion" disabled="@enviandoRecuperacion">
+                    @if(enviandoRecuperacion){ <span><i class="fas fa-spinner fa-spin"></i> ENVIANDO...</span> } else { <span>ENVIAR MENSAJE</span> }
+                </button>
             </div>
         </div>
     </div>
 }
 
-@if (mostrarModalRegistro)
+@* --- MODAL REGISTRO DE BOX (DUEÑO) --- *@
+@if (mostrarModalBox)
 {
-    <div class="modal fade show" style="display: block; background-color: rgba(0, 0, 0, 0.85); z-index: 10000;" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="background-color: #1a1a1a; border: 1px solid #F8C545; color: white;">
-
-                <div class="modal-header" style="border-bottom: 1px solid #444;">
-                    <h5 class="modal-title" style="font-family:'Oswald'; color: #F8C545;">NUEVO ATLETA</h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModalRegistro"></button>
+    <div class="modal-overlay fade-in">
+        <div class="modal-content custom-modal slide-in-up">
+            <div class="modal-header">
+                <h5 class="modal-title-custom">REGISTRA TU LUGAR</h5>
+                <button class="btn-close-custom" @onclick="() => mostrarModalBox = false"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="trial-banner mb-4">
+                    <i class="fas fa-gift fa-2x mb-2"></i>
+                    <h4>¡COMIENZA GRATIS!</h4>
+                    <p>Disfruta de <strong>1 MES COMPLETO</strong> de prueba.</p>
+                    <small style="color:black">Sin cobros el día de hoy.</small>
                 </div>
 
-                <div class="modal-body">
-                    <input type="text" @bind="regNombre" class="input-custom" placeholder="Nombre" />
-                    <input type="text" @bind="regApellidos" class="input-custom" placeholder="Apellidos" />
-                    <input type="email" @bind="regEmail" class="input-custom" placeholder="Email" />                  
-                    <select class="input-custom" style="background-color: #333; color: white;" @onchange="AlSeleccionarBox">
-                        <option value="">-- Selecciona tu lugar de entrenamiento --</option>
-                        @foreach (var box in listaBoxes)
-                        {
-                            <option value="@box.BoxID.ToString()">@box.Nombre</option>
-                        }
-                    </select>
-
-                    @if (boxSeleccionado != null && boxSeleccionado.CostoInscripcion != null && boxSeleccionado.CostoInscripcion > 0)
+                <div class="form-section-label">DATOS DEL NEGOCIO</div>
+                <input type="text" @bind="registroBox.NombreBox" class="form-control input-dark mb-2" placeholder="Nombre del Box" />
+                <input type="text" @bind="registroBox.Ciudad" class="form-control input-dark mb-2" placeholder="Ciudad" />
+                <input type="text" @bind="registroBox.Direccion" class="form-control input-dark mb-4" placeholder="Dirección" />
+                
+                <div class="form-section-label">DATOS DEL ADMIN</div>
+                <div class="row">
+                    <div class="col-6"><input type="text" @bind="registroBox.NombreAdmin" class="form-control input-dark mb-2" placeholder="Nombre" /></div>
+                    <div class="col-6"><input type="text" @bind="registroBox.ApellidosAdmin" class="form-control input-dark mb-2" placeholder="Apellidos" /></div>
+                </div>
+                <input type="tel" @bind="registroBox.Telefono" class="form-control input-dark mb-2" placeholder="Teléfono" />
+                <input type="email" @bind="registroBox.Email" class="form-control input-dark mb-2" placeholder="Email (Usuario)" />
+                <input type="password" @bind="registroBox.Password" class="form-control input-dark mb-2" placeholder="Contraseña" />
+                <input type="password" @bind="confirmarPass" class="form-control input-dark mb-2" placeholder="Confirmar Contraseña" />
+                
+                <div style="margin-top: 20px;">
+                    <div class="section-title-small"><i class="fas fa-info-circle"></i> PRECIOS FUTUROS:</div>
+                    @if (listaPlanesSistema != null && listaPlanesSistema.Count > 0)
                     {
-                        <div class="costo-alert fade-in">
-                            <i class="fas fa-ticket-alt"></i>
-                            <div>
-                                <strong>COSTO DE INSCRIPCIÓN:</strong>
-                                <span class="precio">$@boxSeleccionado.CostoInscripcion</span>
-                                <div class="small-text-costo">Pago único permanente para @boxSeleccionado.Nombre</div>
-                            </div>
+                        <div class="planes-grid">
+                            @foreach (var plan in listaPlanesSistema)
+                            {
+                                <div class="plan-card info-only">
+                                    <div class="plan-name">@plan.Nombre.ToUpper()</div>
+                                    <div class="plan-price">$@plan.Precio.ToString("N2")</div>
+                                    <div class="plan-desc" style="color:#F8C545; font-size: 0.65rem;">*Al finalizar el mes de prueba.</div>
+                                </div>
+                            }
                         </div>
                     }
-
-                    <input type="password" @bind="regPass" class="input-custom" placeholder="Contraseña" />
-                    <input type="password" @bind="regConfirmPass" class="input-custom" placeholder="Confirmar Contraseña" />
-
-                    @if (!string.IsNullOrEmpty(registroError))
-                    {
-                        <div class="alert-error">@registroError</div>
-                    }
                 </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-cancel" @onclick="() => mostrarModalBox = false">Cancelar</button>
+                <button class="btn-confirm" @onclick="GuardarNuevoBox">INICIAR PRUEBA GRATIS</button>
+            </div>
+        </div>
+    </div>
+}
 
-                <div class="modal-footer" style="border-top: none; justify-content: space-between;">
-                    <button type="button" class="btn btn-secondary" @onclick="CerrarModalRegistro">Cancelar</button>
-                    <button type="button" class="btn btn-warning" style="background-color:#F8C545; font-weight:bold;" @onclick="RegistrarUsuario">Guardar</button>
-                </div>
+@* MODAL ATLETA *@
+@if (mostrarModalRegistro)
+{
+    <div class="modal-overlay fade-in">
+        <div class="modal-content custom-modal slide-in-up">
+            <div class="modal-header">
+                <h5 class="modal-title-custom">NUEVO ATLETA</h5>
+                <button class="btn-close-custom" @onclick="CerrarModalRegistro"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="modal-body">
+                <input type="text" @bind="regNombre" class="input-dark mb-2" placeholder="Nombre" />
+                <input type="text" @bind="regApellidos" class="input-dark mb-2" placeholder="Apellidos" />
+                <input type="tel" @bind="regTelefono" class="input-dark mb-2" placeholder="Teléfono" />
+                <input type="email" @bind="regEmail" class="input-dark mb-2" placeholder="Email" />                    
+                <select class="input-dark mb-2" @onchange="AlSeleccionarBox">
+                    <option value="">-- Selecciona tu Box --</option>
+                    @foreach (var box in listaBoxes) { <option value="@box.BoxID.ToString()">@box.Nombre</option> }
+                </select>
 
+                @if (boxSeleccionado != null && boxSeleccionado.CostoInscripcion > 0)
+                {
+                    <div class="costo-alert fade-in">
+                        <i class="fas fa-gift"></i>
+                        <div>
+                            <strong style="font-size: 1rem;">¡TU PRIMER MES ES GRATIS!</strong>
+                            <div class="small-text-costo text-white mt-1">
+                                Inscripción futura, único pago: <span class="precio">$@boxSeleccionado.CostoInscripcion</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+                <input type="password" @bind="regPass" class="input-dark mb-2" placeholder="Contraseña" />
+                <input type="password" @bind="regConfirmPass" class="input-dark mb-2" placeholder="Confirmar" />
+                @if (!string.IsNullOrEmpty(registroError)) { <div class="alert-error shake-animation">@registroError</div> }
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-cancel" @onclick="CerrarModalRegistro">Cancelar</button>
+                <button class="btn-confirm" @onclick="RegistrarUsuario">REGISTRARME GRATIS</button>
             </div>
         </div>
     </div>
 }
 
 <style>
-    /* Estilos Generales Login */
-    .login-container-fullscreen {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: url('imagenes/TIMER.png') no-repeat center center;
-        background-size: cover;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 10;
-    }
+    /* ESTILOS BASE */
+    .login-container-fullscreen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: url('imagenes/TIMER.png') no-repeat center center; background-size: cover; display: flex; justify-content: center; align-items: center; z-index: 10; overflow: hidden; animation: bgMove 20s infinite alternate linear; }
+    @@keyframes bgMove { from { background-size: 100%; } to { background-size: 110%; } }
+    .background-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.9) 90%); z-index: 1; }
+    .brand-header { position: absolute; top: 40px; left: 30px; color: #fff; z-index: 5; font-family: 'Oswald'; font-size: 1.2rem; }
 
-        .login-container-fullscreen::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: -1;
-        }
+    /* TARJETA GLASS */
+    .login-wrapper { position: relative; z-index: 10; width: 90%; max-width: 420px; padding: 40px 30px; border-radius: 20px; background: rgba(20, 20, 20, 0.65); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 50px rgba(0,0,0,0.8); text-align: center; }
+    .logo-area { margin-bottom: 30px; }
+    .title-main { font-family: 'Oswald', sans-serif; font-size: 4rem; font-weight: 700; color: white; margin: 0; line-height: 0.9; letter-spacing: -2px; text-transform: uppercase; background: -webkit-linear-gradient(#fff, #bbb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+    .title-bar { width: 60px; height: 4px; background: #F8C545; margin: 5px auto 10px auto; border-radius: 2px; box-shadow: 0 0 10px #F8C545; }
+    .title-sub { font-family: 'Roboto', sans-serif; font-size: 0.9rem; color: #aaa; letter-spacing: 4px; text-transform: uppercase; font-weight: 300; margin: 0; }
 
-    .login-wrapper {
-        text-align: center;
-        width: 90%;
-        max-width: 400px;
-        padding: 20px;
-        color: white;
-    }
+    /* INPUTS Y BOTONES */
+    .input-group-animated { position: relative; margin-bottom: 20px; }
+    .input-icon { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: #F8C545; font-size: 1.1rem; z-index: 2; }
+    .input-custom { width: 100%; background: rgba(0, 0, 0, 0.5); border: 1px solid #444; border-radius: 50px; padding: 15px 15px 15px 50px; color: #fff; font-size: 1rem; transition: all 0.3s ease; }
+    .input-custom:focus { border-color: #F8C545; background: rgba(0, 0, 0, 0.8); box-shadow: 0 0 15px rgba(248, 197, 69, 0.3); outline: none; }
+    .input-dark { width: 100%; background: #222; border: 1px solid #444; color: white; padding: 15px; border-radius: 8px; font-size: 1rem; }
+    .input-dark:focus { border-color: #F8C545; outline:none; }
+    .btn-login { width: 100%; background: linear-gradient(90deg, #F8C545, #dcb03d); color: #000; font-weight: 900; border: none; padding: 15px; border-radius: 50px; font-size: 1.1rem; font-family: 'Oswald', sans-serif; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; margin-top: 20px; text-transform: uppercase; }
+    .btn-login:active { transform: scale(0.98); }
+    .glow-effect { box-shadow: 0 0 20px rgba(248, 197, 69, 0.4); }
+    .actions-row { margin-top: 15px; text-align: right; }
+    .forgot-pass { color: #888; font-size: 0.85rem; text-decoration: none; transition: color 0.3s; cursor: pointer; }
+    .forgot-pass:hover { color: #F8C545; text-decoration: underline; }
+    .divider { margin: 25px 0; position: relative; text-align: center; }
+    .divider::before { content: ''; position: absolute; top: 50%; left: 0; width: 100%; height: 1px; background: #333; z-index: 1; }
+    .divider span { background: #151515; padding: 0 10px; color: #666; font-size: 0.8rem; position: relative; z-index: 2; }
+    .btn-register-link { background: transparent; border: 1px solid #666; color: white; width: 100%; padding: 12px; border-radius: 50px; font-weight: bold; font-size: 0.9rem; transition: all 0.3s; }
+    .btn-register-link:hover { border-color: white; background: rgba(255,255,255,0.1); }
+    .box-register-area { margin-top: 30px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
+    .small-text { color: #888; font-size: 0.8rem; margin-bottom: 5px; }
+    .btn-link-gold { background: none; border: none; color: #F8C545; font-weight: bold; font-family: 'Oswald'; font-size: 1rem; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
 
-    .title-main {
-        font-family: 'Oswald', sans-serif;
-        font-size: 3rem;
-        color: #F8C545;
-        margin: 0;
-        line-height: 1;
-    }
+    /* ANIMACIONES */
+    .fade-in-up { animation: fadeInUp 0.8s ease-out; }
+    .fade-in-down { animation: fadeInDown 0.8s ease-out; }
+    .slide-in-up { animation: slideInUp 0.4s ease-out; }
+    .pulse-animation { animation: pulse 2s infinite; }
+    .shake-animation { animation: shake 0.5s; }
+    @@keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @@keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+    @@keyframes slideInUp { from { opacity: 0; transform: translateY(100px); } to { opacity: 1; transform: translateY(0); } }
+    @@keyframes pulse { 0% { transform: scale(1); text-shadow: 0 0 0 rgba(248, 197, 69, 0); } 50% { transform: scale(1.05); text-shadow: 0 0 10px rgba(248, 197, 69, 0.5); } 100% { transform: scale(1); text-shadow: 0 0 0 rgba(248, 197, 69, 0); } }
+    @@keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); } 20%, 40%, 60%, 80% { transform: translateX(5px); } }
 
-    .title-sub {
-        font-family: 'Oswald', sans-serif;
-        font-size: 2rem;
-        color: white;
-        margin-bottom: 30px;
-    }
-
-    .input-custom {
-        width: 100%;
-        background: rgba(255, 255, 255, 0.15);
-        border: 2px solid #fff;
-        border-radius: 30px;
-        padding: 12px 20px;
-        color: #fff;
-        margin-bottom: 10px;
-        text-align: center;
-        outline: none;
-    }
-
-        .input-custom:focus {
-            border-color: #F8C545;
-            background: rgba(255, 255, 255, 0.25);
-        }
-
-    .btn-login {
-        background-color: #928453;
-        color: #fff;
-        border: none;
-        padding: 10px 50px;
-        border-radius: 30px;
-        font-size: 1.2rem;
-        font-family: 'Oswald', sans-serif;
-        margin-top: 20px;
-        width: 100%;
-    }
-
-    .brand-header {
-        position: absolute;
-        top: 30px;
-        left: 30px;
-        color: #fff;
-        text-align: left;
-    }
-
-    .alert-error {
-        color: #ff6b6b;
-        background: rgba(0,0,0,0.8);
-        padding: 5px;
-        border-radius: 5px;
-        margin-bottom: 10px;
-    }
-
-    .forgot-pass {
-        color: #ccc;
-        text-decoration: none;
-        display: block;
-        margin-top: 10px;
-        cursor: pointer;
-    }
-
-    .btn-link-gold {
-        background: none;
-        border: none;
-        color: #F8C545;
-        text-decoration: underline;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: color 0.3s;
-    }
-
-        .btn-link-gold:hover {
-            color: white;
-        }
-
-    /* Modales */
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.9);
-        z-index: 3000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .custom-modal {
-        background: #1a1a1a;
-        width: 95%;
-        max-width: 500px;
-        border: 1px solid #F8C545;
-        border-radius: 12px;
-        display: flex;
-        flex-direction: column;
-        max-height: 90vh;
-        overflow: hidden;
-    }
-
-    .scrollable-body {
-        padding: 20px;
-        overflow-y: auto;
-        flex: 1;
-    }
-
-    .section-title {
-        color: white;
-        font-weight: bold;
-        font-family: 'Oswald';
-        border-bottom: 1px solid #F8C545;
-        padding-bottom: 5px;
-        margin-bottom: 10px;
-        font-size: 1.1rem;
-    }
-
-    .divider {
-        border-color: #333;
-        margin: 15px 0;
-    }
-
-    .small-text {
-        color: #888;
-        font-size: 0.8rem;
-        margin-bottom: 10px;
-    }
-
-    .input-dark {
-        background: #333 !important;
-        color: white !important;
-        border: 1px solid #666;
-    }
-
-    .btn-confirm {
-        background: #F8C545;
-        color: black;
-        border: none;
-        padding: 10px;
-        font-weight: bold;
-        flex: 1;
-        border-radius: 5px;
-    }
-
-    .btn-cancel {
-        background: #333;
-        color: white;
-        border: none;
-        padding: 10px;
-        font-weight: bold;
-        flex: 1;
-        border-radius: 5px;
-    }
-
-    .btn-close-custom {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 1.2rem;
-    }
-
-    .modal-header, .modal-footer {
-        padding: 15px;
-    }
-
-    .modal-footer {
-        border-top: 1px solid #333;
-        background: #1a1a1a;
-        flex-shrink: 0;
-    }
-
-    /* Planes Grid */
-    .planes-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 15px;
-    }
-
-    .plan-card {
-        background: #222;
-        border: 1px solid #444;
-        border-radius: 10px;
-        padding: 15px;
-        text-align: center;
-        cursor: pointer;
-        position: relative;
-        transition: all 0.3s;
-    }
-
-        .plan-card:hover {
-            border-color: #F8C545;
-        }
-
-        .plan-card.selected {
-            background: rgba(248, 197, 69, 0.1);
-            border: 2px solid #F8C545;
-            transform: scale(1.02);
-        }
-
-    .plan-name {
-        font-family: 'Oswald';
-        color: white;
-        font-size: 1.1rem;
-    }
-
-    .plan-price {
-        font-family: 'Oswald';
-        color: #F8C545;
-        font-size: 1.5rem;
-        font-weight: bold;
-        margin: 5px 0;
-    }
-
-    .plan-desc {
-        font-size: 0.8rem;
-        color: #aaa;
-    }
-
-    .check-icon {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        color: #28a745;
-        font-size: 1.2rem;
-    }
-
-    .plan-badge {
-        position: absolute;
-        top: -10px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #28a745;
-        color: white;
-        font-size: 0.6rem;
-        padding: 2px 8px;
-        border-radius: 10px;
-        font-weight: bold;
-        white-space: nowrap;
-    }
-
-    /* Estilos Modal Atleta Inputs */
-    .modal-body .input-custom {
-        background-color: #333333 !important;
-        color: white !important;
-        border: 1px solid #666;
-        z-index: 10001;
-        position: relative;
-    }
-
-        .modal-body .input-custom:focus {
-            border-color: #F8C545;
-            background-color: #444 !important;
-        }
-
-    /* NUEVO: ALERTA DE COSTO */
-    .costo-alert {
-        background: rgba(248, 197, 69, 0.1);
-        border: 1px solid #F8C545;
-        border-radius: 8px;
-        padding: 10px;
-        margin: 10px 0;
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        color: white;
-        animation: fadeIn 0.5s;
-    }
-
-        .costo-alert i {
-            font-size: 1.5rem;
-            color: #F8C545;
-        }
-
-    .precio {
-        color: #F8C545;
-        font-weight: bold;
-        font-size: 1.1rem;
-        font-family: 'Oswald';
-        margin-left: 5px;
-    }
-
-    .small-text-costo {
-        font-size: 0.75rem;
-        color: #ccc;
-    }
-
-    @@keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(-5px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
+    /* MODALES */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 5000; display: flex; justify-content: center; align-items: center; }
+    .custom-modal { background: #1a1a1a; width: 95%; max-width: 500px; border: 1px solid #333; border-radius: 15px; display: flex; flex-direction: column; max-height: 85vh; box-shadow: 0 0 40px rgba(0,0,0,1); }
+    .modal-header { padding: 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .modal-body { padding: 20px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+    .modal-footer { padding: 20px; background: #111; border-top: 1px solid #333; display: flex; gap: 10px; flex-shrink: 0; }
+    .modal-title-custom { color: #F8C545; font-family: 'Oswald'; margin: 0; font-size: 1.5rem; letter-spacing: 1px; }
+    .btn-close-custom { background: none; border: none; color: #fff; font-size: 1.5rem; }
+    .btn-confirm { flex: 1; background: #F8C545; color: black; border: none; padding: 12px; border-radius: 8px; font-weight: bold; display: flex; justify-content: center; align-items: center; gap: 10px;}
+    .btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-cancel { flex: 1; background: #333; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; }
+    .form-section-label { color: #888; font-size: 0.75rem; font-weight: bold; margin: 15px 0 5px 0; letter-spacing: 1px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+    .section-title-small { font-size: 0.8rem; color: #ccc; margin-bottom: 10px; font-weight: bold; }
+    .alert-error { background: rgba(220, 53, 69, 0.2); color: #ff6b6b; padding: 10px; border-radius: 8px; border: 1px solid #ff6b6b; margin-top: 15px; font-size: 0.9rem; text-align: left; display: flex; align-items: center; }
+    .mr-2 { margin-right: 0.5rem; }
+    .trial-banner { background: linear-gradient(135deg, #F8C545, #b8860b); color: black; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    .trial-banner h4 { font-family: 'Oswald'; font-weight: bold; margin: 0; }
+    .planes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .plan-card { background: #222; border: 1px solid #333; padding: 10px; border-radius: 8px; text-align: center; }
+    .plan-price { color: #F8C545; font-family: 'Oswald'; font-size: 1.2rem; }
+    .plan-name { color: white; font-weight: bold; font-size: 0.8rem; }
+    .costo-alert { background: rgba(40, 167, 69, 0.2); border: 2px solid #28a745; border-radius: 10px; padding: 15px; margin: 15px 0; display: flex; align-items: flex-start; gap: 15px; color: white; animation: fadeIn 0.5s; }
+    .costo-alert i { font-size: 2rem; color: #28a745; margin-top: 5px; }
+    .precio { color: #F8C545; font-weight: bold; font-size: 1.1rem; font-family: 'Oswald'; }
+    .small-text-costo { font-size: 0.8rem; color: #ccc; }
+    .tracking-text { letter-spacing: 3px; font-size: 0.8rem; animation: pulse 1.5s infinite; }
 </style>
 
 @code {
-    // Login
+    // ---------------- LOGIC: INICIO DE SESIÓN ----------------
     private string loginUsername;
     private string loginPassword;
     private string loginError;
-    private bool cargando = true; // NUEVO: Para el auto-login
-
-    // Registro Atleta
-    private bool mostrarModalRegistro = false;
-    private string regNombre;
-    private string regApellidos;
-    private string regEmail;
-    private string regPass;
-    private string regConfirmPass;
-    private string registroError;
-
-    // Lista de Boxes y Selección
-    private List<Boxes> listaBoxes = new List<Boxes>();
-    private Boxes boxSeleccionado;
-    private Guid regBoxId;
-
-    // Registro Dueño (Box)
-    private bool mostrarModalBox = false;
-    private RegistroBoxes registroBox = new RegistroBoxes();
-    private string confirmarPass = "";
+    private bool cargando = true;
 
     protected override async Task OnInitializedAsync()
     {
-        try
-        {
+        // Carga inicial
+        try {
             var response = await Http.GetAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/boxes");
             if (response.IsSuccessStatusCode) listaBoxes = await response.Content.ReadFromJsonAsync<List<Boxes>>();
-        }
-        catch { }
+        } catch { }
         
-        // Ejecutar Auto-Login
+        try {
+            var resPlanes = await Http.GetAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/boxesAPI/planes-sistema");
+            if (resPlanes.IsSuccessStatusCode) listaPlanesSistema = await resPlanes.Content.ReadFromJsonAsync<List<PlanSistemaDto>>();
+        } catch { }
+
         await IntentarLoginAutomatico();
     }
 
@@ -539,121 +319,55 @@
     {
         try
         {
-            // 1. Buscamos si hay algo guardado
             var guardado = await SecureStorage.Default.GetAsync("auth_token");
-
             if (!string.IsNullOrEmpty(guardado))
             {
-                // 2. Si hay ID, intentamos loguear silenciosamente con la API
                 var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/login-por-id/{guardado}");
-
                 if (response.IsSuccessStatusCode)
                 {
                     var usuario = await response.Content.ReadFromJsonAsync<UsuarioSesionDto>();
                     if (usuario != null)
                     {
-                        Sesion.Usuario = usuario; // Llenamos el servicio
-                        Nav.NavigateTo("/home");  // ¡Adentro!
-                        return; // Salimos para mantener el loading activo mientras navega
+                        Sesion.Usuario = usuario;
+                        Nav.NavigateTo("/home");
+                        return;
                     }
                 }
             }
         }
-        catch 
-        {
-            // Si falla (token vencido, sin internet, etc), se queda en el Login normal
-            SecureStorage.Default.Remove("auth_token"); // Limpiamos basura
-        }
-        
-        cargando = false; // Mostramos el formulario de login
-    }
-
-    private void AlSeleccionarBox(ChangeEventArgs e)
-    {
-        // 1. REINICIO TOTAL: Borramos cualquier selección anterior inmediatamente
-        boxSeleccionado = null;
-        regBoxId = Guid.Empty;
-
-        // 2. Obtenemos el valor del dropdown
-        string idStr = e.Value?.ToString();
-
-        // 3. Si hay un ID válido (no es la opción por defecto "-- Selecciona --")
-        if (!string.IsNullOrEmpty(idStr) && Guid.TryParse(idStr, out Guid id))
-        {
-            regBoxId = id; // Guardamos el ID para el registro
-
-            // 4. Buscamos el box en la lista
-            var encontrado = listaBoxes.FirstOrDefault(b => b.BoxID == id);
-
-            // 5. Solo si el box existe Y tiene un costo mayor a 0, lo asignamos a la variable visual
-            if (encontrado != null)
-            {
-                // Asignamos el objeto completo para que el HTML pueda leer el precio y el nombre
-                boxSeleccionado = encontrado;
-            }
-        }
-
-        // 6. Forzamos a la pantalla a redibujarse para quitar/poner el aviso
-        StateHasChanged();
-    }
-
-    private void AbrirModalRegistroBox()
-    {
-        registroBox = new RegistroBoxes { PlanSeleccionadoID = 1 };
-        confirmarPass = "";
-        mostrarModalBox = true;
-    }
-
-    private void AbrirModalRegistro() => mostrarModalRegistro = true;
-
-    private void CerrarModalRegistro()
-    {
-        mostrarModalRegistro = false;
-        registroError = "";
-        boxSeleccionado = null; // Limpiar selección al cerrar
+        catch { SecureStorage.Default.Remove("auth_token"); }
+        cargando = false;
     }
 
     private async Task IniciarSesion()
     {
-        cargando = true; // Mostramos spinner mientras procesa
-        loginError = "";
+        cargando = true; loginError = "";
         try
         {
             var loginData = new { Username = loginUsername, Password = loginPassword };
-
             var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/login", loginData);
 
             if (response.IsSuccessStatusCode)
             {
-                // LOGIN EXITOSO (200 OK)
                 var usuarioRecibido = await response.Content.ReadFromJsonAsync<UsuarioSesionDto>();
                 Sesion.Usuario = usuarioRecibido;
-
-                // GUARDAR SESIÓN EN EL CELULAR
                 try { await SecureStorage.Default.SetAsync("auth_token", usuarioRecibido.UsuarioID.ToString());} catch {}
-                
                 Nav.NavigateTo("/home");
             }
-            else if (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired) // Error 402 💸
+            else if (response.StatusCode == System.Net.HttpStatusCode.PaymentRequired)
             {
-                // MENSAJE CLARO PARA EL ATLETA
-                loginError = "⛔ El servicio de tu Gimnasio está suspendido temporalmente. Por favor avisa a tu administrador.";
+                loginError = "⛔ El servicio de tu Gimnasio está suspendido temporalmente.";
                 cargando = false;
             }
-            else if (response.StatusCode == System.Net.HttpStatusCode.Forbidden) // ⚠️ CÓDIGO 403 (NO VALIDADO)
+            else if (response.StatusCode == System.Net.HttpStatusCode.Forbidden)
             {
-                // AQUÍ ATRAPAMOS AL USUARIO EN ESPERA
                 cargando = false;
-                await App.Current.MainPage.DisplayAlert("⏳ CUENTA EN ESPERA",
-                    "Tu registro fue exitoso, pero debes esperar a que el administrador de tu Box acepte tu solicitud para poder ingresar.",
-                    "Entendido");
+                await App.Current.MainPage.DisplayAlert("⏳ CUENTA EN ESPERA", "Espera a que tu admin acepte tu solicitud.", "Entendido");
             }
             else
             {
-                // CUALQUIER OTRO ERROR (401, 404, 500)
                 cargando = false;
-                loginError = "Credenciales incorrectas o error de servidor.";
-                // loginError = $"Error: {response.StatusCode}";
+                loginError = "Credenciales incorrectas.";
             }
         }
         catch (Exception ex)
@@ -663,22 +377,108 @@
         }
     }
 
-    private async Task RegistrarUsuario()
+    // ---------------- LOGIC: RECUPERAR PASSWORD (NUEVO) ----------------
+    private bool mostrarModalRecuperar = false;
+    private string telefonoRecuperar;
+    private string mensajeRecuperacion;
+    private bool enviandoRecuperacion = false;
+    private bool esExitoRecuperacion = false;
+
+    private void AbrirModalRecuperar()
     {
-        registroError = "";
-        if (regBoxId == Guid.Empty) { registroError = "Por favor selecciona un Box."; return; }
-        if (regPass != regConfirmPass) { registroError = "Las contraseñas no coinciden."; return; }
-        if (string.IsNullOrEmpty(regEmail) || string.IsNullOrEmpty(regPass)) { registroError = "Campos obligatorios."; return; }
+        telefonoRecuperar = "";
+        mensajeRecuperacion = "";
+        esExitoRecuperacion = false;
+        mostrarModalRecuperar = true;
+    }
+
+    private async Task EnviarRecuperacion()
+    {
+        // Validación simple del teléfono
+        if (string.IsNullOrEmpty(telefonoRecuperar) || telefonoRecuperar.Length < 10)
+        {
+            mensajeRecuperacion = "Ingresa un número de celular válido (mínimo 10 dígitos).";
+            esExitoRecuperacion = false;
+            return;
+        }
+
+        enviandoRecuperacion = true;
+        mensajeRecuperacion = ""; // Limpiamos mensajes previos
 
         try
         {
-            var nuevoUsuario = new { Nombre = regNombre, Apellidos = regApellidos, CorreoElectronico = regEmail, Password = regPass, ConfirmPass = regConfirmPass, BoxID = regBoxId };
+            // Preparamos los datos para enviar
+            var data = new { Telefono = telefonoRecuperar };
+            
+            // Llamada al nuevo endpoint en el backend
+            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/recuperar-password", data);
+
+            if (response.IsSuccessStatusCode)
+            {
+                mensajeRecuperacion = "¡Listo! Te hemos enviado tu contraseña por WhatsApp.";
+                esExitoRecuperacion = true;
+            }
+            else
+            {
+                // Si el backend devuelve un mensaje de error (ej. "No encontramos el usuario")
+                var errorMsg = await response.Content.ReadAsStringAsync();
+                mensajeRecuperacion = !string.IsNullOrEmpty(errorMsg) ? errorMsg.Replace("\"", "") : "No pudimos enviar el mensaje. Verifica el número.";
+                esExitoRecuperacion = false;
+            }
+        }
+        catch (Exception)
+        {
+            mensajeRecuperacion = "Error de conexión. Inténtalo más tarde.";
+            esExitoRecuperacion = false;
+        }
+        finally
+        {
+            // Habilitamos el botón nuevamente
+            enviandoRecuperacion = false;
+        }
+    }
+
+    // ---------------- LOGIC: REGISTRO ATLETA ----------------
+    private bool mostrarModalRegistro = false;
+    private string regNombre; private string regApellidos; private string regEmail; private string regTelefono;
+    private string regPass; private string regConfirmPass; private string registroError;
+    private List<Boxes> listaBoxes = new List<Boxes>();
+    private Boxes boxSeleccionado;
+    private Guid regBoxId;
+
+    private void AbrirModalRegistro() => mostrarModalRegistro = true;
+    private void CerrarModalRegistro() { mostrarModalRegistro = false; registroError = ""; boxSeleccionado = null; }
+
+    private void AlSeleccionarBox(ChangeEventArgs e)
+    {
+        boxSeleccionado = null;
+        regBoxId = Guid.Empty;
+        string idStr = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(idStr) && Guid.TryParse(idStr, out Guid id))
+        {
+            regBoxId = id;
+            var encontrado = listaBoxes.FirstOrDefault(b => b.BoxID == id);
+            if (encontrado != null) boxSeleccionado = encontrado;
+        }
+        StateHasChanged();
+    }
+
+    private async Task RegistrarUsuario()
+    {
+        registroError = "";
+        if (regBoxId == Guid.Empty) { registroError = "Por favor selecciona un lugar de entrenamiento"; return; }
+        if (regPass != regConfirmPass) { registroError = "Las contraseñas no coinciden."; return; }
+        if (string.IsNullOrEmpty(regEmail) || string.IsNullOrEmpty(regPass) || string.IsNullOrEmpty(regTelefono)) { registroError = "Campos obligatorios."; return; }
+
+        try
+        {
+            var nuevoUsuario = new { Nombre = regNombre, Apellidos = regApellidos, CorreoElectronico = regEmail, Telefono = regTelefono, Password = regPass, ConfirmPass = regConfirmPass, BoxID = regBoxId };
             var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/registrar", nuevoUsuario);
 
             if (response.IsSuccessStatusCode)
             {
                 mostrarModalRegistro = false;
-                await App.Current.MainPage.DisplayAlert("¡Éxito!", "Usuario creado correctamente.", "OK");
+                await App.Current.MainPage.DisplayAlert("¡Registro Exitoso!", "Tu cuenta ha sido creada. Disfruta tu mes de prueba.", "OK");
             }
             else
             {
@@ -689,9 +489,32 @@
         catch { registroError = "Error al conectar con la API."; }
     }
 
+    // ---------------- LOGIC: REGISTRO BOX (DUEÑO) ----------------
+    private bool mostrarModalBox = false;
+    private RegistroBoxes registroBox = new RegistroBoxes { PlanSeleccionadoID = 1 };
+    private string confirmarPass = "";
+    
+    public class PlanSistemaDto { public int PlanID { get; set; } public string Nombre { get; set; } public decimal Precio { get; set; } }
+    private List<PlanSistemaDto> listaPlanesSistema = new List<PlanSistemaDto>();
+
+    public class RegistroBoxes
+    {
+        public string NombreBox { get; set; } public string Ciudad { get; set; } public string Direccion { get; set; }
+        public string NombreAdmin { get; set; } public string ApellidosAdmin { get; set; } public string Telefono { get; set; }
+        public string Email { get; set; } public string Password { get; set; } public int PlanSeleccionadoID { get; set; }
+    }
+
+    private void AbrirModalRegistroBox()
+    {
+        registroBox = new RegistroBoxes { PlanSeleccionadoID = 1 }; 
+        confirmarPass = "";
+        mostrarModalBox = true;
+    }
+
     private async Task GuardarNuevoBox()
     {
         if (string.IsNullOrEmpty(registroBox.NombreBox) || string.IsNullOrEmpty(registroBox.Email)) { await App.Current.MainPage.DisplayAlert("Error", "Llena los campos.", "OK"); return; }
+        if (string.IsNullOrEmpty(registroBox.Telefono)) { await App.Current.MainPage.DisplayAlert("Error", "El teléfono es obligatorio.", "OK"); return; }
         if (registroBox.Password != confirmarPass) { await App.Current.MainPage.DisplayAlert("Error", "Contraseñas no coinciden.", "OK"); return; }
 
         try
@@ -699,7 +522,7 @@
             var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/boxesAPI/registrar-nuevo", registroBox);
             if (response.IsSuccessStatusCode)
             {
-                await App.Current.MainPage.DisplayAlert("¡Bienvenido!", "Box y Admin creados.", "OK");
+                await App.Current.MainPage.DisplayAlert("¡Bienvenido!", "Tu lugar de entrenamiento ha sido registrado. Tienes 1 MES DE PRUEBA GRATIS.", "OK");
                 mostrarModalBox = false;
             }
             else

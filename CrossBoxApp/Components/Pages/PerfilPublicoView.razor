@@ -255,9 +255,31 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+        await VerificarPermisosGaleria();
         await CargarPerfil();
     }
 
+    private async Task<bool> VerificarPermisosGaleria()
+    {
+        // 1. Verificamos el estado actual
+        var estado = await Permissions.CheckStatusAsync<Permissions.Photos>();
+
+        // 2. Si no tenemos permiso, lo pedimos
+        if (estado != PermissionStatus.Granted)
+        {
+            estado = await Permissions.RequestAsync<Permissions.Photos>();
+        }
+
+        // 3. Si el usuario dijo que NO
+        if (estado != PermissionStatus.Granted)
+        {
+            await App.Current.MainPage.DisplayAlert("Permiso Requerido", "Necesitamos acceso a tus fotos para subir tu evidencia.", "Entendido");
+            return false;
+        }
+
+        return true;
+    }
     private async Task CargarPerfil()
     {
         if (Sesion.Usuario == null) return;

@@ -113,26 +113,37 @@
 
     private async Task GuardarYSalir()
     {
-        if (modoScore)
+        // 1. Preparamos el payload SIEMPRE (con o sin reps)
+        // Usamos un objeto anónimo que coincide con lo que espera la API
+        var payload = listaLocal.Select(a => new
         {
-            // Enviar a la API
-            try
-            {
-                var payload = listaLocal.Select(a => new 
-                { 
-                    UsuarioID = a.UsuarioId,
-                    BoxID = a.BoxId,
-                    Reps = a.Reps,
-                    NombreAtleta = a.NombreCompleto
-                }).ToList();
+            UsuarioID = a.UsuarioId,
+            BoxID = a.BoxId,
+            // Si modoScore está apagado, mandamos 0 reps, pero el backend igual cuenta la asistencia
+            Reps = modoScore ? a.Reps : 0,
+            NombreAtleta = a.NombreCompleto
+        }).ToList();
 
-                await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/scoresapi/guardar-scores", payload);
-                await App.Current.MainPage.DisplayAlert("Éxito", "Resultados guardados.", "OK");
+        // 2. Enviamos a la API (SIEMPRE, no dentro de un if)
+        try
+        {
+            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/scoresapi/guardar-scores", payload);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await App.Current.MainPage.DisplayAlert("¡Clase Cerrada!", "Asistencias y resultados actualizados.", "OK");
             }
-            catch {}
+            else
+            {
+                // Opcional: Manejo de error silencioso o log
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log de error
         }
 
-        // Limpieza y Salida (Igual que antes)
+        // 3. Limpieza y Salida
         LiveState.AtletasEnClase.Clear();
         Nav.NavigateTo("/home");
     }
