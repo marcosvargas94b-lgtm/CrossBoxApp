@@ -32,7 +32,7 @@
         {
             <div class="input-group-animated">
                 <i class="fas fa-user input-icon"></i>
-                <input type="text" @bind="loginUsername" class="input-custom" placeholder="Usuario / Email" />
+                <input type="text" @bind="loginUsername" class="input-custom" placeholder="Email" />
             </div>
             
             <div class="input-group-animated">
@@ -140,7 +140,7 @@
                     <div class="col-6"><input type="text" @bind="registroBox.NombreAdmin" class="form-control input-dark mb-2" placeholder="Nombre" /></div>
                     <div class="col-6"><input type="text" @bind="registroBox.ApellidosAdmin" class="form-control input-dark mb-2" placeholder="Apellidos" /></div>
                 </div>
-                <input type="tel" @bind="registroBox.Telefono" class="form-control input-dark mb-2" placeholder="Teléfono" />
+                <input type="tel" @bind="registroBox.Telefono" class="form-control input-dark mb-2" placeholder="Teléfono (10 dígitos)" />
                 <input type="email" @bind="registroBox.Email" class="form-control input-dark mb-2" placeholder="Email (Usuario)" />
                 <input type="password" @bind="registroBox.Password" class="form-control input-dark mb-2" placeholder="Contraseña" />
                 <input type="password" @bind="confirmarPass" class="form-control input-dark mb-2" placeholder="Confirmar Contraseña" />
@@ -184,7 +184,7 @@
             <div class="modal-body">
                 <input type="text" @bind="regNombre" class="input-dark mb-2" placeholder="Nombre" />
                 <input type="text" @bind="regApellidos" class="input-dark mb-2" placeholder="Apellidos" />
-                <input type="tel" @bind="regTelefono" class="input-dark mb-2" placeholder="Teléfono" />
+                <input type="tel" @bind="regTelefono" class="input-dark mb-2" placeholder="Teléfono (10 dígitos)" />
                 <input type="email" @bind="regEmail" class="input-dark mb-2" placeholder="Email" />                    
                 <select class="input-dark mb-2" @onchange="AlSeleccionarBox">
                     <option value="">-- Selecciona tu Box --</option>
