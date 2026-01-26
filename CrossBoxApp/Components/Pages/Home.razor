@@ -262,7 +262,7 @@
                 <p>Escanear Pantalla</p>
             </div>
         }
-          @if (EstaActivo("RACHA")) 
+         @if (EstaActivo("RACHA")) 
         {
         <div class="menu-card" @onclick='() => Nav.NavigateTo("/ranking-asistencia")'>
             <i class="fas fa-calendar-check card-icon" style="color:#FFF;"></i>
@@ -273,6 +273,13 @@
     </div>
 
     <div class="footer-brand">@NombreBox</div>
+
+    <div class="delete-account-container">
+        <button class="btn-delete-account" @onclick="ConfirmarEliminarCuenta">
+            Eliminar mi cuenta
+        </button>
+    </div>
+
 </div>
 
 @if (mostrarModalPassword)
@@ -329,7 +336,6 @@
             </div>
             <div class="modal-body text-center">
                 <p style="color:#ccc;">Selecciona cómo quieres renovar tu servicio:</p>
-                
                 <div class="planes-selection-grid">
                     @{ var planMes = listaPlanes.FirstOrDefault(p => p.PlanID == 1); }
                     @if (planMes != null)
@@ -501,12 +507,15 @@
 }
 
 <style>
-    /* Estilos Generales */
+    /* ---------------------------------------------------- */
+    /* ESTILOS GENERALES (CSS)                */
+    /* ---------------------------------------------------- */
+    
     .navbar-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; font-family: 'Oswald'; position: relative; z-index: 100; }
     .brand { font-size: 1.5rem; font-weight: bold; }
     .right-actions { display: flex; align-items: center; gap: 20px; }
     
-    /* Menú y Notificaciones */
+    /* Menú Principal */
     .main-menu-wrapper { position: relative; cursor: pointer; display: flex; align-items: center; gap: 10px; }
     .user-name { font-size: 0.9rem; font-weight: bold; display: none; }
     @@media(min-width: 768px) { .user-name { display: block; } }
@@ -519,6 +528,7 @@
     .dropdown-item i { width: 20px; text-align: center; color: #F8C545; }
     .dropdown-divider { height: 1px; background: #333; margin: 5px 0; }
     
+    /* Notificaciones */
     .noti-wrapper { position: relative; cursor: pointer; }
     .noti-icon { font-size: 1.3rem; color: white; }
     .noti-dot { position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; background: red; border-radius: 50%; border: 2px solid #0d0d0d; }
@@ -527,13 +537,11 @@
     .noti-item { padding: 12px; border-bottom: 1px solid #333; font-size: 0.8rem; display: flex; align-items: center; gap: 10px; color: #ccc; }
     .noti-item.unread { background: #2a2a2a; color: white; border-left: 3px solid #F8C545; }
 
-    /* Home Layout */
+    /* Home & Cards */
     .home-container { background-color: #0d0d0d; min-height: 90vh; color: white; display: flex; flex-direction: column; align-items: center; padding-top: 30px; }
     .welcome-section h1 { font-family: 'Oswald'; color: #F8C545; font-size: 2rem; margin-bottom: 30px; text-align: center; }
     .cards-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; width: 100%; max-width: 1000px; padding-bottom: 40px; }
     .footer-brand { margin-top: auto; padding: 20px; color: #F8C545; font-family: 'Oswald'; }
-
-    /* Tarjetas del Menú */
     .menu-card { background-color: #F8C545; color: black; width: 150px; height: 160px; border-radius: 15px; padding: 15px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; box-shadow: 0 4px 10px rgba(248, 215, 131, 0.2); cursor: pointer; transition: transform 0.2s; }
     .menu-card:active { transform: scale(0.95); }
     .menu-card h3 { font-family: 'Oswald'; font-size: 1rem; font-weight: bold; margin: 0; }
@@ -543,14 +551,14 @@
     .yellow-highlight h3, .yellow-highlight p, .yellow-highlight i { color: black !important; }
     .live-badge { position: absolute; top: 10px; right: 10px; background: red; color: white; font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
 
-    /* Alerta de Pago */
+    /* Alertas de Pago */
     .payment-alert { margin-bottom: 20px; padding: 15px; border-radius: 10px; display: flex; align-items: center; gap: 15px; cursor: pointer; animation: slideDown 0.5s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .payment-alert.warning { background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%); color: black; }
     .payment-alert.expired { background: linear-gradient(90deg, #dc3545 0%, #c82333 100%); color: white; }
     .alert-icon { font-size: 1.5rem; }
     .alert-text { flex: 1; display: flex; flex-direction: column; font-size: 0.9rem; }
 
-    /* Modales Generales */
+    /* Modales */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
     .custom-modal { background: #1a1a1a; width: 90%; max-width: 400px; border-radius: 12px; border: 1px solid #F8C545; padding: 0; overflow: hidden; display: flex; flex-direction: column; color: white; }
     .modal-header { padding: 15px; background: #222; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
@@ -567,7 +575,7 @@
     .btn-eye { border-color: #666; color: #ccc; }
     .btn-eye:hover { background: #444; color: white; }
 
-    /* Selección de Planes */
+    /* Planes Grid */
     .planes-selection-grid { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
     .plan-option-card { background: #222; border: 1px solid #444; border-radius: 10px; padding: 20px; width: 45%; cursor: pointer; transition: 0.2s; position: relative; }
     .plan-option-card:active { transform: scale(0.95); border-color: #F8C545; }
@@ -577,7 +585,7 @@
     .plan-note { font-size: 0.8rem; color: #aaa; }
     .badge-save { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #28a745; color: white; font-size: 0.6rem; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
 
-    /* Módulos */
+    /* Switches */
     .module-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #333; cursor: pointer; }
     .module-row:hover { background: #222; }
     .mod-name { color: white; font-weight: bold; font-family: 'Roboto'; }
@@ -586,7 +594,7 @@
     .switch-thumb { width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: transform 0.3s; }
     .switch-track.on .switch-thumb { transform: translateX(24px); }
 
-    /* PopUp Avisos */
+    /* Aviso PopUp */
     .aviso-content { width: 90%; max-width: 400px; background: #1a1a1a; border-radius: 12px; text-align: center; border: 2px solid #F8C545; padding-bottom: 20px; box-shadow: 0 0 20px rgba(248, 197, 69, 0.3); animation: bounceIn 0.6s; overflow: hidden; }
     .aviso-icon { font-size: 3rem; color: #F8C545; margin-top: 20px; animation: pulse 2s infinite; }
     .aviso-title { font-family: 'Oswald'; color: white; font-size: 1.5rem; margin: 10px 20px; text-transform: uppercase; }
@@ -605,11 +613,47 @@
     .alert-conflict h4 { color: white; font-family: 'Oswald'; letter-spacing: 1px; margin-bottom: 10px; }
     .alert-conflict p { color: #ccc; margin-bottom: 5px; }
     .fade-in { animation: fadeIn 0.3s ease-in; }
-    @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
+   .delete-account-container {
+        width: 100%;
+        max-width: 1000px;
+        display: flex;
+        justify-content: center; /* Lo centramos para que se vea más intencional */
+        margin-top: 60px;        /* Separación del nombre del box */
+        margin-bottom: 20px;     /* Espacio final abajo */
+        padding: 0 20px;
+    }
+
+    .btn-delete-account {
+        background: transparent;
+        border: 2px solid #ff4444; /* Borde rojo brillante visible */
+        color: #ff4444;            /* Texto rojo brillante */
+        font-family: 'Oswald', sans-serif; /* Usamos la fuente de la app */
+        font-size: 1rem;           /* Tamaño más grande */
+        font-weight: bold;
+        text-transform: uppercase; /* Mayúsculas para más presencia */
+        text-decoration: none;     /* Quitamos el subrayado de enlace */
+        padding: 12px 30px;        /* Relleno para que parezca botón */
+        border-radius: 50px;       /* Bordes redondeados modernos */
+        cursor: pointer;
+        transition: all 0.3s ease;
+        letter-spacing: 1px;
+        opacity: 0.8;
+    }
+
+    .btn-delete-account:hover {
+        opacity: 1;
+        background-color: #ff4444; /* Se rellena de rojo al pasar el mouse */
+        color: white;              /* Texto blanco para contraste */
+        box-shadow: 0 0 20px rgba(255, 68, 68, 0.4); /* Un pequeño brillo rojo */
+        transform: translateY(-2px); /* Pequeño efecto de elevación */
+    }
 </style>
 
 @code {
-    // === VARIABLES DE ESTADO Y DATOS ===
+    // ---------------------------------------------
+    // VARIABLES Y ESTADO
+    // ---------------------------------------------
     private bool mostrarMenuPrincipal = false;
     private bool EsAdmin = false;
     private string NombreBox = "MVAPP";
@@ -646,7 +690,7 @@
     public class BoxConfigDTO { public bool EstaVinculadoMP { get; set; } }
     private List<ModuloConfig> listaConfiguracion = new List<ModuloConfig>();
 
-    // === VARIABLES CAMBIO DE PASSWORD (NUEVO) ===
+    // Cambio Password
     private bool mostrarModalPassword = false;
     private bool procesandoPass = false;
     private string passOld = "";
@@ -657,7 +701,9 @@
     private string tipoInputNew = "password";
     private string tipoInputConfirm = "password";
 
-    // === ON INITIALIZED ===
+    // ---------------------------------------------
+    // INITIALIZED
+    // ---------------------------------------------
     protected override async Task OnInitializedAsync()
     {
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
@@ -690,66 +736,56 @@
         try { listaPlanes = await Http.GetFromJsonAsync<List<PlanDto>>("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/pagosapi/planes");} catch { }
     }
 
-    // === LOGICA CAMBIO PASSWORD ===
-    private void AbrirModalPassword()
+    // ---------------------------------------------
+    // ELIMINAR CUENTA (REQUIRED BY APPLE)
+    // ---------------------------------------------
+    private async Task ConfirmarEliminarCuenta()
     {
-        passOld = ""; passNew = ""; passConfirm = ""; msgErrorPass = "";
-        procesandoPass = false;
-        mostrarMenuPrincipal = false;
-        mostrarModalPassword = true;
-    }
+        bool confirmacion = await App.Current.MainPage.DisplayAlert(
+            "⚠️ Eliminar Cuenta",
+            "¿Estás seguro de que quieres eliminar tu cuenta permanentemente? Perderás todo tu historial, fotos y pagos. Esta acción NO se puede deshacer.",
+            "Sí, Eliminar",
+            "Cancelar");
 
-    private void ToggleVerPass(int campo)
-    {
-        if (campo == 1) tipoInputOld = tipoInputOld == "password" ? "text" : "password";
-        if (campo == 2) tipoInputNew = tipoInputNew == "password" ? "text" : "password";
-        if (campo == 3) tipoInputConfirm = tipoInputConfirm == "password" ? "text" : "password";
-    }
-
-    private async Task GuardarNuevaPassword()
-    {
-        if(string.IsNullOrWhiteSpace(passOld) || string.IsNullOrWhiteSpace(passNew) || string.IsNullOrWhiteSpace(passConfirm))
+        if (confirmacion)
         {
-            msgErrorPass = "Todos los campos son obligatorios"; return;
-        }
-        if(passNew != passConfirm)
-        {
-            msgErrorPass = "La contraseña nueva y la confirmación no coinciden"; return;
-        }
-
-        procesandoPass = true;
-        msgErrorPass = "";
-
-        try
-        {
-            var req = new { UsuarioID = Sesion.Usuario.UsuarioID, OldPassword = passOld, NewPassword = passNew, ConfirmPassword = passConfirm };
-            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/cambiar-password", req);
-            
-            if(response.IsSuccessStatusCode)
+            try
             {
-                await App.Current.MainPage.DisplayAlert("¡Éxito!", "Tu contraseña ha sido actualizada.", "OK");
-                mostrarModalPassword = false;
-            }
-            else
-            {
-                var errorJson = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
-                if(errorJson.TryGetProperty("mensaje", out var msg))
-                    msgErrorPass = msg.GetString();
+                // CAMBIO IMPORTANTE:
+                // 1. Usamos PostAsync en lugar de DeleteAsync
+                // 2. Cambiamos la URL a "eliminar-definitivo"
+                // 3. Pasamos 'null' como contenido porque no enviamos datos extra
+                var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/eliminar-definitivo/{Sesion.Usuario.UsuarioID}", null);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await App.Current.MainPage.DisplayAlert("Cuenta Eliminada", "Lamentamos que te vayas. Tu cuenta ha sido borrada.", "Adiós");
+                    CerrarSesion();
+                }
                 else
-                    msgErrorPass = "Error al actualizar la contraseña";
+                {
+                    // LEER EL ERROR REAL DEL SERVIDOR
+                    string mensajeError = await response.Content.ReadAsStringAsync();
+                    await App.Current.MainPage.DisplayAlert("Error", $"No se pudo eliminar: {mensajeError}", "OK");
+                }
             }
-        }
-        catch(Exception ex)
-        {
-            msgErrorPass = "Error de conexión: " + ex.Message;
-        }
-        finally
-        {
-            procesandoPass = false;
+            catch (Exception ex)
+            {
+                await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK");
+            }
         }
     }
 
-    // === MÉTODOS DE SOPORTE Y NAVEGACIÓN ===
+    // ---------------------------------------------
+    // CAMBIO PASSWORD
+    // ---------------------------------------------
+    private void AbrirModalPassword() { passOld = ""; passNew = ""; passConfirm = ""; msgErrorPass = ""; procesandoPass = false; mostrarMenuPrincipal = false; mostrarModalPassword = true; }
+    private void ToggleVerPass(int campo) { if (campo == 1) tipoInputOld = tipoInputOld == "password" ? "text" : "password"; if (campo == 2) tipoInputNew = tipoInputNew == "password" ? "text" : "password"; if (campo == 3) tipoInputConfirm = tipoInputConfirm == "password" ? "text" : "password"; }
+    private async Task GuardarNuevaPassword() { if(string.IsNullOrWhiteSpace(passOld) || string.IsNullOrWhiteSpace(passNew) || string.IsNullOrWhiteSpace(passConfirm)) { msgErrorPass = "Todos los campos son obligatorios"; return; } if(passNew != passConfirm) { msgErrorPass = "La contraseña nueva y la confirmación no coinciden"; return; } procesandoPass = true; msgErrorPass = ""; try { var req = new { UsuarioID = Sesion.Usuario.UsuarioID, OldPassword = passOld, NewPassword = passNew, ConfirmPassword = passConfirm }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/cambiar-password", req); if(response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("¡Éxito!", "Tu contraseña ha sido actualizada.", "OK"); mostrarModalPassword = false; } else { var errorJson = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>(); if(errorJson.TryGetProperty("mensaje", out var msg)) msgErrorPass = msg.GetString(); else msgErrorPass = "Error al actualizar la contraseña"; } } catch(Exception ex) { msgErrorPass = "Error de conexión: " + ex.Message; } finally { procesandoPass = false; } }
+
+    // ---------------------------------------------
+    // SOPORTE Y NAVEGACIÓN
+    // ---------------------------------------------
     private async Task CargarNombreBox() { try { var response = await Http.GetFromJsonAsync<Boxes>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/nombre-box/{Sesion.Usuario.BoxID}"); if (response != null && !string.IsNullOrEmpty(response.Nombre)) { NombreBox = response.Nombre.ToUpper(); } } catch { } }
     private void AbrirGestionModulos() { mostrarMenuPrincipal = false; mostrarModalModulos = true; }
     private async Task CargarConfiguracionModulos() { try { listaConfiguracion = await Http.GetFromJsonAsync<List<ModuloConfig>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/modulos/{Sesion.Usuario.BoxID}"); } catch { } }
@@ -758,8 +794,6 @@
     private void ToggleMainMenu() { mostrarMenuPrincipal = !mostrarMenuPrincipal; if (mostrarMenuPrincipal) mostrarNotis = false; }
     private void ToggleNotificaciones() { mostrarNotis = !mostrarNotis; if (mostrarNotis) { mostrarMenuPrincipal = false; if (hayNuevas) { hayNuevas = false; _ = Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/notificaciones/leer/{Sesion.Usuario.UsuarioID}", null); } } }
     private void CerrarSesion() { diasRestantes = 99; SecureStorage.Default.Remove("auth_token"); Sesion.Usuario = null; Nav.NavigateTo("/"); }
-    
-    // Navegación
     private void IrAPerfil() => Nav.NavigateTo("/mi-perfil");
     private void IrAAgenda() => Nav.NavigateTo("/agenda-view");
     private void IrAWodView() => Nav.NavigateTo("/wod-view");
@@ -768,25 +802,39 @@
     private void IrACompaneros() => Nav.NavigateTo("/entrenamos-juntos");
     private void IrARanking() => Nav.NavigateTo("/ranking");
     private void NavegarA(string destino) { mostrarMenuPrincipal = false; switch (destino) { case "test": Nav.NavigateTo("/test-config"); break; case "usuarios": Nav.NavigateTo("/usuarios-view"); break; case "avisos": AbrirCrearAviso(); break; } }
-
-    // Pagos
+    
+    // ---------------------------------------------
+    // PAGOS
+    // ---------------------------------------------
     private async Task IrAPagar() { if (Sesion.Usuario == null) return; if (Sesion.Usuario.TipoUsuarioID == 2 && Sesion.Usuario.BoxID != IdCanaHueca) { if (boxTieneMP) { await ProcesarPago("Mensualidad", 0); } else { await App.Current.MainPage.DisplayAlert("Pago Presencial", "Tu box no ha configurado pagos en línea. Pasa a recepción.", "Entendido"); } return; } if (Sesion.Usuario.BoxID == IdCanaHueca) { var planPublico = listaPlanes.FirstOrDefault(p => p.PlanID == 3); if (planPublico != null) await ProcesarPago(planPublico.Nombre, planPublico.Precio); return; } if (Sesion.Usuario.TipoUsuarioID == 1) { mostrarModalPlanesAdmin = true; } }
     private async Task ProcesarPago(string titulo, decimal precio) { try { var datosPago = new { Titulo = titulo, Precio = precio, UsuarioID = Sesion.Usuario.UsuarioID }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/mercadopago/crear-preferencia", datosPago); if (response.IsSuccessStatusCode) { var resultado = await response.Content.ReadFromJsonAsync<RespuestaMercadoPago>(); if (resultado != null && !string.IsNullOrEmpty(resultado.url)) { await Browser.Default.OpenAsync(resultado.url, BrowserLaunchMode.SystemPreferred); mostrarModalPlanesAdmin = false; } } else { string errorMsg = await response.Content.ReadAsStringAsync(); if(errorMsg.Contains("error")) { errorMsg = errorMsg.Replace("{", "").Replace("}", "").Replace("\"", "").Replace("error:", ""); } await App.Current.MainPage.DisplayAlert("Error en Pago", errorMsg, "OK"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK"); } }
 
-    // Avisos
+    // ---------------------------------------------
+    // AVISOS
+    // ---------------------------------------------
     private void AbrirCrearAviso() { mostrarMenuPrincipal = false; nuevoAviso = new Avisos(); mostrarModalCrearAviso = true; }
     private async Task PublicarAviso() { if (string.IsNullOrEmpty(nuevoAviso.Titulo)) return; try { nuevoAviso.BoxID = Sesion.Usuario.BoxID; var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/crear", nuevoAviso); if (r.IsSuccessStatusCode) { mostrarModalCrearAviso = false; await App.Current.MainPage.DisplayAlert("Éxito", "Publicado", "OK"); } } catch {} }
     private async Task CargarUltimoAviso() { try { var r = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/ultimo/{Sesion.Usuario.BoxID}"); if (r.StatusCode == System.Net.HttpStatusCode.NoContent) return; if (r.IsSuccessStatusCode) { ultimoAviso = await r.Content.ReadFromJsonAsync<Avisos>(); if (ultimoAviso != null) { var idVisto = await JS.InvokeAsync<string>("localStorage.getItem", "ultimoAvisoVisto"); if (idVisto != ultimoAviso.AvisoID.ToString()) mostrarAvisoPopUp = true; } } } catch {} }
     private async Task CerrarAviso() { if(ultimoAviso!=null) await JS.InvokeVoidAsync("localStorage.setItem", "ultimoAvisoVisto", ultimoAviso.AvisoID.ToString()); mostrarAvisoPopUp = false; }
 
+    // ---------------------------------------------
     // WOD
+    // ---------------------------------------------
     private async void AbrirModalWod() { mostrarMenuPrincipal = false; nuevoWod = new ProgramacionWodViewModel { FechaProgramacion = DateTime.Today }; mostrarModalWod = true; await VerificarWodExistente(DateTime.Today); }
     private async Task AlCambiarFechaWod(ChangeEventArgs e) { if (DateTime.TryParse(e.Value.ToString(), out DateTime fecha)) { nuevoWod.FechaProgramacion = fecha; await VerificarWodExistente(fecha); } }
     private async Task VerificarWodExistente(DateTime fecha) { cargandoOperacionWod = true; wodExiste = false; StateHasChanged(); try { var fechaStr = fecha.ToString("yyyy-MM-dd"); wodExiste = await Http.GetFromJsonAsync<bool>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/existe/{Sesion.Usuario.BoxID}/{fechaStr}"); if (!wodExiste && (nuevoWod.Bloques == null || nuevoWod.Bloques.Count == 0)) { nuevoWod.Bloques = new List<BloqueWodViewModel>(); AgregarBloque(); } } catch { wodExiste = false; if (nuevoWod.Bloques.Count == 0) AgregarBloque(); } finally { cargandoOperacionWod = false; StateHasChanged(); } }
     private async Task CargarWodParaEditar() { cargandoOperacionWod = true; try { var fechaStr = nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd"); var wodExistente = await Http.GetFromJsonAsync<ProgramacionWodViewModel>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/obtener/{Sesion.Usuario.BoxID}/{fechaStr}"); if (wodExistente != null) { nuevoWod = wodExistente; wodExiste = false; } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", "No se pudo cargar el WOD: " + ex.Message, "OK"); } finally { cargandoOperacionWod = false; } }
     private async Task EliminarWodActual() { bool confirmar = await App.Current.MainPage.DisplayAlert("Confirmar", "¿Eliminar WOD completo?", "Sí", "No"); if (confirmar) { cargandoOperacionWod = true; try { var fechaStr = nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd"); var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/eliminar-dia/{Sesion.Usuario.BoxID}/{fechaStr}", null); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("Éxito", "WOD eliminado.", "OK"); wodExiste = false; nuevoWod.Bloques = new List<BloqueWodViewModel>(); AgregarBloque(); } else { string error = await response.Content.ReadAsStringAsync(); await App.Current.MainPage.DisplayAlert("Error", error, "OK"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Excepción", ex.Message, "OK"); } finally { cargandoOperacionWod = false; } } }
+    
+    // ---------------------------------------------
+    // ESCANER
+    // ---------------------------------------------
     private async Task AbrirEscanerParaEntrar() { var scanner = new EscanerPage(); scanner.OnScanResult += async (textoQr) => { await EnviarCheckInAPI(textoQr); }; if (Application.Current.MainPage != null) await Application.Current.MainPage.Navigation.PushModalAsync(scanner); }
     private async Task EnviarCheckInAPI(string boxIdLeido) { try { var request = new { UsuarioId = Sesion.Usuario.UsuarioID, QrData = boxIdLeido }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/liveapi/checkin-qr", request); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("¡Listo!", "Ya apareces en la pantalla.", "OK"); } else { await App.Current.MainPage.DisplayAlert("Error", "No se pudo registrar entrada.", "OK"); } } catch { await App.Current.MainPage.DisplayAlert("Error", "Sin conexión.", "OK"); } }
+    
+    // ---------------------------------------------
+    // HELPERS WOD
+    // ---------------------------------------------
     private void AgregarBloque() => nuevoWod.Bloques.Add(new BloqueWodViewModel { Ejercicios = new List<EjercicioViewModel> { new EjercicioViewModel() } });
     private void EliminarBloque(BloqueWodViewModel b) => nuevoWod.Bloques.Remove(b);
     private void AgregarEjercicio(BloqueWodViewModel b) => b.Ejercicios.Add(new EjercicioViewModel());
