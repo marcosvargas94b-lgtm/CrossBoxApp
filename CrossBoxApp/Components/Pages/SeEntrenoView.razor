@@ -9,6 +9,7 @@
 <div class="top-navbar">
     <div class="nav-left" @onclick="Volver">
         <i class="fas fa-arrow-left"></i> VOLVER
+    </div>
     <div class="nav-title">SE ENTRENÓ</div>
     <div class="nav-right"></div>
 </div>
@@ -426,4 +427,4 @@
 
     public class FeedResponse { public bool yaSubi { get; set; } public List<FotoFeedDto> lista { get; set; } }
     public class LikeRequest { public Guid FotoID { get; set; } public Guid LikerID { get; set; } }
-}
+} 
