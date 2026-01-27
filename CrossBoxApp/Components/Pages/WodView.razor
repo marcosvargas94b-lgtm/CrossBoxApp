@@ -5,148 +5,254 @@
 @inject HttpClient Http
 @inject SesionService Sesion
 
-<div class="top-navbar">
-    <div class="nav-left" @onclick="Volver">
-        <i class="fas fa-arrow-left"></i> VOLVER
+<div class="main-layout">
+
+    <div class="navbar-container">
+        <div class="nav-left" @onclick="Volver">
+            <i class="fas fa-arrow-left"></i> VOLVER
+        </div>
+        <div class="nav-title">WOD DEL DÍA</div>
+        <div class="nav-right"></div>
     </div>
-    <div class="nav-title">WOD DEL DÍA</div>
-    <div class="nav-right"></div> </div>
 
-<div class="wod-container">
-    
-    <h2 class="date-header">@DateTime.Now.ToString("dddd, dd MMMM").ToUpper()</h2>
+    <div class="scrollable-content">
 
-    @if (cargando)
-    {
+        <h2 class="date-header">@DateTime.Now.ToString("dddd, dd MMMM").ToUpper()</h2>
+
+        @if (cargando)
+        {
             <div class="loading-state">
                 <div class="spinner-border text-warning" role="status"></div>
                 <p>Cargando entrenamiento...</p>
             </div>
-    }
-    else if (wodData == null || wodData.Segmentos.Count == 0)
-    {
-            <div class="empty-state">
+        }
+        else if (wodData == null || wodData.Segmentos.Count == 0)
+        {
+            <div class="empty-state fade-in">
                 <i class="fas fa-bed"></i>
                 <h3>DÍA DE DESCANSO</h3>
                 <p>No hay programación cargada para hoy en @(Sesion.Usuario?.BoxNombre ?? "tu Box").</p>
             </div>
-    }
-    else
-    {
-            @foreach (var segmento in wodData.Segmentos)
-            {
+        }
+        else
+        {
+            <div class="wod-segments fade-in">
+                @foreach (var segmento in wodData.Segmentos)
+                {
                     <div class="segment-card">
                         <div class="segment-header">
                             @segmento.Titulo.ToUpper()
                         </div>
 
-                <div class="segment-body">
-                    @foreach (var ejercicio in segmento.Ejercicios)
-                    {
-                        <div class="exercise-row-unified">
-
-                            <span class="text-desc">
-                                @ejercicio.Descripcion
-                            </span>
-
-                            @if (!string.IsNullOrEmpty(ejercicio.PesoRepeticiones))
+                        <div class="segment-body">
+                            @foreach (var ejercicio in segmento.Ejercicios)
                             {
-                                <span class="text-reps">
-                                    - @ejercicio.PesoRepeticiones
-                                </span>
+                                <div class="exercise-row-unified">
+                                    <span class="text-desc">
+                                        @ejercicio.Descripcion
+                                    </span>
+
+                                    @if (!string.IsNullOrEmpty(ejercicio.PesoRepeticiones))
+                                    {
+                                        <span class="text-reps">
+                                            - @ejercicio.PesoRepeticiones
+                                        </span>
+                                    }
+                                </div>
                             }
-
                         </div>
-                    }
-                </div>
                     </div>
-            }
-
-        @if (Sesion.Usuario != null && Sesion.Usuario.TipoUsuarioID == 1 || Sesion.Usuario.TipoUsuarioID == 3)
-        {
-            <div class="admin-actions mt-4 mb-4">
-                <button class="btn btn-danger w-100" @onclick="EliminarWodActual">
-                    <i class="fas fa-trash-alt"></i> ELIMINAR WOD DEL DÍA
-                </button>
+                }
             </div>
+
+            @if (Sesion.Usuario != null && (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.Usuario.TipoUsuarioID == 3))
+            {
+                <div class="admin-actions mt-4 mb-4">
+                    <button class="btn btn-danger w-100" @onclick="EliminarWodActual">
+                        <i class="fas fa-trash-alt"></i> ELIMINAR WOD DEL DÍA
+                    </button>
+                </div>
+            }
         }
 
-
-    }
-
- 
+        <div style="height: 40px;"></div>
+    </div>
 </div>
 
 <style>
-    /* Navbar */
-    .top-navbar {
-        display: flex; justify-content: space-between; align-items: center;
-        padding: 15px; background-color: #1a1a1a; border-bottom: 2px solid #F8C545;
-        color: white; font-family: 'Oswald', sans-serif;
-        position: sticky; top: 0; z-index: 100;
-    }
-    .nav-left { color: #F8C545; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 5px; }
-    .nav-title { font-size: 1.2rem; letter-spacing: 1px; }
-    .nav-right { width: 60px; }
-
-    /* Contenedor General */
-    .wod-container {
-        padding: 20px; background-color: #0d0d0d; min-height: 100vh; color: white;
+    /* --- ESTRUCTURA BASE (IDÉNTICA A HOME) --- */
+    .main-layout {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #0d0d0d;
+        display: flex;
+        flex-direction: column;
+        z-index: 1;
     }
 
-    /* Fecha */
+    .navbar-container {
+        flex-shrink: 0;
+        padding-top: calc(env(safe-area-inset-top) + 5px);
+        padding-bottom: 10px;
+        padding-left: 20px;
+        padding-right: 20px;
+        background-color: #0d0d0d;
+        border-bottom: 1px solid #F8C545;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 100;
+        font-family: 'Oswald';
+        min-height: 60px;
+    }
+
+    .nav-left {
+        color: #F8C545;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+    }
+
+    .nav-title {
+        font-weight: bold;
+        font-size: 1.1rem;
+        color: white;
+        letter-spacing: 1px;
+    }
+
+    .nav-right {
+        width: 60px;
+    }
+
+    .scrollable-content {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 40px;
+    }
+
+    /* --- ESTILOS WOD --- */
+
     .date-header {
-        font-family: 'Oswald'; font-size: 1.5rem; text-align: center; color: white;
-        margin-bottom: 25px; border-bottom: 1px solid #333; padding-bottom: 10px;
+        font-family: 'Oswald';
+        font-size: 1.5rem;
+        text-align: center;
+        color: white;
+        margin-top: 10px;
+        margin-bottom: 25px;
+        border-bottom: 1px solid #333;
+        padding-bottom: 10px;
+        letter-spacing: 1px;
+    }
+
+    .wod-segments {
+        width: 100%;
+        max-width: 600px;
+        align-self: center;
     }
 
     /* Tarjeta de Segmento */
     .segment-card {
-        background-color: #1a1a1a; border: 1px solid #333; border-radius: 8px;
-        margin-bottom: 25px; overflow: hidden;
+        background-color: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
-    
+
     .segment-header {
-        background-color: #F8C545; color: #0d0d0d; font-family: 'Oswald';
-        font-size: 1.1rem; font-weight: bold; padding: 8px 15px;
+        background-color: #F8C545;
+        color: #0d0d0d;
+        font-family: 'Oswald';
+        font-size: 1.1rem;
+        font-weight: bold;
+        padding: 10px 15px;
         letter-spacing: 1px;
     }
 
-    .segment-body { padding: 10px 15px; }
+    .segment-body {
+        padding: 10px 20px;
+    }
 
     /* Filas de Ejercicios */
     .exercise-row-unified {
-    padding: 12px 0;
-    border-bottom: 1px solid #333;
-    /* Asegura que el texto fluya normalmente y no se corte */
-    white-space: normal; 
-    word-wrap: break-word;
-    line-height: 1.4; /* Mejor lectura si ocupa dos líneas */
-}
-.exercise-row-unified:last-child { border-bottom: none; }
+        padding: 12px 0;
+        border-bottom: 1px solid #333;
+        white-space: normal;
+        word-wrap: break-word;
+        line-height: 1.4;
+    }
 
-/* Estilo para la descripción (Blanco) */
-.text-desc {
-    font-family: 'Roboto', sans-serif;
-    font-size: 1rem;
-    color: #eee;
-}
+        .exercise-row-unified:last-child {
+            border-bottom: none;
+        }
 
-/* Estilo para el guión y el peso (Amarillo y negrita) */
-.text-reps {
-    font-family: 'Oswald', sans-serif;
-    font-size: 1.05rem;
-    color: #F8C545;
-    font-weight: bold;
-    /* Un pequeño margen a la izquierda del guión por si acaso */
-    margin-left: 4px; 
-}
+    .text-desc {
+        font-family: 'Roboto', sans-serif;
+        font-size: 1rem;
+        color: #eee;
+    }
+
+    .text-reps {
+        font-family: 'Oswald', sans-serif;
+        font-size: 1.05rem;
+        color: #F8C545;
+        font-weight: bold;
+        margin-left: 6px;
+    }
 
     /* Estados de Carga/Vacío */
     .loading-state, .empty-state {
-        text-align: center; margin-top: 50px; color: #666; font-family: 'Roboto';
+        text-align: center;
+        margin-top: 50px;
+        color: #666;
+        font-family: 'Roboto';
     }
-    .empty-state i { font-size: 3rem; margin-bottom: 15px; color: #333; }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .empty-state h3 {
+            font-family: 'Oswald';
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+    .fade-in {
+        animation: fadeIn 0.5s ease;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .admin-actions {
+        width: 100%;
+        max-width: 600px;
+        align-self: center;
+    }
 </style>
 
 @code {
@@ -157,18 +263,13 @@
     {
         try
         {
-            // 1. Validar sesión
             if (Sesion.Usuario == null)
             {
-                // Si no hay usuario, devolver al login (o recargar sesión guardada)
                 Nav.NavigateTo("/");
                 return;
             }
 
             var boxId = Sesion.Usuario.BoxID;
-
-            // 2. Llamar a la API
-            // Nota: Asegúrate de que tu API esté corriendo y la URL Base en MauiProgram.cs sea correcta
             var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/obtener-hoy/{boxId}");
 
             if (response.IsSuccessStatusCode)
@@ -177,22 +278,19 @@
             }
             else
             {
-                // Si la API devuelve 404, significa que no hay WOD, dejamos wodData en null
                 wodData = null;
             }
         }
         catch (Exception ex)
         {
-            // En desarrollo, puedes mostrar el error para debuggear
             Console.WriteLine($"Error obteniendo WOD: {ex.Message}");
-            await App.Current.MainPage.DisplayAlert("Error", "No se pudo cargar el WOD. Revisa tu conexión.", "OK");
+            // await App.Current.MainPage.DisplayAlert("Error", "No se pudo cargar el WOD.", "OK");
         }
         finally
         {
             cargando = false;
         }
     }
-
 
     private async Task EliminarWodActual()
     {
@@ -205,7 +303,6 @@
         try
         {
             var boxId = Sesion.Usuario.BoxID;
-            // Formato seguro para URL: yyyy-MM-dd
             var fechaStr = DateTime.Now.ToString("yyyy-MM-dd");
 
             var response = await Http.DeleteAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/eliminar-dia/{boxId}/{fechaStr}");
@@ -213,7 +310,6 @@
             if (response.IsSuccessStatusCode)
             {
                 await App.Current.MainPage.DisplayAlert("Éxito", "WOD Eliminado.", "OK");
-                // Recargamos la página para que salga la pantalla de "Día de Descanso"
                 wodData = null;
                 await OnInitializedAsync();
             }

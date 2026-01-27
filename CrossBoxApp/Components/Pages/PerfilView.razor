@@ -6,110 +6,163 @@
 @inject HttpClient Http
 @inject SesionService Sesion
 
-<div class="top-navbar">
-    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
-    <div class="nav-title">MI PERFIL</div>
-    <div class="nav-right"></div>
-</div>
+<div class="main-layout">
 
-<div class="profile-container">
-
-    <div class="photo-section">
-        <div class="image-wrapper">
-            @if (!string.IsNullOrEmpty(previewImagen))
-            {
-                <img src="@previewImagen" class="profile-img" />
-            }
-            else
-            {
-                <img src="https://via.placeholder.com/150/000000/F8C545?text=ALFA" class="profile-img" />
-            }
-            <label class="upload-btn" @onclick="SeleccionarFotoNativa">
-    <i class="fas fa-camera"></i>
-</label>
-@* 
-            <label class="upload-btn">
-                <InputFile OnChange="CargarImagen" accept=".jpg,.jpeg,.png" style="display:none;" />
-                <i class="fas fa-camera"></i>
-            </label> *@
+    <div class="navbar-container">
+        <div class="nav-left" @onclick="Volver">
+            <i class="fas fa-arrow-left"></i> VOLVER
         </div>
-        <p class="username">@(Sesion.Usuario?.Nombre + " " + Sesion.Usuario?.Apellidos ?? "ATLETA")</p>
+        <div class="nav-title">MI PERFIL</div>
+        <div class="nav-right"></div>
     </div>
 
-    <div class="form-section">
+    <div class="scrollable-content">
+        
+        <div class="profile-wrapper fade-in">
+            
+            <div class="photo-section">
+                <div class="image-wrapper" @onclick="SeleccionarFotoNativa">
+                    
+                    @if (abriendoGaleria)
+                    {
+                        <div class="loading-overlay">
+                            <div class="spinner-border text-warning" role="status"></div>
+                        </div>
+                    }
 
-        <label>Acerca de mí (Descripción)</label>
-        <textarea @bind="miPerfil.Descripcion" class="input-dark text-area" placeholder="Ej: Amante del Crossfit, RX en proceso..."></textarea>
+                    @if (!string.IsNullOrEmpty(previewImagen))
+                    {
+                        <img src="@previewImagen" class="profile-img" />
+                    }
+                    else
+                    {
+                        <img src="https://via.placeholder.com/150/000000/F8C545?text=FOTO" class="profile-img" />
+                    }
+                    
+                    <div class="upload-btn">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                </div>
+                <p class="username">@(Sesion.Usuario?.Nombre + " " + Sesion.Usuario?.Apellidos ?? "ATLETA")</p>
+                <small class="text-muted">Toca el círculo para cambiar foto</small>
+            </div>
 
-        <label>WhatsApp de Contacto</label>
+            <div class="form-section">
+                <label class="lbl-input">Acerca de mí (Descripción)</label>
+                <textarea @bind="miPerfil.Descripcion" class="input-dark text-area" placeholder="Ej: Amante del Crossfit, RX en proceso..."></textarea>
 
-        <div class="wrapper-ws">
-            <i class="fab fa-whatsapp icono-ws"></i>
+                <label class="lbl-input">WhatsApp de Contacto</label>
+                <div class="wrapper-ws">
+                    <i class="fas fa-comment-dots brand-icon"></i>
+                    <input type="text" @bind="miPerfil.Whatsapp" class="input-dark input-con-icono" placeholder="Ej: 961 123 4567" />
+                </div>
 
-            <input type="text"
-                   @bind="miPerfil.Whatsapp"
-                   class="input-dark input-con-icono"
-                   placeholder="Ej: 961 123 4567" />
+                <button class="btn-save" @onclick="GuardarPerfil" disabled="@guardando">
+                    @if (guardando)
+                    {
+                        <span><i class="fas fa-spinner fa-spin"></i> GUARDANDO...</span>
+                    }
+                    else if (esEdicion)
+                    {
+                        <span><i class="fas fa-edit"></i> ACTUALIZAR DATOS</span>
+                    }
+                    else
+                    {
+                        <span>GUARDAR PERFIL</span>
+                    }
+                </button>
+            </div>
+
         </div>
-
-        <button class="btn-save" @onclick="GuardarPerfil" disabled="@guardando">
-            @if (guardando)
-            {
-                <span>GUARDANDO...</span>
-            }
-            else if (esEdicion)
-            {
-                <span><i class="fas fa-edit"></i> ACTUALIZAR DATOS</span>
-            }
-            else
-            {
-                <span>GUARDAR PERFIL</span>
-            }
-        </button>
-
+        
+        <div style="height: 40px;"></div>
     </div>
 </div>
 
 <style>
-    /* Estilos base reutilizados */
-    .top-navbar {
+    /* --- ESTRUCTURA BASE --- */
+    .main-layout {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #0d0d0d;
+        display: flex;
+        flex-direction: column;
+        z-index: 1;
+    }
+
+    .navbar-container {
+        flex-shrink: 0;
+        padding-top: calc(env(safe-area-inset-top) + 5px);
+        padding-bottom: 10px;
+        padding-left: 20px;
+        padding-right: 20px;
+        background-color: #0d0d0d;
+        border-bottom: 1px solid #F8C545;
+        color: white;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 15px;
-        background: #1a1a1a;
-        border-bottom: 2px solid #F8C545;
-        color: white;
+        z-index: 100;
         font-family: 'Oswald';
+        min-height: 60px;
     }
 
     .nav-left {
         color: #F8C545;
+        font-weight: bold;
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
     }
 
-    .profile-container {
-        padding: 20px;
-        background-color: #0d0d0d;
-        min-height: 90vh;
+    .nav-title {
+        font-weight: bold;
+        font-size: 1.1rem;
         color: white;
+        letter-spacing: 1px;
+    }
+
+    .nav-right { width: 60px; }
+
+    .scrollable-content {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 40px;
+    }
+
+    /* --- ESTILOS DE PERFIL --- */
+    
+    .profile-wrapper {
+        width: 100%;
+        max-width: 500px; /* Limitamos el ancho para que se vea bien en tablets */
         display: flex;
         flex-direction: column;
         align-items: center;
     }
 
-    /* Foto Circular */
-    .photo-section {
-        text-align: center;
-        margin-bottom: 30px;
+    .photo-section { 
+        text-align: center; 
+        margin-bottom: 30px; 
+        margin-top: 20px;
     }
 
     .image-wrapper {
         position: relative;
         width: 150px;
         height: 150px;
-        margin: 0 auto 15px auto;
+        margin: 0 auto 10px auto;
+        cursor: pointer;
+        border-radius: 50%;
+        transition: transform 0.1s;
     }
+    .image-wrapper:active { transform: scale(0.95); opacity: 0.8; }
 
     .profile-img {
         width: 100%;
@@ -118,6 +171,7 @@
         object-fit: cover;
         border: 4px solid #F8C545;
         background-color: #222;
+        box-shadow: 0 0 20px rgba(248,197,69,0.2);
     }
 
     .upload-btn {
@@ -132,302 +186,237 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        cursor: pointer;
         box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+        pointer-events: none;
     }
 
-    .username {
-        font-family: 'Oswald';
-        font-size: 1.5rem;
-        color: #F8C545;
-        margin: 0;
-    }
-
-    /* Inputs */
-    .form-section {
-        width: 100%;
-        max-width: 400px;
-    }
-
-    label {
-        color: #aaa;
-        font-size: 0.9rem;
-        margin-bottom: 5px;
-        display: block;
-    }
-
-    .input-dark {
-        width: 100%;
-        background-color: #222;
-        border: 1px solid #444;
-        color: white;
-        padding: 12px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-        outline: none;
-    }
-
-        .input-dark:focus {
-            border-color: #F8C545;
-        }
-
-    .text-area {
-        height: 100px;
-        resize: none;
-    }
-
-    
-
-        .input-group input {
-            padding-left: 45px;
-        }
-    /* Espacio para el icono */
-
-    .input-icon {
+    .loading-overlay {
         position: absolute;
-        left: 15px;
-        top: 50%; /* Lo empuja a la mitad */
-        transform: translateY(-50%); /* Lo ajusta matemáticamente al centro exacto */
-        color: #25D366; /* Verde WhatsApp */
-        font-size: 1.5rem; /* Un poco más grande para que luzca mejor */
-        pointer-events: none; /* Truco: permite dar clic "a través" del icono para escribir */
-        z-index: 10;
-    }
-
-    .btn-save {
-        width: 100%;
-        background-color: #F8C545;
-        color: black;
-        font-family: 'Oswald';
-        font-size: 1.2rem;
-        border: none;
-        padding: 12px;
-        border-radius: 30px;
-        font-weight: bold;
-        margin-top: 10px;
-    }
-
-        .btn-save:disabled {
-            background-color: #555;
-            color: #888;
-        }
-
-    .wrapper-ws {
-        position: relative;
-        width: 100%;
-        margin-bottom: 20px;
-        display: flex; /* Asegura que el contenedor tenga altura real */
-        align-items: center; /* Ayuda a centrar */
-    }
-
-    /* Estilo del Ícono: Lo pegamos con pegamento industrial */
-    .icono-ws {
-        position: absolute;
-        left: 15px; /* Separación de la orilla izquierda */
-        top: 50%; /* A la mitad de la altura */
-        transform: translateY(-50%); /* Corrección matemática para centro exacto */
-        color: #25D366; /* Verde WhatsApp */
-        font-size: 1.4rem;
-        z-index: 10; /* Que flote ENCIMA del input */
-        pointer-events: none; /* Para que puedas dar clic al input "a través" del ícono */
-        margin: 0 !important; /* Reseteamos márgenes fantasmas */
-        padding: 0 !important;
-        background: none !important; /* Quitamos fondos raros */
-        border: none !important;
-    }
-
-    /* Estilo del Input específico para este caso */
-    .input-con-icono {
-        padding-left: 50px !important; /* Espacio extra a la izquierda para el ícono */
-        height: 50px; /* Forzamos una altura cómoda */
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.7);
+        border-radius: 50%;
         display: flex;
+        justify-content: center;
         align-items: center;
+        z-index: 10;
+        backdrop-filter: blur(2px);
     }
+
+    .username { 
+        font-family: 'Oswald'; 
+        font-size: 1.5rem; 
+        color: #F8C545; 
+        margin: 0; 
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .form-section { width: 100%; }
+
+    .lbl-input { 
+        color: #F8C545; 
+        font-size: 0.9rem; 
+        margin-bottom: 5px; 
+        display: block; 
+        font-weight: bold;
+        font-family: 'Oswald';
+        letter-spacing: 0.5px;
+    }
+
+    .input-dark { 
+        width: 100%; 
+        background-color: #1a1a1a; 
+        border: 1px solid #444; 
+        color: white; 
+        padding: 12px; 
+        border-radius: 8px; 
+        margin-bottom: 20px; 
+        outline: none; 
+        font-family: 'Roboto';
+    }
+    .input-dark:focus { border-color: #F8C545; box-shadow: 0 0 10px rgba(248,197,69,0.1); }
+    
+    .text-area { height: 100px; resize: none; }
+    
+    .wrapper-ws { position: relative; width: 100%; margin-bottom: 20px; }
+    .icono-ws { 
+        position: absolute; 
+        left: 15px; 
+        top: 50%; 
+        transform: translateY(-50%); 
+        color: #25D366; 
+        font-size: 1.4rem; 
+        z-index: 10; 
+        pointer-events: none; 
+    }
+    .input-con-icono { padding-left: 50px !important; }
+
+    .btn-save { 
+        width: 100%; 
+        background: linear-gradient(45deg, #F8C545, #e0a800);
+        color: black; 
+        font-family: 'Oswald'; 
+        font-size: 1.1rem; 
+        border: none; 
+        padding: 14px; 
+        border-radius: 8px; 
+        font-weight: bold; 
+        margin-top: 10px; 
+        letter-spacing: 1px;
+        box-shadow: 0 4px 15px rgba(248,197,69,0.3);
+    }
+    .btn-save:disabled { background: #333; color: #666; box-shadow: none; }
+    .btn-save:active { transform: scale(0.98); }
+
+    .fade-in { animation: fadeIn 0.5s ease; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 @code {
     private PerfilDto miPerfil = new PerfilDto();
     private string previewImagen = "";
-    private IBrowserFile archivoSeleccionado;
     private bool guardando = false;
-    private bool esEdicion = false; // Variable para saber si estamos editando o creando
+    private bool esEdicion = false;
+    private FileResult archivoSeleccionadoNativo;
+    
+    private bool abriendoGaleria = false; 
 
     protected override async Task OnInitializedAsync()
     {
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
-
         await CargarPerfilExistente();
     }
 
- private async Task SeleccionarFotoNativa()
-{
-    // 1. Verificación de permisos (Solo para Móviles)
-    // En Windows esto no es necesario y a veces causa ruido
-    if (DeviceInfo.Platform != DevicePlatform.WinUI)
+    private async Task SeleccionarFotoNativa()
     {
-        if (!await VerificarPermisosGaleria()) return;
-    }
+        if (abriendoGaleria) return;
+        
+        abriendoGaleria = true;
+        StateHasChanged(); 
+        
+        await Task.Delay(100); 
 
-    try
-    {
-        // 2. CONFIGURACIÓN
-        var opciones = new PickOptions
+        if (DeviceInfo.Platform != DevicePlatform.WinUI)
         {
-            PickerTitle = "Selecciona una imagen",
-            FileTypes = FilePickerFileType.Images
-        };
-
-        FileResult resultado = null;
-
-        // 3. SELECCIÓN (Separamos lógica Windows vs Móvil)
-        if (DeviceInfo.Platform == DevicePlatform.WinUI)
-        {
-            // EN WINDOWS: Llamamos directo (sin MainThread) y atrapamos el error COM
-            // para que no te cierre la app si estás en modo Administrador.
-            try 
+            if (!await VerificarPermisosGaleria()) 
             {
-                resultado = await FilePicker.Default.PickAsync(opciones);
-            }
-            catch (System.Runtime.InteropServices.COMException) 
-            {
-                await App.Current.MainPage.DisplayAlert("Aviso Windows", 
-                    "No se pudo abrir el selector. Si estás ejecutando Visual Studio como Administrador, ciérralo y ábrelo normal.", "OK");
+                abriendoGaleria = false;
+                StateHasChanged();
                 return;
             }
         }
-        else
+
+        try
         {
-            // EN MÓVIL (Android/iOS): A veces ayuda forzar el hilo principal
-            resultado = await FilePicker.Default.PickAsync(opciones);
+            FileResult resultado = null;
+
+            if (DeviceInfo.Platform == DevicePlatform.WinUI)
+            {
+                var opciones = new PickOptions { PickerTitle = "Selecciona una imagen", FileTypes = FilePickerFileType.Images };
+                await MainThread.InvokeOnMainThreadAsync(async () => { 
+                    try { resultado = await FilePicker.Default.PickAsync(opciones); } catch {} 
+                });
+            }
+            else
+            {
+                resultado = await MediaPicker.Default.PickPhotoAsync();
+            }
+
+            if (resultado != null)
+            {
+                using var stream = await resultado.OpenReadAsync();
+                using var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+                memoryStream.Position = 0;
+                var buffer = memoryStream.ToArray();
+                previewImagen = $"data:image/png;base64,{Convert.ToBase64String(buffer)}";
+                archivoSeleccionadoNativo = resultado;
+            }
         }
-
-        // 4. PROCESAMIENTO (Igual para todos)
-        if (resultado != null)
+        catch (Exception ex)
         {
-            using var stream = await resultado.OpenReadAsync();
-            var memoryStream = new MemoryStream();
-            await stream.CopyToAsync(memoryStream);
-            memoryStream.Position = 0;
-
-            var buffer = memoryStream.ToArray();
-            previewImagen = $"data:image/png;base64,{Convert.ToBase64String(buffer)}";
-            
-            // Guardamos la referencia
-            archivoSeleccionadoNativo = resultado; 
+            Console.WriteLine("Error foto: " + ex.Message);
+        }
+        finally
+        {
+            abriendoGaleria = false;
+            StateHasChanged();
         }
     }
-    catch (Exception ex)
-    {
-        await App.Current.MainPage.DisplayAlert("Error", "Ocurrió un problema: " + ex.Message, "OK");
-    }
-}
 
-    // Variable global nueva
-    private FileResult archivoSeleccionadoNativo;
     private async Task<bool> VerificarPermisosGaleria()
     {
-        // 1. Verificamos el estado actual
         var estado = await Permissions.CheckStatusAsync<Permissions.Photos>();
-
-        // 2. Si no tenemos permiso, lo pedimos
+        if (estado != PermissionStatus.Granted) estado = await Permissions.RequestAsync<Permissions.Photos>();
         if (estado != PermissionStatus.Granted)
         {
-            estado = await Permissions.RequestAsync<Permissions.Photos>();
-        }
-
-        // 3. Si el usuario dijo que NO
-        if (estado != PermissionStatus.Granted)
-        {
-            await App.Current.MainPage.DisplayAlert("Permiso Requerido", "Necesitamos acceso a tus fotos para subir tu evidencia.", "Entendido");
+            await App.Current.MainPage.DisplayAlert("Permiso Requerido", "Necesitamos acceso a tus fotos.", "Entendido");
             return false;
         }
-
         return true;
     }
-
 
     private async Task CargarPerfilExistente()
     {
         try
         {
             var userId = Sesion.Usuario.UsuarioID;
-            // Llamamos al endpoint GET que creamos en la API
             var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/PerfilApi/obtener/{userId}");
-
             if (response.IsSuccessStatusCode)
             {
-                // Si responde 200 OK, es que SÍ tiene datos
                 var perfilEncontrado = await response.Content.ReadFromJsonAsync<PerfilDto>();
-
                 if (perfilEncontrado != null)
                 {
                     miPerfil = perfilEncontrado;
-                    esEdicion = true; // Cambiamos el estado a "Edición"
-
-                    // Si la API nos devolvió una URL de foto, la ponemos en el preview
-                    if (!string.IsNullOrEmpty(miPerfil.FotoPerfil))
-                    {
-                        previewImagen = miPerfil.FotoPerfil;
-                    }
+                    esEdicion = true;
+                    if (!string.IsNullOrEmpty(miPerfil.FotoPerfil)) previewImagen = miPerfil.FotoPerfil;
                 }
             }
-            else
-            {
-                // Si responde 404 NotFound, no hacemos nada (se queda vacío para crear)
-                esEdicion = false;
-            }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error al cargar perfil: " + ex.Message);
-        }
-    }
-
-    private async Task CargarImagen(InputFileChangeEventArgs e)
-    {
-        var archivo = e.File;
-        if (archivo != null)
-        {
-            archivoSeleccionado = archivo;
-
-            // Crear preview local para que el usuario vea la foto al instante
-            var format = "image/png";
-            var resizedImage = await archivo.RequestImageFileAsync(format, 300, 300);
-            var buffer = new byte[resizedImage.Size];
-            await resizedImage.OpenReadStream().ReadAsync(buffer);
-            previewImagen = $"data:{format};base64,{Convert.ToBase64String(buffer)}";
-        }
+        catch { }
     }
 
     private async Task GuardarPerfil()
     {
+        if (string.IsNullOrWhiteSpace(miPerfil.Descripcion) || string.IsNullOrWhiteSpace(miPerfil.Whatsapp))
+        {
+            await App.Current.MainPage.DisplayAlert("Faltan Datos", "Descripción y WhatsApp obligatorios.", "OK");
+            return;
+        }
+
         guardando = true;
+        StateHasChanged();
+
         try
         {
             var contenido = new MultipartFormDataContent();
             contenido.Add(new StringContent(Sesion.Usuario.UsuarioID.ToString()), "UsuarioID");
-            contenido.Add(new StringContent(miPerfil.Descripcion ?? ""), "Descripcion");
-            contenido.Add(new StringContent(miPerfil.Whatsapp ?? ""), "Whatsapp");
+            contenido.Add(new StringContent(miPerfil.Descripcion), "Descripcion");
+            contenido.Add(new StringContent(miPerfil.Whatsapp), "Whatsapp");
 
-        if (archivoSeleccionadoNativo != null)
-    {
-        using var stream = await archivoSeleccionadoNativo.OpenReadAsync();
-        var fileContent = new StreamContent(stream);
-        fileContent.Headers.ContentType = new MediaTypeHeaderValue(archivoSeleccionadoNativo.ContentType);
-        contenido.Add(fileContent, "archivoFoto", archivoSeleccionadoNativo.FileName);
-    }
+            if (archivoSeleccionadoNativo != null)
+            {
+                using var stream = await archivoSeleccionadoNativo.OpenReadAsync();
+                using var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+                memoryStream.Position = 0;
+                var fileContent = new ByteArrayContent(memoryStream.ToArray());
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue(archivoSeleccionadoNativo.ContentType ?? "image/jpeg");
+                contenido.Add(fileContent, "archivoFoto", archivoSeleccionadoNativo.FileName);
+            }
 
             var response = await Http.PostAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/PerfilApi/guardar", contenido);
 
             if (response.IsSuccessStatusCode)
             {
-                await App.Current.MainPage.DisplayAlert("¡Listo!", "Tu perfil ha sido actualizado.", "OK");
-                // Recargamos para asegurar que todo esté fresco
+                await App.Current.MainPage.DisplayAlert("¡Listo!", "Perfil actualizado.", "OK");
                 await CargarPerfilExistente();
+                archivoSeleccionadoNativo = null;
             }
             else
             {
-                await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar.", "OK");
+                string errorMsg = await response.Content.ReadAsStringAsync();
+                await App.Current.MainPage.DisplayAlert("Error", errorMsg, "OK");
             }
         }
         catch (Exception ex)
@@ -437,6 +426,7 @@
         finally
         {
             guardando = false;
+            StateHasChanged();
         }
     }
 

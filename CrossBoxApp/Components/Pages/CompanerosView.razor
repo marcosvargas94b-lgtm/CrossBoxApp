@@ -5,66 +5,125 @@
 @inject HttpClient Http
 @inject SesionService Sesion
 
-<div class="top-navbar">
-    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
-    <div class="nav-title">COMPAÑEROS</div> <div class="nav-right"></div>
-</div>
+<div class="main-layout">
 
-<div class="grid-container">
-    @if (lista == null)
-    {
-        <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
-    }
-    else if (lista.Count == 0)
-    {
-        <div class="text-center text-muted mt-5">Aún eres el único en este Box.</div>
-    }
-    else
-    {
-        @foreach (var user in lista)
+    <div class="navbar-container">
+        <div class="nav-left" @onclick="Volver">
+            <i class="fas fa-arrow-left"></i> VOLVER
+        </div>
+        <div class="nav-title">COMPAÑEROS</div>
+        <div class="nav-right"></div>
+    </div>
+
+    <div class="scrollable-content">
+        
+        @if (lista == null)
         {
-            <div class="user-card" @onclick="() => VerPerfil(user.UsuarioID)">
-                <img src="@(user.FotoUrl ?? "imagenes/Rhino.png")" class="card-img" />
-                <div class="card-overlay">
-                    <span class="card-name">@user.NombreCompleto</span>
-                </div>
+            <div class="text-center mt-5">
+                <div class="spinner-border text-warning"></div>
             </div>
         }
-    }
+        else if (lista.Count == 0)
+        {
+            <div class="text-center text-muted mt-5 empty-msg">
+                <i class="fas fa-user-friends mb-3" style="font-size: 3rem; opacity: 0.3;"></i>
+                <p>Aún eres el único en este Box.</p>
+            </div>
+        }
+        else
+        {
+            <div class="grid-container fade-in">
+                @foreach (var user in lista)
+                {
+                    <div class="user-card" @onclick="() => VerPerfil(user.UsuarioID)">
+                        
+                        @* Lógica inteligente: Foto o Inicial *@
+                        @if (!string.IsNullOrEmpty(user.FotoUrl))
+                        {
+                            <img src="@user.FotoUrl" class="card-img" />
+                        }
+                        else
+                        {
+                            <div class="card-initial-bg">
+                                @(user.NombreCompleto?.Substring(0, 1).ToUpper() ?? "A")
+                            </div>
+                        }
+
+                        <div class="card-overlay">
+                            <span class="card-name">@user.NombreCompleto</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        
+        <div style="height: 40px;"></div>
+    </div>
 </div>
 
 <style>
-    /* Navbar Standard */
-    .top-navbar {
+    /* --- ESTRUCTURA BASE (IDÉNTICA A HOME) --- */
+    .main-layout {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #0d0d0d;
+        display: flex;
+        flex-direction: column;
+        z-index: 1;
+    }
+
+    .navbar-container {
+        flex-shrink: 0;
+        padding-top: calc(env(safe-area-inset-top) + 5px);
+        padding-bottom: 10px;
+        padding-left: 20px;
+        padding-right: 20px;
+        background-color: #0d0d0d;
+        border-bottom: 1px solid #F8C545;
+        color: white;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 15px;
-        background: #1a1a1a;
-        border-bottom: 2px solid #F8C545;
-        color: white;
-        position: relative;
+        z-index: 100;
+        font-family: 'Oswald';
+        min-height: 60px;
     }
 
     .nav-left {
         color: #F8C545;
         font-weight: bold;
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
     }
 
     .nav-title {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
         font-weight: bold;
-        font-family: 'Oswald';
+        font-size: 1.1rem;
+        color: white;
+        letter-spacing: 1px;
     }
 
-    /* Grid Layout */
+    .nav-right { width: 60px; }
+
+    .scrollable-content {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 15px; /* Un poco menos de padding para aprovechar el grid */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 40px;
+    }
+
+    /* --- ESTILOS DE GRID --- */
+    
     .grid-container {
-        padding: 15px;
-        background: #0d0d0d;
-        min-height: 100vh;
+        width: 100%;
+        max-width: 800px; /* Limite ancho en tablets */
         display: grid;
         grid-template-columns: repeat(2, 1fr); /* 2 Columnas */
         gap: 15px;
@@ -78,7 +137,10 @@
         aspect-ratio: 3/4; /* Formato vertical tipo retrato */
         border: 1px solid #333;
         box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+        cursor: pointer;
+        transition: transform 0.2s;
     }
+    .user-card:active { transform: scale(0.98); }
 
     .card-img {
         width: 100%;
@@ -91,8 +153,8 @@
         bottom: 0;
         left: 0;
         right: 0;
-        background: linear-gradient(to top, black, transparent);
-        padding: 15px 10px 10px 10px;
+        background: linear-gradient(to top, black 20%, transparent 100%);
+        padding: 20px 10px 10px 10px;
     }
 
     .card-name {
@@ -101,7 +163,29 @@
         font-size: 1rem;
         display: block;
         text-shadow: 1px 1px 3px black;
+        white-space: nowrap; 
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
+
+    /* Estilo para cuando no hay foto (Letra Gigante) */
+    .card-initial-bg {
+        width: 100%;
+        height: 100%;
+        background-color: #222; 
+        color: #F8C545; 
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Oswald';
+        font-size: 4rem; /* Un poco más ajustado */
+        font-weight: bold;
+    }
+
+    .empty-msg { font-family: 'Roboto'; }
+
+    .fade-in { animation: fadeIn 0.5s ease; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 @code {
@@ -111,11 +195,21 @@
     {
         try
         {
+            if (Sesion.Usuario == null) 
+            {
+                Nav.NavigateTo("/");
+                return;
+            }
+
             var boxId = Sesion.Usuario.BoxID;
             var miId = Sesion.Usuario.UsuarioID;
             lista = await Http.GetFromJsonAsync<List<CompaneroDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/companeros/{boxId}/{miId}");
         }
-        catch { }
+        catch (Exception ex)
+        {
+            // Manejo de errores silencioso o log
+            Console.WriteLine(ex.Message);
+        }
     }
 
     private void VerPerfil(Guid id)

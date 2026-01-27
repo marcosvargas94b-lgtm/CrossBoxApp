@@ -3,7 +3,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:CrossBoxApp"
              xmlns:components="clr-namespace:CrossBoxApp.Components"
-             x:Class="CrossBoxApp.MainPage">
+             xmlns:ios="clr-namespace:Microsoft.Maui.Controls.PlatformConfiguration.iOSSpecific;assembly=Microsoft.Maui.Controls"
+             x:Class="CrossBoxApp.MainPage"
+             BackgroundColor="#0d0d0d"
+             ios:Page.UseSafeArea="False">
 
     <BlazorWebView x:Name="blazorWebView" HostPage="wwwroot/index.html">
         <BlazorWebView.RootComponents>

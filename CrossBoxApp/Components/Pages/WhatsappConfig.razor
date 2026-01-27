@@ -3,287 +3,248 @@
 @inject NavigationManager Nav
 @inject CrossBoxApp.Models.Services.SesionService Sesion
 
-<div class="whatsapp-full-page fade-in">
+<div class="main-layout">
 
-    <button class="btn-back" @onclick='() => Nav.NavigateTo("/home")'>
-        <i class="fas fa-arrow-left"></i> Regresar
-    </button>
-
-    <div class="content-wrapper">
-        <div class="header-section text-center">
-            <i class="fas fa-comment-dots brand-icon"></i>
-            <h2>CONEXIÓN WHATSAPP</h2>
-            <p>Vincula el celular del gimnasio para enviar notificaciones automáticas.</p>
+    <div class="navbar-container">
+        <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
+            <i class="fas fa-arrow-left"></i> VOLVER
         </div>
+        <div class="nav-title">WHATSAPP</div>
+        <div class="nav-right"></div>
+    </div>
 
-        <div class="card-status">
-
-            @if (cargando)
-            {
-                <div class="text-center py-4">
-                    <div class="spinner-border text-success" role="status"></div>
-                    <p class="mt-3 text-white">Procesando...</p>
-                </div>
-            }
-            else if (conectado)
-            {
-                <div class="text-center py-4 fade-in">
-                    <i class="fas fa-check-circle fa-4x mb-3 text-success" style="box-shadow: 0 0 30px rgba(40,167,69,0.5); border-radius: 50%;"></i>
-                    <h4 class="text-white">¡Conectado!</h4>
-                    <p class="text-muted">El servicio está activo y funcionando.</p>
-
-                    <button class="btn btn-outline-danger mt-4" @onclick="Desconectar">
-                        <i class="fas fa-sign-out-alt"></i> DESCONECTAR
-                    </button>
-                </div>
-            }
-            else if (!string.IsNullOrEmpty(qrCodeBase64))
-            {
-                <div class="qr-section text-center fade-in">
-                    <div class="alert-info-custom mb-3">
-                        <i class="fas fa-info-circle"></i>
-                        <span>Abre WhatsApp > Menú (3 puntos) > Dispositivos vinculados > Vincular</span>
-                    </div>
-
-                    <div class="qr-box">
-                        <img src="@qrCodeBase64" class="qr-img" />
-                    </div>
-
-                    <p class="timer text-warning mt-2"><small>El código cambia cada cierto tiempo.</small></p>
-
-                    <div class="mt-3 d-flex justify-content-center gap-2">
-                        <button class="btn btn-outline-light btn-sm" @onclick="GenerarQR">
-                            <i class="fas fa-sync"></i> Nuevo QR
-                        </button>
-                        <button class="btn btn-success btn-sm" @onclick="ConfirmarVinculacion">
-                            <i class="fas fa-check"></i> Ya escaneé
-                        </button>
-                    </div>
-                </div>
-            }
-            else
-            {
-                <div class="text-center py-4 fade-in">
-                    <i class="fas fa-plug fa-3x mb-3 text-muted" style="opacity:0.3;"></i>
-                    <p class="text-muted">Estado: <strong>Desconectado</strong></p>
-
-                    <button class="btn-connect" @onclick="GenerarQR">
-                        <span><i class="fas fa-qrcode"></i> GENERAR CÓDIGO QR</span>
-                    </button>
-                </div>
-            }
-        </div>
-
-        @if (conectado)
-        {
-            <div class="test-section mt-4 fade-in">
-                <h5>🚀 Probar Envío</h5>
-
-                <div class="input-row">
-                    <select class="form-select bg-dark text-white input-lada" @bind="ladaSeleccionada">
-                        <option value="521">🇲🇽 +52</option>
-                        <option value="1">🇺🇸 +1</option>
-                        <option value="502">🇬🇹 +502</option>
-                    </select>
-
-                    <input type="text" inputmode="numeric" class="form-control bg-dark text-white input-phone"
-                           placeholder="Tu número (10 dígitos)" @bind="telefonoInput" />
-                </div>
-
-                <button class="btn btn-primary btn-send-full mt-3" @onclick="EnviarPrueba">
-                    <i class="fas fa-paper-plane"></i> ENVIAR PRUEBA
-                </button>
-
-                <small class="text-muted d-block mt-2 text-center">Te llegará un mensaje de confirmación.</small>
+    <div class="scrollable-content">
+        
+        <div class="content-wrapper">
+            <div class="header-section text-center fade-in">
+                <i class="fas fa-comment-dots brand-icon"></i>
+                <h2>CONEXIÓN</h2>
+                <p>Vincula el celular del gimnasio para enviar notificaciones automáticas.</p>
             </div>
-        }
+
+            <div class="card-status fade-in">
+                @if (cargando)
+                {
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-success" role="status"></div>
+                        <p class="mt-3 text-white">Procesando...</p>
+                    </div>
+                }
+                else if (conectado)
+                {
+                    <div class="text-center py-4">
+                        <i class="fas fa-check-circle fa-4x mb-3 text-success" style="box-shadow: 0 0 30px rgba(40,167,69,0.5); border-radius: 50%;"></i>
+                        <h4 class="text-white">¡Conectado!</h4>
+                        <p class="text-muted">El servicio está activo y funcionando.</p>
+
+                        <button class="btn btn-outline-danger mt-4" @onclick="Desconectar">
+                            <i class="fas fa-sign-out-alt"></i> DESCONECTAR
+                        </button>
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(qrCodeBase64))
+                {
+                    <div class="qr-section text-center">
+                        <div class="alert-info-custom mb-3">
+                            <i class="fas fa-info-circle"></i>
+                            <span>Abre WhatsApp > Menú (3 puntos) > Dispositivos vinculados > Vincular</span>
+                        </div>
+
+                        <div class="qr-box">
+                            <img src="@qrCodeBase64" class="qr-img" />
+                        </div>
+
+                        <p class="timer text-warning mt-2"><small>El código cambia cada cierto tiempo.</small></p>
+
+                        <div class="mt-3 d-flex justify-content-center gap-2">
+                            <button class="btn btn-outline-light btn-sm" @onclick="GenerarQR">
+                                <i class="fas fa-sync"></i> Nuevo QR
+                            </button>
+                            <button class="btn btn-success btn-sm" @onclick="ConfirmarVinculacion">
+                                <i class="fas fa-check"></i> Ya escaneé
+                            </button>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <i class="fas fa-plug fa-3x mb-3 text-muted" style="opacity:0.3;"></i>
+                        <p class="text-muted">Estado: <strong>Desconectado</strong></p>
+
+                        <button class="btn-connect" @onclick="GenerarQR">
+                            <span><i class="fas fa-qrcode"></i> GENERAR CÓDIGO QR</span>
+                        </button>
+                    </div>
+                }
+            </div>
+
+            @if (conectado)
+            {
+                <div class="test-section mt-4 fade-in">
+                    <h5>🚀 Probar Envío</h5>
+
+                    <div class="input-row">
+                        <select class="form-select bg-dark text-white input-lada" @bind="ladaSeleccionada">
+                            <option value="521">🇲🇽 +52</option>
+                            <option value="1">🇺🇸 +1</option>
+                            <option value="502">🇬🇹 +502</option>
+                        </select>
+
+                        <input type="text" inputmode="numeric" class="form-control bg-dark text-white input-phone"
+                               placeholder="Tu número (10 dígitos)" @bind="telefonoInput" />
+                    </div>
+
+                    <button class="btn btn-primary btn-send-full mt-3" @onclick="EnviarPrueba">
+                        <i class="fas fa-paper-plane"></i> ENVIAR PRUEBA
+                    </button>
+
+                    <small class="text-muted d-block mt-2 text-center">Te llegará un mensaje de confirmación.</small>
+                </div>
+            }
+        </div>
+        
+        <div style="height: 40px;"></div>
     </div>
 </div>
 
 <style>
-    /* Layout Pantalla Completa */
-    .whatsapp-full-page {
-        min-height: 100vh;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        background-color: #0d0d0d;
-        padding: 20px;
-        position: relative;
+    /* --- ESTRUCTURA BASE --- */
+    .main-layout {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1;
     }
 
-    .content-wrapper {
-        width: 100%;
-        max-width: 500px;
+    .navbar-container {
+        flex-shrink: 0;
+        padding-top: calc(env(safe-area-inset-top) + 5px);
+        padding-bottom: 10px; padding-left: 20px; padding-right: 20px;
+        background-color: #0d0d0d; border-bottom: 1px solid #F8C545;
+        color: white; display: flex; justify-content: space-between; align-items: center;
+        z-index: 100; font-family: 'Oswald'; min-height: 60px;
     }
 
-    /* Botón Regresar */
-    .btn-back {
-        background: none;
-        border: none;
-        color: #aaa;
-        font-size: 1rem;
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        cursor: pointer;
-        z-index: 10;
+    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
+    .nav-right { width: 60px; }
+
+    .scrollable-content {
+        flex-grow: 1; overflow-y: auto; padding: 20px;
+        display: flex; flex-direction: column; align-items: center;
+        -webkit-overflow-scrolling: touch; padding-bottom: 40px;
     }
 
-        .btn-back:hover {
-            color: white;
-        }
+    /* --- ESTILOS WHATSAPP --- */
+    
+    .content-wrapper { width: 100%; max-width: 500px; }
 
-    /* Header */
-    .header-section h2 {
-        font-family: 'Oswald', sans-serif;
-        margin-top: 10px;
-        color: white;
-    }
-
-    .header-section p {
-        color: #888;
-        font-size: 0.9rem;
-    }
+    .header-section { margin-bottom: 20px; }
+    .header-section h2 { font-family: 'Oswald'; margin-top: 10px; color: white; }
+    .header-section p { color: #888; font-size: 0.9rem; }
 
     .brand-icon {
-        font-size: 3.5rem;
-        color: #25D366;
-        margin-bottom: 10px;
+        font-size: 3.5rem; color: #25D366; margin-bottom: 10px;
         text-shadow: 0 0 20px rgba(37, 211, 102, 0.3);
     }
 
     /* Card Status */
     .card-status {
-        background: #1a1a1a;
-        border-radius: 15px;
-        padding: 25px;
-        border: 1px solid #333;
-        min-height: 300px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+        background: #1a1a1a; border-radius: 15px; padding: 25px;
+        border: 1px solid #333; min-height: 300px;
+        display: flex; flex-direction: column; justify-content: center;
         box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     }
 
     .btn-connect {
-        background: #25D366;
-        color: white;
-        border: none;
-        padding: 12px 25px;
-        border-radius: 50px;
-        font-weight: bold;
-        font-size: 1rem;
-        box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
-        transition: transform 0.2s;
+        background: #25D366; color: white; border: none; padding: 12px 25px;
+        border-radius: 50px; font-weight: bold; font-size: 1rem;
+        box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); transition: transform 0.2s;
     }
-
-        .btn-connect:active {
-            transform: scale(0.95);
-        }
+    .btn-connect:active { transform: scale(0.95); }
 
     .qr-box {
-        background: white;
-        padding: 10px;
-        display: inline-block;
-        border-radius: 10px;
-        margin: 10px 0;
+        background: white; padding: 10px; display: inline-block;
+        border-radius: 10px; margin: 10px 0;
     }
-
-    .qr-img {
-        width: 220px;
-        height: 220px;
-        object-fit: contain;
-    }
+    .qr-img { width: 220px; height: 220px; object-fit: contain; }
 
     .alert-info-custom {
-        background: rgba(37, 211, 102, 0.1);
-        border: 1px solid #25D366;
-        color: #25D366;
-        padding: 10px;
-        border-radius: 8px;
-        font-size: 0.85rem;
+        background: rgba(37, 211, 102, 0.1); border: 1px solid #25D366;
+        color: #25D366; padding: 10px; border-radius: 8px; font-size: 0.85rem;
     }
 
     /* Sección de Prueba */
-    .test-section {
-        padding-top: 20px;
-        border-top: 1px solid #333;
-        color: white;
-    }
+    .test-section { padding-top: 20px; border-top: 1px solid #333; color: white; }
 
-    /* INPUTS EN FILA */
-    .input-row {
-        display: flex;
-        gap: 10px;
-    }
+    .input-row { display: flex; gap: 10px; }
+    .input-lada { width: 110px; border: 1px solid #444; flex-shrink: 0; }
+    .input-phone { flex-grow: 1; border: 1px solid #444; }
 
-    .input-lada {
-        width: 110px;
-        border: 1px solid #444;
-        flex-shrink: 0;
-    }
-
-    .input-phone {
-        flex-grow: 1;
-        border: 1px solid #444;
-    }
-
-    /* BOTÓN FULL WIDTH */
     .btn-send-full {
-        width: 100%;
-        padding: 12px;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        border-radius: 8px;
-        background-color: #0d6efd;
-        border: none;
+        width: 100%; padding: 12px; font-weight: bold; text-transform: uppercase;
+        letter-spacing: 1px; border-radius: 8px; background-color: #0d6efd; border: none;
     }
+    .btn-send-full:active { transform: scale(0.98); }
 
-        .btn-send-full:active {
-            transform: scale(0.98);
-        }
-
-    .fade-in {
-        animation: fadeIn 0.5s ease;
-    }
-    @@keyframes fadeIn {from{opacity: 0;}to {opacity: 1;}}
+    .fade-in { animation: fadeIn 0.5s ease; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 @code {
-    // Variables de estado
+    private bool verificandoEstado = true;
     private bool cargando = false;
     private bool conectado = false;
     private string qrCodeBase64 = null;
 
-    // Variables para el formulario de prueba
     private string ladaSeleccionada = "521";
     private string telefonoInput = "";
 
-    // Propiedad calculada para obtener el GUID del box actual
     private string boxId => Sesion.Usuario.BoxID.ToString();
-
-    // URL BASE DE TU API (Ajusta si es necesario)
     private string ApiUrl = "https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/whatsapp";
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        // Al entrar, verificamos si el usuario ya tiene la bandera activa en la sesión.
-        // Si tu objeto Sesion.Usuario.Box.WhatsappActivo existe y es true:
-        if (Sesion.Usuario.Box != null && Sesion.Usuario.Box.WhatsappActivo == true)
+        await VerificarEstadoEnVivo();
+    }
+
+    private async Task VerificarEstadoEnVivo()
+    {
+        verificandoEstado = true;
+        conectado = false; 
+        StateHasChanged();
+
+        try
         {
-            conectado = true;
+            var response = await Http.GetAsync($"{ApiUrl}/estado-real/{boxId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                string resultado = await response.Content.ReadAsStringAsync();
+                conectado = (resultado.ToLower() == "true");
+
+                if (Sesion.Usuario.Box != null)
+                {
+                    Sesion.Usuario.Box.WhatsappActivo = conectado;
+                }
+            }
+            else
+            {
+                if (Sesion.Usuario.Box != null && Sesion.Usuario.Box.WhatsappActivo == true)
+                    conectado = true;
+            }
         }
-        else
+        catch
         {
-            conectado = false;
+            if (Sesion.Usuario.Box != null && Sesion.Usuario.Box.WhatsappActivo == true)
+                conectado = true;
+        }
+        finally
+        {
+            verificandoEstado = false;
+            StateHasChanged();
         }
     }
 
-    // 1. GENERAR QR
     private async Task GenerarQR()
     {
         cargando = true;
@@ -297,7 +258,6 @@
             if (response.IsSuccessStatusCode)
             {
                 var base64Raw = await response.Content.ReadAsStringAsync();
-                // Limpiamos comillas extra que a veces llegan del JSON
                 string limpio = base64Raw.Replace("\"", "").Trim();
                 qrCodeBase64 = limpio;
             }
@@ -317,7 +277,6 @@
         }
     }
 
-    // 2. CONFIRMAR VINCULACIÓN (Botón "Ya escaneé")
     private async Task ConfirmarVinculacion()
     {
         cargando = true;
@@ -328,11 +287,8 @@
             if (response.IsSuccessStatusCode)
             {
                 conectado = true;
-                qrCodeBase64 = null; // Ocultamos el QR
-
-                // Actualizamos la sesión localmente para que no se pierda al navegar
+                qrCodeBase64 = null; 
                 if (Sesion.Usuario.Box != null) Sesion.Usuario.Box.WhatsappActivo = true;
-
                 await App.Current.MainPage.DisplayAlert("¡Conectado!", "Tu WhatsApp ha sido vinculado exitosamente.", "OK");
             }
             else
@@ -350,10 +306,9 @@
         }
     }
 
-    // 3. DESCONECTAR / CERRAR SESIÓN
     private async Task Desconectar()
     {
-        bool confirmar = await App.Current.MainPage.DisplayAlert("Desconectar", "¿Seguro que quieres cerrar sesión de WhatsApp? Dejarás de enviar mensajes automáticos.", "Sí, desconectar", "Cancelar");
+        bool confirmar = await App.Current.MainPage.DisplayAlert("Desconectar", "¿Seguro que quieres cerrar sesión?", "Sí", "Cancelar");
         if (!confirmar) return;
 
         cargando = true;
@@ -365,10 +320,7 @@
             {
                 conectado = false;
                 qrCodeBase64 = null;
-
-                // Actualizamos la sesión localmente
                 if (Sesion.Usuario.Box != null) Sesion.Usuario.Box.WhatsappActivo = false;
-
                 await App.Current.MainPage.DisplayAlert("Desconectado", "Has cerrado sesión correctamente.", "OK");
             }
             else
@@ -387,7 +339,6 @@
         }
     }
 
-    // 4. ENVIAR MENSAJE DE PRUEBA
     private async Task EnviarPrueba()
     {
         if (string.IsNullOrEmpty(telefonoInput))
@@ -396,11 +347,10 @@
             return;
         }
 
-        cargando = true; // Mostramos spinner si es necesario, o bloqueamos botón
+        cargando = true; 
         try
         {
             string numeroFinal = ladaSeleccionada + telefonoInput;
-            // Si el usuario eligió "Otro" y no hay lada, o escribió lada manual
             if (string.IsNullOrEmpty(ladaSeleccionada)) numeroFinal = telefonoInput;
 
             var datos = new
@@ -415,7 +365,7 @@
             if (response.IsSuccessStatusCode)
             {
                 await App.Current.MainPage.DisplayAlert("¡Éxito!", "Mensaje enviado. Revisa tu celular.", "OK");
-                telefonoInput = ""; // Limpiamos el campo
+                telefonoInput = ""; 
             }
             else
             {

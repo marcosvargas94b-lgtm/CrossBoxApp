@@ -22,10 +22,10 @@
         <Nullable>enable</Nullable>
 
         <!-- Display name -->
-        <ApplicationTitle>CrossBoxApp</ApplicationTitle>
+        <ApplicationTitle>AFTRACK</ApplicationTitle>
 
         <!-- App Identifier -->
-        <ApplicationId>com.companyname.crossboxapp</ApplicationId>
+		<ApplicationId>com.alfafit.app</ApplicationId>
 
         <!-- Versions -->
         <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
@@ -46,12 +46,21 @@
       <AndroidPackageFormat>apk</AndroidPackageFormat>
     </PropertyGroup>
 
+
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-ios|AnyCPU'">
+      <MtouchLink>SdkOnly</MtouchLink>
+    </PropertyGroup>
+
+
+    <PropertyGroup Condition="'$(TargetFramework)'=='net9.0-ios'">
+      <CodesignKey>Apple Development: Created via API (9G8X59256X)</CodesignKey>
+      <CodesignProvision>VS: com.alfafit.app Development</CodesignProvision>
+    </PropertyGroup>
+
     <ItemGroup>
-		<MauiIcon Include="Resources\AppIcon\appicon.svg"
-			   ForegroundScale="0.65"
-			   Color="#000000" />
+		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundScale="0.65" Color="#000000" />
         <!-- Splash Screen -->
-        <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
+        <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#0d0d0d" BaseSize="128,128" />
 
         <!-- Images -->
         <MauiImage Include="Resources\Images\*" />

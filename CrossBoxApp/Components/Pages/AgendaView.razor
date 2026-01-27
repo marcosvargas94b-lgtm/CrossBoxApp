@@ -5,213 +5,300 @@
 @inject HttpClient Http
 @inject SesionService Sesion
 
-<div class="top-navbar">
-    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
-    <div class="nav-title">AGENDA TU CLASE</div>
-    <div class="nav-right"></div>
-</div>
+<div class="main-layout">
 
-<div class="agenda-container">
-    <h2 class="date-header">@DateTime.Now.ToString("dddd, dd MMMM").ToUpper()</h2>
+    <div class="navbar-container">
+        <div class="nav-left" @onclick="Volver">
+            <i class="fas fa-arrow-left"></i> VOLVER
+        </div>
+        <div class="nav-title">AGENDA TU CLASE</div>
+        <div class="nav-right"></div>
+    </div>
 
-    <div class="booking-section">
+    <div class="scrollable-content">
+        
+        <h2 class="date-header">@DateTime.Now.ToString("dddd, dd MMMM").ToUpper()</h2>
 
-        @if (miReservaActualId == Guid.Empty)
+        <div class="booking-section fade-in">
+            @if (miReservaActualId == Guid.Empty)
+            {
+                <label class="lbl-input">Selecciona tu horario:</label>
+                <div class="input-group">
+                    <select @bind="horarioSeleccionado" class="form-control input-dark">
+                        <option value="">-- Elige Hora --</option>
+                        @foreach (var item in agendaData)
+                        {
+                            <option value="@item.HorarioId">@item.HorarioNombre</option>
+                        }
+                    </select>
+                    <button class="btn-reservar" @onclick="ReservarClase">RESERVAR</button>
+                </div>
+            }
+            else
+            {
+                <div class="reservation-info text-center fade-in">
+                    <div class="success-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <p class="success-text">Ya tienes clase reservada.</p>
+                    <button class="btn-cancelar w-100" @onclick="CancelarReserva">
+                        CANCELAR MI RESERVACIÓN
+                    </button>
+                </div>
+            }
+        </div>
+
+        <div class="divider"></div>
+
+        @if (cargando)
         {
-            <label>Selecciona tu horario:</label>
-            <div class="input-group">
-                <select @bind="horarioSeleccionado" class="form-control input-dark">
-                    <option value="">-- Elige Hora --</option>
-                    @foreach (var item in agendaData)
-                    {
-                        <option value="@item.HorarioId">@item.HorarioNombre</option>
-                    }
-                </select>
-                <button class="btn btn-warning" @onclick="ReservarClase">RESERVAR</button>
+            <div class="text-center mt-4">
+                <div class="spinner-border text-warning"></div>
+                <p class="mt-2 text-muted">Cargando horarios...</p>
             </div>
         }
         else
         {
-            <div class="reservation-info text-center">
-                <p style="color: #eee; margin-bottom: 10px;">
-                    <i class="fas fa-check-circle" style="color:#28a745;"></i>
-                    Ya tienes clase reservada.
-                </p>
-                <button class="btn btn-danger w-100" @onclick="CancelarReserva">
-                    CANCELAR MI RESERVACIÓN
-                </button>
+            <div class="cards-grid">
+                @foreach (var horario in agendaData)
+                {
+                    <div class="schedule-card fade-in">
+                        <div class="card-header">
+                            <span class="time-text">@horario.HorarioNombre</span>
+                            <span class="badge-count">@horario.UsuariosInscritos.Count Atletas</span>
+                        </div>
+                        <div class="card-body">
+                            @if (horario.UsuariosInscritos.Count == 0)
+                            {
+                                <p class="text-muted small mb-0">Sin atletas registrados aún.</p>
+                            }
+                            else
+                            {
+                                <div class="user-list">
+                                    @foreach (var usuario in horario.UsuariosInscritos)
+                                    {
+                                        <div class="user-item">
+                                            <i class="fas fa-user-check"></i> 
+                                            <span>@usuario</span>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
             </div>
         }
-
+        
+        <div style="height: 40px;"></div>
     </div>
-
-    <hr class="divider" />
-
-    @if (cargando)
-    {
-        <div class="text-center mt-4"><div class="spinner-border text-warning"></div></div>
-    }
-    else
-    {
-        <div class="cards-grid">
-            @foreach (var horario in agendaData)
-            {
-                <div class="schedule-card">
-                    <div class="card-header">
-                        <span>@horario.HorarioNombre</span>
-                        <span class="badge-count">@horario.UsuariosInscritos.Count</span>
-                    </div>
-                    <div class="card-body">
-                        @if (horario.UsuariosInscritos.Count == 0)
-                        {
-                            <p class="text-muted small">Sin atletas aún.</p>
-                        }
-                        else
-                        {
-                            <ul class="user-list">
-                                @foreach (var usuario in horario.UsuariosInscritos)
-                                {
-                                    <li><i class="fas fa-user-check"></i> @usuario</li>
-                                }
-                            </ul>
-                        }
-                    </div>
-                </div>
-            }
-        </div>
-    }
 </div>
 
 <style>
-    /* Reutilizamos estilos base */
-    .top-navbar {
+    /* --- ESTRUCTURA BASE (IDÉNTICA A HOME) --- */
+    .main-layout {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #0d0d0d;
+        display: flex;
+        flex-direction: column;
+        z-index: 1;
+    }
+
+    .navbar-container {
+        flex-shrink: 0;
+        /* Padding exacto del Home */
+        padding-top: calc(env(safe-area-inset-top) + 5px);
+        padding-bottom: 10px;
+        padding-left: 20px;
+        padding-right: 20px;
+        
+        background-color: #0d0d0d;
+        border-bottom: 1px solid #F8C545;
+        color: white;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 15px;
-        background: #1a1a1a;
-        border-bottom: 2px solid #F8C545;
-        color: white;
+        z-index: 100;
         font-family: 'Oswald';
+        min-height: 60px;
     }
 
     .nav-left {
         color: #F8C545;
+        font-weight: bold;
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
     }
 
     .nav-title {
-        font-size: 1.2rem;
-    }
-
-    .nav-right {
-        width: 60px;
-    }
-
-    .agenda-container {
-        padding: 20px;
-        background: #0d0d0d;
-        min-height: 100vh;
+        font-weight: bold;
+        font-size: 1.1rem;
         color: white;
+        letter-spacing: 1px;
     }
 
+    .nav-right { width: 60px; }
+
+    .scrollable-content {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 40px;
+    }
+
+    /* --- ESTILOS DE AGENDA --- */
+    
     .date-header {
         font-family: 'Oswald';
         text-align: center;
-        border-bottom: 1px solid #333;
-        padding-bottom: 10px;
+        color: #F8C545;
+        font-size: 1.5rem;
+        margin-top: 10px;
         margin-bottom: 20px;
+        letter-spacing: 1px;
     }
 
-    /* Estilos Reserva */
     .booking-section {
-        background: #222;
-        padding: 15px;
-        border-radius: 10px;
-        border: 1px solid #444;
+        background: #1a1a1a;
+        padding: 20px;
+        border-radius: 15px;
+        border: 1px solid #333;
         margin-bottom: 20px;
+        width: 100%;
+        max-width: 600px;
+        align-self: center; /* Centramos este bloque */
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+
+    .lbl-input {
+        color: #aaa;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+        display: block;
     }
 
     .input-group {
         display: flex;
         gap: 10px;
-        margin-top: 10px;
     }
 
     .input-dark {
         background: #333 !important;
         color: white !important;
-        border: 1px solid #F8C545;
+        border: 1px solid #555;
         flex: 1;
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 1rem;
     }
-
-    .btn-warning {
-        background: #F8C545;
+    
+    .btn-reservar {
+        background-color: #F8C545;
         color: black;
         font-weight: bold;
         border: none;
+        padding: 0 20px;
+        border-radius: 8px;
+        font-family: 'Oswald';
+        transition: transform 0.2s;
     }
+    .btn-reservar:active { transform: scale(0.95); }
+
+    /* Estado Confirmado */
+    .success-icon { font-size: 3rem; color: #28a745; margin-bottom: 10px; }
+    .success-text { color: #eee; font-size: 1.1rem; margin-bottom: 15px; font-weight: bold; }
+    
+    .btn-cancelar {
+        background: transparent;
+        border: 1px solid #dc3545;
+        color: #dc3545;
+        padding: 10px;
+        border-radius: 50px;
+        font-weight: bold;
+        transition: all 0.2s;
+    }
+    .btn-cancelar:active { background: #dc3545; color: white; }
 
     .divider {
-        border-color: #333;
-        margin: 20px 0;
+        width: 100%;
+        height: 1px;
+        background: #333;
+        margin: 10px 0 20px 0;
     }
 
-    /* Estilos Tarjetas */
+    /* Lista de Horarios */
     .cards-grid {
         display: flex;
-        flex-wrap: wrap;
+        flex-direction: column;
         gap: 15px;
-        justify-content: center;
+        width: 100%;
+        max-width: 600px;
+        align-self: center;
     }
 
     .schedule-card {
         background: #1a1a1a;
         border: 1px solid #333;
-        border-radius: 8px;
-        width: 100%;
+        border-radius: 12px;
         overflow: hidden;
     }
 
     .card-header {
-        background: #F8C545;
-        color: black;
-        padding: 10px 15px;
-        font-family: 'Oswald';
-        font-weight: bold;
+        background: #252525;
+        padding: 12px 15px;
         display: flex;
         justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #333;
+    }
+
+    .time-text {
+        font-family: 'Oswald';
+        font-size: 1.1rem;
+        color: white;
+        font-weight: bold;
     }
 
     .badge-count {
-        background: black;
-        color: #F8C545;
-        padding: 2px 8px;
+        background: #F8C545;
+        color: black;
+        padding: 3px 10px;
         border-radius: 10px;
         font-size: 0.8rem;
+        font-weight: bold;
     }
 
-    .card-body {
-        padding: 10px 15px;
-    }
+    .card-body { padding: 15px; }
 
     .user-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
     }
 
-        .user-list li {
-            padding: 5px 0;
-            border-bottom: 1px solid #333;
-            font-size: 0.9rem;
-            color: #eee;
-        }
+    .user-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #333;
+        color: #ccc;
+        font-size: 0.95rem;
+    }
+    .user-item:last-child { border-bottom: none; padding-bottom: 0; }
+    
+    .user-item i { color: #F8C545; }
 
-            .user-list li i {
-                color: #F8C545;
-                margin-right: 8px;
-            }
+    .fade-in { animation: fadeIn 0.5s ease; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 @code {
@@ -240,12 +327,11 @@
             {
                 agendaData = await response.Content.ReadFromJsonAsync<List<AgendaVisualDto>>();
 
-                // Lógica para detectar si ya reservé
                 var miHorario = agendaData.FirstOrDefault(x => x.EsMiReserva);
                 if (miHorario != null)
                 {
                     miReservaActualId = miHorario.HorarioId;
-                    horarioSeleccionado = miReservaActualId; // Opcional: preseleccionar
+                    horarioSeleccionado = miReservaActualId;
                 }
                 else
                 {
@@ -287,12 +373,10 @@
             if (response.IsSuccessStatusCode)
             {
                 await App.Current.MainPage.DisplayAlert("¡Listo!", "Tu clase ha sido reservada.", "OK");
-                // Recargar datos para ver mi nombre en la lista inmediatamente
                 await CargarDatos();
             }
             else
             {
-                // Leer mensaje de error (ej: "Ya reservaste hoy")
                 var errorMsg = await response.Content.ReadFromJsonAsync<dynamic>();
                 await App.Current.MainPage.DisplayAlert("Aviso", errorMsg.mensaje.ToString(), "OK");
             }
@@ -315,7 +399,6 @@
                 UsuarioId = Sesion.Usuario.UsuarioID,
                 BoxId = Sesion.Usuario.BoxID,
                 Fecha = DateTime.Now
-                // HorarioId no es estrictamente necesario para borrar por fecha/usuario, pero lo puedes mandar
             };
 
             var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/agendaapi/cancelar", reserva);
@@ -323,7 +406,7 @@
             if (response.IsSuccessStatusCode)
             {
                 await App.Current.MainPage.DisplayAlert("Listo", "Reserva cancelada.", "OK");
-                await CargarDatos(); // Recargar para mostrar el combo de nuevo
+                await CargarDatos();
             }
         }
         catch (Exception ex)

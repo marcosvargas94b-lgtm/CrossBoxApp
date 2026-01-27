@@ -5,91 +5,233 @@
 @inject HttpClient Http
 @inject SesionService Sesion
 
-<div class="top-navbar">
-    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
-    <div class="nav-title">RUTINA: @NombreAtleta.ToUpper()</div>
-    <div class="nav-right"></div>
-</div>
+<div class="main-layout">
 
-<div class="rutina-container">
-    @for (int i = 1; i <= 7; i++)
-    {
-        var diaNum = i;
-        var rutinaDia = ObtenerRutina(diaNum);
-        bool tieneRutina = rutinaDia != null;
+    <div class="navbar-container">
+        <div class="nav-left" @onclick="Volver">
+            <i class="fas fa-arrow-left"></i> VOLVER
+        </div>
+        <div class="nav-title">RUTINA: @NombreAtleta.ToUpper()</div>
+        <div class="nav-right"></div>
+    </div>
 
-        <div class="dia-card @(tieneRutina ? "cargada" : "")">
-            <div class="dia-header">
-                <span class="dia-nombre">@NombreDia(diaNum)</span>
-                @if (tieneRutina)
-                {
-                    <span class="badge-coach">Coach: @rutinaDia.CoachNombre</span>
-                }
-            </div>
+    <div class="scrollable-content">
+        
+        @for (int i = 1; i <= 7; i++)
+        {
+            var diaNum = i;
+            var rutinaDia = ObtenerRutina(diaNum);
+            bool tieneRutina = rutinaDia != null;
 
-            <div class="dia-body">
-                @if (diaEditando == diaNum)
-                {
-                    <textarea @bind="textoEditando" class="form-control input-dark" rows="4" placeholder="Escribe la rutina aquí..."></textarea>
-                    <div class="edit-actions">
-                        <button class="btn-cancel" @onclick="CancelarEdicion">Cancelar</button>
-                        <button class="btn-save" @onclick="() => Guardar(diaNum)">Guardar</button>
-                    </div>
-                }
-                else
-                {
+            <div class="dia-card @(tieneRutina ? "cargada" : "") fade-in">
+                <div class="dia-header">
+                    <span class="dia-nombre">@NombreDia(diaNum)</span>
                     @if (tieneRutina)
                     {
-                        <div class="rutina-texto">@rutinaDia.Descripcion</div>
-                        <div class="rutina-footer">
-                            <span class="status-label"><i class="fas fa-check-circle"></i> Rutina Cargada</span>
-                            <div class="actions">
-                                <i class="fas fa-pen btn-icon edit" @onclick='() => Editar(diaNum, rutinaDia.Descripcion ?? "")'></i>
-                                <i class="fas fa-trash btn-icon delete" @onclick="() => Eliminar(diaNum)"></i>
-                            </div>
+                        <span class="badge-coach">
+                            <i class="fas fa-user-shield"></i> @rutinaDia.CoachNombre
+                        </span>
+                    }
+                </div>
+
+                <div class="dia-body">
+                    @if (diaEditando == diaNum)
+                    {
+                        <textarea @bind="textoEditando" class="form-control input-dark" rows="4" placeholder="Escribe la rutina aquí..."></textarea>
+                        <div class="edit-actions">
+                            <button class="btn-cancel" @onclick="CancelarEdicion">Cancelar</button>
+                            <button class="btn-save" @onclick="() => Guardar(diaNum)">Guardar</button>
                         </div>
                     }
                     else
                     {
-                        <div class="empty-placeholder" @onclick='() => Editar(diaNum, "")'>
-                            <i class="fas fa-plus-circle"></i> Agregar Rutina
-                        </div>
+                        @if (tieneRutina)
+                        {
+                            <div class="rutina-texto">@rutinaDia.Descripcion</div>
+                            <div class="rutina-footer">
+                                <span class="status-label"><i class="fas fa-check-circle"></i> Rutina Cargada</span>
+                                <div class="actions">
+                                    <i class="fas fa-pen btn-icon edit" @onclick='() => Editar(diaNum, rutinaDia.Descripcion ?? "")'></i>
+                                    <i class="fas fa-trash btn-icon delete" @onclick="() => Eliminar(diaNum)"></i>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="empty-placeholder" @onclick='() => Editar(diaNum, "")'>
+                                <i class="fas fa-plus-circle"></i> Agregar Rutina
+                            </div>
+                        }
                     }
-                }
+                </div>
             </div>
-        </div>
-    }
+        }
+        
+        <div style="height: 40px;"></div>
+    </div>
 </div>
 
 <style>
-    .rutina-container { padding: 15px; background: #0d0d0d; min-height: 100vh; padding-bottom: 50px; }
-    .dia-card { background: #1a1a1a; border: 1px solid #333; border-radius: 10px; margin-bottom: 15px; overflow: hidden; transition: all 0.3s; }
-    .dia-card.cargada { border: 2px solid #28a745; box-shadow: 0 0 10px rgba(40,167,69,0.1); }
-    .dia-header { background: #222; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
-    .dia-nombre { font-family: 'Oswald'; color: #F8C545; font-size: 1.1rem; }
-    .badge-coach { font-size: 0.7rem; color: #888; background: #111; padding: 2px 6px; border-radius: 4px; border: 1px solid #444; }
+    /* --- ESTRUCTURA BASE --- */
+    .main-layout {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1;
+    }
+
+    .navbar-container {
+        flex-shrink: 0;
+        padding-top: calc(env(safe-area-inset-top) + 5px);
+        padding-bottom: 10px; padding-left: 20px; padding-right: 20px;
+        background-color: #0d0d0d; border-bottom: 1px solid #F8C545;
+        color: white; display: flex; justify-content: space-between; align-items: center;
+        z-index: 100; font-family: 'Oswald'; min-height: 60px;
+    }
+
+    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
+    .nav-right { width: 60px; }
+
+    .scrollable-content {
+        flex-grow: 1; overflow-y: auto; padding: 20px;
+        display: flex; flex-direction: column; align-items: center;
+        -webkit-overflow-scrolling: touch; padding-bottom: 40px;
+    }
+
+    /* --- ESTILOS RUTINA ADMIN --- */
+    
+    .dia-card {
+        width: 100%; max-width: 600px;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        overflow: hidden;
+        transition: all 0.3s;
+    }
+
+    .dia-card.cargada {
+        border: 1px solid #28a745;
+        box-shadow: 0 4px 10px rgba(40, 167, 69, 0.1);
+        border-left: 4px solid #28a745;
+    }
+
+    .dia-header {
+        background: #222;
+        padding: 10px 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #333;
+    }
+
+    .dia-nombre {
+        font-family: 'Oswald';
+        color: #F8C545;
+        font-size: 1.1rem;
+        letter-spacing: 1px;
+    }
+
+    .badge-coach {
+        font-size: 0.75rem;
+        color: #aaa;
+        background: #151515;
+        padding: 3px 8px;
+        border-radius: 4px;
+        border: 1px solid #444;
+        display: flex; align-items: center; gap: 5px;
+    }
+
     .dia-body { padding: 15px; color: white; }
-    .rutina-texto { white-space: pre-wrap; font-family: 'Roboto'; font-size: 0.95rem; line-height: 1.4; color: #ddd; margin-bottom: 10px; }
-    .rutina-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #333; padding-top: 10px; margin-top: 10px; }
-    .status-label { color: #28a745; font-size: 0.8rem; font-weight: bold; }
-    .btn-icon { font-size: 1.1rem; cursor: pointer; padding: 5px; margin-left: 10px; }
+
+    .rutina-texto {
+        white-space: pre-wrap;
+        font-family: 'Roboto', sans-serif;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        color: #ddd;
+        margin-bottom: 15px;
+    }
+
+    .rutina-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid #333;
+        padding-top: 10px;
+        margin-top: 10px;
+    }
+
+    .status-label {
+        color: #28a745;
+        font-size: 0.8rem;
+        font-weight: bold;
+        display: flex; align-items: center; gap: 5px;
+    }
+
+    .btn-icon {
+        font-size: 1rem;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 5px;
+        transition: background 0.2s;
+        margin-left: 5px;
+    }
+    .btn-icon:hover { background: #333; }
     .edit { color: #F8C545; }
     .delete { color: #dc3545; }
-    .empty-placeholder { text-align: center; color: #666; cursor: pointer; padding: 20px; border: 2px dashed #333; border-radius: 8px; transition: 0.2s; }
-    .empty-placeholder:hover { border-color: #F8C545; color: #F8C545; }
-    .input-dark { background: #333; color: white; border: 1px solid #555; width: 100%; margin-bottom: 10px; }
+
+    .empty-placeholder {
+        text-align: center;
+        color: #666;
+        cursor: pointer;
+        padding: 20px;
+        border: 2px dashed #333;
+        border-radius: 8px;
+        transition: 0.2s;
+        font-weight: bold;
+    }
+    .empty-placeholder:hover { border-color: #F8C545; color: #F8C545; background: rgba(248, 197, 69, 0.05); }
+
+    .input-dark {
+        background: #333;
+        color: white;
+        border: 1px solid #555;
+        width: 100%;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 8px;
+    }
+    .input-dark:focus { border-color: #F8C545; outline: none; }
+
     .edit-actions { display: flex; gap: 10px; }
-    .btn-save { flex: 1; background: #28a745; border: none; color: white; padding: 8px; border-radius: 5px; font-weight: bold; }
-    .btn-cancel { flex: 1; background: #333; border: none; color: white; padding: 8px; border-radius: 5px; }
-    .top-navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #1a1a1a; border-bottom: 2px solid #F8C545; color: white; font-family: 'Oswald'; }
-    .nav-left { color: #F8C545; cursor: pointer; }
+    
+    .btn-save {
+        flex: 1;
+        background: #28a745;
+        border: none;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+    
+    .btn-cancel {
+        flex: 1;
+        background: #333;
+        border: none;
+        color: white;
+        padding: 10px;
+        border-radius: 5px;
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 @code {
     [Parameter] public Guid UsuarioId { get; set; }
     [Parameter] public string NombreAtleta { get; set; }
 
-    // Renombramos la clase para evitar conflictos con la otra pantalla
     public class RutinaAdminDto 
     { 
         public int DiaSemana { get; set; } 
@@ -133,7 +275,6 @@
     {
         if (string.IsNullOrWhiteSpace(textoEditando)) return;
 
-        // Usamos un objeto anónimo, asegúrate de que coincida con el DTO del Backend
         var req = new 
         { 
             UsuarioID = UsuarioId, 

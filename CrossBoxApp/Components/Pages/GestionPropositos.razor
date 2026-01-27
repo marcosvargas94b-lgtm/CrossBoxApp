@@ -5,68 +5,139 @@
 @inject HttpClient Http
 @inject SesionService Sesion
 
-<div class="top-navbar">
-    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
-    <div class="nav-title">RETOS DE @NombreAtleta.ToUpper()</div>
-    <div class="nav-right"></div>
-</div>
+<div class="main-layout">
 
-<div class="gestion-container">
-    @if (propositos == null)
-    {
-        <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
-    }
-    else if (propositos.Count == 0)
-    {
-        <div class="empty-state">Este atleta no tiene propósitos.</div>
-    }
-    else
-    {
-        <p class="instruction-text">Toca un reto para marcarlo como CUMPLIDO o PENDIENTE.</p>
+    <div class="navbar-container">
+        <div class="nav-left" @onclick="Volver">
+            <i class="fas fa-arrow-left"></i> VOLVER
+        </div>
+        <div class="nav-title">RETOS DE @NombreAtleta.ToUpper()</div>
+        <div class="nav-right"></div>
+    </div>
+
+    <div class="scrollable-content">
         
-        @foreach (var p in propositos)
+        @if (propositos == null)
         {
-            <div class="admin-goal-card @(p.Cumplido ? "is-done" : "")" @onclick="() => ToggleCumplido(p)">
-                <div class="check-box">
-                    @if (p.Cumplido) { <i class="fas fa-check"></i> }
-                </div>
-                <div class="goal-info">
-                    <span class="desc">@p.Descripcion</span>
-                    <span class="status">@(p.Cumplido ? "¡LOGRADO!" : "Pendiente")</span>
-                </div>
+            <div class="text-center mt-5">
+                <div class="spinner-border text-warning"></div>
             </div>
         }
-    }
+        else if (propositos.Count == 0)
+        {
+            <div class="empty-state fade-in">
+                <i class="fas fa-bullseye" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px;"></i>
+                <p>Este atleta no tiene propósitos definidos.</p>
+            </div>
+        }
+        else
+        {
+            <p class="instruction-text fade-in">Toca un reto para marcarlo como CUMPLIDO o PENDIENTE.</p>
+            
+            <div class="goals-list fade-in">
+                @foreach (var p in propositos)
+                {
+                    <div class="admin-goal-card @(p.Cumplido ? "is-done" : "")" @onclick="() => ToggleCumplido(p)">
+                        
+                        <div class="check-box">
+                            @if (p.Cumplido) 
+                            { 
+                                <i class="fas fa-check"></i> 
+                            }
+                        </div>
+
+                        <div class="goal-info">
+                            <span class="desc">@p.Descripcion</span>
+                            <span class="status">@(p.Cumplido ? "¡LOGRADO!" : "Pendiente")</span>
+                        </div>
+
+                    </div>
+                }
+            </div>
+        }
+        
+        <div style="height: 40px;"></div>
+    </div>
 </div>
 
 <style>
-    .gestion-container { padding: 15px; background: #0d0d0d; min-height: 100vh; color: white; }
-    .instruction-text { text-align: center; color: #666; font-size: 0.8rem; margin-bottom: 20px; }
-    
-    .admin-goal-card {
-        background: #1a1a1a; padding: 15px; border-radius: 8px; margin-bottom: 10px;
-        display: flex; align-items: center; gap: 15px; cursor: pointer;
-        border: 1px solid #333; transition: 0.2s;
+    /* --- ESTRUCTURA BASE --- */
+    .main-layout {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1;
     }
+
+    .navbar-container {
+        flex-shrink: 0;
+        padding-top: calc(env(safe-area-inset-top) + 5px);
+        padding-bottom: 10px; padding-left: 20px; padding-right: 20px;
+        background-color: #0d0d0d; border-bottom: 1px solid #F8C545;
+        color: white; display: flex; justify-content: space-between; align-items: center;
+        z-index: 100; font-family: 'Oswald'; min-height: 60px;
+    }
+
+    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
+    .nav-right { width: 60px; }
+
+    .scrollable-content {
+        flex-grow: 1; overflow-y: auto; padding: 20px;
+        display: flex; flex-direction: column; align-items: center;
+        -webkit-overflow-scrolling: touch; padding-bottom: 40px;
+    }
+
+    /* --- ESTILOS GESTIÓN --- */
     
+    .instruction-text { 
+        text-align: center; color: #666; font-size: 0.85rem; 
+        margin-bottom: 20px; font-family: 'Roboto';
+    }
+
+    .goals-list { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 10px; }
+
+    .admin-goal-card {
+        background: #1a1a1a; padding: 15px; border-radius: 10px;
+        display: flex; align-items: center; gap: 15px; cursor: pointer;
+        border: 1px solid #333; transition: all 0.2s;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+    .admin-goal-card:active { transform: scale(0.98); }
+
     .admin-goal-card.is-done {
         border-color: #28a745;
         background: rgba(40, 167, 69, 0.1);
+        border-left: 4px solid #28a745;
     }
 
     .check-box {
-        width: 30px; height: 30px; border-radius: 50%; border: 2px solid #666;
+        width: 32px; height: 32px; border-radius: 50%; border: 2px solid #666;
         display: flex; align-items: center; justify-content: center;
-        transition: 0.2s;
+        transition: 0.2s; flex-shrink: 0;
     }
-    .is-done .check-box { border-color: #28a745; background: #28a745; color: white; }
-
-    .goal-info { display: flex; flex-direction: column; }
-    .desc { font-size: 1rem; font-family: 'Roboto'; }
-    .status { font-size: 0.7rem; color: #666; text-transform: uppercase; font-weight: bold; }
-    .is-done .status { color: #28a745; }
     
-    .top-navbar { display: flex; justify-content: space-between; padding: 15px; background: #1a1a1a; color: #F8C545; font-family: 'Oswald'; }
+    .is-done .check-box { 
+        border-color: #28a745; background: #28a745; color: white; 
+        box-shadow: 0 0 8px rgba(40,167,69,0.5);
+    }
+
+    .goal-info { display: flex; flex-direction: column; flex: 1; }
+    
+    .desc { 
+        font-size: 1rem; font-family: 'Roboto'; color: #eee; 
+        line-height: 1.4; margin-bottom: 3px;
+    }
+    
+    .status { 
+        font-size: 0.75rem; color: #666; text-transform: uppercase; 
+        font-weight: bold; letter-spacing: 0.5px; 
+    }
+    
+    .is-done .status { color: #28a745; }
+
+    .empty-state { text-align: center; margin-top: 60px; color: #666; font-family: 'Roboto'; }
+
+    .fade-in { animation: fadeIn 0.5s ease; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 @code {
@@ -74,6 +145,7 @@
     [Parameter] public string NombreAtleta { get; set; }
 
     class PropositoDto { public int PropositoID { get; set; } public string Descripcion { get; set; } public bool Cumplido { get; set; } }
+    
     private List<PropositoDto> propositos;
 
     protected override async Task OnInitializedAsync()
@@ -83,7 +155,11 @@
 
     private async Task Cargar()
     {
-        try { propositos = await Http.GetFromJsonAsync<List<PropositoDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/mis-propositos/{UsuarioId}"); } catch { propositos = new List<PropositoDto>(); }
+        try 
+        { 
+            propositos = await Http.GetFromJsonAsync<List<PropositoDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/mis-propositos/{UsuarioId}"); 
+        } 
+        catch { propositos = new List<PropositoDto>(); }
     }
 
     private async Task ToggleCumplido(PropositoDto p)
@@ -91,8 +167,17 @@
         // Optimistic UI Update (Cambia visualmente al instante)
         p.Cumplido = !p.Cumplido;
         
-        // Llamada API
-        await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/validar/{p.PropositoID}/{Sesion.Usuario.UsuarioID}", null);
+        try
+        {
+            // Llamada API para guardar el cambio (validado por el coach actual)
+            await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/validar/{p.PropositoID}/{Sesion.Usuario.UsuarioID}", null);
+        }
+        catch
+        {
+            // Si falla, revertimos el cambio visual
+            p.Cumplido = !p.Cumplido;
+            await App.Current.MainPage.DisplayAlert("Error", "No se pudo actualizar el estado.", "OK");
+        }
     }
 
     private void Volver() => Nav.NavigateTo("/usuarios-view");

@@ -1,83 +1,265 @@
 ﻿@page "/leaderboard-hoy"
+@using CrossBoxApp.Models.Services
 @inject HttpClient Http
 @inject NavigationManager Nav
-@using CrossBoxApp.Models.Services
 @inject SesionService Sesion
 
-<div class="top-navbar">
-    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
-    <div class="nav-title">LEADERBOARD DIARIO</div>
-</div>
+<div class="main-layout">
 
-<div class="leaderboard-container">
-    <div class="date-header">
-        @DateTime.Now.ToString("dddd dd MMMM").ToUpper()
+    <div class="navbar-container">
+        <div class="nav-left" @onclick="Volver">
+            <i class="fas fa-arrow-left"></i> VOLVER
+        </div>
+        <div class="nav-title">LEADERBOARD DIARIO</div>
+        <div class="nav-right"></div>
     </div>
 
-    @if (lista == null)
-    {
-        <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
-    }
-    else if (lista.Count == 0)
-    {
-        <div class="empty-state">
-            <i class="fas fa-clipboard"></i>
-            <p>Aún no hay resultados registrados hoy.</p>
+    <div class="scrollable-content">
+        
+        <div class="date-header">
+            @DateTime.Now.ToString("dddd, dd MMMM").ToUpper()
         </div>
-    }
-    else
-    {
-        <div class="podium-list">
-            @foreach (var item in lista)
-            {
-                <div class="score-row @(item.Posicion == 1 ? "gold" : "")">
-                    <div class="pos">@item.Posicion</div>
-                    <div class="name">@item.Nombre</div>
-                    <div class="reps">
-                        @item.Reps <small>REPS</small>
+
+        @if (lista == null)
+        {
+            <div class="text-center mt-5">
+                <div class="spinner-border text-warning" role="status"></div>
+                <p class="mt-2 text-muted">Cargando resultados...</p>
+            </div>
+        }
+        else if (lista.Count == 0)
+        {
+            <div class="empty-state fade-in">
+                <i class="fas fa-clipboard-list" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px;"></i>
+                <h3>SIN RESULTADOS</h3>
+                <p>Aún no hay scores registrados hoy.</p>
+            </div>
+        }
+        else
+        {
+            <div class="podium-list fade-in">
+                @foreach (var item in lista)
+                {
+                    <div class="score-row @(item.Posicion == 1 ? "gold" : "")">
+                        <div class="pos-column">
+                            @if (item.Posicion == 1)
+                            {
+                                <i class="fas fa-crown gold-icon"></i>
+                            }
+                            else if (item.Posicion == 2)
+                            {
+                                <i class="fas fa-medal silver-icon"></i>
+                            }
+                            else if (item.Posicion == 3)
+                            {
+                                <i class="fas fa-medal bronze-icon"></i>
+                            }
+                            else
+                            {
+                                <span>@item.Posicion</span>
+                            }
+                        </div>
+                        
+                        <div class="name-column">
+                            @item.Nombre
+                        </div>
+                        
+                        <div class="reps-column">
+                            <span class="reps-val">@item.Reps</span>
+                            <small>PTS</small>
+                        </div>
                     </div>
-                </div>
-            }
-        </div>
-    }
+                }
+            </div>
+        }
+        
+        <div style="height: 40px;"></div>
+    </div>
 </div>
 
 <style>
-    .top-navbar { display: flex; justify-content: space-between; padding: 15px; background: #1a1a1a; color: #F8C545; font-family: 'Oswald'; }
-    .leaderboard-container { background: #0d0d0d; min-height: 100vh; padding: 20px; color: white; }
-    .date-header { text-align: center; font-family: 'Oswald'; font-size: 1.5rem; color: #F8C545; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-    
-    .score-row {
-        display: flex; align-items: center; justify-content: space-between;
-        background: #1a1a1a; padding: 15px; margin-bottom: 10px;
-        border-radius: 10px; border: 1px solid #333;
+    /* --- ESTRUCTURA BASE --- */
+    .main-layout {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #0d0d0d;
+        display: flex;
+        flex-direction: column;
+        z-index: 1;
     }
+
+    .navbar-container {
+        flex-shrink: 0;
+        padding-top: calc(env(safe-area-inset-top) + 5px);
+        padding-bottom: 10px;
+        padding-left: 20px;
+        padding-right: 20px;
+        background-color: #0d0d0d;
+        border-bottom: 1px solid #F8C545;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 100;
+        font-family: 'Oswald';
+        min-height: 60px;
+    }
+
+    .nav-left {
+        color: #F8C545;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+    }
+
+    .nav-title {
+        font-weight: bold;
+        font-size: 1.1rem;
+        color: white;
+        letter-spacing: 1px;
+    }
+
+    .nav-right { width: 60px; }
+
+    .scrollable-content {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 40px;
+    }
+
+    /* --- ESTILOS LEADERBOARD --- */
+    
+    .date-header {
+        font-family: 'Oswald';
+        font-size: 1.5rem;
+        color: white; /* Blanco para mejor contraste */
+        margin-top: 10px;
+        margin-bottom: 25px;
+        border-bottom: 1px solid #333;
+        padding-bottom: 10px;
+        text-align: center;
+        width: 100%;
+        letter-spacing: 1px;
+    }
+
+    .podium-list {
+        width: 100%;
+        max-width: 600px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .score-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #1a1a1a;
+        padding: 15px;
+        border-radius: 12px;
+        border: 1px solid #333;
+        transition: transform 0.1s;
+    }
+
     .score-row.gold {
         border: 2px solid #FFD700;
-        background: linear-gradient(90deg, #1a1a1a 0%, rgba(255, 215, 0, 0.1) 100%);
+        background: rgba(255, 215, 0, 0.1);
         transform: scale(1.02);
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
     }
-    .pos { font-size: 1.5rem; font-weight: bold; width: 40px; color: #666; font-family: 'Oswald'; }
-    .gold .pos { color: #FFD700; }
-    
-    .name { flex: 1; font-size: 1.1rem; font-family: 'Roboto'; }
-    .reps { font-family: 'Oswald'; font-size: 1.5rem; color: white; font-weight: bold; }
-    .reps small { font-size: 0.7rem; color: #F8C545; }
-    
-    .empty-state { text-align: center; margin-top: 50px; color: #666; }
-    .empty-state i { font-size: 4rem; margin-bottom: 15px; }
+
+    /* Columnas alineadas */
+    .pos-column {
+        width: 40px;
+        text-align: center;
+        font-family: 'Oswald';
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: #666;
+    }
+
+    .name-column {
+        flex: 1;
+        font-size: 1rem;
+        font-family: 'Roboto', sans-serif;
+        color: #eee;
+        padding-left: 10px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .reps-column {
+        font-family: 'Oswald';
+        text-align: right;
+        display: flex;
+        align-items: baseline;
+        gap: 5px;
+    }
+
+    .reps-val {
+        font-size: 1.4rem;
+        color: white;
+        font-weight: bold;
+    }
+
+    .reps-column small {
+        font-size: 0.7rem;
+        color: #F8C545;
+        font-weight: bold;
+    }
+
+    /* Iconos de medallas */
+    .gold-icon { color: #FFD700; font-size: 1.4rem; }
+    .silver-icon { color: #C0C0C0; font-size: 1.3rem; }
+    .bronze-icon { color: #CD7F32; font-size: 1.3rem; }
+
+    .empty-state {
+        text-align: center;
+        margin-top: 60px;
+        color: #666;
+        font-family: 'Roboto';
+    }
+
+    .fade-in { animation: fadeIn 0.5s ease; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 @code {
-    class LeaderboardItem { public string Nombre { get; set; } public int Reps { get; set; } public int Posicion { get; set; } }
+    public class LeaderboardItem 
+    { 
+        public string Nombre { get; set; } 
+        public int Reps { get; set; } 
+        public int Posicion { get; set; } 
+    }
+    
     private List<LeaderboardItem> lista;
 
     protected override async Task OnInitializedAsync()
     {
-        try {
+        try 
+        {
+            if (Sesion.Usuario == null) 
+            {
+                Nav.NavigateTo("/");
+                return;
+            }
+
             lista = await Http.GetFromJsonAsync<List<LeaderboardItem>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/scoresapi/leaderboard-hoy/{Sesion.Usuario.BoxID}");
-        } catch { lista = new List<LeaderboardItem>(); }
+        } 
+        catch 
+        { 
+            lista = new List<LeaderboardItem>(); 
+        }
     }
 
-     private void Volver() => Nav.NavigateTo("/home");
+    private void Volver() => Nav.NavigateTo("/home");
 }

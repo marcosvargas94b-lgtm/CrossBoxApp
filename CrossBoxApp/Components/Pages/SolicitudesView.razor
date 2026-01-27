@@ -5,157 +5,126 @@
 @inject HttpClient Http
 @inject SesionService Sesion
 
-<div class="top-navbar">
-    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
-    <div class="nav-title">SOLICITUDES DE ACCESO</div>
-    <div class="nav-right"></div>
-</div>
+<div class="main-layout">
 
-<div class="users-container">
-    @if (listaPendientes == null)
-    {
-        <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
-    }
-    else if (listaPendientes.Count == 0)
-    {
-        <div class="empty-state">
-            <i class="fas fa-check-circle"></i>
-            <p>No hay solicitudes pendientes.</p>
+    <div class="navbar-container">
+        <div class="nav-left" @onclick="Volver">
+            <i class="fas fa-arrow-left"></i> VOLVER
         </div>
-    }
-    else
-    {
-        @foreach (var u in listaPendientes)
+        <div class="nav-title">SOLICITUDES DE ACCESO</div>
+        <div class="nav-right"></div>
+    </div>
+
+    <div class="scrollable-content">
+        
+        @if (listaPendientes == null)
         {
-            <div class="request-card">
-                <div class="info">
-                    <div class="name">@u.NombreCompleto</div>
-                    <div class="email">@u.CorreoElectronico</div>
-                    <div class="date"><i class="far fa-clock"></i> @u.FechaCreacion.ToString("dd/MM/yyyy")</div>
-                </div>
-                <div class="actions">
-                    <button class="btn-reject" @onclick="() => Rechazar(u)">
-                        <i class="fas fa-times"></i>
-                    </button>
-                    <button class="btn-accept" @onclick="() => Aprobar(u)">
-                        <i class="fas fa-check"></i>
-                    </button>
-                </div>
+            <div class="text-center mt-5">
+                <div class="spinner-border text-warning"></div>
             </div>
         }
-    }
+        else if (listaPendientes.Count == 0)
+        {
+            <div class="empty-state fade-in">
+                <i class="fas fa-check-circle" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px;"></i>
+                <p>No hay solicitudes pendientes.</p>
+            </div>
+        }
+        else
+        {
+            <div class="requests-list fade-in">
+                @foreach (var u in listaPendientes)
+                {
+                    <div class="request-card">
+                        <div class="info">
+                            <div class="name">@u.NombreCompleto</div>
+                            <div class="email">@u.CorreoElectronico</div>
+                            <div class="date"><i class="far fa-clock"></i> @u.FechaCreacion.ToString("dd/MM/yyyy")</div>
+                        </div>
+                        <div class="actions">
+                            <button class="btn-reject" @onclick="() => Rechazar(u)">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <button class="btn-accept" @onclick="() => Aprobar(u)">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        
+        <div style="height: 40px;"></div>
+    </div>
 </div>
 
 <style>
-    /* Estilos (Sin cambios) */
-    .top-navbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 15px;
-        background: #1a1a1a;
-        border-bottom: 2px solid #F8C545;
-        color: white;
-        font-family: 'Oswald';
+    /* --- ESTRUCTURA BASE --- */
+    .main-layout {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1;
     }
 
-    .nav-left {
-        color: #F8C545;
-        cursor: pointer;
+    .navbar-container {
+        flex-shrink: 0;
+        padding-top: calc(env(safe-area-inset-top) + 5px);
+        padding-bottom: 10px; padding-left: 20px; padding-right: 20px;
+        background-color: #0d0d0d; border-bottom: 1px solid #F8C545;
+        color: white; display: flex; justify-content: space-between; align-items: center;
+        z-index: 100; font-family: 'Oswald'; min-height: 60px;
     }
 
-    .users-container {
-        padding: 15px;
-        background: #0d0d0d;
-        min-height: 100vh;
-        color: white;
+    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
+    .nav-right { width: 60px; }
+
+    .scrollable-content {
+        flex-grow: 1; overflow-y: auto; padding: 20px;
+        display: flex; flex-direction: column; align-items: center;
+        -webkit-overflow-scrolling: touch; padding-bottom: 40px;
     }
 
-    .empty-state {
-        text-align: center;
-        margin-top: 50px;
-        color: #666;
-    }
+    /* --- ESTILOS SOLICITUDES --- */
+    
+    .empty-state { text-align: center; margin-top: 60px; color: #666; font-family: 'Roboto'; }
 
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 10px;
-            color: #333;
-        }
+    .requests-list { width: 100%; max-width: 600px; }
 
     .request-card {
         background: #1a1a1a;
         border: 1px solid #333;
-        border-radius: 8px;
+        border-radius: 12px;
         padding: 15px;
         margin-bottom: 15px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        animation: slideIn 0.3s;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
 
-    .name {
-        font-family: 'Oswald';
-        font-size: 1.1rem;
-        color: white;
-    }
+    .info { flex: 1; }
 
-    .email {
-        font-size: 0.8rem;
-        color: #aaa;
-    }
+    .name { font-family: 'Oswald'; font-size: 1.1rem; color: white; margin-bottom: 2px; }
+    .email { font-size: 0.85rem; color: #aaa; }
+    .date { font-size: 0.75rem; color: #666; margin-top: 5px; }
 
-    .date {
-        font-size: 0.7rem;
-        color: #666;
-        margin-top: 5px;
-    }
-
-    .actions {
-        display: flex;
-        gap: 10px;
-    }
+    .actions { display: flex; gap: 12px; margin-left: 10px; }
 
     .btn-accept, .btn-reject {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        border: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        cursor: pointer;
-        transition: transform 0.2s;
-        color: white;
+        width: 45px; height: 45px;
+        border-radius: 50%; border: none;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem; cursor: pointer;
+        transition: transform 0.2s; color: white;
     }
 
-    .btn-accept {
-        background: #28a745;
-        box-shadow: 0 0 10px rgba(40,167,69,0.4);
-    }
+    .btn-accept { background: #28a745; box-shadow: 0 0 15px rgba(40,167,69,0.4); }
+    .btn-reject { background: #dc3545; box-shadow: 0 0 15px rgba(220,53,69,0.4); }
 
-    .btn-reject {
-        background: #dc3545;
-        box-shadow: 0 0 10px rgba(220,53,69,0.4);
-    }
+    .btn-accept:active, .btn-reject:active { transform: scale(0.9); }
 
-        .btn-accept:active, .btn-reject:active {
-            transform: scale(0.9);
-        }
-
-    @@keyframes slideIn {
-        from {
-            transform: translateX(-10px);
-            opacity: 0;
-        }
-
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
+    .fade-in { animation: fadeIn 0.5s ease; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 @code {
@@ -165,12 +134,11 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // 1. SEGURIDAD: Solo Admin (1) o Staff con permiso
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
 
         if (Sesion.Usuario.TipoUsuarioID != 1 && !Sesion.TienePermiso("MANAGE_USERS"))
         {
-            await App.Current.MainPage.DisplayAlert("Acceso Denegado", "No tienes permisos para gestionar solicitudes.", "OK");
+            await App.Current.MainPage.DisplayAlert("Acceso Denegado", "No tienes permisos.", "OK");
             Nav.NavigateTo("/home");
             return;
         }
@@ -180,38 +148,31 @@
 
     private async Task CargarPendientes()
     {
-        try
-        {
+        try {
             listaPendientes = await Http.GetFromJsonAsync<List<PendienteDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/usuariosapi/pendientes/{Sesion.Usuario.BoxID}");
-        }
-        catch { listaPendientes = new List<PendienteDto>(); }
+        } catch { listaPendientes = new List<PendienteDto>(); }
     }
 
     private async Task Aprobar(PendienteDto u)
     {
-        try
-        {
+        try {
             var r = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/usuariosapi/aprobar/{u.UsuarioID}", null);
-            if (r.IsSuccessStatusCode)
-            {
+            if (r.IsSuccessStatusCode) {
                 listaPendientes.Remove(u);
-                await App.Current.MainPage.DisplayAlert("Listo", $"{u.NombreCompleto} ahora es miembro activo.", "OK");
+                await App.Current.MainPage.DisplayAlert("Listo", $"{u.NombreCompleto} aceptado.", "OK");
             }
-        }
-        catch { }
+        } catch { }
     }
 
     private async Task Rechazar(PendienteDto u)
     {
-        bool confirm = await App.Current.MainPage.DisplayAlert("Rechazar", "¿Seguro que quieres rechazar y eliminar esta solicitud?", "Sí", "Cancelar");
+        bool confirm = await App.Current.MainPage.DisplayAlert("Rechazar", "¿Eliminar solicitud?", "Sí", "Cancelar");
         if (!confirm) return;
 
-        try
-        {
+        try {
             var r = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/usuariosapi/rechazar/{u.UsuarioID}", null);
             if (r.IsSuccessStatusCode) listaPendientes.Remove(u);
-        }
-        catch { }
+        } catch { }
     }
 
     private void Volver() => Nav.NavigateTo("/home");

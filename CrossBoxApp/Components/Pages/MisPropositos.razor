@@ -5,73 +5,86 @@
 @inject HttpClient Http
 @inject SesionService Sesion
 
-<div class="top-navbar">
-    <div class="nav-left" @onclick="Volver"><i class="fas fa-arrow-left"></i> VOLVER</div>
-    <div class="nav-title">MIS PROPÓSITOS @DateTime.Now.Year</div>
-    <div class="nav-right"></div>
-</div>
+<div class="main-layout">
 
-<div class="propositos-container">
-    
-    <div class="chalkboard-header">
-        <p>"Lo que no se define, no se puede medir"</p>
-        <button class="btn-add-goal" @onclick="AbrirModalCrear">
-            <i class="fas fa-plus"></i> AGREGAR META
-        </button>
+    <div class="navbar-container">
+        <div class="nav-left" @onclick="Volver">
+            <i class="fas fa-arrow-left"></i> VOLVER
+        </div>
+        <div class="nav-title">MIS PROPÓSITOS @DateTime.Now.Year</div>
+        <div class="nav-right"></div>
     </div>
 
-    @if (misPropositos == null)
-    {
-        <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
-    }
-    else if (misPropositos.Count == 0)
-    {
-        <div class="empty-state">
-            <i class="fas fa-bullseye"></i>
-            <p>Aún no tienes propósitos definidos.</p>
+    <div class="scrollable-content">
+        
+        <div class="chalkboard-header fade-in">
+            <p>"Lo que no se define, no se puede medir"</p>
+            <button class="btn-add-goal" @onclick="AbrirModalCrear">
+                <i class="fas fa-plus"></i> AGREGAR META
+            </button>
         </div>
-    }
-    else
-    {
-        <div class="goals-list">
-            @foreach (var p in misPropositos)
-            {
-                <div class="goal-card @(p.Cumplido ? "completed" : "pending")" @onclick="() => AbrirModalEditar(p)">
-                    <div class="goal-text">@p.Descripcion</div>
-                    <div class="goal-status">
-                        @if (p.Cumplido)
-                        {
-                            <i class="fas fa-trophy trophy-icon"></i>
-                        }
-                        else
-                        {
-                            <i class="far fa-circle circle-icon"></i>
-                        }
+
+        @if (misPropositos == null)
+        {
+            <div class="text-center mt-5">
+                <div class="spinner-border text-warning"></div>
+            </div>
+        }
+        else if (misPropositos.Count == 0)
+        {
+            <div class="empty-state fade-in">
+                <i class="fas fa-bullseye"></i>
+                <p>Aún no tienes propósitos definidos.</p>
+            </div>
+        }
+        else
+        {
+            <div class="goals-list fade-in">
+                @foreach (var p in misPropositos)
+                {
+                    <div class="goal-card @(p.Cumplido ? "completed" : "pending")" @onclick="() => AbrirModalEditar(p)">
+                        <div class="goal-text">@p.Descripcion</div>
+                        <div class="goal-status">
+                            @if (p.Cumplido)
+                            {
+                                <i class="fas fa-trophy trophy-icon"></i>
+                            }
+                            else
+                            {
+                                <i class="far fa-circle circle-icon"></i>
+                            }
+                        </div>
                     </div>
-                </div>
-            }
-        </div>
-    }
+                }
+            </div>
+        }
+        
+        <div style="height: 40px;"></div>
+    </div>
 </div>
 
 @if (mostrarModal)
 {
-    <div class="modal-overlay">
-        <div class="modal-content custom-modal">
+    <div class="modal-overlay fade-in">
+        <div class="modal-content custom-modal slide-up">
             <div class="modal-header">
-                <h5 style="color:#F8C545; margin:0;">@(editandoID == 0 ? "NUEVA META" : "EDITAR META")</h5>
+                <h5 style="color:#F8C545; margin:0; font-family:'Oswald'">
+                    @(editandoID == 0 ? "NUEVA META" : "EDITAR META")
+                </h5>
                 <button class="btn-close-custom" @onclick="() => mostrarModal = false"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
                 <textarea @bind="textoProposito" class="form-control input-dark" rows="3" placeholder="Ej: Sacar mi primer Muscle Up..."></textarea>
                 @if (editandoID != 0)
                 {
-                    <small class="text-muted mt-2 d-block">Nota: No puedes borrar metas, solo editarlas.</small>
+                    <small class="text-muted mt-2 d-block" style="font-size:0.8rem;">
+                        <i class="fas fa-info-circle"></i> Nota: No puedes borrar metas, solo editarlas o cumplirlas.
+                    </small>
                 }
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" @onclick="() => mostrarModal = false">Cancelar</button>
-                <button class="btn btn-warning" @onclick="Guardar">GUARDAR</button>
+                <button class="btn-cancel" @onclick="() => mostrarModal = false">Cancelar</button>
+                <button class="btn-confirm" @onclick="Guardar">GUARDAR</button>
             </div>
         </div>
     </div>
@@ -84,183 +97,117 @@
         <h1>¡FELICIDADES!</h1>
         <p>Has cumplido tu propósito:</p>
         <div class="achieved-goal">"@nombreLogroReciente"</div>
-        <small>Toca para continuar</small>
+        <small class="tap-hint">Toca para continuar</small>
         
-        </div>
+        <div class="confetti"></div>
+        <div class="confetti"></div>
+        <div class="confetti"></div>
+    </div>
 }
 
 <style>
-    /* Estilos Generales */
-    .propositos-container { padding: 15px; background: #0d0d0d; min-height: 100vh; }
-    .chalkboard-header { 
-        background: #1a1a1a; padding: 20px; border-radius: 10px; border: 1px dashed #666; 
-        text-align: center; margin-bottom: 20px; 
+    /* --- ESTRUCTURA BASE --- */
+    .main-layout {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1;
     }
-    .chalkboard-header p { font-style: italic; color: #aaa; font-family: 'Roboto'; }
-    .btn-add-goal { 
-        background: #F8C545; color: black; border: none; padding: 10px 20px; 
-        border-radius: 30px; font-weight: bold; font-family: 'Oswald'; cursor: pointer; 
-        margin-top: 10px; box-shadow: 0 4px 10px rgba(248,197,69,0.3); 
+
+    .navbar-container {
+        flex-shrink: 0;
+        padding-top: calc(env(safe-area-inset-top) + 5px);
+        padding-bottom: 10px; padding-left: 20px; padding-right: 20px;
+        background-color: #0d0d0d; border-bottom: 1px solid #F8C545;
+        color: white; display: flex; justify-content: space-between; align-items: center;
+        z-index: 100; font-family: 'Oswald'; min-height: 60px;
     }
-    .empty-state {
-        text-align: center;
-        margin-top: 50px;
-        color: #cccccc; 
-        font-family: 'Roboto';
-        opacity: 0.8;
+
+    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
+    .nav-right { width: 60px; }
+
+    .scrollable-content {
+        flex-grow: 1; overflow-y: auto; padding: 20px;
+        display: flex; flex-direction: column; align-items: center;
+        -webkit-overflow-scrolling: touch; padding-bottom: 40px;
     }
+
+    /* --- ESTILOS PROPÓSITOS --- */
     
-    .empty-state i {
-        font-size: 4rem;
-        margin-bottom: 15px;
-        color: #444; 
+    .chalkboard-header { 
+        background: #1a1a1a; 
+        padding: 20px; 
+        border-radius: 10px; 
+        border: 1px dashed #666; 
+        text-align: center; 
+        margin-bottom: 25px; 
+        width: 100%;
+        max-width: 500px;
     }
-    .goals-list { display: flex; flex-direction: column; gap: 10px; }
+    .chalkboard-header p { font-style: italic; color: #aaa; font-family: 'Roboto'; margin-bottom: 15px; }
+    
+    .btn-add-goal { 
+        background: #F8C545; color: black; border: none; padding: 10px 25px; 
+        border-radius: 30px; font-weight: bold; font-family: 'Oswald'; 
+        cursor: pointer; box-shadow: 0 4px 10px rgba(248,197,69,0.3); 
+        transition: transform 0.2s;
+    }
+    .btn-add-goal:active { transform: scale(0.95); }
+
+    .goals-list { 
+        display: flex; flex-direction: column; gap: 12px; 
+        width: 100%; max-width: 500px;
+    }
     
     .goal-card { 
-        background: #1a1a1a; padding: 15px; border-radius: 10px; 
+        background: #1a1a1a; padding: 15px 20px; border-radius: 10px; 
         display: flex; justify-content: space-between; align-items: center;
-        border-left: 5px solid #666; transition: all 0.3s; cursor: pointer;
+        border-left: 5px solid #444; transition: all 0.2s; cursor: pointer;
+        border: 1px solid #333; /* Borde sutil alrededor */
+        border-left-width: 5px; /* Recuperamos el borde izquierdo grueso */
     }
+    .goal-card:active { transform: scale(0.98); background: #222; }
     
-    /* ESTILOS DE ESTADO */
     .goal-card.pending { border-left-color: #666; }
     .goal-card.completed { 
-        border-left-color: #FFD700; /* Dorado */
-        background: linear-gradient(90deg, #1a1a1a 0%, rgba(255, 215, 0, 0.1) 100%);
-        box-shadow: 0 0 15px rgba(255, 215, 0, 0.1);
+        border-left-color: #FFD700; 
+        background: linear-gradient(90deg, #1a1a1a 0%, rgba(255, 215, 0, 0.05) 100%);
+        border-color: #443300;
     }
 
-    .goal-text { color: white; font-family: 'Roboto'; font-size: 1rem; flex: 1; padding-right: 10px; }
+    .goal-text { color: white; font-family: 'Roboto'; font-size: 1rem; flex: 1; padding-right: 15px; line-height: 1.4; }
     .trophy-icon { color: #FFD700; font-size: 1.5rem; animation: popIn 0.5s; }
-    .circle-icon { color: #666; font-size: 1.2rem; }
+    .circle-icon { color: #666; font-size: 1.3rem; }
 
-    /* Modal */
-    .input-dark { background: #333 !important; color: white !important; border: 1px solid #F8C545; }
+    .empty-state { text-align: center; margin-top: 50px; color: #666; font-family: 'Roboto'; opacity: 0.8; }
+    .empty-state i { font-size: 4rem; margin-bottom: 15px; color: #333; }
+
+    /* --- MODALES --- */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 4000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
+    .custom-modal { background: #1a1a1a; width: 90%; max-width: 400px; border: 1px solid #F8C545; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+    .modal-header { background: #222; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+    .modal-body { padding: 20px; color: white; }
+    .modal-footer { padding: 15px; background: #222; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #333; }
     
-    /* ANIMACIÓN CELEBRACIÓN */
-    .celebration-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.9); z-index: 5000;
-        display: flex; flex-direction: column; justify-content: center; align-items: center;
-        color: white; text-align: center; animation: fadeIn 0.5s;
-    }
+    .btn-close-custom { background: none; border: none; color: white; font-size: 1.2rem; }
+    .btn-confirm { background: #F8C545; color: black; border: none; padding: 8px 20px; font-weight: bold; border-radius: 5px; }
+    .btn-cancel { background: #333; color: white; border: none; padding: 8px 20px; border-radius: 5px; }
+    .input-dark { background: #333 !important; color: white !important; border: 1px solid #555; }
+    .input-dark:focus { border-color: #F8C545; box-shadow: none; }
+
+    /* --- CELEBRACIÓN --- */
+    .celebration-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; }
     .trophy-animation { font-size: 5rem; margin-bottom: 20px; animation: bounce 1s infinite; }
     .celebration-overlay h1 { font-family: 'Oswald'; color: #F8C545; font-size: 2.5rem; margin-bottom: 10px; }
-    .achieved-goal { font-size: 1.5rem; font-style: italic; margin: 20px 0; color: white; border-bottom: 2px solid #F8C545; display: inline-block; padding-bottom: 5px; }
-    .modal-overlay {
-        position: fixed;
-        top: 0; 
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.85); /* Fondo oscuro transparente */
-        z-index: 4000; /* Encima de todo */
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        animation: fadeIn 0.2s;
-    }
+    .achieved-goal { font-size: 1.4rem; font-style: italic; margin: 20px 20px; color: white; border-bottom: 2px solid #F8C545; display: inline-block; padding-bottom: 5px; }
+    .tap-hint { opacity: 0.6; animation: pulse 2s infinite; }
 
-    .modal-content.custom-modal {
-        background: #1a1a1a;
-        width: 90%;
-        max-width: 400px;
-        border: 2px solid #F8C545; /* Borde amarillo */
-        border-radius: 12px;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 0 30px rgba(248, 197, 69, 0.2);
-    }
-
-    .modal-header {
-        background: #222;
-        padding: 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #333;
-    }
-
-    .modal-body {
-        padding: 20px;
-        color: white;
-    }
-
-    .modal-footer {
-        padding: 15px;
-        background: #222;
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-    }
-
-    .btn-close-custom {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 1.2rem;
-        cursor: pointer;
-    }
-
-    /* Botones del modal */
-    .btn-secondary {
-        background: #333;
-        color: white;
-        border: none;
-        padding: 8px 15px;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-    
-    .btn-warning {
-        background: #F8C545;
-        color: black;
-        border: none;
-        padding: 8px 15px;
-        border-radius: 5px;
-        font-weight: bold;
-        cursor: pointer;
-    }
-
-    .top-navbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 15px;
-        background: #1a1a1a; /* Fondo gris oscuro, no negro */
-        border-bottom: 2px solid #F8C545; /* Línea amarilla abajo */
-        color: white;
-        font-family: 'Oswald';
-        position: sticky;
-        top: 0;
-        z-index: 100;
-    }
-
-    .nav-left {
-        color: #F8C545; /* Texto amarillo para el botón volver */
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 1rem;
-    }
-
-    .nav-title {
-        font-size: 1.2rem;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-    }
-
-    .nav-right {
-        width: 70px; /* Espacio vacío para centrar el título */
-    }
-
-
+    .fade-in { animation: fadeIn 0.5s ease; }
+    .slide-up { animation: slideUp 0.3s ease; }
     @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     @@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
     @@keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+    @@keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
 </style>
 
 @code {
@@ -269,7 +216,7 @@
     private List<PropositoDto> misPropositos;
     private bool mostrarModal = false;
     private string textoProposito = "";
-    private int editandoID = 0; // 0 = Crear
+    private int editandoID = 0; 
 
     // Animación
     private bool mostrarAnimacionLogro = false;
@@ -278,6 +225,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
         await CargarPropositos();
     }
 
@@ -287,7 +235,7 @@
         {
             misPropositos = await Http.GetFromJsonAsync<List<PropositoDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/mis-propositos/{Sesion.Usuario.UsuarioID}");
             
-            // Detectar si hay un logro nuevo para mostrar animación
+            // Detectar si hay un logro nuevo
             var nuevoLogro = misPropositos.FirstOrDefault(p => p.EsNuevoLogro);
             if (nuevoLogro != null)
             {
@@ -302,8 +250,10 @@
     private async Task CerrarAnimacion()
     {
         mostrarAnimacionLogro = false;
-        // Marcar como visto en API para que no salga otra vez
-        await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/marcar-visto/{idLogroReciente}", null);
+        // Marcar como visto
+        try {
+            await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/marcar-visto/{idLogroReciente}", null);
+        } catch {}
     }
 
     private void AbrirModalCrear()
@@ -313,7 +263,7 @@
 
     private void AbrirModalEditar(PropositoDto p)
     {
-        if (p.Cumplido) return; // No editar si ya se cumplió (opcional)
+        if (p.Cumplido) return; // Opcional: Bloquear edición de cumplidos
         editandoID = p.PropositoID;
         textoProposito = p.Descripcion;
         mostrarModal = true;
@@ -323,21 +273,21 @@
     {
         if (string.IsNullOrWhiteSpace(textoProposito)) return;
 
-        if (editandoID == 0)
-        {
-            // CREAR
-            var req = new { UsuarioID = Sesion.Usuario.UsuarioID, Descripcion = textoProposito };
-            await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/crear", req);
-        }
-        else
-        {
-            // EDITAR
-            var req = new { PropositoID = editandoID, Descripcion = textoProposito };
-            await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/editar", req);
-        }
-        
-        mostrarModal = false;
-        await CargarPropositos();
+        try {
+            if (editandoID == 0)
+            {
+                var req = new { UsuarioID = Sesion.Usuario.UsuarioID, Descripcion = textoProposito };
+                await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/crear", req);
+            }
+            else
+            {
+                var req = new { PropositoID = editandoID, Descripcion = textoProposito };
+                await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/editar", req);
+            }
+            
+            mostrarModal = false;
+            await CargarPropositos();
+        } catch {}
     }
 
     private void Volver() => Nav.NavigateTo("/home");

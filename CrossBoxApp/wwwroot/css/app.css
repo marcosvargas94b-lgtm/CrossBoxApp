@@ -1,6 +1,81 @@
-﻿/*#if (SampleContent)*/
+﻿/* RESET TOTAL: Ocupar toda la pantalla sin bordes */
 html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100vw !important; /* Ancho de la ventana */
+    height: 100vh !important; /* Alto de la ventana */
+    overflow-x: hidden; /* Evita scroll lateral accidental */
+    background-color: #0d0d0d !important;
+}
+
+/* Si tenías estilos viejos de .content o .page, esto asegura que no estorben */
+app {
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* --- BARRA DE NAVEGACIÓN GLOBAL (FORZADA) --- */
+.top-navbar {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    /* --- CORRECCIÓN CRÍTICA DEL NOTCH --- */
+    /* Usamos !important para que NINGUNA página se resista */
+    padding-top: calc(env(safe-area-inset-top) + 15px) !important;
+    padding-bottom: 15px !important;
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+    /* ------------------------------------ */
+
+    background: #1a1a1a !important;
+    border-bottom: 2px solid #F8C545 !important;
+    color: white !important;
+    font-family: 'Oswald', sans-serif !important;
+    /* ASEGURAR QUE SE QUEDE PEGADA ARRIBA Y ENCIMA DE TODO */
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 9999 !important; /* Capa muy alta para que nada la tape */
+    width: 100% !important;
+    box-sizing: border-box !important; /* Evita que el padding ensanche la barra más del 100% */
+}
+
+/* Forzamos también los elementos internos para que no se descuadren */
+.nav-left {
+    color: #F8C545 !important;
+    font-weight: bold !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.nav-title {
+    position: absolute !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    font-size: 1.2rem !important;
+    font-weight: bold !important;
+    color: white !important;
+    text-transform: uppercase !important;
+}
+.text-warning {
+    color: #F8C545 !important;
+}
+
+.bg-dark-custom {
+    background-color: #1a1a1a;
+}
+
+/* Spinner centrado siempre */
+.spinner-centered {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50vh;
+    color: #F8C545;
 }
 
 a, .btn-link {

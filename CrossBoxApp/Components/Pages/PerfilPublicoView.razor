@@ -20,7 +20,16 @@
     else
     {
         <div class="hero-image-container">
-            <img src="@(perfil.FotoUrl ?? "imagenes/Rhino.png")" class="hero-image" />
+            @if (!string.IsNullOrEmpty(perfil.FotoUrl))
+            {
+                <img src="@perfil.FotoUrl" class="hero-image" />
+            }
+            else
+            {
+                <div class="hero-initial-placeholder">
+                    @(perfil.NombreCompleto?.Substring(0, 1).ToUpper() ?? "A")
+                </div>
+            }
         </div>
 
         <div class="info-section">
@@ -242,6 +251,22 @@
         text-transform: uppercase;
         font-weight: 900; /* Muy negrita */
         letter-spacing: 1px;
+    }
+
+    .hero-initial-placeholder {
+        width: 100%;
+        height: 100%;
+        background-color: #222; /* Fondo gris oscuro */
+        color: #F8C545; /* Letra Amarilla */
+        /* CENTRADO PERFECTO */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        /* LETRA GIGANTE */
+        font-family: 'Oswald';
+        font-size: 8rem; /* Letra muy grande para que llene el espacio */
+        font-weight: bold;
+        text-shadow: 0 0 20px rgba(248, 197, 69, 0.3); /* Un brillito */
     }
 </style>
 

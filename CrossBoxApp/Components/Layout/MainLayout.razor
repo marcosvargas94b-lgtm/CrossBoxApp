@@ -1,7 +1,27 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@implements IDisposable
 
-<div class="page">
-    <main>
+<div style="width: 100%; min-height: 100vh; margin: 0; padding: 0;">
+    <main style="margin: 0; padding: 0;">
         @Body
     </main>
 </div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += AlCambiarDePagina;
+    }
+
+    private async void AlCambiarDePagina(object sender, LocationChangedEventArgs e)
+    {
+        try { await JS.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= AlCambiarDePagina;
+    }
+}

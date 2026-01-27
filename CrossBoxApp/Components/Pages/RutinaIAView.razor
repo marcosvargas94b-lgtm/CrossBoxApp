@@ -7,134 +7,151 @@
 @inject HttpClient Http
 @inject SesionService Sesion
 
-<div class="navbar-container">
-    <div class="left-action" @onclick='() => Nav.NavigateTo("/home")'>
-        <i class="fas fa-arrow-left"></i>
+<div class="main-layout">
+
+    <div class="navbar-container">
+        <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
+            <i class="fas fa-arrow-left"></i> VOLVER
+        </div>
+        <div class="nav-title">COACH IA PRO</div>
+        <div class="nav-right"></div>
     </div>
-    <div class="brand">COACH IA PRO</div>
-    <div class="right-actions"></div>
-</div>
 
-<div class="rutina-container">
+    <div class="scrollable-content">
 
-    @if (cargandoInicial)
-    {
-        <div class="loading-screen text-center mt-5">
-            <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;"></div>
-            <p class="mt-3" style="color:#aaa; font-family:'Oswald'; letter-spacing:1px;">CONECTANDO CON TU COACH...</p>
-        </div>
-    }
-    else if (rutinaGenerada == null)
-    {
-        <div class="welcome-section fade-in">
-            <h1>PLANIFICACIÓN INTELIGENTE</h1>
-            <p style="text-align:center; color:#ccc;">Diseñaré tu próximo ciclo basado en tus objetivos y tu historial previo.</p>
-        </div>
-
-        <div class="form-card fade-in">
-            <label class="form-label">Nivel de Experiencia</label>
-            <select class="form-control input-dark mb-3" @bind="perfil.Nivel">
-                <option value="Principiante">Principiante (Adaptación)</option>
-                <option value="Intermedio">Intermedio (Carga Progresiva)</option>
-                <option value="Avanzado">Avanzado (Especialización)</option>
-            </select>
-
-            <label class="form-label">Objetivo Principal</label>
-            <select class="form-control input-dark mb-3" @bind="perfil.Objetivo">
-                <option value="Hipertrofia">Hipertrofia (Ganar Músculo)</option>
-                <option value="Fuerza">Fuerza Máxima</option>
-                <option value="Resistencia">Resistencia / Quema de Grasa</option>
-            </select>
-
-            <label class="form-label">Días por Semana: <span style="color:#F8C545">@perfil.DiasPorSemana</span></label>
-            <div class="range-container mb-3">
-                <input type="range" class="form-range w-100" min="2" max="6" step="1" @bind="perfil.DiasPorSemana" />
-                <div class="d-flex justify-content-between small text-muted"><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span></div>
+        @if (cargandoInicial)
+        {
+            <div class="loading-screen text-center mt-5">
+                <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;"></div>
+                <p class="mt-3" style="color:#aaa; font-family:'Oswald'; letter-spacing:1px;">CONECTANDO CON TU COACH...</p>
+            </div>
+        }
+        else if (rutinaGenerada == null)
+        {
+            <div class="welcome-section fade-in">
+                <h1 style="color: #F8C545; font-family: 'Oswald'; text-align: center;">PLANIFICACIÓN INTELIGENTE</h1>
+                <p style="text-align:center; color:#ccc; font-size: 0.9rem;">Diseñaré tu próximo ciclo basado en tus objetivos y tu historial previo.</p>
             </div>
 
-            <label class="form-label">Equipo Disponible</label>
-            <select class="form-control input-dark mb-3" @bind="perfil.Equipo">
-                <option value="Gym Comercial Completo">Gym Completo</option>
-                <option value="Mancuernas y Banco">Solo Mancuernas y Banco</option>
-                <option value="Peso Corporal">Solo Peso Corporal</option>
-            </select>
+            <div class="form-card fade-in">
+                <label class="form-label">Nivel de Experiencia</label>
+                <select class="form-control input-dark mb-3" @bind="perfil.Nivel">
+                    <option value="Principiante">Principiante (Adaptación)</option>
+                    <option value="Intermedio">Intermedio (Carga Progresiva)</option>
+                    <option value="Avanzado">Avanzado (Especialización)</option>
+                </select>
 
-            <label class="form-label">Lesiones o Molestias</label>
-            <input type="text" @bind="perfil.Lesiones" class="form-control input-dark mb-4" placeholder="Ej: Dolor lumbar, rodilla..." />
+                <label class="form-label">Objetivo Principal</label>
+                <select class="form-control input-dark mb-3" @bind="perfil.Objetivo">
+                    <option value="Hipertrofia">Hipertrofia (Ganar Músculo)</option>
+                    <option value="Fuerza">Fuerza Máxima</option>
+                    <option value="Resistencia">Resistencia / Quema de Grasa</option>
+                </select>
 
-            <button class="btn-confirm w-100 py-3" @onclick="GenerarRutina" disabled="@generando">
-                @if (generando) { <span><i class="fas fa-brain fa-spin"></i> ANALIZANDO DATOS...</span> }
-                else { <span><i class="fas fa-bolt"></i> GENERAR PLAN</span> }
-            </button>
-            
-            @if (!string.IsNullOrEmpty(errorMensaje)) { <div class="alert alert-danger mt-3">@errorMensaje</div> }
-        </div>
-    }
-    else
-    {
-        <div class="rutina-view fade-in">
-            <div class="header-rutina">
-                <h2 style="font-size: 1.4rem;">@rutinaGenerada.NombreRutina</h2>
-                <div class="badge-obj">@rutinaGenerada.Explicacion</div>
+                <label class="form-label">Días por Semana: <span style="color:#F8C545">@perfil.DiasPorSemana</span></label>
+                <div class="range-container mb-3">
+                    <input type="range" class="form-range w-100" min="2" max="6" step="1" @bind="perfil.DiasPorSemana" />
+                    <div class="d-flex justify-content-between small text-muted"><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span></div>
+                </div>
+
+                <label class="form-label">Equipo Disponible</label>
+                <select class="form-control input-dark mb-3" @bind="perfil.Equipo">
+                    <option value="Gym Comercial Completo">Gym Completo</option>
+                    <option value="Mancuernas y Banco">Solo Mancuernas y Banco</option>
+                    <option value="Peso Corporal">Solo Peso Corporal</option>
+                </select>
+
+                <label class="form-label">Lesiones o Molestias</label>
+                <input type="text" @bind="perfil.Lesiones" class="form-control input-dark mb-4" placeholder="Ej: Dolor lumbar, rodilla..." />
+
+                <button class="btn-confirm w-100 py-3" @onclick="GenerarRutina" disabled="@generando">
+                    @if (generando) { <span><i class="fas fa-brain fa-spin"></i> ANALIZANDO DATOS...</span> }
+                    else { <span><i class="fas fa-bolt"></i> GENERAR PLAN</span> }
+                </button>
                 
-                <div class="progress-container mt-3">
-                    <div class="d-flex justify-content-between text-muted small mb-1">
-                        <span>Progreso del Mesociclo</span>
-                        <span>@diasCompletados.Count / @(rutinaGenerada.Semanas.Count * perfil.DiasPorSemana) Sesiones</span>
-                    </div>
-                    <div class="progress" style="height: 6px; background-color: #333;">
-                        <div class="progress-bar bg-warning" role="progressbar" style="width: @(CalcularPorcentaje())%"></div>
+                @if (!string.IsNullOrEmpty(errorMensaje)) { <div class="alert alert-danger mt-3">@errorMensaje</div> }
+            </div>
+        }
+        else
+        {
+            <div class="rutina-view fade-in">
+                <div class="header-rutina">
+                    <h2 style="font-size: 1.4rem; color: white; font-family: 'Oswald'; margin-bottom: 5px;">@rutinaGenerada.NombreRutina</h2>
+                    <div class="badge-obj">@rutinaGenerada.Explicacion</div>
+                    
+                    <div class="progress-container mt-3">
+                        <div class="d-flex justify-content-between text-muted small mb-1">
+                            <span>Progreso del Mesociclo</span>
+                            <span>@diasCompletados.Count / @(rutinaGenerada.Semanas.Count * perfil.DiasPorSemana) Sesiones</span>
+                        </div>
+                        <div class="progress" style="height: 6px; background-color: #333;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: @(CalcularPorcentaje())%"></div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="week-tabs">
-                @foreach (var sem in rutinaGenerada.Semanas)
-                {
-                    <button class="tab-btn @(semanaActiva == sem.NumeroSemana ? "active" : "")" @onclick="() => semanaActiva = sem.NumeroSemana">
-                        SEM @sem.NumeroSemana
-                    </button>
-                }
-            </div>
-
-            <div class="info-semana">
-                <i class="fas fa-crosshairs text-warning"></i> <strong>Enfoque:</strong> @GetSemanaActual().Enfoque
-            </div>
-
-            @foreach (var dia in GetSemanaActual().Dias)
-            {
-                string claveDia = $"{semanaActiva}-{dia.Dia}";
-                bool completado = diasCompletados.Contains(claveDia);
-
-                <div class="day-card @(completado ? "border-success" : "")">
-                    <div class="day-header @(completado ? "bg-success-dim" : "")">
-                        <div><span class="day-title">@dia.Dia.ToUpper()</span><span class="muscle-tag"> // @dia.GrupoMuscular</span></div>
-                        @if(completado) { <span class="badge bg-success"><i class="fas fa-check"></i> HECHO</span> }
-                    </div>
-                    <div class="exercises-list @(completado ? "opacity-50" : "")">
-                        @foreach (var ej in dia.Ejercicios)
+                <div class="week-tabs-container">
+                    <div class="week-tabs">
+                        @foreach (var sem in rutinaGenerada.Semanas)
                         {
-                            <div class="ex-row">
-                                <div class="ex-info"><div class="ex-name">@ej.NombreEspanol</div><div class="ex-notes">@ej.NotaTecnica</div></div>
-                                <div class="ex-meta"><div class="meta-box"><span class="meta-val">@ej.Series</span><span class="meta-label">SETS</span></div><div class="meta-box"><span class="meta-val">@ej.Repeticiones</span><span class="meta-label">REPS</span></div></div>
-                            </div>
+                            <button class="tab-btn @(semanaActiva == sem.NumeroSemana ? "active" : "")" @onclick="() => semanaActiva = sem.NumeroSemana">
+                                SEM @sem.NumeroSemana
+                            </button>
                         }
                     </div>
-                    <div class="day-footer">
-                        @if (completado) { <button class="btn-feedback disabled-btn" disabled>ENTRENAMIENTO GUARDADO</button> }
-                        else { <button class="btn-feedback" @onclick="() => AbrirFeedback(dia.Dia)"><i class="fas fa-clipboard-check"></i> REGISTRAR SESIÓN</button> }
-                    </div>
                 </div>
-            }
 
-            <div class="footer-actions mt-4">
-                <button class="btn-finalize" @onclick="IniciarProcesoCierre" disabled="@cargandoResumen">
-                    @if(cargandoResumen) { <span><i class="fas fa-spinner fa-spin"></i> ANALIZANDO TU MES...</span> }
-                    else { <span><i class="fas fa-flag-checkered"></i> FINALIZAR MESOCICLO</span> }
-                </button>
+                <div class="info-semana">
+                    <i class="fas fa-crosshairs text-warning"></i> 
+                    <span><strong>Enfoque:</strong> @GetSemanaActual().Enfoque</span>
+                </div>
+
+                @foreach (var dia in GetSemanaActual().Dias)
+                {
+                    string claveDia = $"{semanaActiva}-{dia.Dia}";
+                    bool completado = diasCompletados.Contains(claveDia);
+
+                    <div class="day-card @(completado ? "border-success" : "")">
+                        <div class="day-header @(completado ? "bg-success-dim" : "")">
+                            <div>
+                                <span class="day-title">@dia.Dia.ToUpper()</span>
+                                <span class="muscle-tag"> // @dia.GrupoMuscular</span>
+                            </div>
+                            @if(completado) { <span class="badge bg-success"><i class="fas fa-check"></i> HECHO</span> }
+                        </div>
+                        <div class="exercises-list @(completado ? "opacity-50" : "")">
+                            @foreach (var ej in dia.Ejercicios)
+                            {
+                                <div class="ex-row">
+                                    <div class="ex-info">
+                                        <div class="ex-name">@ej.NombreEspanol</div>
+                                        <div class="ex-notes">@ej.NotaTecnica</div>
+                                    </div>
+                                    <div class="ex-meta">
+                                        <div class="meta-box"><span class="meta-val">@ej.Series</span><span class="meta-label">SETS</span></div>
+                                        <div class="meta-box"><span class="meta-val">@ej.Repeticiones</span><span class="meta-label">REPS</span></div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="day-footer">
+                            @if (completado) { <button class="btn-feedback disabled-btn" disabled>ENTRENAMIENTO GUARDADO</button> }
+                            else { <button class="btn-feedback" @onclick="() => AbrirFeedback(dia.Dia)"><i class="fas fa-clipboard-check"></i> REGISTRAR SESIÓN</button> }
+                        </div>
+                    </div>
+                }
+
+                <div class="footer-actions mt-4">
+                    <button class="btn-finalize" @onclick="IniciarProcesoCierre" disabled="@cargandoResumen">
+                        @if(cargandoResumen) { <span><i class="fas fa-spinner fa-spin"></i> ANALIZANDO TU MES...</span> }
+                        else { <span><i class="fas fa-flag-checkered"></i> FINALIZAR MESOCICLO</span> }
+                    </button>
+                </div>
             </div>
-        </div>
-    }
+        }
+        
+        <div style="height: 60px;"></div>
+    </div>
 </div>
 
 @if (mostrarFeedback)
@@ -142,11 +159,13 @@
     <div class="modal-overlay fade-in">
         <div class="modal-content custom-modal slide-up">
             <h4 class="text-warning text-center mb-3" style="font-family:'Oswald'">REPORTE: @diaFeedback</h4>
+            
             <label class="form-label">Nivel de Cansancio (1-10)</label>
             <div class="d-flex align-items-center gap-2 mb-3">
                 <input type="range" class="form-range flex-grow-1" min="1" max="10" @bind="inputCansancio" />
                 <span class="badge bg-warning text-dark" style="font-size:1rem; width:40px;">@inputCansancio</span>
             </div>
+            
             <label class="form-label">Sensación / Dolor</label>
             <select @bind="inputDolor" class="form-control input-dark mb-3">
                 <option value="Sin Dolor">Todo bien / Fuerte 💪</option>
@@ -154,8 +173,10 @@
                 <option value="Dolor Articular">Dolor articular 😫</option>
                 <option value="Agotado">Muy agotado 😴</option>
             </select>
+            
             <label class="form-label">Comentarios</label>
-            <textarea @bind="inputComentarios" class="form-control input-dark mb-3" rows="3" placeholder="Ej: Me costó la última serie de sentadilla. El press banca se sintió ligero."></textarea>
+            <textarea @bind="inputComentarios" class="form-control input-dark mb-3" rows="3" placeholder="Ej: Me costó la última serie..."></textarea>
+            
             <div class="d-flex gap-2">
                 <button class="btn btn-secondary flex-fill" @onclick="() => mostrarFeedback = false">Cancelar</button>
                 <button class="btn btn-warning flex-fill fw-bold" @onclick="GuardarFeedback">GUARDAR DATOS</button>
@@ -183,10 +204,84 @@
 }
 
 <style>
-    /* Agrega estos estilos a los que ya tenías */
+    /* --- ESTRUCTURA BASE --- */
+    .main-layout {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1;
+    }
+
+    .navbar-container {
+        flex-shrink: 0;
+        padding-top: calc(env(safe-area-inset-top) + 5px);
+        padding-bottom: 10px; padding-left: 20px; padding-right: 20px;
+        background-color: #0d0d0d; border-bottom: 1px solid #F8C545;
+        color: white; display: flex; justify-content: space-between; align-items: center;
+        z-index: 100; font-family: 'Oswald'; min-height: 60px;
+    }
+
+    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
+    .nav-right { width: 60px; }
+
+    .scrollable-content {
+        flex-grow: 1; overflow-y: auto; padding: 20px;
+        display: flex; flex-direction: column; -webkit-overflow-scrolling: touch; padding-bottom: 40px;
+    }
+
+    /* --- ESTILOS ESPECÍFICOS RUTINA IA --- */
+    
+    .form-card { background: #1a1a1a; padding: 20px; border-radius: 10px; border: 1px solid #333; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 100%; max-width: 600px; align-self: center; }
+    .input-dark { background: #333 !important; border: 1px solid #555; color: white !important; margin-bottom: 15px; }
+    .form-label { color: #F8C545; font-size: 0.9rem; font-weight: bold; margin-bottom: 5px; display:block; }
+    
+    .btn-confirm { background: linear-gradient(45deg, #F8C545, #e0a800); border: none; padding: 15px; font-weight: bold; border-radius: 8px; width: 100%; color: black; font-family: 'Oswald'; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
+    
+    .header-rutina { text-align: center; margin-bottom: 20px; width: 100%; max-width: 600px; align-self: center; }
+    .badge-obj { display: inline-block; background: #222; color: #aaa; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; margin-top: 5px; border: 1px solid #444; }
+
+    /* Tabs Horizontales */
+    .week-tabs-container { width: 100vw; margin-left: -20px; padding: 0 20px; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 15px; }
+    .week-tabs { display: flex; gap: 8px; padding-bottom: 5px; min-width: max-content; }
+    .tab-btn { background: #222; border: 1px solid #333; color: #aaa; padding: 10px 15px; border-radius: 8px; white-space: nowrap; font-family: 'Oswald'; flex-shrink: 0; }
+    .tab-btn.active { background: #F8C545; color: black; border-color: #F8C545; font-weight: bold; }
+
+    .info-semana { width: 100%; max-width: 600px; align-self: center; background: rgba(248,197,69,0.1); border-left: 3px solid #F8C545; padding: 12px; font-size: 0.9rem; margin-bottom: 20px; border-radius: 4px; color: #ddd; display: flex; align-items: center; gap: 10px; }
+
+    /* Day Card */
+    .day-card { width: 100%; max-width: 600px; align-self: center; background: #1a1a1a; border-radius: 12px; border: 1px solid #333; margin-bottom: 20px; overflow: hidden; }
+    .day-header { background: #222; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; color: #F8C545; font-family: 'Oswald'; border-bottom: 1px solid #2a2a2a; }
+    .day-title { font-size: 1.1rem; }
+    .muscle-tag { color: #888; font-size: 0.8rem; margin-left: 5px; font-family: 'Roboto'; }
+    
+    .border-success { border: 1px solid #28a745 !important; }
+    .bg-success-dim { background: rgba(40, 167, 69, 0.15) !important; color: #28a745 !important; }
+    .opacity-50 { opacity: 0.6; pointer-events: none; }
+
+    /* Exercises */
+    .ex-row { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #252525; align-items: center; }
+    .ex-info { flex: 1; margin-right: 10px; }
+    .ex-name { font-weight: bold; font-size: 1rem; color: #eee; }
+    .ex-notes { font-size: 0.75rem; color: #888; }
+    .meta-box { background: #2a2a2a; padding: 4px 10px; border-radius: 6px; text-align: center; margin-left: 8px; border: 1px solid #444; min-width: 50px; }
+    .meta-val { font-weight: bold; color: #F8C545; display: block; font-size: 1rem; font-family: 'Oswald'; line-height: 1; }
+    .meta-label { font-size: 0.6rem; color: #aaa; display: block; text-transform: uppercase; }
+
+    .day-footer { padding: 12px; text-align: center; background: #1a1a1a; border-top: 1px solid #252525; }
+    .btn-feedback { background: transparent; border: 1px solid #555; color: #ddd; padding: 10px; border-radius: 25px; font-size: 0.85rem; width: 100%; font-weight: bold; transition: 0.2s; }
+    .btn-feedback:active { background: #333; }
+    .disabled-btn { background: #1a1a1a !important; color: #28a745 !important; border: 1px solid #28a745 !important; cursor: default !important; opacity: 1; }
+
+    .btn-finalize { width: 100%; max-width: 600px; align-self: center; background: #dc3545; color: white; border: none; padding: 15px; font-weight: bold; border-radius: 10px; font-family: 'Oswald'; margin-top: 20px; font-size: 1.1rem; letter-spacing: 1px; }
+
+    /* Modales */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+    .custom-modal { background: #1a1a1a; width: 90%; max-width: 350px; padding: 25px; border-radius: 15px; border: 1px solid #F8C545; box-shadow: 0 0 30px rgba(248,197,69,0.3); }
+    
+    /* Score Circle */
     .score-circle { width: 80px; height: 80px; border-radius: 50%; border: 4px solid #F8C545; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto; background: rgba(248, 197, 69, 0.1); }
     .score-circle span { font-size: 1.8rem; font-weight: bold; color: white; line-height: 1; }
     .score-circle small { font-size: 0.6rem; color: #aaa; }
+    
     .analysis-item { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-start; }
     .analysis-item i { font-size: 1.2rem; margin-top: 3px; }
     .analysis-item strong { display: block; color: white; font-size: 0.95rem; }
@@ -194,35 +289,7 @@
     .highlight-box { background: #F8C545; padding: 15px; border-radius: 8px; color: black !important; }
     .highlight-box strong { color: black; text-transform: uppercase; font-family: 'Oswald'; }
     .highlight-box p { color: #222; font-weight: 500; }
-    /* Estilos base previos se mantienen */
-    .navbar-container { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; font-family: 'Oswald'; position: sticky; top: 0; z-index: 100; }
-    .rutina-container { background: #0d0d0d; min-height: 100vh; padding: 20px; padding-bottom: 100px; color: white; font-family: 'Roboto'; }
-    .form-card { background: #1a1a1a; padding: 20px; border-radius: 10px; border: 1px solid #333; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-    .input-dark { background: #333 !important; border: 1px solid #555; color: white !important; margin-bottom: 15px; }
-    .form-label { color: #F8C545; font-size: 0.9rem; font-weight: bold; margin-bottom: 5px; display:block; }
-    .btn-confirm { background: linear-gradient(45deg, #F8C545, #e0a800); border: none; padding: 15px; font-weight: bold; border-radius: 8px; width: 100%; color: black; font-family: 'Oswald'; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
-    .header-rutina { text-align: center; margin-bottom: 20px; }
-    .week-tabs { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 15px; padding-bottom: 5px; }
-    .tab-btn { flex: 1; background: #222; border: 1px solid #333; color: #aaa; padding: 10px; border-radius: 8px; white-space: nowrap; font-family: 'Oswald'; }
-    .tab-btn.active { background: #F8C545; color: black; border-color: #F8C545; font-weight: bold; }
-    .info-semana { background: rgba(248,197,69,0.1); border-left: 3px solid #F8C545; padding: 12px; font-size: 0.9rem; margin-bottom: 20px; border-radius: 4px; color: #ddd; display: flex; align-items: center; gap: 10px; }
-    .day-card { background: #161616; border-radius: 12px; border: 1px solid #333; margin-bottom: 20px; overflow: hidden; }
-    .day-header { background: #222; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; color: #F8C545; font-family: 'Oswald'; border-bottom: 1px solid #2a2a2a; }
-    .border-success { border: 1px solid #28a745 !important; }
-    .bg-success-dim { background: rgba(40, 167, 69, 0.15) !important; color: #28a745 !important; }
-    .opacity-50 { opacity: 0.6; pointer-events: none; }
-    .disabled-btn { background: #1a1a1a !important; color: #28a745 !important; border: 1px solid #28a745 !important; cursor: default !important; width: 100%; padding: 10px; font-weight: bold; font-family: 'Oswald'; text-transform: uppercase; }
-    .ex-row { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #252525; align-items: center; }
-    .ex-name { font-weight: bold; font-size: 1rem; color: #eee; }
-    .ex-notes { font-size: 0.75rem; color: #888; }
-    .meta-box { background: #2a2a2a; padding: 4px 10px; border-radius: 6px; text-align: center; margin-left: 8px; border: 1px solid #444; min-width: 50px; }
-    .meta-val { font-weight: bold; color: #F8C545; display: block; font-size: 1rem; font-family: 'Oswald'; line-height: 1; }
-    .meta-label { font-size: 0.6rem; color: #aaa; display: block; text-transform: uppercase; }
-    .day-footer { padding: 12px; text-align: center; background: #1a1a1a; border-top: 1px solid #252525; }
-    .btn-feedback { background: transparent; border: 1px solid #555; color: #ddd; padding: 10px; border-radius: 25px; font-size: 0.85rem; width: 100%; font-weight: bold; }
-    .btn-finalize { width: 100%; background: #dc3545; color: white; border: none; padding: 15px; font-weight: bold; border-radius: 10px; font-family: 'Oswald'; margin-top: 20px; font-size: 1.1rem; letter-spacing: 1px; }
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-    .custom-modal { background: #1a1a1a; width: 90%; max-width: 350px; padding: 25px; border-radius: 15px; border: 1px solid #F8C545; box-shadow: 0 0 30px rgba(248,197,69,0.3); }
+
     .fade-in { animation: fadeIn 0.5s ease; }
     .slide-up { animation: slideUp 0.4s ease; }
     @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -285,47 +352,43 @@
 
     private void AbrirFeedback(string dia) { diaFeedback = dia; inputCansancio = 7; inputDolor = "Sin Dolor"; inputComentarios = ""; mostrarFeedback = true; }
 
-  private async Task GuardarFeedback()
-{
-    if (rutinaGenerada == null) return;
-    
-    // Clave consistente: Sem 1, Dia Lunes -> "1-Lunes"
-    string claveDia = $"{semanaActiva}-{diaFeedback}";
-
-    var datos = new 
-    { 
-        RutinaID = rutinaGenerada.IdBaseDatos, // <--- Verifica que esto no sea Guid.Empty
-      
-        DiaSemana = claveDia, 
-        NivelCansancio = inputCansancio, 
-        DolorLesion = inputDolor, 
-        Comentarios = inputComentarios 
-    };
-
-    try 
+    private async Task GuardarFeedback()
     {
-        var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/IAEntrenador/feedback", datos);
+        if (rutinaGenerada == null) return;
         
-        if (response.IsSuccessStatusCode)
-        {
-            diasCompletados.Add(claveDia); // Pintar verde
-            mostrarFeedback = false;
-            await App.Current.MainPage.DisplayAlert("¡Guardado!", "Progreso registrado.", "OK");
-        }
-        else 
-        {
-            // Si falla, mostramos el error real del servidor
-            var error = await response.Content.ReadAsStringAsync();
-            await App.Current.MainPage.DisplayAlert("Error Servidor", error, "OK");
-        }
-    } 
-    catch (Exception ex) 
-    { 
-        await App.Current.MainPage.DisplayAlert("Error Conexión", ex.Message, "OK"); 
-    }
-}
+        string claveDia = $"{semanaActiva}-{diaFeedback}";
 
-    // --- LÓGICA DE CIERRE Y CONTINUIDAD ---
+        var datos = new 
+        { 
+            RutinaID = rutinaGenerada.IdBaseDatos, 
+            DiaSemana = claveDia, 
+            NivelCansancio = inputCansancio, 
+            DolorLesion = inputDolor, 
+            Comentarios = inputComentarios 
+        };
+
+        try 
+        {
+            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/IAEntrenador/feedback", datos);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                diasCompletados.Add(claveDia);
+                mostrarFeedback = false;
+                await App.Current.MainPage.DisplayAlert("¡Guardado!", "Progreso registrado.", "OK");
+            }
+            else 
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                await App.Current.MainPage.DisplayAlert("Error Servidor", error, "OK");
+            }
+        } 
+        catch (Exception ex) 
+        { 
+            await App.Current.MainPage.DisplayAlert("Error Conexión", ex.Message, "OK"); 
+        }
+    }
+
     private async Task IniciarProcesoCierre()
     {
         cargandoResumen = true;
@@ -333,7 +396,7 @@
             var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/IAEntrenador/resumen-cierre/{rutinaGenerada.IdBaseDatos}");
             if (response.IsSuccessStatusCode) {
                 resumenCierre = await response.Content.ReadFromJsonAsync<ResumenCierreDto>();
-                mostrandoResumen = true; // ABRE EL MODAL CON EL REPORTE
+                mostrandoResumen = true; 
             } else { await App.Current.MainPage.DisplayAlert("Error", "No se pudo generar el análisis.", "OK"); }
         } catch { await App.Current.MainPage.DisplayAlert("Error", "Error de conexión.", "OK"); }
         finally { cargandoResumen = false; }
@@ -341,7 +404,7 @@
 
     private async Task MostrarOpcionesContinuidad()
     {
-        mostrandoResumen = false; // Cierra el modal del reporte
+        mostrandoResumen = false; 
         
         string accion = await App.Current.MainPage.DisplayActionSheet(
             "¿Qué deseas hacer ahora?", "Cancelar", null, 
@@ -351,7 +414,7 @@
         if (accion == "Generar Siguiente Nivel (Mantiene Historial)")
         {
             await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/IAEntrenador/finalizar/{Sesion.Usuario.UsuarioID}", null);
-            rutinaGenerada = null; // Muestra formulario para generar el nuevo plan
+            rutinaGenerada = null;
         }
         else if (accion == "Reiniciar Historial (Empezar de Cero)")
         {
