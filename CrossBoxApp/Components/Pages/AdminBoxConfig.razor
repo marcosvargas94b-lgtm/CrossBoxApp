@@ -3,6 +3,7 @@
 @inject HttpClient Http
 @inject NavigationManager Nav
 @inject CrossBoxApp.Models.Services.SesionService Sesion
+@implements IDisposable
 
 <div class="config-page fade-in">
     <button class="btn-back" @onclick='() => Nav.NavigateTo("/home")'>
@@ -143,26 +144,59 @@
 </style>
 
 @code {
-    private int tabActiva = 1; 
+    private int tabActiva = 1;
     private bool guardando = false;
-    
+
     // Objeto principal para almacenar los datos
     private BoxConfigDTO datosBox = new BoxConfigDTO();
 
     // --- DATOS MERCADO PAGO ---
-    private string appId = "3844219986795201"; 
-    private string redirectUri = "https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/marketplace/oauth/callback"; 
+    private string appId = "3844219986795201";
+    private string redirectUri = "https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/marketplace/oauth/callback";
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        await CargarDatos();
+        // 2. NOS SUSCRIBIMOS AL EVENTO "RESUMING" (CUANDO LA APP VUELVE A PRIMER PLANO)
+        if (Application.Current != null)
+        {
+            Application.Current.Resuming += AlVolverAlaApp;
+        }
+
+        // Carga inicial normal
+        _ = CargarDatos();
+    }
+
+    // 3. ESTA ES LA FUNCIÓN MÁGICA QUE RECARGA AUTOMÁTICAMENTE
+    private void AlVolverAlaApp(object? sender, EventArgs e)
+    {
+        // Ejecutamos esto en el hilo de Blazor
+        InvokeAsync(async () =>
+        {
+            // Le damos un segundito de respiro para asegurarnos de que
+            // el backend ya haya procesado la respuesta de Mercado Pago
+            await Task.Delay(1500);
+
+            Console.WriteLine("🔄 Volviendo a la app... Recargando estado MP.");
+            await CargarDatos();
+
+            // Forzamos el renderizado para que cambie de Rojo a Verde
+            StateHasChanged();
+        });
+    }
+
+    // 4. LIMPIEZA OBLIGATORIA
+    public void Dispose()
+    {
+        if (Application.Current != null)
+        {
+            Application.Current.Resuming -= AlVolverAlaApp;
+        }
     }
 
     private async Task CargarDatos()
     {
         try
         {
-            // Llamamos a la API para obtener precios y estado de MP
             var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
             if (response.IsSuccessStatusCode)
             {
@@ -172,7 +206,8 @@
         }
         catch (Exception ex)
         {
-            await App.Current.MainPage.DisplayAlert("Error", "No se pudo cargar la configuración: " + ex.Message, "OK");
+            // Opcional: Loguear error silencioso al recargar
+            Console.WriteLine("Error cargando config: " + ex.Message);
         }
     }
 
@@ -181,14 +216,14 @@
         guardando = true;
         try
         {
-            datosBox.BoxID = Sesion.Usuario.BoxID; // Aseguramos el ID
+            datosBox.BoxID = Sesion.Usuario.BoxID;
             var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/boxesAPI/actualizar-precios", datosBox);
 
             if (response.IsSuccessStatusCode)
             {
                 await App.Current.MainPage.DisplayAlert("¡Éxito!", "Precios actualizados correctamente.", "OK");
             }
-            else 
+            else
             {
                 await App.Current.MainPage.DisplayAlert("Error", "No se pudieron guardar los cambios.", "OK");
             }
@@ -204,37 +239,39 @@
     }
 
     private async Task DesvincularCuenta()
-{
-    bool confirmar = await App.Current.MainPage.DisplayAlert("¿Desconectar?", 
-        "Si te desconectas, tus atletas ya no podrán pagarte en la App hasta que te vincules de nuevo.", 
-        "Sí, desconectar", "Cancelar");
-
-    if (confirmar)
     {
-        try
+        bool confirmar = await App.Current.MainPage.DisplayAlert("¿Desconectar?",
+            "Si te desconectas, tus atletas ya no podrán pagarte en la App hasta que te vincules de nuevo.",
+            "Sí, desconectar", "Cancelar");
+
+        if (confirmar)
         {
-            var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/boxesAPI/desvincular/{Sesion.Usuario.BoxID}", null);
-            
-            if (response.IsSuccessStatusCode)
+            try
             {
-                await CargarDatos(); // Recargamos para que salga el botón azul
+                var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/boxesAPI/desvincular/{Sesion.Usuario.BoxID}", null);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await CargarDatos(); // Recargamos para que salga el botón azul
+                }
+                else
+                {
+                    await App.Current.MainPage.DisplayAlert("Error", "No se pudo desconectar.", "OK");
+                }
             }
-            else
+            catch (Exception ex)
             {
-                await App.Current.MainPage.DisplayAlert("Error", "No se pudo desconectar.", "OK");
+                await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
             }
-        }
-        catch (Exception ex)
-        {
-            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
         }
     }
-}
 
     private async Task VincularMercadoPago()
     {
         string url = $"https://auth.mercadopago.com.mx/authorization?client_id={appId}&response_type=code&platform_id=mp&state={Sesion.Usuario.BoxID}&redirect_uri={redirectUri}";
         await Browser.Default.OpenAsync(url, BrowserLaunchMode.SystemPreferred);
+
+        // NOTA: Aquí el código NO se detiene, por eso necesitamos el evento "AlVolverAlaApp"
     }
 
     public class BoxConfigDTO
@@ -242,6 +279,6 @@
         public Guid BoxID { get; set; }
         public decimal? PrecioMensualidad { get; set; }
         public decimal? PrecioInscripcion { get; set; }
-        public bool EstaVinculadoMP { get; set; } // <--- Esto controla si sale verde o rojo
+        public bool EstaVinculadoMP { get; set; }
     }
 }
