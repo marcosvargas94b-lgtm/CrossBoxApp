@@ -53,10 +53,13 @@
 
                 <label class="lbl-input">WhatsApp de Contacto</label>
                 <div class="wrapper-ws">
-                    <i class="fas fa-comment-dots brand-icon"></i>
-                    <input type="text" @bind="miPerfil.Whatsapp" class="input-dark input-con-icono" placeholder="Ej: 961 123 4567" />
-                </div>
+                    <i class="fas fa-comment-dots icono-input"></i>
 
+                    <input type="text"
+                           @bind="miPerfil.Whatsapp"
+                           class="input-dark input-con-icono"
+                           placeholder="Ej: 961 123 4567" />
+                </div>
                 <button class="btn-save" @onclick="GuardarPerfil" disabled="@guardando">
                     @if (guardando)
                     {
@@ -270,6 +273,41 @@
 
     .fade-in { animation: fadeIn 0.5s ease; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .wrapper-ws {
+        position: relative;
+        width: 100%;
+        margin-bottom: 20px; /* Espacio debajo */
+    }
+
+    /* 2. El icono flota sobre el input */
+    .icono-input {
+        position: absolute;
+        left: 15px; /* Distancia desde la izquierda */
+        top: 50%; /* Centrado verticalmente */
+        transform: translateY(-50%); /* Ajuste fino del centro */
+        color: #F8C545; /* Tu color amarillo/dorado */
+        font-size: 1.2rem; /* Tamaño del icono */
+        pointer-events: none; /* Importante: permite hacer clic en el input a través del icono */
+        z-index: 10; /* Asegura que esté encima del fondo del input */
+    }
+
+    /* 3. El input debe tener espacio a la izquierda */
+    .input-con-icono {
+        width: 100%;
+        padding-left: 45px !important; /* Espacio para que el texto no toque el icono */
+        height: 50px; /* Altura cómoda */
+        /* Tus estilos base (mantenlos) */
+        background: #333 !important;
+        color: white !important;
+        border: 1px solid #555;
+        border-radius: 8px;
+    }
+
+        .input-con-icono:focus {
+            border-color: #F8C545;
+            outline: none;
+        }
 </style>
 
 @code {

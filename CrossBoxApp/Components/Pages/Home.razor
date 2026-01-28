@@ -346,30 +346,36 @@
     <div class="modal-overlay">
         <div class="modal-content custom-modal">
             <div class="modal-header">
-                <h5 style="color:#F8C545; margin:0;">ELIGE TU PLAN</h5>
+                <h5 style="color:#F8C545; margin:0; font-family:'Oswald'; letter-spacing:1px;">ELIGE TU PLAN</h5>
                 <button class="btn-close-custom" @onclick="() => mostrarModalPlanesAdmin = false"><i class="fas fa-times"></i></button>
             </div>
+
             <div class="modal-body text-center">
-                <p style="color:#ccc;">Selecciona cómo quieres renovar tu servicio:</p>
+                <p style="color:#ccc; font-size:0.9rem; margin-bottom:20px;">Selecciona cómo quieres renovar tu servicio:</p>
+
                 <div class="planes-selection-grid">
-                    @{ var planMes = listaPlanes.FirstOrDefault(p => p.PlanID == 1); }
+                    @{
+                        var planMes = listaPlanes.FirstOrDefault(p => p.PlanID == 1);
+                    }
                     @if (planMes != null)
                     {
                         <div class="plan-option-card" @onclick='() => ProcesarPago("Renta Mensual", planMes.Precio)'>
                             <div class="plan-title">MENSUAL</div>
                             <div class="plan-price">$@planMes.Precio</div>
-                            <div class="plan-note">Pago recurrente</div>
+                            <div class="plan-note">Pago único por 30 días</div>
                         </div>
                     }
 
-                    @{ var planAnio = listaPlanes.FirstOrDefault(p => p.PlanID == 2); }
+                    @{
+                        var planAnio = listaPlanes.FirstOrDefault(p => p.PlanID == 2);
+                    }
                     @if (planAnio != null)
                     {
                         <div class="plan-option-card recommended" @onclick='() => ProcesarPago("Renta Anual (Ahorro)", planAnio.Precio)'>
-                            <div class="badge-save">MEJOR OPCIÓN</div>
+                            <div class="badge-save">AHORRA MÁS</div>
                             <div class="plan-title">ANUAL</div>
                             <div class="plan-price">$@planAnio.Precio</div>
-                            <div class="plan-note">12 Meses de servicio</div>
+                            <div class="plan-note">12 Meses de servicio completo</div>
                         </div>
                     }
                 </div>
@@ -377,7 +383,6 @@
         </div>
     </div>
 }
-
 @if (mostrarModalModulos)
 {
     <div class="modal-overlay">
@@ -414,81 +419,82 @@
 
 @if (mostrarModalWod)
 {
-    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.85); z-index: 2000;" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content" style="background-color: #222; border: 1px solid #F8C545; color: white;">
-                <div class="modal-header">
-                    <h5 class="modal-title" style="color: #F8C545; font-family:'Oswald'">PROGRAMACIÓN WOD</h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="() => mostrarModalWod = false"></button>
+    <div class="modal-overlay">
+        <div class="modal-content custom-modal">
+
+            <div class="modal-header">
+                <h5 style="margin:0; color:#F8C545; font-family:'Oswald'">PROGRAMACIÓN WOD</h5>
+                <button class="btn-close-custom" @onclick="() => mostrarModalWod = false"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="mb-4">
+                    <label style="color:#aaa; font-size:0.8rem;">Fecha del WOD:</label>
+                    <input type="date" value="@nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd")" @onchange="AlCambiarFechaWod" class="form-control input-dark" />
                 </div>
-                <div class="modal-body">
-                    <div class="mb-4">
-                        <label style="color:#aaa; font-size:0.8rem;">Fecha del WOD:</label>
-                        <input type="date" value="@nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd")" @onchange="AlCambiarFechaWod" class="form-control input-dark" />
-                    </div>
-                    @if (cargandoOperacionWod)
-                    {
-                        <div class="text-center py-5">
-                            <div class="spinner-border text-warning" role="status"></div>
-                            <p class="mt-2 text-muted">Verificando...</p>
-                        </div>
-                    }
-                    else if (wodExiste)
-                    {
-                        <div class="alert-conflict fade-in">
-                            <i class="fas fa-exclamation-triangle conflict-icon"></i>
-                            <h4>¡YA EXISTE UN WOD!</h4>
-                            <p>Hay una rutina programada para esta fecha.</p>
-                            <div class="d-grid gap-2 mt-4">
-                                <button class="btn btn-outline-warning" @onclick="CargarWodParaEditar"><i class="fas fa-edit"></i> EDITAR EXISTENTE</button>
-                                <button class="btn btn-outline-danger" @onclick="EliminarWodActual"><i class="fas fa-trash"></i> ELIMINAR TODO</button>
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="fade-in">
-                            @for (int i = 0; i < nuevoWod.Bloques.Count; i++)
-                            {
-                                var indexBloque = i; var bloque = nuevoWod.Bloques[i];
-                                <div class="card p-2 mb-3" style="background-color: #333; border: 1px solid #F8C545;">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <span style="color:#F8C545; font-weight:bold;">BLOQUE #@(indexBloque + 1)</span>
-                                        <button class="btn btn-sm btn-danger" @onclick="() => EliminarBloque(bloque)"><i class="fas fa-trash"></i></button>
-                                    </div>
-                                    <select @bind="bloque.SegmentoClaseID" class="form-control input-dark mb-2">
-                                        <option value="">-- Segmento --</option>
-                                        @foreach (var seg in listaSegmentos)
-                                        {
-                                            <option value="@seg.Id">@seg.Nombre</option>
-                                        }
-                                    </select>
-                                    @foreach (var ejercicio in bloque.Ejercicios)
-                                    {
-                                        <div class="input-group mb-2">
-                                            <input type="text" @bind="ejercicio.PesoRepeticiones" class="form-control input-dark" placeholder="Peso/Reps" style="width: 30%;" />
-                                            <input type="text" @bind="ejercicio.Descripcion" class="form-control input-dark" placeholder="Descripción" />
-                                            <button class="btn btn-outline-danger" @onclick="() => EliminarEjercicio(bloque, ejercicio)">X</button>
-                                        </div>
-                                    }
-                                    <button class="btn btn-sm btn-outline-light w-100" @onclick="() => AgregarEjercicio(bloque)">+ Ejercicio</button>
-                                </div>
-                            }
-                            <button class="btn btn-outline-warning w-100 py-2" @onclick="AgregarBloque">+ Bloque</button>
-                        </div>
-                    }
-                </div>
-                @if (!wodExiste && !cargandoOperacionWod)
+
+                @if (cargandoOperacionWod)
                 {
-                    <div class="modal-footer">
-                        <button class="btn btn-warning w-100" style="background-color:#F8C545; font-weight:bold;" @onclick="GuardarProgramacion">GUARDAR WOD</button>
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-2 text-muted">Verificando...</p>
+                    </div>
+                }
+                else if (wodExiste)
+                {
+                    <div class="alert-conflict fade-in">
+                        <i class="fas fa-exclamation-triangle conflict-icon"></i>
+                        <h4>¡YA EXISTE UN WOD!</h4>
+                        <p>Hay una rutina programada para esta fecha.</p>
+                        <div class="d-grid gap-2 mt-4">
+                            <button class="btn btn-outline-warning" @onclick="CargarWodParaEditar"><i class="fas fa-edit"></i> EDITAR EXISTENTE</button>
+                            <button class="btn btn-outline-danger" @onclick="EliminarWodActual"><i class="fas fa-trash"></i> ELIMINAR TODO</button>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="fade-in">
+                        @for (int i = 0; i < nuevoWod.Bloques.Count; i++)
+                        {
+                            var indexBloque = i; var bloque = nuevoWod.Bloques[i];
+                            <div class="card p-2 mb-3" style="background-color: #333; border: 1px solid #F8C545;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span style="color:#F8C545; font-weight:bold;">BLOQUE #@(indexBloque + 1)</span>
+                                    <button class="btn btn-sm btn-danger" @onclick="() => EliminarBloque(bloque)"><i class="fas fa-trash"></i></button>
+                                </div>
+                                <select @bind="bloque.SegmentoClaseID" class="form-control input-dark mb-2">
+                                    <option value="@Guid.Empty" selected disabled>-- Selecciona Segmento --</option>
+                                    @foreach (var seg in listaSegmentos)
+                                    {
+                                        <option value="@seg.Id">@seg.Nombre</option>
+                                    }
+                                </select>
+                                @foreach (var ejercicio in bloque.Ejercicios)
+                                {
+                                    <div class="input-group mb-2">
+                                        <input type="text" @bind="ejercicio.PesoRepeticiones" class="form-control input-dark" placeholder="Peso/Reps" style="width: 30%;" />
+                                        <input type="text" @bind="ejercicio.Descripcion" class="form-control input-dark" placeholder="Descripción" />
+                                        <button class="btn btn-outline-danger" @onclick="() => EliminarEjercicio(bloque, ejercicio)">X</button>
+                                    </div>
+                                }
+                                <button class="btn btn-sm btn-outline-light w-100" @onclick="() => AgregarEjercicio(bloque)">+ Ejercicio</button>
+                            </div>
+                        }
+                        <button class="btn btn-outline-warning w-100 py-2" @onclick="AgregarBloque">+ Bloque</button>
                     </div>
                 }
             </div>
+
+            @if (!wodExiste && !cargandoOperacionWod)
+            {
+                <div class="modal-footer">
+                    <button class="btn btn-warning w-100" style="background-color:#F8C545; font-weight:bold;" @onclick="GuardarProgramacion">GUARDAR WOD</button>
+                </div>
+            }
         </div>
     </div>
 }
-
 @if (mostrarModalCrearAviso)
 {
     <div class="modal-overlay">
@@ -579,8 +585,89 @@
 }
 
 <style>
-    /* --- 1. ESTRUCTURA FIJA SOLO PARA HOME --- */
-    /* Usamos position:fixed para "clavar" el Home a la pantalla sin bloquear el body global */
+    /* --- ESTILOS PARA SELECCIÓN DE PLANES --- */
+
+    .planes-selection-grid {
+        display: flex;
+        flex-direction: column; /* En móvil, uno abajo del otro */
+        gap: 15px;
+        width: 100%;
+    }
+
+    /* En pantallas medianas/grandes, ponerlos lado a lado */
+    @@media (min-width: 400px) {
+        .planes-selection-grid
+
+    {
+        flex-direction: row;
+    }
+
+    }
+
+    .plan-option-card {
+        background: #2a2a2a;
+        border: 1px solid #444;
+        border-radius: 12px;
+        padding: 20px;
+        flex: 1; /* Ocupan el mismo ancho */
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative; /* Para posicionar el badge */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+        .plan-option-card:hover {
+            background: #333;
+            border-color: #F8C545;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(248, 197, 69, 0.2);
+        }
+
+        /* Estilo especial para la opción recomendada (Anual) */
+        .plan-option-card.recommended {
+            border: 2px solid #F8C545;
+            background: rgba(248, 197, 69, 0.05);
+        }
+
+    .badge-save {
+        position: absolute;
+        top: -10px;
+        background: #F8C545;
+        color: black;
+        font-size: 0.65rem;
+        font-weight: bold;
+        padding: 4px 10px;
+        border-radius: 10px;
+        text-transform: uppercase;
+        font-family: 'Oswald';
+        box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    }
+
+    .plan-title {
+        font-family: 'Oswald';
+        font-size: 1.1rem;
+        color: #ddd;
+        margin-bottom: 5px;
+        letter-spacing: 1px;
+    }
+
+    .plan-price {
+        font-family: 'Oswald';
+        font-size: 1.8rem;
+        color: white;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .plan-note {
+        font-size: 0.75rem;
+        color: #888;
+        font-family: 'Roboto';
+    }
+
     .main-layout {
         position: fixed; 
         top: 0; 
@@ -714,16 +801,71 @@
     .noti-item.unread { background: #2a2a2a; color: white; border-left: 3px solid #F8C545; }
 
     /* Modales */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
-    .custom-modal { background: #1a1a1a; width: 90%; max-width: 400px; border-radius: 12px; border: 1px solid #F8C545; padding: 0; overflow: hidden; display: flex; flex-direction: column; color: white; }
-    .modal-header { padding: 15px; background: #222; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
-    .modal-body { padding: 20px; }
-    .modal-footer { padding: 15px; background: #222; border-top: 1px solid #333; display: flex; gap: 10px; }
+    .modal-overlay { 
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        height: 100%; 
+        background: rgba(0,0,0,0.85); 
+        z-index: 3000; 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        backdrop-filter: blur(4px); 
+        padding: 20px; /* Margen de seguridad para que no toque los bordes */
+    }
+
+    .custom-modal { 
+        background: #1a1a1a; 
+        width: 100%; 
+        max-width: 400px; 
+        border-radius: 12px; 
+        border: 1px solid #F8C545; 
+        display: flex; 
+        flex-direction: column; 
+        color: white; 
+        
+        /* LÍMITE DE ALTURA CLAVE */
+        max-height: 85vh; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .modal-header { 
+        padding: 15px; 
+        background: #222; 
+        border-bottom: 1px solid #333; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        flex-shrink: 0; /* No se aplasta */
+    }
+
+    .modal-body { 
+        padding: 20px; 
+        
+        /* SCROLL INTERNO AUTOMÁTICO */
+        overflow-y: auto; 
+        flex-grow: 1; /* Ocupa el espacio disponible */
+        
+        /* Suavizado en iOS */
+        -webkit-overflow-scrolling: touch; 
+    }
+
+    .modal-footer { 
+        padding: 15px; 
+        background: #222; 
+        border-top: 1px solid #333; 
+        display: flex; 
+        gap: 10px; 
+        flex-shrink: 0; /* No se aplasta */
+    }
+
+    /* Resto de estilos de botones y campos */
     .btn-close-custom { background: none; border: none; color: white; font-size: 1.2rem; }
     .btn-confirm { background: #F8C545; color: black; border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
     .btn-cancel { background: #333; color: white; border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
     .input-dark { background: #333 !important; color: white !important; border: 1px solid #666; }
-    
     /* Eliminar cuenta */
     .delete-account-container { width: 100%; max-width: 1000px; display: flex; justify-content: center; margin-top: 30px; margin-bottom: 10px; padding: 0 20px; }
     .btn-delete-account { background: transparent; border: 1px solid #ff4444; color: #ff4444; font-family: 'Oswald', sans-serif; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; padding: 8px 20px; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; letter-spacing: 1px; opacity: 0.8; }
@@ -940,7 +1082,76 @@
     private void EliminarBloque(BloqueWodViewModel b) => nuevoWod.Bloques.Remove(b);
     private void AgregarEjercicio(BloqueWodViewModel b) => b.Ejercicios.Add(new EjercicioViewModel());
     private void EliminarEjercicio(BloqueWodViewModel b, EjercicioViewModel e) => b.Ejercicios.Remove(e);
-    private async Task GuardarProgramacion() { try { nuevoWod.BoxID = Sesion.Usuario.BoxID; var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/guardar", nuevoWod); if (r.IsSuccessStatusCode) { mostrarModalWod = false; await App.Current.MainPage.DisplayAlert("Éxito", "Guardado", "OK"); } } catch {} }
+    private async Task GuardarProgramacion()
+    {
+        // 1. Validaciones básicas (IDs vacíos, sin bloques, etc)
+        if (nuevoWod.Bloques == null || nuevoWod.Bloques.Count == 0)
+        {
+            await App.Current.MainPage.DisplayAlert("Faltan datos", "Agrega al menos un bloque.", "OK");
+            return;
+        }
+
+        if (nuevoWod.Bloques.Any(b => b.SegmentoClaseID == Guid.Empty))
+        {
+            await App.Current.MainPage.DisplayAlert("Faltan datos", "Selecciona el TIPO DE SEGMENTO en todos los bloques.", "OK");
+            return;
+        }
+
+        // =========================================================================
+        // 2. PARCHE DE ORO (AQUÍ ESTÁ LA SOLUCIÓN AL ERROR DE LA IMAGEN) 🛠️
+        // =========================================================================
+        // El servidor exige que enviemos el "NombreSegmento", aunque ya tenga el ID.
+        // Así que lo buscamos en la lista y lo asignamos manualmente antes de enviar.
+        foreach (var bloque in nuevoWod.Bloques)
+        {
+            var infoSegmento = listaSegmentos.FirstOrDefault(s => s.Id == bloque.SegmentoClaseID);
+            if (infoSegmento != null)
+            {
+                bloque.NombreSegmento = infoSegmento.Nombre;
+            }
+            else
+            {
+                bloque.NombreSegmento = "General"; // Valor por defecto para que no falle
+            }
+        }
+        // =========================================================================
+
+        cargandoOperacionWod = true;
+        StateHasChanged();
+
+        try
+        {
+            nuevoWod.BoxID = Sesion.Usuario.BoxID;
+
+            // Enviamos al servidor
+            var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/guardar", nuevoWod);
+
+            if (r.IsSuccessStatusCode)
+            {
+                mostrarModalWod = false;
+                await App.Current.MainPage.DisplayAlert("¡Éxito!", "WOD Guardado correctamente.", "OK");
+
+                // Limpiar formulario
+                nuevoWod = new ProgramacionWodViewModel { FechaProgramacion = DateTime.Today };
+                AgregarBloque();
+            }
+            else
+            {
+                // Si falla, mostramos el error que manda el servidor
+                var errorMsg = await r.Content.ReadAsStringAsync();
+                await App.Current.MainPage.DisplayAlert("Error del Servidor", errorMsg, "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error de App", ex.Message, "OK");
+        }
+        finally
+        {
+            cargandoOperacionWod = false;
+            StateHasChanged();
+        }
+    }
     private async Task CargarSegmentos() { try { var r = await Http.GetAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/segmentos"); if(r.IsSuccessStatusCode) listaSegmentos = await r.Content.ReadFromJsonAsync<List<SegmentoDto>>(); } catch {} }
     private async Task CargarNotificaciones() { try { misNotificaciones = await Http.GetFromJsonAsync<List<NotificacionDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/notificaciones/{Sesion.Usuario.UsuarioID}"); hayNuevas = misNotificaciones.Any(n => !n.Leido); } catch {} }
     private string GetIcono(string t) => t == "MATCH_MUTUO" ? "fas fa-heart text-danger" : "fas fa-bell";

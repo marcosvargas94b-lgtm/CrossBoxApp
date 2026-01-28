@@ -30,7 +30,7 @@
         {
             <div class="welcome-section fade-in">
                 <h1 style="color: #F8C545; font-family: 'Oswald'; text-align: center;">PLANIFICACIÓN INTELIGENTE</h1>
-                <p style="text-align:center; color:#ccc; font-size: 0.9rem;">Diseñaré tu próximo ciclo basado en tus objetivos y tu historial previo.</p>
+                <p style="text-align:center; color:#ccc; font-size: 0.9rem;">Diseñaré tu próximo ciclo basado en tus objetivos.</p>
             </div>
 
             <div class="form-card fade-in">
@@ -119,21 +119,51 @@
                             </div>
                             @if(completado) { <span class="badge bg-success"><i class="fas fa-check"></i> HECHO</span> }
                         </div>
+                        
                         <div class="exercises-list @(completado ? "opacity-50" : "")">
                             @foreach (var ej in dia.Ejercicios)
                             {
                                 <div class="ex-row">
-                                    <div class="ex-info">
-                                        <div class="ex-name">@ej.NombreEspanol</div>
+                                    <div class="ex-info-vertical">
+
+                                        <div class="ex-name-row">
+                                            <span class="ex-name">@ej.NombreEspanol</span>
+                                        </div>
+
                                         <div class="ex-notes">@ej.NotaTecnica</div>
-                                    </div>
-                                    <div class="ex-meta">
-                                        <div class="meta-box"><span class="meta-val">@ej.Series</span><span class="meta-label">SETS</span></div>
-                                        <div class="meta-box"><span class="meta-val">@ej.Repeticiones</span><span class="meta-label">REPS</span></div>
+
+                                        <div class="ex-actions-meta-row">
+
+                                            <div class="action-buttons-group">
+                                                <button class="btn-icon-ia btn-video" @onclick="() => VerEnYoutube(ej.NombreEspanol)">
+                                                    <i class="fas fa-play-circle"></i>
+                                                </button>
+
+                                                @if (!completado)
+                                                {
+                                                    <button class="btn-ia btn-swap-text" @onclick="() => ReemplazarEjercicioUI(dia, ej)">
+                                                        <i class="fas fa-sync-alt"></i>
+                                                        <span>Cambiar</span>
+                                                    </button>
+                                                }
+                                            </div>
+
+                                            <div class="ex-meta-inline">
+                                                <div class="meta-pill">
+                                                    <span class="meta-val">@ej.Series</span>
+                                                    <span class="meta-label">SETS</span>
+                                                </div>
+                                                <div class="meta-pill">
+                                                    <span class="meta-val">@ej.Repeticiones</span>
+                                                    <span class="meta-label">REPS</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             }
                         </div>
+
                         <div class="day-footer">
                             @if (completado) { <button class="btn-feedback disabled-btn" disabled>ENTRENAMIENTO GUARDADO</button> }
                             else { <button class="btn-feedback" @onclick="() => AbrirFeedback(dia.Dia)"><i class="fas fa-clipboard-check"></i> REGISTRAR SESIÓN</button> }
@@ -205,83 +235,149 @@
 
 <style>
     /* --- ESTRUCTURA BASE --- */
-    .main-layout {
-        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1;
-    }
-
-    .navbar-container {
-        flex-shrink: 0;
-        padding-top: calc(env(safe-area-inset-top) + 5px);
-        padding-bottom: 10px; padding-left: 20px; padding-right: 20px;
-        background-color: #0d0d0d; border-bottom: 1px solid #F8C545;
-        color: white; display: flex; justify-content: space-between; align-items: center;
-        z-index: 100; font-family: 'Oswald'; min-height: 60px;
-    }
-
+    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
     .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
     .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
     .nav-right { width: 60px; }
-
-    .scrollable-content {
-        flex-grow: 1; overflow-y: auto; padding: 20px;
-        display: flex; flex-direction: column; -webkit-overflow-scrolling: touch; padding-bottom: 40px;
-    }
-
-    /* --- ESTILOS ESPECÍFICOS RUTINA IA --- */
+    .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
     
+    /* --- FORMULARIOS Y BOTONES GENERALES --- */
     .form-card { background: #1a1a1a; padding: 20px; border-radius: 10px; border: 1px solid #333; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 100%; max-width: 600px; align-self: center; }
     .input-dark { background: #333 !important; border: 1px solid #555; color: white !important; margin-bottom: 15px; }
     .form-label { color: #F8C545; font-size: 0.9rem; font-weight: bold; margin-bottom: 5px; display:block; }
-    
     .btn-confirm { background: linear-gradient(45deg, #F8C545, #e0a800); border: none; padding: 15px; font-weight: bold; border-radius: 8px; width: 100%; color: black; font-family: 'Oswald'; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
     
+    /* --- ESTRUCTURA RUTINA (HEADER Y TABS) --- */
     .header-rutina { text-align: center; margin-bottom: 20px; width: 100%; max-width: 600px; align-self: center; }
     .badge-obj { display: inline-block; background: #222; color: #aaa; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; margin-top: 5px; border: 1px solid #444; }
-
-    /* Tabs Horizontales */
     .week-tabs-container { width: 100vw; margin-left: -20px; padding: 0 20px; overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 15px; }
     .week-tabs { display: flex; gap: 8px; padding-bottom: 5px; min-width: max-content; }
     .tab-btn { background: #222; border: 1px solid #333; color: #aaa; padding: 10px 15px; border-radius: 8px; white-space: nowrap; font-family: 'Oswald'; flex-shrink: 0; }
     .tab-btn.active { background: #F8C545; color: black; border-color: #F8C545; font-weight: bold; }
-
     .info-semana { width: 100%; max-width: 600px; align-self: center; background: rgba(248,197,69,0.1); border-left: 3px solid #F8C545; padding: 12px; font-size: 0.9rem; margin-bottom: 20px; border-radius: 4px; color: #ddd; display: flex; align-items: center; gap: 10px; }
-
-    /* Day Card */
+    
+    /* --- DAY CARD (CONTENEDOR DEL DÍA) --- */
     .day-card { width: 100%; max-width: 600px; align-self: center; background: #1a1a1a; border-radius: 12px; border: 1px solid #333; margin-bottom: 20px; overflow: hidden; }
     .day-header { background: #222; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; color: #F8C545; font-family: 'Oswald'; border-bottom: 1px solid #2a2a2a; }
     .day-title { font-size: 1.1rem; }
     .muscle-tag { color: #888; font-size: 0.8rem; margin-left: 5px; font-family: 'Roboto'; }
-    
     .border-success { border: 1px solid #28a745 !important; }
     .bg-success-dim { background: rgba(40, 167, 69, 0.15) !important; color: #28a745 !important; }
     .opacity-50 { opacity: 0.6; pointer-events: none; }
+    
+    /* --- TARJETA DE EJERCICIO (Vertical Flow - MEJORADO) --- */
+    .ex-row { 
+        padding: 15px; 
+        border-bottom: 1px solid #333; 
+        background: #151515; /* Fondo ligeramente más claro para contraste */
+    }
+    
+    .ex-info-vertical {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 8px; /* Espacio entre los bloques internos */
+    }
 
-    /* Exercises */
-    .ex-row { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid #252525; align-items: center; }
-    .ex-info { flex: 1; margin-right: 10px; }
-    .ex-name { font-weight: bold; font-size: 1rem; color: #eee; }
-    .ex-notes { font-size: 0.75rem; color: #888; }
-    .meta-box { background: #2a2a2a; padding: 4px 10px; border-radius: 6px; text-align: center; margin-left: 8px; border: 1px solid #444; min-width: 50px; }
-    .meta-val { font-weight: bold; color: #F8C545; display: block; font-size: 1rem; font-family: 'Oswald'; line-height: 1; }
-    .meta-label { font-size: 0.6rem; color: #aaa; display: block; text-transform: uppercase; }
+    /* 1. Nombre del Ejercicio */
+    .ex-name-row {
+        width: 100%;
+    }
+    .ex-name { 
+        font-weight: bold; 
+        font-size: 1.1rem; 
+        color: white; 
+        line-height: 1.2;
+    }
 
+    /* 2. Notas Técnicas (Instrucción) */
+    .ex-notes { 
+        font-size: 0.85rem; 
+        color: #aaa; 
+        line-height: 1.4; 
+    }
+
+    /* 3. Fila de Acciones y Metas */
+    .ex-actions-meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 8px;
+        flex-wrap: wrap; /* Importante para pantallas muy chicas */
+        gap: 10px;
+    }
+
+    /* Grupo de Botones (Izquierda) */
+    .action-buttons-group { 
+        display: flex; 
+        gap: 12px; 
+        align-items: center; 
+    }
+
+    /* Grupo de Metas (Derecha - Sets/Reps) */
+    .ex-meta-inline {
+        display: flex;
+        gap: 8px;
+        margin-left: auto; /* Empuja a la derecha si hay espacio */
+    }
+
+    /* Estilo Pastilla para Sets/Reps */
+    .meta-pill {
+        background: #252525;
+        border: 1px solid #444;
+        border-radius: 6px;
+        padding: 4px 10px;
+        text-align: center;
+        min-width: 50px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .meta-val { font-weight: bold; color: #F8C545; font-size: 1rem; line-height: 1; font-family: 'Oswald'; }
+    .meta-label { font-size: 0.6rem; color: #888; text-transform: uppercase; margin-top: 2px; }
+
+    /* Estilos de Botones (IA, Video, Swap) */
+    .btn-icon-ia { border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; }
+    .btn-ia { border: none; border-radius: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; font-family: 'Oswald'; font-weight: bold;}
+
+    .btn-video { 
+        background: rgba(255, 68, 68, 0.15); 
+        color: #ff4444; 
+        border: 1px solid #ff4444;
+        font-size: 1.2rem; 
+        width: 38px; 
+        height: 38px; 
+        border-radius: 50%;
+    }
+    .btn-video:active { transform: scale(0.9); background: #ff4444; color: white; }
+
+    .btn-swap-text { 
+        background: rgba(13, 202, 240, 0.1); 
+        color: #0dcaf0; 
+        border: 1px solid #0dcaf0; 
+        padding: 0 14px; 
+        gap: 6px; 
+        height: 36px; 
+        border-radius: 18px; 
+    }
+    .btn-swap-text i { font-size: 0.9rem; }
+    .btn-swap-text span { font-size: 0.8rem; letter-spacing: 0.5px; }
+    .btn-swap-text:active { background: #0dcaf0; color: black; transform: scale(0.95); }
+    
+    /* --- FOOTER DEL DÍA (REGISTRAR SESIÓN) --- */
     .day-footer { padding: 12px; text-align: center; background: #1a1a1a; border-top: 1px solid #252525; }
     .btn-feedback { background: transparent; border: 1px solid #555; color: #ddd; padding: 10px; border-radius: 25px; font-size: 0.85rem; width: 100%; font-weight: bold; transition: 0.2s; }
     .btn-feedback:active { background: #333; }
     .disabled-btn { background: #1a1a1a !important; color: #28a745 !important; border: 1px solid #28a745 !important; cursor: default !important; opacity: 1; }
-
     .btn-finalize { width: 100%; max-width: 600px; align-self: center; background: #dc3545; color: white; border: none; padding: 15px; font-weight: bold; border-radius: 10px; font-family: 'Oswald'; margin-top: 20px; font-size: 1.1rem; letter-spacing: 1px; }
-
-    /* Modales */
+    
+    /* --- MODALES Y ANIMACIONES --- */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
     .custom-modal { background: #1a1a1a; width: 90%; max-width: 350px; padding: 25px; border-radius: 15px; border: 1px solid #F8C545; box-shadow: 0 0 30px rgba(248,197,69,0.3); }
-    
-    /* Score Circle */
     .score-circle { width: 80px; height: 80px; border-radius: 50%; border: 4px solid #F8C545; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto; background: rgba(248, 197, 69, 0.1); }
     .score-circle span { font-size: 1.8rem; font-weight: bold; color: white; line-height: 1; }
     .score-circle small { font-size: 0.6rem; color: #aaa; }
-    
     .analysis-item { display: flex; gap: 15px; margin-bottom: 15px; align-items: flex-start; }
     .analysis-item i { font-size: 1.2rem; margin-top: 3px; }
     .analysis-item strong { display: block; color: white; font-size: 0.95rem; }
@@ -289,7 +385,6 @@
     .highlight-box { background: #F8C545; padding: 15px; border-radius: 8px; color: black !important; }
     .highlight-box strong { color: black; text-transform: uppercase; font-family: 'Oswald'; }
     .highlight-box p { color: #222; font-weight: 500; }
-
     .fade-in { animation: fadeIn 0.5s ease; }
     .slide-up { animation: slideUp 0.4s ease; }
     @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -388,6 +483,77 @@
             await App.Current.MainPage.DisplayAlert("Error Conexión", ex.Message, "OK"); 
         }
     }
+
+    // --- NUEVAS FUNCIONES PARA YOUTUBE Y REEMPLAZO ---
+
+    private async Task VerEnYoutube(string nombreEjercicio)
+    {
+        try
+        {
+            var busqueda = System.Net.WebUtility.UrlEncode($"técnica {nombreEjercicio} gym");
+            // Nota: Launcher abre la app nativa o navegador
+            await Microsoft.Maui.ApplicationModel.Launcher.Default.OpenAsync($"https://www.youtube.com/results?search_query={busqueda}");
+        }
+        catch 
+        {
+            await App.Current.MainPage.DisplayAlert("Ups", "No se pudo abrir YouTube", "OK");
+        }
+    }
+
+    private async Task ReemplazarEjercicioUI(DiaEntrenoDto diaDto, EjercicioDto ejercicioActual)
+    {
+        bool confirmar = await App.Current.MainPage.DisplayAlert("¿Cambiar Ejercicio?", 
+            $"La IA buscará una alternativa para '{ejercicioActual.NombreEspanol}' que trabaje lo mismo.", 
+            "Sí, cambiar", "Cancelar");
+
+        if (!confirmar) return;
+
+        cargandoInicial = true; // Mostramos loading
+        StateHasChanged();
+
+        try
+        {
+            var dto = new 
+            {
+                RutinaID = rutinaGenerada.IdBaseDatos,
+                UsuarioID = Sesion.Usuario.UsuarioID,
+                Semana = semanaActiva,
+                Dia = diaDto.Dia,
+                NombreEjercicio = ejercicioActual.NombreEspanol
+            };
+
+            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/IAEntrenador/reemplazar-ejercicio", dto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var nuevoEjercicio = await response.Content.ReadFromJsonAsync<EjercicioDto>();
+                
+                // Actualizar en caliente
+                var indice = diaDto.Ejercicios.IndexOf(ejercicioActual);
+                if (indice != -1)
+                {
+                    diaDto.Ejercicios[indice] = nuevoEjercicio;
+                }
+                
+                await App.Current.MainPage.DisplayAlert("Hecho", "Ejercicio actualizado por el Coach IA.", "OK");
+            }
+            else
+            {
+                await App.Current.MainPage.DisplayAlert("Error", "El Coach no pudo encontrar un reemplazo en este momento.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
+        finally
+        {
+            cargandoInicial = false;
+            StateHasChanged();
+        }
+    }
+
+    // -------------------------------------------------
 
     private async Task IniciarProcesoCierre()
     {
