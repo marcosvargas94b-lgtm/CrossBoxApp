@@ -6,16 +6,20 @@
 @inject HttpClient Http
 @inject SesionService Sesion
 
-@* NAVBAR FIJA SUPERIOR *@
-<div class="top-navbar">
-    <div class="nav-left" @onclick="Volver">
-        <i class="fas fa-arrow-left"></i> REGRESAR A LISTA
-    </div>
-</div>
+<div class="main-layout">
 
-@* CONTENEDOR DE SCROLL INDEPENDIENTE (EVITA BARRAS BLANCAS) *@
-<div class="main-scroll-container">
-    <div class="profile-detail-container">
+    @* NAVBAR FIJA SUPERIOR *@
+    <div class="navbar-container">
+        <div class="nav-left" @onclick="Volver">
+            <i class="fas fa-arrow-left"></i> VOLVER
+        </div>
+        <div class="nav-title">PERFIL ATLETA</div>
+        <div class="nav-right"></div>
+    </div>
+
+    @* CONTENEDOR DE SCROLL *@
+    <div class="scrollable-content">
+        
         @if (perfil == null)
         {
             <div class="spinner-container">
@@ -35,13 +39,19 @@
                         @(perfil.NombreCompleto?.Substring(0, 1).ToUpper() ?? "A")
                     </div>
                 }
+                
+                <div class="hero-overlay-info">
+                    <h1 class="user-name">@perfil.NombreCompleto</h1>
+                </div>
             </div>
 
             <div class="info-section">
-                <h1 class="user-name">@perfil.NombreCompleto</h1>
-
-                <div class="stats-badge">
-                    <i class="fas fa-heart"></i> @perfil.TotalLikes Likes acumulados
+                
+                @* DISEÑO DE LIKES RECUPERADO Y MEJORADO *@
+                <div class="likes-badge-premium">
+                    <i class="fas fa-heart"></i>
+                    <span class="likes-count">@perfil.TotalLikes</span>
+                    <span class="likes-text">LIKES ACUMULADOS</span>
                 </div>
 
                 <div class="bio-box">
@@ -51,20 +61,23 @@
 
                 @if (perfil.EsMatchMutuo)
                 {
-                    <div class="match-success-box">
-                        <h3>¡YA HAN HECHO MATCH!</h3>
-                        <p>Comuníquense para entrenar:</p>
+                    <div class="match-success-box fade-in">
+                        <div class="match-badge">¡YA HAN HECHO MATCH!</div>
+                        
                         <div class="whatsapp-pill" @onclick="AbrirWhatsApp">
-                            <i class="fab fa-whatsapp"></i>
-                            <span>WA: @perfil.WhatsappTarget</span>
+                            <i class="fas fa-comment-dots"></i>
+                            <div class="btn-text-container">
+                                <span class="main-btn-text">CLICK PARA CHATEAR POR WHATSAPP</span>
+                                <span class="sub-btn-text">TELÉFONO: @perfil.WhatsappTarget</span>
+                            </div>
                         </div>
                     </div>
                 }
                 else if (perfil.YaLeDiMatch)
                 {
-                    <div class="match-sent-box">
-                        <i class="fas fa-check-circle pulse"></i>
-                        <span>Match Enviado</span>
+                    <div class="match-sent-box pulse">
+                        <i class="fas fa-check-circle"></i>
+                        <span>MATCH ENVIADO</span>
                         <small>Esperando respuesta...</small>
                     </div>
                 }
@@ -76,190 +89,95 @@
                 }
             </div>
         }
+        
+        <div style="height: 60px;"></div>
     </div>
 </div>
 
-@* MODAL DE ANIMACIÓN PARA NUEVO MATCH *@
-@if (mostrarAnimacionMatch)
-{
-    <div class="match-overlay">
-        <div class="match-content">
-            <h1 class="match-title">IT'S A MATCH!</h1>
-            <div class="hearts-animation">💖 ❤️ 💖</div>
-            <p>¡Tú y @perfil.NombreCompleto se matchearon!</p>
-
-            <div class="whatsapp-box" @onclick="AbrirWhatsApp">
-                <i class="fab fa-whatsapp"></i>
-                <span>WA: @perfil.WhatsappTarget</span>
-            </div>
-
-            <button class="btn-close-match" @onclick="CerrarMatch">GENIAL</button>
-        </div>
-    </div>
-}
-
 <style>
-    /* --- ESTRUCTURA FIJA --- */
-    .top-navbar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 60px;
-        padding: 0 15px;
-        background: #1a1a1a;
-        border-bottom: 2px solid #F8C545;
-        display: flex;
-        align-items: center;
-        z-index: 1000;
+    /* --- ESTRUCTURA BASE --- */
+    .main-layout {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1;
     }
 
-    .nav-left {
-        color: #F8C545;
-        font-weight: bold;
-        cursor: pointer;
-        font-family: 'Oswald';
-        display: flex;
-        align-items: center;
-        gap: 10px;
+    .navbar-container {
+        flex-shrink: 0;
+        padding-top: calc(env(safe-area-inset-top) + 5px);
+        padding-bottom: 10px; padding-left: 20px; padding-right: 20px;
+        background-color: #1a1a1a; border-bottom: 1px solid #F8C545;
+        color: white; display: flex; justify-content: space-between; align-items: center;
+        z-index: 100; font-family: 'Oswald'; min-height: 60px;
     }
 
-    .main-scroll-container {
-        position: fixed;
-        top: 60px;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        overflow-y: auto;
-        background: #0d0d0d;
+    .scrollable-content {
+        flex-grow: 1; overflow-y: auto; 
+        background-color: #0d0d0d;
+        display: flex; flex-direction: column; 
         -webkit-overflow-scrolling: touch;
     }
 
-    /* --- DISEÑO DE PERFIL --- */
-    .profile-detail-container {
-        display: flex;
-        flex-direction: column;
-        padding-bottom: 50px;
-    }
-
+    /* --- HERO --- */
     .hero-image-container {
-        width: 100%;
-        height: 48vh;
-        background: #1a1a1a;
-        position: relative;
+        width: 100%; height: 380px; position: relative; background: #000; flex-shrink: 0;
     }
 
     .hero-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
-        -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+        width: 100%; height: 100%; object-fit: cover;
+        mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
     }
 
-    .hero-initial-placeholder {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 10rem;
-        font-family: 'Oswald';
-        color: #F8C545;
-        background: #222;
-    }
+    .hero-overlay-info { position: absolute; bottom: 15px; left: 0; right: 0; text-align: center; }
+    .user-name { font-family: 'Oswald'; font-size: 2.6rem; color: #F8C545; text-transform: uppercase; text-shadow: 2px 2px 12px rgba(0,0,0,1); margin: 0; }
 
-    .info-section {
-        padding: 0 25px;
-        margin-top: -50px;
-        z-index: 10;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .user-name {
-        font-family: 'Oswald';
-        font-size: 2.5rem;
-        color: #F8C545;
-        text-transform: uppercase;
-        text-align: center;
-        text-shadow: 2px 2px 10px rgba(0,0,0,0.9);
-        margin-bottom: 5px;
-    }
-
-    .stats-badge {
-        background: rgba(255,255,255,0.1);
-        padding: 6px 15px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        margin-bottom: 20px;
-        border: 1px solid #444;
-    }
-
-    .bio-box {
-        width: 100%;
-        background: #1a1a1a;
-        padding: 15px;
-        border-radius: 12px;
-        border-left: 4px solid #F8C545;
-        margin-bottom: 25px;
-    }
-
-    .bio-box label { color: #888; font-size: 0.75rem; font-weight: bold; letter-spacing: 1px; }
-    .bio-box p { margin-top: 5px; color: #ddd; font-style: italic; line-height: 1.4; }
-
-    /* --- BOTONES Y ESTADOS --- */
-    .btn-match {
-        width: 100%;
-        padding: 18px;
+    /* --- NUEVO DISEÑO LIKES BADGE --- */
+    .likes-badge-premium {
+        background: rgba(255, 255, 255, 0.08);
+        padding: 10px 25px;
         border-radius: 50px;
-        border: none;
-        background: linear-gradient(45deg, #F8C545, #ff9f43);
-        color: black;
-        font-weight: 900;
-        font-size: 1.3rem;
-        font-family: 'Oswald';
-        box-shadow: 0 4px 15px rgba(248, 197, 69, 0.3);
-    }
-
-    .match-success-box {
-        width: 100%;
-        background: rgba(37, 211, 102, 0.1);
-        border: 1px solid #25D366;
-        padding: 20px;
-        border-radius: 15px;
-        text-align: center;
-    }
-
-    .whatsapp-pill {
-        background: #25D366;
-        color: white;
-        padding: 10px 20px;
-        border-radius: 30px;
-        font-size: 1.2rem;
-        font-weight: bold;
-        display: inline-flex;
+        border: 1px solid rgba(248, 197, 69, 0.3);
+        display: flex;
         align-items: center;
         gap: 10px;
-        margin-top: 10px;
-        cursor: pointer;
+        margin-bottom: 25px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }
 
-    .match-sent-box {
-        text-align: center;
-        color: #F8C545;
+    .likes-badge-premium i { color: #ff4757; font-size: 1.2rem; filter: drop-shadow(0 0 5px rgba(255,71,87,0.5)); }
+    .likes-count { color: #F8C545; font-family: 'Oswald'; font-size: 1.4rem; font-weight: bold; }
+    .likes-text { color: #eee; font-family: 'Oswald'; font-size: 0.9rem; letter-spacing: 1px; }
+
+    /* --- INFO SECTION --- */
+    .info-section { padding: 20px; display: flex; flex-direction: column; align-items: center; }
+
+    .bio-box { width: 100%; background: #1a1a1a; padding: 15px; border-radius: 12px; border-left: 4px solid #F8C545; margin-bottom: 30px; }
+    .bio-box label { color: #F8C545; font-size: 0.75rem; font-weight: bold; display: block; margin-bottom: 5px; font-family: 'Oswald'; letter-spacing: 1px; }
+    .bio-box p { color: #ccc; font-style: italic; margin: 0; font-size: 0.95rem; }
+
+    /* --- WHATSAPP PILL CORREGIDA --- */
+    .whatsapp-pill {
+        background: #25D366; color: #000; padding: 12px 20px; border-radius: 12px; 
+        display: flex; align-items: center; gap: 15px; cursor: pointer; 
+        transition: 0.3s; margin-top: 15px; width: 100%; box-shadow: 0 6px 20px rgba(0,0,0,0.4);
     }
-    .match-sent-box i { font-size: 2.5rem; margin-bottom: 5px; }
-    .match-sent-box span { display: block; font-family: 'Oswald'; font-size: 1.4rem; }
 
-    /* --- ANIMACIONES --- */
-    .pulse { animation: pulseAnim 2s infinite; }
-    @@keyframes pulseAnim { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+    .whatsapp-pill i { font-size: 1.8rem; }
+    .btn-text-container { display: flex; flex-direction: column; text-align: left; }
+    .main-btn-text { font-family: 'Oswald'; font-weight: bold; font-size: 0.85rem; line-height: 1.2; }
+    .sub-btn-text { font-family: 'Roboto'; font-size: 0.8rem; font-weight: 900; opacity: 0.8; }
 
-    .spinner-container { display: flex; justify-content: center; padding-top: 100px; width: 100%; }
+    .match-success-box { width: 100%; background: rgba(37, 211, 102, 0.05); border: 1px solid #25D366; border-radius: 15px; padding: 20px; text-align: center; }
+    .match-badge { color: #25D366; font-family: 'Oswald'; font-size: 1.3rem; font-weight: bold; margin-bottom: 5px; }
+
+    .btn-match {
+        width: 100%; padding: 16px; background: linear-gradient(45deg, #F8C545, #ff9f43);
+        border: none; border-radius: 50px; color: black; font-weight: 900; font-family: 'Oswald';
+        font-size: 1.4rem; box-shadow: 0 4px 15px rgba(248, 197, 69, 0.3);
+    }
+
+    .spinner-container { display: flex; justify-content: center; align-items: center; padding-top: 100px; width: 100%; }
 </style>
-
 @code {
     [Parameter] public Guid TargetUserId { get; set; }
     private DetallePublicoDto perfil;
@@ -273,55 +191,37 @@
 
     private async Task CargarPerfil()
     {
-        try
-        {
+        try {
             var miId = Sesion.Usuario.UsuarioID;
             perfil = await Http.GetFromJsonAsync<DetallePublicoDto>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/detalle-publico/{TargetUserId}/{miId}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error al cargar perfil: " + ex.Message);
-        }
+        } catch { }
     }
 
     private async Task HacerMatch()
     {
-        try
-        {
+        try {
             var req = new LikeRequest { LikerID = Sesion.Usuario.UsuarioID, FotoID = TargetUserId };
             var resp = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/hacer-match", req);
-
-            if (resp.IsSuccessStatusCode)
-            {
+            if (resp.IsSuccessStatusCode) {
                 var result = await resp.Content.ReadFromJsonAsync<MatchResponseDto>();
-                if (result.EsMatchMutuo)
-                {
+                if (result.EsMatchMutuo) {
                     mostrarAnimacionMatch = true;
                     await CargarPerfil();
-                }
-                else
-                {
+                } else {
                     await CargarPerfil();
                     await App.Current.MainPage.DisplayAlert("¡Listo!", "Tu interés ha sido enviado.", "OK");
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            await App.Current.MainPage.DisplayAlert("Error", "No se pudo procesar el match.", "OK");
-        }
+        } catch { }
     }
 
     private async Task AbrirWhatsApp()
     {
-        if (perfil == null || string.IsNullOrEmpty(perfil.WhatsappTarget)) return;
-        
-        try
-        {
+        if (perfil?.WhatsappTarget == null) return;
+        try {
             var url = $"https://wa.me/{perfil.WhatsappTarget.Replace("+", "").Replace(" ", "")}";
             await Browser.Default.OpenAsync(url, BrowserLaunchMode.External);
-        }
-        catch { }
+        } catch { }
     }
 
     private void CerrarMatch() => mostrarAnimacionMatch = false;
