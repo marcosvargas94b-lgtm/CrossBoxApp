@@ -6,72 +6,80 @@
 @inject HttpClient Http
 @inject SesionService Sesion
 
+@* NAVBAR FIJA SUPERIOR *@
 <div class="top-navbar">
     <div class="nav-left" @onclick="Volver">
         <i class="fas fa-arrow-left"></i> REGRESAR A LISTA
     </div>
 </div>
 
-<div class="profile-detail-container">
-    @if (perfil == null)
-    {
-        <div class="spinner-border text-warning mt-5" style="align-self:center;"></div>
-    }
-    else
-    {
-        <div class="hero-image-container">
-            @if (!string.IsNullOrEmpty(perfil.FotoUrl))
-            {
-                <img src="@perfil.FotoUrl" class="hero-image" />
-            }
-            else
-            {
-                <div class="hero-initial-placeholder">
-                    @(perfil.NombreCompleto?.Substring(0, 1).ToUpper() ?? "A")
-                </div>
-            }
-        </div>
-
-        <div class="info-section">
-            <h1 class="user-name">@perfil.NombreCompleto</h1>
-
-            <div class="stats-badge">
-                <i class="fas fa-heart"></i> @perfil.TotalLikes Likes acumulados
+@* CONTENEDOR DE SCROLL INDEPENDIENTE (EVITA BARRAS BLANCAS) *@
+<div class="main-scroll-container">
+    <div class="profile-detail-container">
+        @if (perfil == null)
+        {
+            <div class="spinner-container">
+                <div class="spinner-border text-warning"></div>
             </div>
-
-            <div class="bio-box">
-                <label>SOBRE MÍ:</label>
-                <p>@(string.IsNullOrEmpty(perfil.Descripcion) ? "Sin descripción..." : perfil.Descripcion)</p>
-            </div>
-
-            @if (perfil.EsMatchMutuo)
-            {
-                <div class="match-success-box">
-                    <h3>¡YA HAN HECHO MATCH!</h3>
-                    <p>Comuníquense para entrenar:</p>
-                    <div class="whatsapp-pill">
-                        <span>WhatsApp: </span>@perfil.WhatsappTarget
+        }
+        else
+        {
+            <div class="hero-image-container">
+                @if (!string.IsNullOrEmpty(perfil.FotoUrl))
+                {
+                    <img src="@perfil.FotoUrl" class="hero-image" />
+                }
+                else
+                {
+                    <div class="hero-initial-placeholder">
+                        @(perfil.NombreCompleto?.Substring(0, 1).ToUpper() ?? "A")
                     </div>
-                </div>
-            }
-            else if (perfil.YaLeDiMatch)
-            {
-                <div class="match-sent-box">
-                    <i class="fas fa-check-circle"></i> Match Enviado
-                    <span>Esperando respuesta...</span>
-                </div>
-            }
-            else
-            {
-                <button class="btn-match" @onclick="HacerMatch">
-                    <i class="fas fa-heart"></i> MATCH
-                </button>
-            }
+                }
+            </div>
 
-        </div>
-    }
+            <div class="info-section">
+                <h1 class="user-name">@perfil.NombreCompleto</h1>
+
+                <div class="stats-badge">
+                    <i class="fas fa-heart"></i> @perfil.TotalLikes Likes acumulados
+                </div>
+
+                <div class="bio-box">
+                    <label>SOBRE MÍ:</label>
+                    <p>@(string.IsNullOrEmpty(perfil.Descripcion) ? "Sin descripción..." : perfil.Descripcion)</p>
+                </div>
+
+                @if (perfil.EsMatchMutuo)
+                {
+                    <div class="match-success-box">
+                        <h3>¡YA HAN HECHO MATCH!</h3>
+                        <p>Comuníquense para entrenar:</p>
+                        <div class="whatsapp-pill" @onclick="AbrirWhatsApp">
+                            <i class="fab fa-whatsapp"></i>
+                            <span>WA: @perfil.WhatsappTarget</span>
+                        </div>
+                    </div>
+                }
+                else if (perfil.YaLeDiMatch)
+                {
+                    <div class="match-sent-box">
+                        <i class="fas fa-check-circle pulse"></i>
+                        <span>Match Enviado</span>
+                        <small>Esperando respuesta...</small>
+                    </div>
+                }
+                else
+                {
+                    <button class="btn-match" @onclick="HacerMatch">
+                        <i class="fas fa-heart"></i> HACER MATCH
+                    </button>
+                }
+            </div>
+        }
+    </div>
 </div>
 
+@* MODAL DE ANIMACIÓN PARA NUEVO MATCH *@
 @if (mostrarAnimacionMatch)
 {
     <div class="match-overlay">
@@ -80,12 +88,10 @@
             <div class="hearts-animation">💖 ❤️ 💖</div>
             <p>¡Tú y @perfil.NombreCompleto se matchearon!</p>
 
-            <div class="whatsapp-box">
+            <div class="whatsapp-box" @onclick="AbrirWhatsApp">
                 <i class="fab fa-whatsapp"></i>
-                <span>WA: @whatsappRevelado</span>
+                <span>WA: @perfil.WhatsappTarget</span>
             </div>
-
-            <p class="match-hint">Ahora pueden comunicarse.</p>
 
             <button class="btn-close-match" @onclick="CerrarMatch">GENIAL</button>
         </div>
@@ -93,228 +99,189 @@
 }
 
 <style>
-
-    .match-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 999; display: flex; justify-content: center; align-items: center; animation: fadeIn 0.5s; }
-    .match-content { text-align: center; color: white; padding: 20px; }
-    .match-title { font-family: 'Oswald'; font-size: 3rem; color: #F8C545; text-shadow: 0 0 10px orange; animation: popIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
-    .whatsapp-box { background: #25D366; color: white; padding: 15px 30px; border-radius: 50px; font-size: 1.5rem; margin: 20px auto; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; width: fit-content; animation: slideUp 1s; }
-    .btn-close-match { background: white; color: black; border: none; padding: 10px 30px; border-radius: 20px; font-weight: bold; margin-top: 20px; }
-    
-    @@keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-    @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-    /* --- CAMBIOS EN LA NAVBAR --- */
+    /* --- ESTRUCTURA FIJA --- */
     .top-navbar {
-        padding: 15px;
-        background: #1a1a1a; /* Fondo negro sólido */
-        border-bottom: 2px solid #F8C545; /* Línea divisoria amarilla */
+        position: fixed;
+        top: 0;
+        left: 0;
         width: 100%;
+        height: 60px;
+        padding: 0 15px;
+        background: #1a1a1a;
+        border-bottom: 2px solid #F8C545;
         display: flex;
         align-items: center;
-        position: relative; /* Ocupa su propio espacio en el flujo */
-        z-index: 10;
+        z-index: 1000;
     }
 
     .nav-left {
         color: #F8C545;
         font-weight: bold;
         cursor: pointer;
+        font-family: 'Oswald';
         display: flex;
         align-items: center;
-        gap: 8px; /* Espacio entre flecha y texto */
-        font-family: 'Oswald';
+        gap: 10px;
     }
 
-    /* --- RESTO DEL DISEÑO --- */
-    .profile-detail-container {
+    .main-scroll-container {
+        position: fixed;
+        top: 60px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow-y: auto;
         background: #0d0d0d;
-        min-height: 100vh;
-        color: white;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* --- DISEÑO DE PERFIL --- */
+    .profile-detail-container {
         display: flex;
         flex-direction: column;
+        padding-bottom: 50px;
     }
 
     .hero-image-container {
         width: 100%;
-        height: 45vh; /* Un poco menos de altura ya que ahora tenemos barra arriba */
-        overflow: hidden;
+        height: 48vh;
+        background: #1a1a1a;
         position: relative;
-        background-color: #222; /* Fondo por si la imagen tarda en cargar */
     }
 
     .hero-image {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        /* Mantenemos el degradado inferior para que se funda con el contenido */
-        mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
-        -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
-    }
-
-    .info-section {
-        padding: 20px;
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-top: -50px; /* Jala el contenido hacia arriba sobre la foto */
-        position: relative;
-        z-index: 2;
-    }
-
-    .user-name {
-        font-family: 'Oswald';
-        font-size: 2rem;
-        color: #F8C545;
-        text-align: center;
-        margin-bottom: 5px;
-        text-transform: uppercase;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.8); /* Sombra para resaltar sobre cualquier fondo */
-    }
-
-    .stats-badge {
-        background: #333;
-        padding: 5px 15px;
-        border-radius: 20px;
-        font-size: 0.9rem;
-        color: #ccc;
-        margin-bottom: 20px;
-        border: 1px solid #555;
-    }
-
-        .stats-badge i {
-            color: #e0245e;
-            margin-right: 5px;
-        }
-
-    .bio-box {
-        width: 100%;
-        background: #1a1a1a;
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 30px;
-        border-left: 3px solid #F8C545;
-    }
-
-        .bio-box label {
-            color: #888;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: bold;
-        }
-
-        .bio-box p {
-            margin-top: 5px;
-            font-style: italic;
-            color: #eee;
-        }
-
-    .btn-match {
-        background: linear-gradient(45deg, #ff6b6b, #ff4757);
-        border: none;
-        width: 80%;
-        padding: 15px;
-        border-radius: 50px;
-        font-size: 1.5rem;
-        color: white;
-        font-weight: bold;
-        box-shadow: 0 5px 15px rgba(255, 71, 87, 0.4);
-        transition: transform 0.2s;
-        margin-bottom: 30px;
-    }
-
-        .btn-match:active {
-            transform: scale(0.95);
-        }
-
-    .whatsapp-pill {
-        background: white;
-        color: #075e54; /* Verde oscuro oficial de WhatsApp */
-        font-weight: bold;
-        padding: 8px 25px; /* Un poco menos de padding vertical */
-        border-radius: 30px;
-        font-size: 1.3rem; /* Número grande */
-        margin-top: 10px;
-        display: inline-flex; /* Para alinear bien el texto */
-        align-items: center;
-        gap: 10px; /* Espacio entre "WA:" y el número */
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-
-    .wa-label {
-        background-color: #25D366; /* Verde brillante */
-        color: white;
-        font-size: 0.9rem;
-        padding: 3px 8px;
-        border-radius: 10px;
-        text-transform: uppercase;
-        font-weight: 900; /* Muy negrita */
-        letter-spacing: 1px;
+        mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
     }
 
     .hero-initial-placeholder {
         width: 100%;
         height: 100%;
-        background-color: #222; /* Fondo gris oscuro */
-        color: #F8C545; /* Letra Amarilla */
-        /* CENTRADO PERFECTO */
         display: flex;
         align-items: center;
         justify-content: center;
-        /* LETRA GIGANTE */
+        font-size: 10rem;
         font-family: 'Oswald';
-        font-size: 8rem; /* Letra muy grande para que llene el espacio */
-        font-weight: bold;
-        text-shadow: 0 0 20px rgba(248, 197, 69, 0.3); /* Un brillito */
+        color: #F8C545;
+        background: #222;
     }
+
+    .info-section {
+        padding: 0 25px;
+        margin-top: -50px;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .user-name {
+        font-family: 'Oswald';
+        font-size: 2.5rem;
+        color: #F8C545;
+        text-transform: uppercase;
+        text-align: center;
+        text-shadow: 2px 2px 10px rgba(0,0,0,0.9);
+        margin-bottom: 5px;
+    }
+
+    .stats-badge {
+        background: rgba(255,255,255,0.1);
+        padding: 6px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+        border: 1px solid #444;
+    }
+
+    .bio-box {
+        width: 100%;
+        background: #1a1a1a;
+        padding: 15px;
+        border-radius: 12px;
+        border-left: 4px solid #F8C545;
+        margin-bottom: 25px;
+    }
+
+    .bio-box label { color: #888; font-size: 0.75rem; font-weight: bold; letter-spacing: 1px; }
+    .bio-box p { margin-top: 5px; color: #ddd; font-style: italic; line-height: 1.4; }
+
+    /* --- BOTONES Y ESTADOS --- */
+    .btn-match {
+        width: 100%;
+        padding: 18px;
+        border-radius: 50px;
+        border: none;
+        background: linear-gradient(45deg, #F8C545, #ff9f43);
+        color: black;
+        font-weight: 900;
+        font-size: 1.3rem;
+        font-family: 'Oswald';
+        box-shadow: 0 4px 15px rgba(248, 197, 69, 0.3);
+    }
+
+    .match-success-box {
+        width: 100%;
+        background: rgba(37, 211, 102, 0.1);
+        border: 1px solid #25D366;
+        padding: 20px;
+        border-radius: 15px;
+        text-align: center;
+    }
+
+    .whatsapp-pill {
+        background: #25D366;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 30px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+        cursor: pointer;
+    }
+
+    .match-sent-box {
+        text-align: center;
+        color: #F8C545;
+    }
+    .match-sent-box i { font-size: 2.5rem; margin-bottom: 5px; }
+    .match-sent-box span { display: block; font-family: 'Oswald'; font-size: 1.4rem; }
+
+    /* --- ANIMACIONES --- */
+    .pulse { animation: pulseAnim 2s infinite; }
+    @@keyframes pulseAnim { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+    .spinner-container { display: flex; justify-content: center; padding-top: 100px; width: 100%; }
 </style>
 
 @code {
     [Parameter] public Guid TargetUserId { get; set; }
     private DetallePublicoDto perfil;
-
     private bool mostrarAnimacionMatch = false;
-    private string whatsappRevelado = "";
-    private bool yaDiMatch = false; // Para deshabilitar botón
 
     protected override async Task OnInitializedAsync()
     {
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
-        await VerificarPermisosGaleria();
         await CargarPerfil();
     }
 
-    private async Task<bool> VerificarPermisosGaleria()
-    {
-        // 1. Verificamos el estado actual
-        var estado = await Permissions.CheckStatusAsync<Permissions.Photos>();
-
-        // 2. Si no tenemos permiso, lo pedimos
-        if (estado != PermissionStatus.Granted)
-        {
-            estado = await Permissions.RequestAsync<Permissions.Photos>();
-        }
-
-        // 3. Si el usuario dijo que NO
-        if (estado != PermissionStatus.Granted)
-        {
-            await App.Current.MainPage.DisplayAlert("Permiso Requerido", "Necesitamos acceso a tus fotos para subir tu evidencia.", "Entendido");
-            return false;
-        }
-
-        return true;
-    }
     private async Task CargarPerfil()
     {
-        if (Sesion.Usuario == null) return;
         try
         {
-            // OJO: Ahora pasamos también MI ID al final de la URL
             var miId = Sesion.Usuario.UsuarioID;
             perfil = await Http.GetFromJsonAsync<DetallePublicoDto>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/detalle-publico/{TargetUserId}/{miId}");
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al cargar perfil: " + ex.Message);
+        }
     }
 
     private async Task HacerMatch()
@@ -327,28 +294,36 @@
             if (resp.IsSuccessStatusCode)
             {
                 var result = await resp.Content.ReadFromJsonAsync<MatchResponseDto>();
-
                 if (result.EsMatchMutuo)
                 {
-                    // Recargar perfil para que aparezca la caja verde de WhatsApp automáticamente
+                    mostrarAnimacionMatch = true;
                     await CargarPerfil();
-                    await App.Current.MainPage.DisplayAlert("❤️", "¡IT'S A MATCH!", "OK");
                 }
                 else
                 {
-                    // Recargar perfil para que aparezca el letrero de "Enviado"
                     await CargarPerfil();
-                    await App.Current.MainPage.DisplayAlert("😉", "Match enviado.", "OK");
+                    await App.Current.MainPage.DisplayAlert("¡Listo!", "Tu interés ha sido enviado.", "OK");
                 }
             }
         }
         catch (Exception ex)
         {
-            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+            await App.Current.MainPage.DisplayAlert("Error", "No se pudo procesar el match.", "OK");
         }
     }
 
-    
+    private async Task AbrirWhatsApp()
+    {
+        if (perfil == null || string.IsNullOrEmpty(perfil.WhatsappTarget)) return;
+        
+        try
+        {
+            var url = $"https://wa.me/{perfil.WhatsappTarget.Replace("+", "").Replace(" ", "")}";
+            await Browser.Default.OpenAsync(url, BrowserLaunchMode.External);
+        }
+        catch { }
+    }
+
     private void CerrarMatch() => mostrarAnimacionMatch = false;
     private void Volver() => Nav.NavigateTo("/entrenamos-juntos");
 }

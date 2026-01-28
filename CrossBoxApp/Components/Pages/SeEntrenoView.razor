@@ -288,12 +288,10 @@
 
     .feed-image {
         width: 100%;
-        height: auto;
+        aspect-ratio: 1 / 1; /* Esto fuerza a que todas las fotos sean cuadradas como en Instagram */
+        object-fit: cover; /* Recorta la imagen para llenar el cuadrado sin deformarse */
         display: block;
-        max-height: 500px;
-        object-fit: cover;
     }
-
     .feed-footer { padding: 15px; }
 
     .btn-like {
@@ -388,7 +386,7 @@
         {
             var content = new MultipartFormDataContent();
             content.Add(new StringContent(Sesion.Usuario.UsuarioID.ToString()), "UsuarioID");
-            content.Add(new StringContent(string.IsNullOrWhiteSpace(descripcion) ? " " : descripcion), "Descripcion");
+            content.Add(new StringContent(descripcion ?? string.Empty), "Descripcion");
 
             using var stream = await fotoFeedNativa.OpenReadAsync();
             using var memoryStream = new MemoryStream();
