@@ -81,25 +81,41 @@
             <div class="feed-list">
                 @foreach (var item in feed)
                 {
-                           <div class="feed-card fade-in">
-                               <div class="feed-header">
-                    @if (!string.IsNullOrEmpty(item.FotoPerfilUsuario))
-                    {
-                        <img src="@item.FotoPerfilUsuario" class="avatar-small" 
-                             @onclick="() => IrAlPerfil(item.UsuarioID)" style="cursor:pointer;" />
-                    }
-                    else
-                    {
-                        <div class="avatar-small-initial" @onclick="() => IrAlPerfil(item.UsuarioID)" style="cursor:pointer;">
-                            @(item.NombreUsuario?.Substring(0, 1).ToUpper() ?? "U")
+                       <div class="feed-card fade-in">
+                        <div class="feed-header">
+
+                            @* 1. GRUPO IZQUIERDO: FOTO Y NOMBRE *@
+                            @* Usamos flex-grow: 1 para que este grupo empuje el botón de borrar a la derecha *@
+                            <div style="display:flex; align-items:center; gap:10px; flex-grow:1;">
+
+                                @if (!string.IsNullOrEmpty(item.FotoPerfilUsuario))
+                                {
+                                    <img src="@item.FotoPerfilUsuario" class="avatar-small"
+                                         @onclick="() => IrAlPerfil(item.UsuarioID)" style="cursor:pointer;" />
+                                }
+                                else
+                                {
+                                    <div class="avatar-small-initial" @onclick="() => IrAlPerfil(item.UsuarioID)" style="cursor:pointer;">
+                                        @(item.NombreUsuario?.Substring(0, 1).ToUpper() ?? "U")
+                                    </div>
+                                }
+
+                                <span class="feed-username clickable-name" @onclick="() => IrAlPerfil(item.UsuarioID)"
+                                      style="cursor:pointer; text-decoration:underline; text-underline-offset: 4px;">
+                                    @item.NombreUsuario
+                                </span>
+
+                            </div>
+
+                            @* 2. BOTÓN DERECHO: BORRAR (SOLO SI ES MI FOTO) *@
+                            @if (item.UsuarioID == Sesion.Usuario.UsuarioID)
+                            {
+                                <button class="btn-delete-feed" @onclick="() => BorrarMiFoto(item)">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            }
+
                         </div>
-                    }
-                    @* Hacemos que el nombre sea clicable *@
-                         <span class="feed-username" @onclick="() => IrAlPerfil(item.UsuarioID)" 
-                     style="cursor:pointer; text-decoration:underline; text-underline-offset: 4px;">
-                           @item.NombreUsuario
-                       </span>
-                    </div>
 
                         <img src="@item.FotoUrl" class="feed-image" />
 
@@ -332,6 +348,28 @@
 
     .fade-in { animation: fadeIn 0.5s ease; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .clickable-name {
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+    .clickable-name:active {
+        color: #F8C545; /* Se pone amarillo al tocarlo */
+        text-decoration: underline;
+    }
+
+    .btn-delete-feed {
+        background: transparent;
+        border: none;
+        color: #666; /* Gris discreto */
+        font-size: 1.1rem;
+        padding: 5px 10px;
+        transition: color 0.2s;
+    }
+
+        .btn-delete-feed:active {
+            color: #dc3545; /* Rojo al presionar */
+            transform: scale(0.9);
+        }
 </style>
 
 @code {
@@ -475,6 +513,46 @@
             Nav.NavigateTo($"/perfil-publico/{targetId}");
         }
     }
+
+    private async Task BorrarMiFoto(FotoFeedDto foto)
+    {
+        bool confirmar = await App.Current.MainPage.DisplayAlert("¿Borrar Foto?",
+            "Se perderán los likes acumulados en esta foto. ¿Estás seguro?", "Sí, borrar", "Cancelar");
+
+        if (!confirmar) return;
+
+        try
+        {
+            var req = new BorrarFotoRequest
+            {
+                FotoID = foto.FotoDiaID,
+                UsuarioID = Sesion.Usuario.UsuarioID
+            };
+
+            var resp = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/borrar-foto", req);
+
+            if (resp.IsSuccessStatusCode)
+            {
+                // Recargamos el feed para que desaparezca la foto
+                await CargarFeed();
+                // Actualizamos el estado para permitir subir otra si queremos
+                yaSubiFotoHoy = false;
+                await App.Current.MainPage.DisplayAlert("Listo", "Foto eliminada.", "OK");
+            }
+            else
+            {
+                await App.Current.MainPage.DisplayAlert("Error", "No se pudo borrar.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
+    }
+
+    // Clase auxiliar para el Request (agrégala al final del archivo o en tus Models)
+    public class BorrarFotoRequest { public Guid FotoID { get; set; } public Guid UsuarioID { get; set; } }
+
 
     private void Volver() => Nav.NavigateTo("/home");
 
