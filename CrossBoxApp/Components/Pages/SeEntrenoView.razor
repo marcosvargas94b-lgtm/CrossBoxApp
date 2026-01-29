@@ -81,20 +81,25 @@
             <div class="feed-list">
                 @foreach (var item in feed)
                 {
-                    <div class="feed-card fade-in">
-                        <div class="feed-header">
-                            @if (!string.IsNullOrEmpty(item.FotoPerfilUsuario))
-                            {
-                                <img src="@item.FotoPerfilUsuario" class="avatar-small" />
-                            }
-                            else
-                            {
-                                <div class="avatar-small-initial">
-                                    @(item.NombreUsuario?.Substring(0, 1).ToUpper() ?? "U")
-                                </div>
-                            }
-                            <span class="feed-username">@item.NombreUsuario</span>
+                           <div class="feed-card fade-in">
+                               <div class="feed-header">
+                    @if (!string.IsNullOrEmpty(item.FotoPerfilUsuario))
+                    {
+                        <img src="@item.FotoPerfilUsuario" class="avatar-small" 
+                             @onclick="() => IrAlPerfil(item.UsuarioID)" style="cursor:pointer;" />
+                    }
+                    else
+                    {
+                        <div class="avatar-small-initial" @onclick="() => IrAlPerfil(item.UsuarioID)" style="cursor:pointer;">
+                            @(item.NombreUsuario?.Substring(0, 1).ToUpper() ?? "U")
                         </div>
+                    }
+                    @* Hacemos que el nombre sea clicable *@
+                         <span class="feed-username" @onclick="() => IrAlPerfil(item.UsuarioID)" 
+                     style="cursor:pointer; text-decoration:underline; text-underline-offset: 4px;">
+                           @item.NombreUsuario
+                       </span>
+                    </div>
 
                         <img src="@item.FotoUrl" class="feed-image" />
 
@@ -456,6 +461,19 @@
             }
         }
         catch { foto.YaDiLike = false; foto.Likes--; }
+    }
+
+    private void IrAlPerfil(Guid targetId)
+    {
+        // Si el ID es el mío, voy a "mi-perfil", si es de otro, voy al perfil público
+        if (targetId == Sesion.Usuario.UsuarioID)
+        {
+            Nav.NavigateTo("/mi-perfil");
+        }
+        else
+        {
+            Nav.NavigateTo($"/perfil-publico/{targetId}");
+        }
     }
 
     private void Volver() => Nav.NavigateTo("/home");

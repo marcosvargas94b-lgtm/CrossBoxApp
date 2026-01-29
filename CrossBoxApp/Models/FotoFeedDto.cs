@@ -19,5 +19,6 @@ namespace CrossBoxApp.Models
 
         // Estado para el usuario que está viendo
         public bool YaDiLike { get; set; }
+        public Guid UsuarioID { get; set; }
     }
 }
