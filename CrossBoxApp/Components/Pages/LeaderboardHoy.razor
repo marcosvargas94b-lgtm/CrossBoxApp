@@ -30,7 +30,7 @@
         else if (lista.Count == 0)
         {
             <div class="empty-state fade-in">
-                <i class="fas fa-clipboard-list" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px;"></i>
+                <i class="fas fa-dumbbell" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px;"></i>
                 <h3>SIN RESULTADOS</h3>
                 <p>Aún no hay scores registrados hoy.</p>
             </div>
@@ -41,32 +41,36 @@
                 @foreach (var item in lista)
                 {
                     <div class="score-row @(item.Posicion == 1 ? "gold" : "")">
+                        
+                        @* 1. POSICIÓN / MEDALLA *@
                         <div class="pos-column">
-                            @if (item.Posicion == 1)
+                            @if (item.Posicion == 1) { <i class="fas fa-crown gold-icon"></i> }
+                            else if (item.Posicion == 2) { <i class="fas fa-medal silver-icon"></i> }
+                            else if (item.Posicion == 3) { <i class="fas fa-medal bronze-icon"></i> }
+                            else { <span>@item.Posicion</span> }
+                        </div>
+                        
+                        @* 2. FOTO (NUEVO) *@
+                        <div class="avatar-column">
+                            @if (!string.IsNullOrEmpty(item.Foto))
                             {
-                                <i class="fas fa-crown gold-icon"></i>
-                            }
-                            else if (item.Posicion == 2)
-                            {
-                                <i class="fas fa-medal silver-icon"></i>
-                            }
-                            else if (item.Posicion == 3)
-                            {
-                                <i class="fas fa-medal bronze-icon"></i>
+                                <img src="@item.Foto" class="score-avatar" />
                             }
                             else
                             {
-                                <span>@item.Posicion</span>
+                                <div class="score-placeholder">@item.Nombre.Substring(0,1)</div>
                             }
                         </div>
-                        
+
+                        @* 3. NOMBRE *@
                         <div class="name-column">
                             @item.Nombre
                         </div>
                         
+                        @* 4. REPS *@
                         <div class="reps-column">
                             <span class="reps-val">@item.Reps</span>
-                            <small>PTS</small>
+                            <small>REPS</small>
                         </div>
                     </div>
                 }
@@ -79,156 +83,41 @@
 
 <style>
     /* --- ESTRUCTURA BASE --- */
-    .main-layout {
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background-color: #0d0d0d;
-        display: flex;
-        flex-direction: column;
-        z-index: 1;
-    }
-
-    .navbar-container {
-        flex-shrink: 0;
-        padding-top: calc(env(safe-area-inset-top) + 5px);
-        padding-bottom: 10px;
-        padding-left: 20px;
-        padding-right: 20px;
-        background-color: #0d0d0d;
-        border-bottom: 1px solid #F8C545;
-        color: white;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 100;
-        font-family: 'Oswald';
-        min-height: 60px;
-    }
-
-    .nav-left {
-        color: #F8C545;
-        font-weight: bold;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.9rem;
-    }
-
-    .nav-title {
-        font-weight: bold;
-        font-size: 1.1rem;
-        color: white;
-        letter-spacing: 1px;
-    }
-
+    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
+    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
     .nav-right { width: 60px; }
-
-    .scrollable-content {
-        flex-grow: 1;
-        overflow-y: auto;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 40px;
-    }
+    .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
 
     /* --- ESTILOS LEADERBOARD --- */
+    .date-header { font-family: 'Oswald'; font-size: 1.5rem; color: white; margin-top: 10px; margin-bottom: 25px; border-bottom: 1px solid #333; padding-bottom: 10px; text-align: center; width: 100%; letter-spacing: 1px; }
+    .podium-list { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 10px; }
+
+    .score-row { display: flex; align-items: center; background: #1a1a1a; padding: 10px 15px; border-radius: 12px; border: 1px solid #333; transition: transform 0.1s; }
+    .score-row.gold { border: 2px solid #FFD700; background: rgba(255, 215, 0, 0.1); transform: scale(1.02); box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); }
+
+    /* COLUMNAS */
+    .pos-column { width: 35px; text-align: center; font-family: 'Oswald'; font-weight: bold; font-size: 1.2rem; color: #666; }
     
-    .date-header {
-        font-family: 'Oswald';
-        font-size: 1.5rem;
-        color: white; /* Blanco para mejor contraste */
-        margin-top: 10px;
-        margin-bottom: 25px;
-        border-bottom: 1px solid #333;
-        padding-bottom: 10px;
-        text-align: center;
-        width: 100%;
-        letter-spacing: 1px;
-    }
+    /* AVATAR */
+    .avatar-column { margin: 0 15px 0 10px; }
+    .score-avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #333; }
+    .score-placeholder { width: 45px; height: 45px; border-radius: 50%; background: #333; color: #888; display: flex; align-items: center; justify-content: center; font-weight: bold; font-family: 'Oswald'; border: 2px solid #444; }
+    .gold .score-avatar, .gold .score-placeholder { border-color: #FFD700; }
 
-    .podium-list {
-        width: 100%;
-        max-width: 600px;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
+    .name-column { flex: 1; font-size: 1rem; font-family: 'Roboto', sans-serif; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+    
+    .reps-column { font-family: 'Oswald'; text-align: right; display: flex; align-items: baseline; gap: 5px; }
+    .reps-val { font-size: 1.4rem; color: #F8C545; font-weight: bold; }
+    .reps-column small { font-size: 0.7rem; color: #888; font-weight: bold; }
 
-    .score-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: #1a1a1a;
-        padding: 15px;
-        border-radius: 12px;
-        border: 1px solid #333;
-        transition: transform 0.1s;
-    }
-
-    .score-row.gold {
-        border: 2px solid #FFD700;
-        background: rgba(255, 215, 0, 0.1);
-        transform: scale(1.02);
-        box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
-    }
-
-    /* Columnas alineadas */
-    .pos-column {
-        width: 40px;
-        text-align: center;
-        font-family: 'Oswald';
-        font-weight: bold;
-        font-size: 1.2rem;
-        color: #666;
-    }
-
-    .name-column {
-        flex: 1;
-        font-size: 1rem;
-        font-family: 'Roboto', sans-serif;
-        color: #eee;
-        padding-left: 10px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .reps-column {
-        font-family: 'Oswald';
-        text-align: right;
-        display: flex;
-        align-items: baseline;
-        gap: 5px;
-    }
-
-    .reps-val {
-        font-size: 1.4rem;
-        color: white;
-        font-weight: bold;
-    }
-
-    .reps-column small {
-        font-size: 0.7rem;
-        color: #F8C545;
-        font-weight: bold;
-    }
-
-    /* Iconos de medallas */
+    /* ICONOS */
     .gold-icon { color: #FFD700; font-size: 1.4rem; }
     .silver-icon { color: #C0C0C0; font-size: 1.3rem; }
     .bronze-icon { color: #CD7F32; font-size: 1.3rem; }
 
-    .empty-state {
-        text-align: center;
-        margin-top: 60px;
-        color: #666;
-        font-family: 'Roboto';
-    }
-
+    .empty-state { text-align: center; margin-top: 60px; color: #666; font-family: 'Roboto'; }
     .fade-in { animation: fadeIn 0.5s ease; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
@@ -239,6 +128,7 @@
         public string Nombre { get; set; } 
         public int Reps { get; set; } 
         public int Posicion { get; set; } 
+        public string Foto { get; set; } // Propiedad nueva
     }
     
     private List<LeaderboardItem> lista;
@@ -247,12 +137,9 @@
     {
         try 
         {
-            if (Sesion.Usuario == null) 
-            {
-                Nav.NavigateTo("/");
-                return;
-            }
+            if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
 
+            // IMPORTANTE: Asegúrate de recompilar el backend con el nuevo código del controlador
             lista = await Http.GetFromJsonAsync<List<LeaderboardItem>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/scoresapi/leaderboard-hoy/{Sesion.Usuario.BoxID}");
         } 
         catch 

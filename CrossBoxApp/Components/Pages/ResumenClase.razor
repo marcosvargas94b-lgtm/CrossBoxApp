@@ -28,18 +28,36 @@
             {
                 @foreach (var atleta in listaLocal)
                 {
-                    <div class="user-left">
-                        @if (!string.IsNullOrEmpty(atleta.FotoUrl))
+                    <div class="user-row">
+                        <div class="user-left">
+                            @if (!string.IsNullOrEmpty(atleta.FotoUrl))
+                            {
+                                <img src="@atleta.FotoUrl" class="avatar-list-img" />
+                            }
+                            else
+                            {
+                                <div class="avatar-list-letter">
+                                    @(atleta.NombreCompleto?.Substring(0, 1).ToUpper() ?? "A")
+                                </div>
+                            }
+                            <span class="text-truncate">@atleta.NombreCompleto</span>
+                        </div>
+
+                        @if (modoScore)
                         {
-                            <img src="@atleta.FotoUrl" class="avatar-img" />
+                            <div class="score-input-wrapper">
+                                <input type="number" 
+                                       @bind="atleta.Reps" 
+                                       class="input-reps" 
+                                       placeholder="0" 
+                                       min="0" />
+                                <small>REPS</small>
+                            </div>
                         }
                         else
                         {
-                            <div class="avatar-letter">
-                                @(atleta.NombreCompleto?.Substring(0, 1).ToUpper() ?? "A")
-                            </div>
+                            <i class="fas fa-check" style="color:#28a745; margin-right:10px;"></i>
                         }
-                        <span class="text-truncate">@atleta.NombreCompleto</span>
                     </div>
                 }
             }
@@ -51,14 +69,137 @@
     </div>
 </div>
 
-<style>
-    /* Estilos base (Mantener los anteriores y agregar estos) */
-    .resumen-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0d0d0d; color: white; display: flex; justify-content: center; align-items: center; z-index: 3000; }
-    .resumen-card { background: #1a1a1a; width: 90%; max-width: 450px; border-radius: 20px; padding: 30px; text-align: center; border: 2px solid #F8C545; box-shadow: 0 0 50px rgba(248, 197, 69, 0.2); }
-    
-    .header-resumen h2 { font-family: 'Oswald'; margin-bottom: 20px; color: white; }
+@* --- MODAL DE PODIO (LEADERBOARD) --- *@
+@if (mostrarPodio)
+{
+    <div class="podium-overlay fade-in">
+        <div class="victory-container">
+            
+            @* TÍTULO PRINCIPAL *@
+            <h1 class="victory-title">
+                <i class="fas fa-crown title-crown"></i> LEADERBOARD
+            </h1>
+            
+            <div class="victory-layout">
+                
+                @* IZQUIERDA: EL PODIO *@
+                <div class="podium-section">
+                    <div class="podium-stage">
+                        
+                        @* 2DO LUGAR (PLATA) *@
+                        <div class="podium-pillar silver" style="height: 140px;">
+                            @if (top3.Count >= 2)
+                            {
+                                <div class="podium-avatar-box slide-up-delay-1">
+                                    @if (!string.IsNullOrEmpty(top3[1].FotoUrl))
+                                    {
+                                        <img src="@top3[1].FotoUrl" class="avatar-circle" />
+                                    }
+                                    else
+                                    {
+                                        <div class="avatar-letter-box">@top3[1].NombreCompleto.Substring(0,1)</div>
+                                    }
+                                </div>
+                                <div class="bar-fill grow-up-delay-1">
+                                    <span class="rank-num">2</span>
+                                    <div class="winner-info">
+                                        <span class="winner-name">@top3[1].NombreCompleto</span>
+                                        <span class="winner-score">@top3[1].Reps <small>REPS</small></span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
 
-    /* Toggle Switch */
+                        @* 1ER LUGAR (ORO) *@
+                        <div class="podium-pillar gold" style="height: 190px;">
+                            @if (top3.Count >= 1)
+                            {
+                                <div class="crown-floating zoom-in-delay">@* <i class="fas fa-crown"></i> *@</div>
+                                
+                                <div class="podium-avatar-box big slide-up-delay-2">
+                                    @if (!string.IsNullOrEmpty(top3[0].FotoUrl))
+                                    {
+                                        <img src="@top3[0].FotoUrl" class="avatar-circle" />
+                                    }
+                                    else
+                                    {
+                                        <div class="avatar-letter-box gold-bg">@top3[0].NombreCompleto.Substring(0,1)</div>
+                                    }
+                                </div>
+
+                                <div class="bar-fill grow-up-delay-2">
+                                    <span class="rank-num">1</span>
+                                    <div class="winner-info">
+                                        <span class="winner-name">@top3[0].NombreCompleto</span>
+                                        <span class="winner-score">@top3[0].Reps <small>REPS</small></span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        @* 3ER LUGAR (BRONCE) *@
+                        <div class="podium-pillar bronze" style="height: 110px;">
+                            @if (top3.Count >= 3)
+                            {
+                                <div class="podium-avatar-box slide-up-delay-1">
+                                    @if (!string.IsNullOrEmpty(top3[2].FotoUrl))
+                                    {
+                                        <img src="@top3[2].FotoUrl" class="avatar-circle" />
+                                    }
+                                    else
+                                    {
+                                        <div class="avatar-letter-box">@top3[2].NombreCompleto.Substring(0,1)</div>
+                                    }
+                                </div>
+                                <div class="bar-fill grow-up-delay-1">
+                                    <span class="rank-num">3</span>
+                                    <div class="winner-info">
+                                        <span class="winner-name">@top3[2].NombreCompleto</span>
+                                        <span class="winner-score">@top3[2].Reps <small>REPS</small></span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                    </div>
+                </div>
+
+                @* DERECHA: LISTA DEL RESTO *@
+                <div class="list-section slide-in-right">
+                    <h4>THE PACK</h4>
+                    <div class="others-list scroll-custom">
+                        @if (restoAtletas.Count == 0)
+                        {
+                            <p class="text-muted" style="font-size:0.8rem; text-align:center; padding-top:20px;">Solo los más fuertes hoy...</p>
+                        }
+                        else
+                        {
+                            @for (int i = 0; i < restoAtletas.Count; i++)
+                            {
+                                <div class="other-row">
+                                    <span class="pos">#@(i + 4)</span>
+                                    <span class="name text-truncate-list">@restoAtletas[i].NombreCompleto</span>
+                                    <span class="score">
+                                        @restoAtletas[i].Reps <span class="lbl-reps">REPS</span>
+                                    </span>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+            </div>
+
+            <button class="btn-continue" @onclick="FinalizarNavegacion">CONTINUAR AL HOME <i class="fas fa-arrow-right"></i></button>
+        </div>
+    </div>
+}
+
+<style>
+    /* --- ESTILOS BASE --- */
+    .resumen-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0d0d0d; color: white; display: flex; justify-content: center; align-items: center; z-index: 1; }
+    .resumen-card { background: #1a1a1a; width: 90%; max-width: 450px; border-radius: 20px; padding: 30px; text-align: center; border: 2px solid #F8C545; box-shadow: 0 0 50px rgba(248, 197, 69, 0.2); }
+    .header-resumen h2 { font-family: 'Oswald'; margin-bottom: 20px; color: white; }
     .score-toggle { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px; cursor: pointer; }
     .score-toggle span { font-size: 0.8rem; font-weight: bold; color: #666; transition: color 0.3s; }
     .score-toggle span.active { color: #F8C545; }
@@ -66,70 +207,207 @@
     .toggle-track.on { background: #F8C545; }
     .toggle-thumb { width: 20px; height: 20px; background: white; border-radius: 50%; position: absolute; top: 3px; left: 3px; transition: 0.3s; }
     .toggle-track.on .toggle-thumb { transform: translateX(24px); }
-
-    /* Lista y Rows */
+    
+    /* Lista de Asistencia */
     .attendance-list { max-height: 300px; overflow-y: auto; margin-bottom: 20px; }
     .user-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; }
     .user-left { display: flex; align-items: center; gap: 10px; }
-    .user-row img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
-    .user-row span { font-family: 'Oswald'; font-size: 1rem; }
-
-    /* Input Reps */
+    .avatar-list-img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #F8C545; }
+    .avatar-list-letter { width: 40px; height: 40px; background-color: #333; color: #F8C545; border-radius: 50%; border: 2px solid #F8C545; display: flex; align-items: center; justify-content: center; font-weight: bold; font-family: 'Oswald'; font-size: 1.2rem; }
+    .text-truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
     .score-input-wrapper { display: flex; align-items: center; gap: 5px; animation: fadeIn 0.3s; }
     .input-reps { width: 60px; background: #222; border: 1px solid #F8C545; color: white; text-align: center; padding: 5px; border-radius: 5px; font-weight: bold; font-size: 1.1rem; }
-    .score-input-wrapper small { font-size: 0.6rem; color: #F8C545; font-weight: bold; }
-
     .btn-close-session { width: 100%; padding: 15px; border-radius: 50px; border: none; background: #F8C545; color: black; font-weight: bold; font-family: 'Oswald'; font-size: 1.2rem; cursor: pointer; }
-    @@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
 
-    .avatar-img {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid #F8C545;
+    /* --- ESTILOS LEADERBOARD (PODIO) --- */
+    .podium-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.96); 
+        z-index: 5000;
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
+        backdrop-filter: blur(8px);
     }
 
-    .avatar-letter {
-        width: 40px;
-        height: 40px;
-        background-color: #333;
-        color: #F8C545;
-        border-radius: 50%;
-        border: 2px solid #F8C545;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
+    .victory-container { width: 95%; max-width: 900px; display: flex; flex-direction: column; align-items: center; }
+
+    .victory-title {
+        font-family: 'Oswald'; font-size: 3rem; color: #F8C545;
+        text-shadow: 0 0 30px rgba(248, 197, 69, 0.4);
+        margin-bottom: 40px; letter-spacing: 4px;
+        animation: zoomIn 0.5s ease-out;
+        display: flex; align-items: center; gap: 15px;
+    }
+    .title-crown { font-size: 2.5rem; color: #FFD700; filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6)); }
+
+    .victory-layout {
+        display: flex; flex-direction: row; gap: 40px; width: 100%;
+        align-items: flex-end; justify-content: center;
+        flex-wrap: wrap; 
+    }
+
+    /* COLUMNAS DEL PODIO */
+    .podium-section { flex: 2; min-width: 320px; display: flex; justify-content: center; margin-bottom: 20px; }
+    .podium-stage { display: flex; align-items: flex-end; gap: 15px; }
+    .podium-pillar { width: 100px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; position: relative; }
+    
+    /* Barras de Color */
+    .bar-fill {
+        width: 100%; height: 100%;
+        border-top-left-radius: 12px; border-top-right-radius: 12px;
+        display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
+        padding-top: 15px;
+        position: relative;
+    }
+    .gold .bar-fill { background: linear-gradient(180deg, #FFD700 0%, #B8860B 100%); border: 2px solid #FFF8DC; box-shadow: 0 0 40px rgba(255, 215, 0, 0.3); z-index: 10; }
+    .silver .bar-fill { background: linear-gradient(180deg, #E0E0E0 0%, #A9A9A9 100%); border: 1px solid #FFF; }
+    .bronze .bar-fill { background: linear-gradient(180deg, #CD7F32 0%, #8B4513 100%); border: 1px solid #FFDAB9; }
+
+    /* AVATARES CIRCULARES EN PODIO */
+    .podium-avatar-box {
+        width: 60px !important; 
+        height: 60px !important; 
+        min-width: 60px; min-height: 60px;
+        margin-bottom: 15px; z-index: 20;
+        border-radius: 50%; 
+        overflow: hidden; 
+        border: 3px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.6);
+        background: #000;
+        display: flex; justify-content: center; align-items: center;
+    }
+    .podium-avatar-box.big { 
+        width: 85px !important; height: 85px !important; 
+        min-width: 85px; min-height: 85px;
+        border-color: #F8C545; 
+    }
+
+    /* IMAGEN DENTRO DEL CÍRCULO */
+    .avatar-circle { 
+        width: 100%; height: 100%; 
+        object-fit: cover; 
+        display: block; 
+    }
+    
+    .avatar-letter-box {
+        width: 100%; height: 100%; background: #333; color: white;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Oswald'; font-weight: bold; font-size: 1.5rem;
+    }
+    .avatar-letter-box.gold-bg { background: #F8C545; color: black; font-size: 2rem; }
+
+    .rank-num { font-size: 3.5rem; font-weight: 900; opacity: 0.3; font-family: 'Oswald'; line-height: 1; color: black; mix-blend-mode: overlay; }
+    
+    /* Corona Flotante */
+    .crown-floating { 
+        font-size: 3rem; color: #FFD700; position: absolute; top: -130px; left: 50%; transform: translateX(-50%);
+        filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.9)); 
+        animation: float 3s infinite ease-in-out; z-index: 30;
+    }
+
+    /* --- NUEVA TIPOGRAFÍA PARA GANADORES --- */
+    .winner-info { 
+        position: absolute; bottom: 15px; width: 100%; text-align: center; 
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3); /* Sombra para mejorar lectura sobre metal */
+    }
+    .winner-name { 
+        display: block; 
+        font-family: 'Oswald'; 
+        font-size: 1rem; /* Más grande */
+        color: black; 
+        font-weight: 800; /* Más grueso */
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+        padding: 0 2px; 
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+    .winner-score { 
+        display: block; 
         font-family: 'Oswald';
-        font-size: 1.2rem;
+        font-size: 1.4rem; /* Mucho más grande para el número */
+        color: #000; 
+        font-weight: 900; /* Super bold */
+        line-height: 1;
+    }
+    .winner-score small {
+        font-size: 0.7rem;
+        font-weight: 600;
+        vertical-align: middle;
+        opacity: 0.8;
     }
 
-    .text-truncate {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 180px; /* Evita que nombres largos rompan el diseño */
+    /* LISTA THE PACK */
+    .list-section {
+        flex: 1; min-width: 280px; background: rgba(255,255,255,0.05);
+        border-radius: 15px; padding: 20px; border: 1px solid #333;
+        max-height: 320px; display: flex; flex-direction: column;
     }
+    .list-section h4 { font-family: 'Oswald'; color: #888; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 10px; font-size: 1.2rem; letter-spacing: 1px; }
+    .others-list { overflow-y: auto; flex: 1; }
+    .other-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #2a2a2a; font-family: 'Roboto'; font-size: 0.95rem; }
+    .other-row .pos { font-weight: bold; color: #666; width: 35px; }
+    .other-row .name { flex: 1; color: #ddd; font-weight: 500; }
+    .text-truncate-list { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+    
+    .other-row .score { font-weight: bold; color: #F8C545; font-family: 'Oswald'; font-size: 1.1rem; }
+    .lbl-reps { font-size: 0.6rem; color: #888; margin-left: 2px; vertical-align: middle; }
+
+    .btn-continue { 
+        margin-top: 40px; background: transparent; border: 2px solid #F8C545; 
+        color: #F8C545; padding: 15px 50px; font-family: 'Oswald'; font-size: 1.2rem; 
+        cursor: pointer; transition: 0.3s; border-radius: 50px; 
+        animation: fadeIn 2s ease-in; text-transform: uppercase; letter-spacing: 2px;
+    }
+    .btn-continue:hover { background: #F8C545; color: black; box-shadow: 0 0 20px rgba(248, 197, 69, 0.4); }
+
+    /* Scrollbar */
+    .scroll-custom::-webkit-scrollbar { width: 5px; }
+    .scroll-custom::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+
+    /* ANIMACIONES */
+    .fade-in { animation: fadeIn 0.5s forwards; }
+    @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @@keyframes zoomIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    
+    .grow-up-delay-1 { animation: growUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.5s forwards; transform-origin: bottom; transform: scaleY(0); opacity: 0; }
+    .grow-up-delay-2 { animation: growUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 1s forwards; transform-origin: bottom; transform: scaleY(0); opacity: 0; }
+    @@keyframes growUp { from { transform: scaleY(0); opacity: 1; } to { transform: scaleY(1); opacity: 1; } }
+
+    .slide-up-delay-1 { animation: slideUpAvatar 0.8s 0.5s forwards; opacity: 0; transform: translateY(50px); }
+    .slide-up-delay-2 { animation: slideUpAvatar 0.8s 1s forwards; opacity: 0; transform: translateY(50px); }
+    @@keyframes slideUpAvatar { to { opacity: 1; transform: translateY(0); } }
+
+    .zoom-in-delay { animation: zoomIn 0.5s 1.8s backwards; }
+    .slide-in-right { animation: slideInRight 0.8s 1.5s backwards; }
+    @@keyframes slideInRight { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+    @@keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
 </style>
 
 @code {
-    // Clase local para manejar el dato "Reps" temporalmente
     class AtletaResumen
     {
         public Guid UsuarioId { get; set; }
-        public Guid BoxId { get; set; } // Necesitamos esto para guardar
+        public Guid BoxId { get; set; }
         public string NombreCompleto { get; set; }
         public string FotoUrl { get; set; }
-        public int Reps { get; set; } // Nuevo campo
+        public int Reps { get; set; }
+    }
+    
+    // DTO para recibir info del nuevo endpoint
+    class InfoPodioDto {
+        public Guid UsuarioID { get; set; }
+        public string Nombre { get; set; }
+        public string FotoUrl { get; set; }
     }
 
     private List<AtletaResumen> listaLocal = new List<AtletaResumen>();
     private bool modoScore = false;
+    
+    // VARIABLES PARA EL PODIO
+    private bool mostrarPodio = false;
+    private List<AtletaResumen> top3 = new List<AtletaResumen>();
+    private List<AtletaResumen> restoAtletas = new List<AtletaResumen>();
 
     protected override void OnInitialized()
     {
-        // Convertimos del servicio global a la lista local para poder editar Reps
         listaLocal = LiveState.AtletasEnClase.Select(a => new AtletaResumen 
         { 
             UsuarioId = a.UsuarioId,
@@ -142,37 +420,70 @@
 
     private async Task GuardarYSalir()
     {
-        // 1. Preparamos el payload SIEMPRE (con o sin reps)
-        // Usamos un objeto anónimo que coincide con lo que espera la API
+        // 1. Enviamos a la API SIEMPRE
         var payload = listaLocal.Select(a => new
         {
             UsuarioID = a.UsuarioId,
             BoxID = a.BoxId,
-            // Si modoScore está apagado, mandamos 0 reps, pero el backend igual cuenta la asistencia
             Reps = modoScore ? a.Reps : 0,
             NombreAtleta = a.NombreCompleto
         }).ToList();
 
-        // 2. Enviamos a la API (SIEMPRE, no dentro de un if)
         try
         {
-            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/scoresapi/guardar-scores", payload);
+            await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/scoresapi/guardar-scores", payload);
+        }
+        catch { }
 
-            if (response.IsSuccessStatusCode)
+        // 2. DECISIÓN DE FLUJO
+        if (modoScore)
+        {
+            // SI HAY PUNTAJES: Calcular Leaderboard Local
+            var ordenados = listaLocal.Where(a => a.Reps > 0).OrderByDescending(a => a.Reps).ToList();
+            
+            if (ordenados.Any())
             {
-                await App.Current.MainPage.DisplayAlert("¡Clase Cerrada!", "Asistencias y resultados actualizados.", "OK");
+                // TRAER FOTOS ACTUALIZADAS
+                try 
+                {
+                    var ids = ordenados.Select(x => x.UsuarioId).ToList();
+                    var responseFotos = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/scoresapi/info-podio", ids);
+                    
+                    if (responseFotos.IsSuccessStatusCode)
+                    {
+                        var infos = await responseFotos.Content.ReadFromJsonAsync<List<InfoPodioDto>>();
+                        foreach (var item in ordenados)
+                        {
+                            var info = infos.FirstOrDefault(x => x.UsuarioID == item.UsuarioId);
+                            if (info != null)
+                            {
+                                item.FotoUrl = info.FotoUrl; 
+                                item.NombreCompleto = info.Nombre;
+                            }
+                        }
+                    }
+                }
+                catch { }
+
+                top3 = ordenados.Take(3).ToList();
+                restoAtletas = ordenados.Skip(3).ToList();
+                mostrarPodio = true;
+                StateHasChanged(); 
             }
             else
             {
-                // Opcional: Manejo de error silencioso o log
+                FinalizarNavegacion();
             }
         }
-        catch (Exception ex)
+        else
         {
-            // Log de error
+            // SI ES SOLO ASISTENCIA: Salir directo
+            FinalizarNavegacion();
         }
+    }
 
-        // 3. Limpieza y Salida
+    private void FinalizarNavegacion()
+    {
         LiveState.AtletasEnClase.Clear();
         Nav.NavigateTo("/home");
     }

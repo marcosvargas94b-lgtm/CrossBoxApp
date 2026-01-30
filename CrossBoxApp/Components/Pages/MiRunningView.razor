@@ -17,12 +17,14 @@
 
     <div class="scrollable-content">
         
+        @* CONTROLES DEL MES *@
         <div class="month-control fade-in">
             <button class="btn-nav" @onclick="MesAnterior"><i class="fas fa-chevron-left"></i></button>
             <span class="month-label">@fechaActual.ToString("MMMM yyyy").ToUpper()</span>
             <button class="btn-nav" @onclick="MesSiguiente"><i class="fas fa-chevron-right"></i></button>
         </div>
 
+        @* CALENDARIO *@
         <div class="calendar-grid fade-in">
             <div class="day-name">DOM</div> <div class="day-name">LUN</div> <div class="day-name">MAR</div>
             <div class="day-name">MIE</div> <div class="day-name">JUE</div> <div class="day-name">VIE</div>
@@ -40,12 +42,13 @@
                 bool hayPlan = log != null;
                 bool estaHecho = hayPlan && (log.Realizado == true);
 
-                // Color base del plan (Gris si no se ha hecho, Verde brillante si ya)
-                string colorIcono = estaHecho ? "#00FF00" : (hayPlan ? ObtenerColorTipo(log.Tipo) : "#333");
-                string bordeColor = hayPlan ? ObtenerColorTipo(log.Tipo) : "#333";
+                // Colores dinámicos
+                string colorBorde = hayPlan ? ObtenerColorTipo(log.Tipo) : "#333";
+                string bgDia = hayPlan ? "rgba(30,30,30,0.9)" : "#1a1a1a";
+                string opacidad = hayPlan ? "1" : "0.5";
 
                 <div class="calendar-day"
-                     style="border-color: @bordeColor; background: @(hayPlan ? "rgba(30,30,30,0.8)" : "#1a1a1a"); opacity: @(hayPlan ? 1 : 0.5)"
+                     style="border-color: @colorBorde; background: @bgDia; opacity: @opacidad"
                      @onclick="() => AbrirModal(diaActual)">
 
                     <span class="day-number">@dia</span>
@@ -53,8 +56,16 @@
                     @if (hayPlan)
                     {
                         <div class="day-content">
-                            <i class="fas fa-running running-icon" style="color: @colorIcono"></i>
-                            <span class="day-status">@(estaHecho ? "✔ HECHO" : log.Tipo)</span>
+                            @if (estaHecho)
+                            {
+                                <i class="fas fa-check-circle" style="color:#28a745; font-size:1.4rem;"></i>
+                                <span class="day-status" style="color:#28a745">HECHO</span>
+                            }
+                            else
+                            {
+                                <i class="fas fa-running" style="color: @colorBorde; font-size:1.4rem;"></i>
+                                <span class="day-status" style="color: @colorBorde">@log.Tipo</span>
+                            }
                         </div>
                     }
                 </div>
@@ -65,58 +76,85 @@
     </div>
 </div>
 
+@* --- MODAL REDISEÑADO --- *@
 @if (mostrarModal && logSeleccionado != null)
 {
     <div class="modal-overlay fade-in">
         <div class="modal-content custom-modal slide-up">
+            
+            @* HEADER CON COLOR DEL TIPO DE ENTRENO *@
             <div class="modal-header" style="background: @ObtenerColorTipo(logSeleccionado.Tipo)">
-                <h5 style="color:black; font-weight:bold; margin:0;">@fechaSeleccionada.ToString("dd MMMM") - @logSeleccionado.Tipo</h5>
-                <button class="btn-close-custom" @onclick="CerrarModal"><i class="fas fa-times" style="color:black"></i></button>
+                <div class="header-info">
+                    <span class="header-date">@fechaSeleccionada.ToString("dd MMMM").ToUpper()</span>
+                    <span class="header-type">@logSeleccionado.Tipo</span>
+                </div>
+                <button class="btn-close-custom" @onclick="CerrarModal"><i class="fas fa-times"></i></button>
             </div>
 
             <div class="modal-body">
                 
-                <div class="coach-section">
-                    <label style="color:#F8C545; font-weight:bold;">📝 PLAN DEL COACH:</label>
-                    <div class="plan-title">@logSeleccionado.Titulo</div>
-                    <div class="plan-desc">@logSeleccionado.Descripcion</div>
+                @* TARJETA DEL PLAN DEL COACH *@
+                <div class="coach-card">
+                    <div class="card-label"><i class="fas fa-clipboard-list"></i> PLAN DEL COACH</div>
+                    <h4 class="plan-title">@logSeleccionado.Titulo</h4>
+                    <p class="plan-desc">@logSeleccionado.Descripcion</p>
                 </div>
 
-                <hr class="divider" />
+                <div class="action-divider"></div>
 
-                <label class="lbl-input">✅ ¿LO HICISTE?</label>
-                <div class="switch-container" @onclick="ToggleRealizado">
-                    <div class="switch-track @(logSeleccionado.Realizado == true ? "on" : "off")">
-                        <div class="switch-thumb"></div>
+                @* SECCIÓN DE FEEDBACK DEL ATLETA *@
+                <div class="feedback-section">
+                    
+                    <div class="status-toggle-row">
+                        <label class="section-label">ESTADO:</label>
+                        <div class="status-pill @(logSeleccionado.Realizado == true ? "done" : "pending")" @onclick="ToggleRealizado">
+                            @if (logSeleccionado.Realizado == true)
+                            {
+                                <i class="fas fa-check-circle"></i> <span>ENTRENAMIENTO COMPLETADO</span>
+                            }
+                            else
+                            {
+                                <i class="far fa-circle"></i> <span>NO REALIZADO</span>
+                            }
+                        </div>
                     </div>
-                    <span class="switch-label">@(logSeleccionado.Realizado == true ? "¡SÍ, ENTRENAMIENTO COMPLETADO!" : "NO REALIZADO")</span>
-                </div>
 
-                @if (logSeleccionado.Realizado == true)
-                {
-                    <label class="lbl-input mt-3">🔥 ESCALA DE ESFUERZO (RPE 1-10)</label>
-                    <p class="rpe-helper">1 = Muy Suave | 10 = Máximo Esfuerzo</p>
-
-                    <div class="rpe-grid">
-                        @for (int i = 1; i <= 10; i++)
-                        {
-                            int val = i;
-                            <div class="rpe-item @(logSeleccionado.RPE == val ? "selected" : "")"
-                                 style="background: @ObtenerColorRPE(val)"
-                                 @onclick="() => SeleccionarRPE(val)">
-                                @val
+                    @if (logSeleccionado.Realizado == true)
+                    {
+                        <div class="fade-in mt-3">
+                            <label class="section-label">INTENSIDAD (RPE 1-10):</label>
+                            <div class="rpe-container">
+                                @for (int i = 1; i <= 10; i++)
+                                {
+                                    int val = i;
+                                    <div class="rpe-btn @(logSeleccionado.RPE == val ? "active" : "")"
+                                         style="--rpe-color: @ObtenerColorRPE(val)"
+                                         @onclick="() => SeleccionarRPE(val)">
+                                        @val
+                                    </div>
+                                }
                             </div>
-                        }
-                    </div>
+                            <div class="rpe-legend">
+                                <span>Suave</span>
+                                <span>Máximo</span>
+                            </div>
 
-                    <label class="lbl-input mt-3">💬 SENSACIONES / COMENTARIOS:</label>
-                    <textarea @bind="logSeleccionado.ComentariosAtleta" class="form-control input-dark" rows="3" placeholder="¿Cómo te sentiste? ¿Dolor? ¿Ritmo?"></textarea>
-                }
+                            <label class="section-label mt-3">TUS SENSACIONES:</label>
+                            <textarea @bind="logSeleccionado.ComentariosAtleta" 
+                                      class="feedback-textarea" 
+                                      placeholder="Ej: Me sentí fuerte en las subidas..."></textarea>
+                        </div>
+                    }
+                </div>
+
             </div>
 
             <div class="modal-footer">
-                <button class="btn-cancel" @onclick="CerrarModal">Cerrar</button>
-                <button class="btn-confirm" @onclick="GuardarFeedback">GUARDAR MI REPORTE</button>
+                <button class="btn-cancel" @onclick="CerrarModal">CERRAR</button>
+                @if (logSeleccionado.Realizado == true)
+                {
+                    <button class="btn-save" @onclick="GuardarFeedback">GUARDAR REPORTE</button>
+                }
             </div>
         </div>
     </div>
@@ -130,8 +168,7 @@
     }
 
     .navbar-container {
-        flex-shrink: 0;
-        padding-top: calc(env(safe-area-inset-top) + 5px);
+        flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px);
         padding-bottom: 10px; padding-left: 20px; padding-right: 20px;
         background-color: #0d0d0d; border-bottom: 1px solid #F8C545;
         color: white; display: flex; justify-content: space-between; align-items: center;
@@ -148,7 +185,7 @@
         -webkit-overflow-scrolling: touch; padding-bottom: 40px;
     }
 
-    /* --- CALENDARIO --- */
+    /* --- CALENDARIO (Mantenido igual, funciona bien) --- */
     .month-control {
         display: flex; justify-content: space-between; align-items: center;
         margin-bottom: 15px; background: #1a1a1a; padding: 10px;
@@ -161,65 +198,107 @@
         display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
         width: 100%; max-width: 500px;
     }
-
     .day-name { text-align: center; color: #666; font-size: 0.7rem; font-weight: bold; margin-bottom: 5px; }
-
     .calendar-day {
         background: #1a1a1a; border: 1px solid #333; border-radius: 6px;
         min-height: 75px; padding: 4px; position: relative; cursor: pointer;
         display: flex; flex-direction: column; justify-content: space-between;
     }
     .calendar-day.empty { background: transparent; border: none; cursor: default; }
-
     .day-number { font-size: 0.8rem; font-weight: bold; align-self: flex-end; color: #aaa; }
+    .day-content { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; margin-top: -15px; }
+    .day-status { font-size: 0.5rem; font-weight: bold; margin-top: 2px; text-transform: uppercase; text-align: center; line-height: 1; }
 
-    .day-content {
-        display: flex; flex-direction: column; align-items: center;
-        justify-content: center; height: 100%; margin-top: -15px;
+    /* --- MODAL ESTILO PREMIUM --- */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+    .custom-modal { 
+        background: #121212; width: 90%; max-width: 400px; 
+        border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; 
+        max-height: 90vh; border: 1px solid #333;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    }
+    
+    .modal-header { 
+        padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; 
+        /* El background se pone inline dinámico */
+    }
+    .header-info { display: flex; flex-direction: column; }
+    .header-date { font-family: 'Oswald'; font-size: 1.2rem; font-weight: bold; color: black; line-height: 1; }
+    .header-type { font-family: 'Roboto'; font-size: 0.8rem; font-weight: 900; color: rgba(0,0,0,0.7); text-transform: uppercase; }
+    .btn-close-custom { background: rgba(0,0,0,0.1); border: none; font-size: 1.2rem; width: 35px; height: 35px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+
+    .modal-body { padding: 20px; color: white; overflow-y: auto; background-color: #121212; }
+
+    /* TARJETA DEL PLAN (COACH) */
+    .coach-card {
+        background: linear-gradient(145deg, #1e1e1e, #252525);
+        border-left: 4px solid #F8C545;
+        border-radius: 8px; padding: 15px; margin-bottom: 20px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .card-label { color: #F8C545; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; font-family: 'Oswald'; letter-spacing: 1px; }
+    .plan-title { font-family: 'Oswald'; font-size: 1.3rem; color: white; margin-bottom: 8px; line-height: 1.2; }
+    .plan-desc { font-size: 0.95rem; color: #ccc; white-space: pre-line; font-family: 'Roboto'; line-height: 1.5; }
+
+    .action-divider { height: 1px; background: #333; margin-bottom: 20px; }
+
+    /* SECCIÓN FEEDBACK */
+    .section-label { color: #888; font-size: 0.8rem; font-weight: bold; display: block; margin-bottom: 8px; font-family: 'Roboto'; letter-spacing: 0.5px; }
+
+    /* Status Pill (Botón Grande) */
+    .status-pill {
+        background: #222; border: 1px solid #444; border-radius: 50px;
+        padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 10px;
+        transition: all 0.3s;
+    }
+    .status-pill i { font-size: 1.2rem; }
+    .status-pill span { font-weight: bold; font-family: 'Oswald'; font-size: 1rem; letter-spacing: 0.5px; }
+    
+    .status-pill.pending { color: #aaa; }
+    .status-pill.pending:active { transform: scale(0.98); background: #333; }
+    
+    .status-pill.done { 
+        background: rgba(40, 167, 69, 0.2); border-color: #28a745; color: #28a745; 
+        box-shadow: 0 0 15px rgba(40, 167, 69, 0.1);
     }
 
-    .running-icon { font-size: 1.5rem; filter: drop-shadow(0 0 2px black); }
-    .day-status { font-size: 0.5rem; font-weight: bold; margin-top: 2px; text-transform: uppercase; color: white; text-align: center; line-height: 1; }
+    /* RPE Selector Estilizado */
+    .rpe-container { display: flex; justify-content: space-between; gap: 4px; margin-bottom: 5px; }
+    .rpe-btn {
+        flex: 1; height: 35px; border-radius: 4px; background: #222; border: 1px solid #333;
+        color: #666; font-weight: bold; display: flex; align-items: center; justify-content: center;
+        font-size: 0.9rem; cursor: pointer; transition: all 0.2s;
+    }
+    .rpe-btn.active {
+        background: var(--rpe-color); color: black; border-color: var(--rpe-color);
+        transform: scale(1.1); box-shadow: 0 0 10px var(--rpe-color); z-index: 10;
+    }
+    .rpe-legend { display: flex; justify-content: space-between; font-size: 0.7rem; color: #555; margin-bottom: 15px; }
 
-    /* --- MODAL --- */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
-    .custom-modal { background: #1a1a1a; width: 90%; max-width: 400px; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; max-height: 85vh; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
-    
-    .modal-header { padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; }
-    .modal-body { padding: 20px; color: white; overflow-y: auto; }
-    .modal-footer { padding: 15px; display: flex; justify-content: space-between; gap: 10px; background: #222; border-top: 1px solid #333; }
+    /* Textarea */
+    .feedback-textarea {
+        width: 100%; background: #1a1a1a; border: 1px solid #333; color: white;
+        border-radius: 8px; padding: 12px; font-family: 'Roboto'; font-size: 0.95rem;
+        outline: none; resize: none; min-height: 80px;
+    }
+    .feedback-textarea:focus { border-color: #F8C545; background: #222; }
 
-    /* Sección Plan */
-    .coach-section { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border-left: 3px solid #F8C545; }
-    .plan-title { font-family: 'Oswald'; font-size: 1.2rem; color: white; margin-bottom: 5px; }
-    .plan-desc { font-size: 0.9rem; color: #ccc; white-space: pre-line; }
-    .divider { border-top: 1px dashed #555; margin: 20px 0; }
+    /* Footer */
+    .modal-footer { padding: 15px 20px; display: flex; gap: 15px; background: #1a1a1a; border-top: 1px solid #2a2a2a; }
+    .btn-save { 
+        background: #F8C545; color: black; border: none; padding: 12px; font-weight: bold; flex: 2; 
+        border-radius: 8px; font-family: 'Oswald'; text-transform: uppercase; letter-spacing: 1px;
+        box-shadow: 0 4px 15px rgba(248, 197, 69, 0.2);
+    }
+    .btn-cancel { 
+        background: transparent; color: #888; border: 1px solid #444; padding: 12px; 
+        font-weight: bold; flex: 1; border-radius: 8px; font-family: 'Oswald'; 
+    }
 
-    /* Switch */
-    .switch-container { display: flex; align-items: center; gap: 10px; cursor: pointer; background: #222; padding: 10px; border-radius: 8px; border: 1px solid #444; margin-bottom: 10px; }
-    .switch-track { width: 50px; height: 26px; border-radius: 13px; background: #444; position: relative; transition: background 0.3s; }
-    .switch-track.on { background: #28a745; }
-    .switch-thumb { width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: transform 0.3s; }
-    .switch-track.on .switch-thumb { transform: translateX(24px); }
-    .switch-label { font-weight: bold; font-size: 0.9rem; color: white; }
-
-    /* RPE */
-    .lbl-input { color: #aaa; font-size: 0.85rem; margin-bottom: 5px; display: block; font-weight: bold; }
-    .rpe-helper { font-size: 0.7rem; color: #888; margin-top: -5px; margin-bottom: 10px; }
-    .rpe-grid { display: flex; gap: 5px; justify-content: space-between; }
-    .rpe-item { width: 100%; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: black; border-radius: 4px; cursor: pointer; opacity: 0.3; transition: all 0.2s; }
-    .rpe-item.selected { opacity: 1; transform: scale(1.15); border: 2px solid white; box-shadow: 0 0 10px rgba(255,255,255,0.5); }
-
-    .input-dark { background: #333 !important; color: white !important; border: 1px solid #666; }
-    
-    .btn-confirm { background: #F8C545; color: black; border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; font-family: 'Oswald'; }
-    .btn-cancel { background: #333; color: white; border: none; padding: 10px; border-radius: 5px; }
-    .btn-close-custom { background: none; border: none; font-size: 1.2rem; }
-
-    .fade-in { animation: fadeIn 0.5s ease; }
+    .fade-in { animation: fadeIn 0.4s ease; }
     .slide-up { animation: slideUp 0.3s ease; }
-    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    @@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @@keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 </style>
 
 @code {
@@ -233,7 +312,6 @@
     private RunningLogs logSeleccionado;
     private DateTime fechaSeleccionada;
 
-    // DEFINICIÓN DE TIPOS Y COLORES
     class TipoEntreno { public string Nombre { get; set; } public string Color { get; set; } }
 
     private List<TipoEntreno> TiposEntreno = new List<TipoEntreno>
@@ -262,7 +340,6 @@
 
         try
         {
-            // Usamos el endpoint para traer mis propios logs
             logsDelMes = await Http.GetFromJsonAsync<List<RunningLogs>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/runningapi/plan/{Sesion.Usuario.UsuarioID}/{fechaActual.Month}/{fechaActual.Year}");
         }
         catch { logsDelMes = new List<RunningLogs>(); }
@@ -276,21 +353,16 @@
         return t != null ? t.Color : "#F8C545";
     }
 
-    // --- NAVEGACIÓN MESES ---
     private async Task MesAnterior() { fechaActual = fechaActual.AddMonths(-1); await CargarCalendario(); }
     private async Task MesSiguiente() { fechaActual = fechaActual.AddMonths(1); await CargarCalendario(); }
 
-    // --- MODAL ---
     private void AbrirModal(int dia)
     {
         var log = ObtenerLog(dia);
         if (log != null)
         {
-            // Clona o asigna referencia para editar
             logSeleccionado = log;
-            // Si Realizado es null, lo ponemos en false para empezar la edición
             if (logSeleccionado.Realizado == null) logSeleccionado.Realizado = false;
-
             fechaSeleccionada = new DateTime(fechaActual.Year, fechaActual.Month, dia);
             mostrarModal = true;
         }
@@ -308,14 +380,12 @@
     {
         try
         {
-            // Usamos el endpoint de feedback
             var resp = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/runningapi/guardar-feedback", logSeleccionado);
-
             if (resp.IsSuccessStatusCode)
             {
                 mostrarModal = false;
-                await App.Current.MainPage.DisplayAlert("¡Bien hecho!", "Entrenamiento registrado.", "OK");
-                await CargarCalendario(); // Recargar para ver cambios visuales
+                await App.Current.MainPage.DisplayAlert("¡Excelente!", "Reporte guardado correctamente.", "OK");
+                await CargarCalendario();
             }
         }
         catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }
@@ -323,11 +393,11 @@
 
     private string ObtenerColorRPE(int valor)
     {
-        if (valor <= 2) return "#32CD32"; 
-        if (valor <= 4) return "#ADFF2F"; 
-        if (valor <= 6) return "#FFD700"; 
-        if (valor <= 8) return "#FF8C00"; 
-        return "#FF0000"; 
+        if (valor <= 2) return "#32CD32"; // Verde
+        if (valor <= 4) return "#ADFF2F"; // Verde claro
+        if (valor <= 6) return "#FFD700"; // Amarillo
+        if (valor <= 8) return "#FF8C00"; // Naranja
+        return "#FF0000";                 // Rojo
     }
 
     private void CerrarModal() => mostrarModal = false;

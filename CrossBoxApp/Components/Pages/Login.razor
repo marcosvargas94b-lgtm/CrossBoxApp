@@ -91,7 +91,12 @@
                 </div>
 
                 <div class="input-group-animated">
-                    <input type="tel" @bind="telefonoRecuperar" class="input-dark" placeholder="Número (10 dígitos)" />
+                    <input type="tel"
+                           @bind="telefonoRecuperar"
+                           class="input-dark"
+                           placeholder="Número (10 dígitos)"
+                           maxlength="10"
+                           oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
                 </div>
 
                 @if (!string.IsNullOrEmpty(mensajeRecuperacion))
@@ -140,7 +145,12 @@
                     <div class="col-6"><input type="text" @bind="registroBox.NombreAdmin" class="form-control input-dark mb-2" placeholder="Nombre" /></div>
                     <div class="col-6"><input type="text" @bind="registroBox.ApellidosAdmin" class="form-control input-dark mb-2" placeholder="Apellidos" /></div>
                 </div>
-                <input type="tel" @bind="registroBox.Telefono" class="form-control input-dark mb-2" placeholder="Teléfono (10 dígitos)" />
+                <input type="tel"
+                       @bind="registroBox.Telefono"
+                       class="form-control input-dark mb-2"
+                       placeholder="Teléfono (10 dígitos)"
+                       maxlength="10"
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
                 <input type="email" @bind="registroBox.Email" class="form-control input-dark mb-2" placeholder="Email (Usuario)" />
                 <input type="password" @bind="registroBox.Password" class="form-control input-dark mb-2" placeholder="Contraseña" />
                 <input type="password" @bind="confirmarPass" class="form-control input-dark mb-2" placeholder="Confirmar Contraseña" />
@@ -184,7 +194,12 @@
             <div class="modal-body">
                 <input type="text" @bind="regNombre" class="input-dark mb-2" placeholder="Nombre" />
                 <input type="text" @bind="regApellidos" class="input-dark mb-2" placeholder="Apellidos" />
-                <input type="tel" @bind="regTelefono" class="input-dark mb-2" placeholder="Teléfono (10 dígitos)" />
+                <input type="tel"
+                       @bind="regTelefono"
+                       class="input-dark mb-2"
+                       placeholder="Teléfono (10 dígitos)"
+                       maxlength="10"
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
                 <input type="email" @bind="regEmail" class="input-dark mb-2" placeholder="Email" />                    
                 <select class="input-dark mb-2" @onchange="AlSeleccionarBox">
                     <option value="">-- Selecciona tu Box --</option>
@@ -395,23 +410,21 @@
 
     private async Task EnviarRecuperacion()
     {
-        // Validación simple del teléfono
-        if (string.IsNullOrEmpty(telefonoRecuperar) || telefonoRecuperar.Length < 10)
+        // --- VALIDACIÓN BLINDADA ---
+        if (string.IsNullOrEmpty(telefonoRecuperar) || telefonoRecuperar.Length != 10 || !long.TryParse(telefonoRecuperar, out _))
         {
-            mensajeRecuperacion = "Ingresa un número de celular válido (mínimo 10 dígitos).";
+            mensajeRecuperacion = "El número debe ser de 10 dígitos exactos.";
             esExitoRecuperacion = false;
             return;
         }
+        // ---------------------------
 
         enviandoRecuperacion = true;
-        mensajeRecuperacion = ""; // Limpiamos mensajes previos
+        mensajeRecuperacion = "";
 
         try
         {
-            // Preparamos los datos para enviar
             var data = new { Telefono = telefonoRecuperar };
-            
-            // Llamada al nuevo endpoint en el backend
             var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/recuperar-password", data);
 
             if (response.IsSuccessStatusCode)
@@ -421,20 +434,18 @@
             }
             else
             {
-                // Si el backend devuelve un mensaje de error (ej. "No encontramos el usuario")
                 var errorMsg = await response.Content.ReadAsStringAsync();
-                mensajeRecuperacion = !string.IsNullOrEmpty(errorMsg) ? errorMsg.Replace("\"", "") : "No pudimos enviar el mensaje. Verifica el número.";
+                mensajeRecuperacion = !string.IsNullOrEmpty(errorMsg) ? errorMsg.Replace("\"", "") : "No pudimos enviar el mensaje.";
                 esExitoRecuperacion = false;
             }
         }
         catch (Exception)
         {
-            mensajeRecuperacion = "Error de conexión. Inténtalo más tarde.";
+            mensajeRecuperacion = "Error de conexión.";
             esExitoRecuperacion = false;
         }
         finally
         {
-            // Habilitamos el botón nuevamente
             enviandoRecuperacion = false;
         }
     }
@@ -468,8 +479,17 @@
     {
         registroError = "";
         if (regBoxId == Guid.Empty) { registroError = "Por favor selecciona un lugar de entrenamiento"; return; }
+
+        // --- VALIDACIÓN BLINDADA ---
+        if (string.IsNullOrEmpty(regTelefono) || regTelefono.Length != 10 || !long.TryParse(regTelefono, out _))
+        {
+            registroError = "El teléfono debe tener 10 dígitos exactos.";
+            return;
+        }
+        // ---------------------------
+
         if (regPass != regConfirmPass) { registroError = "Las contraseñas no coinciden."; return; }
-        if (string.IsNullOrEmpty(regEmail) || string.IsNullOrEmpty(regPass) || string.IsNullOrEmpty(regTelefono)) { registroError = "Campos obligatorios."; return; }
+        if (string.IsNullOrEmpty(regEmail) || string.IsNullOrEmpty(regPass)) { registroError = "Campos obligatorios."; return; }
 
         try
         {
@@ -514,8 +534,19 @@
 
     private async Task GuardarNuevoBox()
     {
-        if (string.IsNullOrEmpty(registroBox.NombreBox) || string.IsNullOrEmpty(registroBox.Email)) { await App.Current.MainPage.DisplayAlert("Error", "Llena los campos.", "OK"); return; }
-        if (string.IsNullOrEmpty(registroBox.Telefono)) { await App.Current.MainPage.DisplayAlert("Error", "El teléfono es obligatorio.", "OK"); return; }
+        if (string.IsNullOrEmpty(registroBox.NombreBox) || string.IsNullOrEmpty(registroBox.Email))
+        {
+            await App.Current.MainPage.DisplayAlert("Error", "Llena los campos obligatorios.", "OK"); return;
+        }
+
+        // --- VALIDACIÓN BLINDADA ---
+        if (string.IsNullOrEmpty(registroBox.Telefono) || registroBox.Telefono.Length != 10 || !long.TryParse(registroBox.Telefono, out _))
+        {
+            await App.Current.MainPage.DisplayAlert("Teléfono Inválido", "El teléfono debe tener 10 dígitos numéricos.", "OK");
+            return;
+        }
+        // ---------------------------
+
         if (registroBox.Password != confirmarPass) { await App.Current.MainPage.DisplayAlert("Error", "Contraseñas no coinciden.", "OK"); return; }
 
         try

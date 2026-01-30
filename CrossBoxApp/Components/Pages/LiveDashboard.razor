@@ -122,7 +122,28 @@
         @if (verWod)
         {
             <div class="panel-header">
-                <span>WOD HOY</span>
+                @* CAMBIO 1: El Select ahora vive aquí *@
+                @if (wodHoy != null && wodHoy.Bloques != null && wodHoy.Bloques.Count > 0)
+                {
+                    <div class="header-select-wrapper">
+                        <i class="fas fa-layer-group select-icon"></i>
+                        <select class="header-select" @onchange="CambiarBloqueVisible">
+                            <option value="@Guid.Empty" selected="@(segmentoSeleccionadoID == Guid.Empty)">WOD COMPLETO</option>
+                            @foreach (var b in wodHoy.Bloques)
+                            {
+                                <option value="@b.SegmentoClaseID" selected="@(b.SegmentoClaseID == segmentoSeleccionadoID)">
+                                    @(string.IsNullOrEmpty(b.NombreSegmento) ? "BLOQUE" : b.NombreSegmento.ToUpper())
+                                </option>
+                            }
+                        </select>
+                        <i class="fas fa-chevron-down select-arrow"></i>
+                    </div>
+                }
+                else
+                {
+                    <span>WOD</span>
+                }
+
                 <div style="display:flex; gap:10px;">
                     <button class="btn-icon-header" @onclick="ToggleExpandirWod">
                         <i class="fas @(wodExpandido ? "fa-compress" : "fa-expand")"></i>
@@ -132,40 +153,35 @@
                     </button>
                 </div>
             </div>
+
             <div class="panel-content scroll-custom">
                 @if (wodHoy != null && wodHoy.Bloques != null && wodHoy.Bloques.Count > 0)
                 {
-                    <div class="segment-selector mb-3">
-                        <select class="form-control input-dark select-wod" @onchange="CambiarBloqueVisible">
-                            <option value="@Guid.Empty" selected="@(segmentoSeleccionadoID == Guid.Empty)">📜 WOD COMPLETO</option>
-                            @foreach (var b in wodHoy.Bloques)
-                            {
-                                <option value="@b.SegmentoClaseID" selected="@(b.SegmentoClaseID == segmentoSeleccionadoID)">
-                                    @(string.IsNullOrEmpty(b.NombreSegmento) ? "BLOQUE" : b.NombreSegmento.ToUpper())
-                                </option>
-                            }
-                        </select>
-                    </div>
-
+                    @* Ya no necesitamos el select aquí, así que vamos directo a los bloques *@
                     <div class="bloques-container">
                         @foreach (var bloque in wodHoy.Bloques)
                         {
                             @if (segmentoSeleccionadoID == Guid.Empty || bloque.SegmentoClaseID == segmentoSeleccionadoID)
                             {
                                 <div class="wod-block fade-in">
-                                    <h4>@(string.IsNullOrEmpty(bloque.NombreSegmento) ? "BLOQUE" : bloque.NombreSegmento.ToUpper())</h4>
+
+                                    @* CAMBIO 2: Título elegante sin fondo amarillo *@
+                                    <h4 class="block-title">
+                                        @(string.IsNullOrEmpty(bloque.NombreSegmento) ? "BLOQUE" : bloque.NombreSegmento.ToUpper())
+                                    </h4>
+
                                     @if (bloque.Ejercicios != null)
                                     {
                                         <div class="exercises-wrapper">
                                             @foreach (var ej in bloque.Ejercicios)
                                             {
-                                                <div class="ejercicio-row-compact">
-                                                    <span class="ej-nombre">@ej.Descripcion</span>
-                                                    @if (!string.IsNullOrEmpty(ej.PesoRepeticiones))
-                                                    {
-                                                        <span class="ej-guion">-</span>
-                                                        <span class="ej-reps">@ej.PesoRepeticiones</span>
-                                                    }
+                                                @* CAMBIO 3: Filas limpias sin bordes *@
+                                                <div class="ejercicio-row-clean">
+                                                    <span class="ej-reps">@ej.PesoRepeticiones</span>
+                                                    <div class="ej-nombre">
+                                                        @* Usamos MarkupString para que Blazor entienda el HTML que vamos a inyectar *@
+                                                        @((MarkupString)FormatearPesoPlateado(ej.Descripcion))
+                                                    </div>
                                                 </div>
                                             }
                                         </div>
@@ -263,9 +279,8 @@
         </div>
     </div>
 }
-
 <style>
-    /* --- 1. AVISO DE ROTACIÓN --- */
+    /* --- 1. AVISO DE ROTACIÓN (SOLO MÓVIL VERTICAL) --- */
     .rotate-warning { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; color: #F8C545; text-align: center; padding: 40px; }
     .phone-animation { font-size: 4rem; margin-bottom: 20px; animation: rotarCelular 2s infinite ease-in-out; }
     @@keyframes rotarCelular { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
@@ -279,7 +294,7 @@
         padding: 15px; gap: 15px; box-sizing: border-box; overflow: hidden;
     }
 
-    /* --- 3. PANELES --- */
+    /* --- 3. PANELES GENERALES --- */
     .panel { 
         flex: 1; /* Normal: 33% */
         display: flex; flex-direction: column; 
@@ -294,66 +309,111 @@
         background: #000; cursor: pointer; border-color: #333; 
     }
     .panel.collapsed:hover { background: #1a1a1a; }
-    .panel.collapsed .panel-content, .panel.collapsed .panel-header .header-left, .panel.collapsed .panel-header span { display: none; opacity: 0; }
+    /* Ocultar contenido al colapsar */
+    .panel.collapsed .panel-content, 
+    .panel.collapsed .panel-header .header-left, 
+    .panel.collapsed .panel-header span, 
+    .panel.collapsed .panel-header .header-select-wrapper { display: none; opacity: 0; }
 
-    /* --- ESTADO "WOD EXPANDIDO" --- */
-    
-    /* 1. La lista desaparece (0 ancho) */
-    .dashboard-container.wod-wide .list-panel {
-        flex: 0 0 0 !important; width: 0 !important; padding: 0 !important; border: none !important; margin: 0 !important;
-    }
-
-    /* 2. El WOD crece a 2 unidades */
-    /* Timer (1) + WOD (2) = 3. El Timer mantiene su tamaño original exacto. */
-    .dashboard-container.wod-wide .wod-panel {
-        flex: 2; 
-    }
-
-    /* 3. GRID SÚPER COMPACTO (PEGADO) */
-    .dashboard-container.wod-wide .exercises-wrapper {
-        display: grid;
-        grid-template-columns: 1fr 1fr; /* 50% - 50% */
-        
-        /* AQUÍ ESTÁ EL TRUCO: 0 vertical, 20px horizontal */
-        gap: 0 20px; 
-        
-        width: 100%;
-        align-content: start; /* Empuja todo hacia arriba */
-    }
-
-    /* Estilo de filas ajustado para ser compacto */
-    .ejercicio-row-compact { 
-        padding: 6px 12px; /* Menos padding vertical para que queden pegadas */
-        border-bottom: 1px solid #333; 
-        background: #111; 
-        display: flex; align-items: center; flex-wrap: wrap;
-        
-        /* Asegura que no se estiren innecesariamente */
-        height: auto; 
-        min-height: auto;
-    }
-    
-    /* --- RESTO DE ESTILOS --- */
+    /* Header Genérico */
     .panel-header { height: 50px; background: #1a1a1a; border-bottom: 2px solid #F8C545; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; font-family: 'Oswald'; font-size: 1.1rem; color: #F8C545; white-space: nowrap; flex-shrink: 0; }
     .panel-content { flex: 1; padding: 15px; overflow-y: auto; position: relative; }
+    .btn-icon-header { background: none; border: none; color: #888; font-size: 1rem; cursor: pointer; }
 
-    .wod-block { background-color: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 0; overflow: hidden; margin-bottom: 15px; }
-    .wod-block h4 { background-color: #F8C545; color: black; margin: 0; padding: 8px 12px; font-size: 0.95rem; font-weight: bold; font-family: 'Oswald'; border-bottom: none; letter-spacing: 1px; text-transform: uppercase; }
+    /* --- 4. SELECTOR EN HEADER (WOD) --- */
+    .header-select-wrapper {
+        display: flex; align-items: center; background-color: #000; border: 1px solid #333;
+        border-radius: 4px; padding: 0 10px; height: 32px; position: relative; min-width: 160px;
+    }
+    .select-icon { font-size: 0.8rem; color: #F8C545; margin-right: 8px; }
+    .header-select {
+        background: transparent; border: none; color: white; font-family: 'Oswald'; font-size: 0.95rem;
+        font-weight: bold; appearance: none; -webkit-appearance: none; width: 100%;
+        cursor: pointer; outline: none;
+    }
+    .header-select option { background-color: #1a1a1a; color: white; padding: 10px; }
+    .select-arrow { font-size: 0.7rem; color: #666; margin-left: 5px; pointer-events: none; }
 
+    /* --- 5. ESTILOS WOD LIMPIOS & ALINEADOS --- */
+    .wod-block { 
+        margin-bottom: 25px; 
+        /* Mantiene unido el título con sus ejercicios al cambiar columna */
+        break-inside: avoid; 
+        -webkit-column-break-inside: avoid;
+    }
+    
+    .block-title {
+        color: #F8C545; /* Texto Amarillo */
+        background: transparent; 
+        padding: 2px 10px; margin: 0 0 12px 0;
+        font-size: 1.1rem; font-weight: bold; font-family: 'Oswald';
+        border-left: 4px solid #F8C545; /* Distintivo vertical */
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Línea sutil divisoria */
+        text-transform: uppercase; letter-spacing: 1px;
+    }
+
+    /* FILA DE EJERCICIO: USAMOS GRID PARA ALINEACIÓN PERFECTA */
+    .ejercicio-row-clean {
+        display: grid;
+        /* Columna 1 (Amarillo): 110px fijos. Columna 2 (Texto): El resto */
+        grid-template-columns: 110px 1fr;
+        gap: 15px; /* Espacio entre número y nombre */
+        align-items: baseline; /* Alinea textos por su base */
+        
+        padding: 4px 0;
+        margin-bottom: 2px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Línea muy sutil para guiar al ojo */
+        
+        /* Evita que un ejercicio se parta a la mitad entre columnas */
+        -webkit-column-break-inside: avoid;
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    .ej-reps {
+        color: #F8C545; font-weight: 900; font-family: 'Oswald'; font-size: 1.1rem;
+        text-align: right; /* Alineado a la derecha para pegar con el texto */
+        white-space: nowrap; /* No permite saltos de línea en el peso/reps */
+    }
+
+    .ej-nombre {
+        color: #e0e0e0;
+        font-family: 'Roboto', sans-serif;
+        font-size: 1rem;
+        font-weight: 500;
+        line-height: 1.3;
+        text-align: left;
+    }
+    /* Scroll Personalizado */
     .scroll-custom::-webkit-scrollbar { width: 6px; }
     .scroll-custom::-webkit-scrollbar-track { background: #111; }
     .scroll-custom::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-    
-    .ejercicio-row-compact:last-child { border-bottom: none; }
-    .ej-nombre { color: white; font-weight: 500; font-family: 'Roboto', sans-serif; font-size: 0.9rem; margin-right: 5px; }
-    .ej-guion { color: #666; margin: 0 8px; font-weight: bold; }
-    .ej-reps { color: #F8C545; font-weight: bold; font-style: italic; font-family: 'Oswald', sans-serif; font-size: 0.95rem; }
 
+    /* --- 6. ESTADO "WOD EXPANDIDO" (COLUMNAS DINÁMICAS) --- */
+    .dashboard-container.wod-wide .list-panel { 
+        flex: 0 0 0 !important; width: 0 !important; padding: 0 !important; border: none !important; margin: 0 !important; 
+    }
+    .dashboard-container.wod-wide .wod-panel { 
+        flex: 2; /* Ocupa el espacio extra */
+    }
+    
+    /* LÓGICA DE COLUMNAS ESTILO PERIÓDICO */
+    .dashboard-container.wod-wide .exercises-wrapper {
+        display: block; 
+        /* Ancho mínimo de columna. El navegador decidirá si caben 2, 3 o 4 */
+        column-width: 380px; 
+        column-gap: 50px;
+        column-rule: 1px solid rgba(255, 255, 255, 0.1); 
+        width: 100%;
+        padding-top: 10px;
+    }
+
+    /* --- BARRA VERTICAL (Estado Colapsado) --- */
     .vertical-bar { height: 100%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; animation: fadeIn 0.5s; }
     .v-text { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); font-family: 'Oswald'; font-size: 1.2rem; letter-spacing: 3px; white-space: nowrap; margin-bottom: 10px; }
     .v-icon { font-size: 1.5rem; }
 
-    /* Timer Styles */
+    /* --- 7. TIMER STYLES --- */
     .flex-center-vertical { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0 10px; }
     .timer-type-selector { display: flex; background: #222; border-radius: 25px; padding: 4px; margin-bottom: 20px; width: 100%; border: 1px solid #444; }
     .type-btn { flex: 1; background: transparent; border: none; color: #888; padding: 8px; border-radius: 20px; font-family: 'Oswald'; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; }
@@ -366,6 +426,7 @@
     .time-inputs input:focus { outline: none; color: #F8C545; }
     .single-input { width: 100%; font-size: 1.5rem; background: #222; border: 1px solid #333; color: white; text-align: center; font-family: 'Oswald'; border-radius: 10px; }
     .btn-save-timer { width: 100%; background: #28a745; color: white; border: none; padding: 12px; font-weight: bold; font-family: 'Oswald'; border-radius: 8px; font-size: 1.1rem; cursor: pointer; }
+    
     .timer-display { font-family: 'Oswald'; font-weight: bold; color: white; line-height: 1; font-size: clamp(3rem, 12vw, 8rem); text-shadow: 0 0 20px rgba(255,255,255,0.1); margin: 10px 0; }
     .timer-display.running { color: #28a745; text-shadow: 0 0 30px rgba(40, 167, 69, 0.4); }
     .timer-display.resting { color: #dc3545; text-shadow: 0 0 30px rgba(220, 53, 69, 0.4); }
@@ -376,25 +437,29 @@
     .btn-control { width: 60px; height: 60px; border-radius: 50%; border: none; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s; }
     .start { background: #28a745; color: white; } .stop { background: #dc3545; color: white; } .reset { background: #333; color: white; }
     .btn-control:active { transform: scale(0.95); }
+    .prep-display { text-align: center; } .prep-label { font-family: 'Oswald'; font-size: 2rem; color: #888; } .prep-number { font-size: 8rem; color: #F8C545; font-family: 'Oswald'; font-weight: bold; line-height: 1; }
     
+    /* --- 8. LISTA ATLETAS --- */
     .atletas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 10px; }
     .atleta-card { background: #222; border: 1px solid #444; border-radius: 8px; padding: 10px 5px; text-align: center; transition: 0.2s; }
     .avatar { width: 45px; height: 45px; background: #333; color: #F8C545; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; margin: 0 auto 5px auto; border: 2px solid #F8C545; position: relative; }
     .name { font-size: 0.75rem; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .btn-terminate { width: 100%; padding: 15px; background: #dc3545; color: white; font-weight: bold; font-family: 'Oswald'; border: none; cursor: pointer; margin-top: auto; border-radius: 0; }
-    .btn-icon-header { background: none; border: none; color: #888; font-size: 1rem; cursor: pointer; }
     .empty-state { text-align: center; color: #444; margin-top: 50px; } .empty-state i { font-size: 3rem; margin-bottom: 10px; }
-    
+
+    /* --- 9. MODAL ATLETAS --- */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
     .custom-modal { background: #111; width: 90%; max-width: 500px; border-radius: 10px; border: 1px solid #333; display: flex; flex-direction: column; overflow: hidden; height: 80vh; }
-    .search-input { padding-left: 40px; background: #222; color: white; border: 1px solid #444; height: 40px; border-radius: 20px; }
+    .modal-header { height: auto; padding: 15px; border-bottom: 1px solid #333; }
+    .modal-body { padding: 15px; overflow-y: auto; flex: 1; }
+    .search-input { padding-left: 10px; background: #222; color: white; border: 1px solid #444; height: 40px; border-radius: 20px; width: 100%; text-indent: 10px;}
     .atleta-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #222; cursor: pointer; }
     .avatar-mini { width: 35px; height: 35px; background: #444; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px; background-size: cover; }
-    .prep-number { font-size: 8rem; color: #F8C545; font-family: 'Oswald'; font-weight: bold; line-height: 1; }
     .atleta-nombre { color: #F8C545; font-weight: bold; font-family: 'Oswald'; font-size: 1rem; line-height: 1; }
     .lista-atletas-scroll { max-height: 50vh; overflow-y: auto; margin-top: 10px; }
     .atleta-info { display: flex; align-items: center; flex: 1; gap: 10px; }
 
+    /* Animaciones */
     .fade-in { animation: fadeIn 0.3s ease-in; } .slide-in { animation: slideIn 0.3s ease-out; }
     @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @@keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -402,8 +467,28 @@
     @@keyframes pulseBig { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
     .last-round-alert { color: #dc3545 !important; animation: pulseRed 1s infinite; }
     @@keyframes pulseRed { 0% { transform: scale(1); } 50% { transform: scale(1.05); text-shadow: 0 0 10px red; } 100% { transform: scale(1); } }
-</style>
 
+    .peso-highlight {
+        color: #F8C545; /* Amarillo Box */
+        font-weight: 900; /* Negrita */
+        font-family: 'Oswald', sans-serif; /* Fuente condensada para números */
+        font-size: 0.95em;
+        margin-left: 5px;
+    }
+
+    .peso-silver {
+    color: #C0C0C0; 
+    font-weight: 800; /* Negrita para que se note bien */
+    font-family: 'Oswald', sans-serif; /* Usamos la misma fuente de números */
+    font-size: 0.95em; /* Un pelín más pequeño que el nombre */
+    letter-spacing: 0.5px; /* Un poco de espacio para leer mejor los números */
+    margin-left: 6px; /* Separarlo un poco del nombre del ejercicio */
+    
+    /* Opcional: Una sombra sutil para darle efecto metálico */
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5); 
+}
+
+</style>
 @code {
     private bool wodExpandido = false;
     private bool verTimer = true;
@@ -445,6 +530,26 @@
         await CargarWodHoy();
     }
 
+    private string FormatearNombreConPeso(string descripcion)
+    {
+        if (string.IsNullOrEmpty(descripcion)) return "";
+
+        // Buscamos si hay paréntesis con pesos, ej: "Deadlift (135/95)"
+        // Usamos una expresión regular simple o búsqueda de índice
+        int indiceParentesis = descripcion.IndexOf('(');
+
+        if (indiceParentesis > 0)
+        {
+            string nombre = descripcion.Substring(0, indiceParentesis);
+            string peso = descripcion.Substring(indiceParentesis);
+
+            // Devolvemos HTML formateado: Nombre normal + Peso en Amarillo/Bold
+            return $"{nombre} <span class='peso-highlight'>{peso}</span>";
+        }
+
+        return descripcion;
+    }
+
     private async Task CargarWodHoy()
     {
         try
@@ -483,6 +588,29 @@
         }
         listaAtletasFiltrada = listaTodosAtletas;
     }
+
+    private string FormatearPesoPlateado(string descripcionBase)
+    {
+        if (string.IsNullOrEmpty(descripcionBase)) return "";
+
+        // Buscamos dónde empieza el paréntesis "("
+        int indiceInicio = descripcionBase.IndexOf('(');
+
+        // Si encontramos un paréntesis, separamos el texto
+        if (indiceInicio > 0)
+        {
+            string nombreEjercicio = descripcionBase.Substring(0, indiceInicio);
+            // El resto es el peso (ej: "(135/95)")
+            string partePeso = descripcionBase.Substring(indiceInicio);
+
+            // Inyectamos un <span> con la clase CSS plateada
+            return $"{nombreEjercicio} <span class='peso-silver'>{partePeso}</span>";
+        }
+
+        // Si no tiene pesos, devolvemos el nombre normal
+        return descripcionBase;
+    }
+
     private void FiltrarAtletas(ChangeEventArgs e)
     {
         filtroAtleta = e.Value?.ToString() ?? "";

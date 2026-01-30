@@ -186,7 +186,12 @@
 
                 <div class="mb-3">
                     <label class="form-label text-warning">Teléfono</label>
-                    <input type="tel" @bind="nuevoAtleta.Telefono" class="form-control input-dark" placeholder="Ej: 9611234567" />
+                    <input type="tel"
+                           @bind="nuevoAtleta.Telefono"
+                           class="form-control input-dark"
+                           placeholder="Ej: 9611234567"
+                           maxlength="10"
+                           oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');" />
                 </div>
                 <div class="mb-3">
                     <label class="form-label text-warning">Correo (Opcional)</label>
@@ -497,22 +502,63 @@
 
     private async Task GuardarAtletaManual()
     {
+        // 1. Validar Nombre y Apellidos
         if (string.IsNullOrWhiteSpace(nuevoAtleta.Nombre) || string.IsNullOrWhiteSpace(nuevoAtleta.Apellidos))
         {
-            await App.Current.MainPage.DisplayAlert("Error", "Nombre y Apellidos son obligatorios", "OK"); return;
+            await App.Current.MainPage.DisplayAlert("Error", "Nombre y Apellidos son obligatorios", "OK");
+            return;
         }
+
+        // 2. VALIDACIÓN DE TELÉFONO BLINDADA 🛡️
+        if (!string.IsNullOrEmpty(nuevoAtleta.Telefono))
+        {
+            // Quitamos espacios en blanco por si acaso
+            nuevoAtleta.Telefono = nuevoAtleta.Telefono.Trim();
+
+            // Verificamos que sean números y que sean exactamente 10
+            if (!long.TryParse(nuevoAtleta.Telefono, out _) || nuevoAtleta.Telefono.Length != 10)
+            {
+                await App.Current.MainPage.DisplayAlert("Teléfono Inválido", "El número debe tener exactamente 10 dígitos numéricos.", "Corregir");
+                return;
+            }
+        }
+        
+        else
+        {
+            await App.Current.MainPage.DisplayAlert("Falta Teléfono", "Debes ingresar un número de 10 dígitos.", "OK");
+            return;
+        }
+        
+
         try
         {
             nuevoAtleta.BoxID = Sesion.Usuario.BoxID;
             var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/usuariosapi/crear-manual", nuevoAtleta);
-            if (response.IsSuccessStatusCode) {
-                await App.Current.MainPage.DisplayAlert("¡Listo!", "Atleta creado.", "OK");
-                mostrarModalCrear = false; await CargarUsuarios();
-            } else {
-                var msg = await response.Content.ReadFromJsonAsync<dynamic>();
-                await App.Current.MainPage.DisplayAlert("Error", msg.mensaje.ToString(), "OK");
+
+            if (response.IsSuccessStatusCode)
+            {
+                await App.Current.MainPage.DisplayAlert("¡Listo!", "Atleta creado exitosamente.", "OK");
+                mostrarModalCrear = false;
+                await CargarUsuarios();
             }
-        } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }
+            else
+            {
+                // Intentar leer error del backend
+                try
+                {
+                    var msg = await response.Content.ReadFromJsonAsync<dynamic>();
+                    await App.Current.MainPage.DisplayAlert("Error", msg.mensaje.ToString(), "OK");
+                }
+                catch
+                {
+                    await App.Current.MainPage.DisplayAlert("Error", "No se pudo crear el atleta.", "OK");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK");
+        }
     }
 
     private void VerEvaluaciones(AtletaConEstadoDto u) { u.MostrarMenu = false; Nav.NavigateTo($"/evaluaciones/{u.UsuarioID}/{u.NombreCompleto}"); }

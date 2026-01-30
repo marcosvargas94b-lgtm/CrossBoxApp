@@ -417,6 +417,7 @@
     </div>
 }
 
+@* --- MODAL DE PROGRAMACIÓN WOD (REDISEÑADO & CORREGIDO) --- *@
 @if (mostrarModalWod)
 {
     <div class="modal-overlay">
@@ -427,7 +428,8 @@
                 <button class="btn-close-custom" @onclick="() => mostrarModalWod = false"><i class="fas fa-times"></i></button>
             </div>
 
-            <div class="modal-body">
+            @* IMPORTANTE: Padding-bottom grande para que el popover del último ejercicio no se corte *@
+            <div class="modal-body" style="padding-bottom: 300px;">
                 <div class="mb-4">
                     <label style="color:#aaa; font-size:0.8rem;">Fecha del WOD:</label>
                     <input type="date" value="@nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd")" @onchange="AlCambiarFechaWod" class="form-control input-dark" />
@@ -455,14 +457,15 @@
                 else
                 {
                     <div class="fade-in">
-                        @for (int i = 0; i < nuevoWod.Bloques.Count; i++)
+                        @foreach (var bloque in listaBloquesEditor)
                         {
-                            var indexBloque = i; var bloque = nuevoWod.Bloques[i];
-                            <div class="card p-2 mb-3" style="background-color: #333; border: 1px solid #F8C545;">
+                            <div class="card p-2 mb-3" style="background-color: #252525; border: 1px solid #444;">
+                                
                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span style="color:#F8C545; font-weight:bold;">BLOQUE #@(indexBloque + 1)</span>
-                                    <button class="btn btn-sm btn-danger" @onclick="() => EliminarBloque(bloque)"><i class="fas fa-trash"></i></button>
+                                    <span style="color:#F8C545; font-weight:bold; font-family:'Oswald'">BLOQUE</span>
+                                    <button class="btn-icon delete-btn" @onclick="() => EliminarBloque(bloque)"><i class="fas fa-trash"></i></button>
                                 </div>
+                                
                                 <select @bind="bloque.SegmentoClaseID" class="form-control input-dark mb-2">
                                     <option value="@Guid.Empty" selected disabled>-- Selecciona Segmento --</option>
                                     @foreach (var seg in listaSegmentos)
@@ -470,17 +473,66 @@
                                         <option value="@seg.Id">@seg.Nombre</option>
                                     }
                                 </select>
+                                
                                 @foreach (var ejercicio in bloque.Ejercicios)
                                 {
-                                    <div class="input-group mb-2">
-                                        <input type="text" @bind="ejercicio.PesoRepeticiones" class="form-control input-dark" placeholder="Peso/Reps" style="width: 30%;" />
-                                        <input type="text" @bind="ejercicio.Descripcion" class="form-control input-dark" placeholder="Descripción" />
-                                        <button class="btn btn-outline-danger" @onclick="() => EliminarEjercicio(bloque, ejercicio)">X</button>
+                                    <div class="ejercicio-row fade-in">
+                                        
+                                        @* 1. REPS *@
+                                        <div class="input-group-reps">
+                                            <input type="text" @bind="ejercicio.Reps" class="form-control input-dark text-center" placeholder="Reps" />
+                                        </div>
+
+                                        @* 2. NOMBRE *@
+                                        <div class="input-group-name">
+                                            <input type="text" @bind="ejercicio.NombreBase" class="form-control input-dark" placeholder="Ejercicio" />
+                                        </div>
+
+                                        @* 3. BOTÓN PESOS (Action Wrapper) *@
+                                        <div class="action-wrapper">
+                                            <button class="btn-icon weight-btn @(ejercicio.TienePesos ? "active" : "")" 
+                                                    @onclick="() => TogglePesoPopup(ejercicio)">
+                                                <i class="fas fa-dumbbell"></i>
+                                                @if(ejercicio.TienePesos) { <span class="dot-indicator"></span> }
+                                            </button>
+
+                                            @if (ejercicio.MostrarPopupPeso)
+                                            {
+                                                <div class="weight-popover slide-up-fast">
+                                                    <div class="popover-header">PESOS (Rx)</div>
+                                                    <div class="popover-body">
+                                                        <div class="weight-input">
+                                                            <label>H</label>
+                                                            <input type="text" @bind="ejercicio.PesoH" placeholder="lbs/kg" />
+                                                        </div>
+                                                        <div class="weight-input">
+                                                            <label>M</label>
+                                                            <input type="text" @bind="ejercicio.PesoM" placeholder="lbs/kg" />
+                                                        </div>
+                                                    </div>
+                                                    <button class="btn-popover-close" @onclick="() => TogglePesoPopup(ejercicio)">
+                                                        <i class="fas fa-check"></i> LISTO
+                                                    </button>
+                                                </div>
+                                                @* Backdrop transparente para cerrar al hacer clic fuera *@
+                                                <div class="popover-backdrop" @onclick="() => TogglePesoPopup(ejercicio)"></div>
+                                            }
+                                        </div>
+
+                                        @* 4. ELIMINAR *@
+                                        <button class="btn-icon delete-btn" @onclick="() => EliminarEjercicio(bloque, ejercicio)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+
                                     </div>
                                 }
-                                <button class="btn btn-sm btn-outline-light w-100" @onclick="() => AgregarEjercicio(bloque)">+ Ejercicio</button>
+
+                                <button class="btn-add-ejercicio" @onclick="() => AgregarEjercicio(bloque)">
+                                    <i class="fas fa-plus"></i> Ejercicio
+                                </button>
                             </div>
                         }
+                        
                         <button class="btn btn-outline-warning w-100 py-2" @onclick="AgregarBloque">+ Bloque</button>
                     </div>
                 }
@@ -495,6 +547,7 @@
         </div>
     </div>
 }
+
 @if (mostrarModalCrearAviso)
 {
     <div class="modal-overlay">
@@ -585,202 +638,143 @@
 }
 
 <style>
-    /* --- ESTILOS PARA SELECCIÓN DE PLANES --- */
-
-    .planes-selection-grid {
+    /* --- TUS ESTILOS ORIGINALES SE MANTIENEN --- */
+    
+    /* --- FILA DE EJERCICIO --- */
+    .ejercicio-row {
         display: flex;
-        flex-direction: column; /* En móvil, uno abajo del otro */
-        gap: 15px;
-        width: 100%;
+        align-items: center;
+        gap: 8px;
+        background: #1f1f1f;
+        padding: 8px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        border: 1px solid #333;
+        position: relative; /* Necesario para el popover */
     }
 
-    /* En pantallas medianas/grandes, ponerlos lado a lado */
-    @@media (min-width: 400px) {
-        .planes-selection-grid
+    /* Inputs */
+    .input-group-reps { flex: 0 0 70px; } 
+    .input-group-name { flex: 1; }
 
-    {
-        flex-direction: row;
-    }
-
-    }
-
-    .plan-option-card {
-        background: #2a2a2a;
+    .input-dark {
+        background: #121212 !important;
         border: 1px solid #444;
-        border-radius: 12px;
-        padding: 20px;
-        flex: 1; /* Ocupan el mismo ancho */
-        cursor: pointer;
-        transition: all 0.2s ease;
-        position: relative; /* Para posicionar el badge */
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+        color: white !important;
+        font-size: 0.9rem;
+        height: 38px;
+    }
+    .input-dark:focus {
+        border-color: #F8C545;
+        box-shadow: 0 0 5px rgba(248, 197, 69, 0.3);
     }
 
-        .plan-option-card:hover {
-            background: #333;
-            border-color: #F8C545;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(248, 197, 69, 0.2);
-        }
+    .btn-icon {
+        width: 38px; height: 38px; border: none; border-radius: 6px;
+        display: flex; justify-content: center; align-items: center;
+        cursor: pointer; transition: all 0.2s; position: relative;
+    }
 
-        /* Estilo especial para la opción recomendada (Anual) */
-        .plan-option-card.recommended {
-            border: 2px solid #F8C545;
-            background: rgba(248, 197, 69, 0.05);
-        }
+    .weight-btn { background: #333; color: #888; }
+    .weight-btn:hover { background: #444; color: #F8C545; }
+    .weight-btn.active { color: #F8C545; border: 1px solid #F8C545; background: rgba(248, 197, 69, 0.1); }
 
-    .badge-save {
+    .dot-indicator { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: #F8C545; border-radius: 50%; }
+    .delete-btn { background: transparent; color: #666; }
+    .delete-btn:hover { background: rgba(220, 53, 69, 0.2); color: #dc3545; }
+
+    /* --- POPOVER DE PESOS (CORREGIDO) --- */
+    .action-wrapper { position: relative; }
+
+    .weight-popover {
         position: absolute;
-        top: -10px;
-        background: #F8C545;
-        color: black;
-        font-size: 0.65rem;
-        font-weight: bold;
-        padding: 4px 10px;
-        border-radius: 10px;
-        text-transform: uppercase;
-        font-family: 'Oswald';
-        box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        top: 45px; /* Abre hacia abajo */
+        right: 0;
+        width: 180px;
+        background: #1a1a1a;
+        border: 1px solid #F8C545;
+        border-radius: 8px;
+        padding: 0 0 10px 0; /* Sin padding arriba para que el header toque borde */
+        box-shadow: 0 5px 20px rgba(0,0,0,0.9);
+        z-index: 2000; /* Siempre encima */
+    }
+    .weight-popover::after {
+        content: ""; position: absolute; top: -6px; right: 15px; width: 10px; height: 10px;
+        background: #1a1a1a; border-top: 1px solid #F8C545; border-left: 1px solid #F8C545;
+        transform: rotate(45deg);
     }
 
-    .plan-title {
-        font-family: 'Oswald';
-        font-size: 1.1rem;
-        color: #ddd;
-        margin-bottom: 5px;
-        letter-spacing: 1px;
+    .popover-header {
+        font-family: 'Oswald'; font-size: 0.8rem;
+        background-color: #F8C545; color: #000; /* Fondo amarillo, letra negra */
+        font-weight: bold; text-align: center;
+        border-top-left-radius: 7px; border-top-right-radius: 7px;
+        padding: 5px 0; margin-bottom: 10px; letter-spacing: 1px;
     }
 
-    .plan-price {
-        font-family: 'Oswald';
-        font-size: 1.8rem;
-        color: white;
-        font-weight: bold;
-        margin-bottom: 5px;
+    .popover-body { display: flex; gap: 8px; margin-bottom: 8px; padding: 0 10px; }
+
+    .weight-input { display: flex; flex-direction: column; align-items: center; }
+    .weight-input label { font-size: 0.7rem; color: #aaa; font-weight: bold; }
+    .weight-input input {
+        width: 100%; background: #000; border: 1px solid #444;
+        color: white; text-align: center; border-radius: 4px; font-size: 0.9rem; padding: 4px;
+    }
+    .weight-input input:focus { border-color: #F8C545; outline: none; }
+
+    .btn-popover-close {
+        width: 90%; margin: 0 auto; display: block;
+        background: #F8C545; border: none; color: black;
+        font-weight: bold; font-family: 'Oswald'; font-size: 0.8rem;
+        padding: 4px; border-radius: 4px; cursor: pointer;
     }
 
-    .plan-note {
-        font-size: 0.75rem;
-        color: #888;
-        font-family: 'Roboto';
+    /* Backdrop invisible para cerrar al hacer click fuera */
+    .popover-backdrop {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1500;
+        background: transparent;
     }
 
-    .main-layout {
-        position: fixed; 
-        top: 0; 
-        left: 0; 
-        right: 0; 
-        bottom: 0;
-        background-color: #0d0d0d;
-        display: flex;
-        flex-direction: column;
-        z-index: 1; /* Asegura que esté al frente */
+    .btn-add-ejercicio {
+        width: 100%; background: transparent; border: 1px dashed #555;
+        color: #888; padding: 8px; border-radius: 8px; margin-top: 5px;
+        transition: 0.2s;
     }
+    .btn-add-ejercicio:hover { border-color: #F8C545; color: #F8C545; background: rgba(248, 197, 69, 0.05); }
 
-    /* --- 2. NAVBAR COMPACTA (CORRECCIÓN DE ESPACIO) --- */
-    .navbar-container {
-        flex-shrink: 0;
-        
-        /* SOLUCIÓN AL ESPACIO GRANDE: */
-        /* Usamos solo el área segura + un padding pequeño (5px) */
-        padding-top: calc(env(safe-area-inset-top) + 5px); 
-        padding-bottom: 10px; /* Reducido de 15px */
-        padding-left: 20px;
-        padding-right: 20px;
-        
-        background-color: #0d0d0d;
-        border-bottom: 1px solid #F8C545;
-        color: white;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 100;
-        font-family: 'Oswald';
-        
-        /* Altura controlada para que no se expanda */
-        height: auto;
-        min-height: 60px; 
-    }
-
-    /* --- 3. CONTENIDO CON SCROLL INTERNO --- */
-    .scrollable-content {
-        flex-grow: 1;
-        overflow-y: auto; /* El scroll vive AQUÍ, no en el body */
-        padding: 15px;    /* Reducido un poco el padding lateral */
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        
-        /* Suavizado iOS */
-        -webkit-overflow-scrolling: touch;
-        
-        /* Padding extra abajo para que el último elemento no quede pegado al borde */
-        padding-bottom: 40px; 
-    }
-
-    /* --- RESTO DE TUS ESTILOS --- */
-    .brand { font-size: 1.3rem; font-weight: bold; } /* Texto un poco más pequeño */
+    .slide-up-fast { animation: slideUp 0.2s ease-out; }
+    
+    /* RESTO DE ESTILOS GLOBALES */
+    .planes-selection-grid { display: flex; flex-direction: column; gap: 15px; width: 100%; }
+    @@media (min-width: 400px) { .planes-selection-grid { flex-direction: row; } }
+    .plan-option-card { background: #2a2a2a; border: 1px solid #444; border-radius: 12px; padding: 20px; flex: 1; cursor: pointer; transition: all 0.2s ease; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .plan-option-card:hover { background: #333; border-color: #F8C545; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(248, 197, 69, 0.2); }
+    .plan-option-card.recommended { border: 2px solid #F8C545; background: rgba(248, 197, 69, 0.05); }
+    .badge-save { position: absolute; top: -10px; background: #F8C545; color: black; font-size: 0.65rem; font-weight: bold; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; font-family: 'Oswald'; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+    .plan-title { font-family: 'Oswald'; font-size: 1.1rem; color: #ddd; margin-bottom: 5px; letter-spacing: 1px; }
+    .plan-price { font-family: 'Oswald'; font-size: 1.8rem; color: white; font-weight: bold; margin-bottom: 5px; }
+    .plan-note { font-size: 0.75rem; color: #888; font-family: 'Roboto'; }
+    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; height: auto; min-height: 60px; }
+    .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
+    .brand { font-size: 1.3rem; font-weight: bold; }
     .right-actions { display: flex; align-items: center; gap: 15px; }
-    
-    .welcome-section h1 { 
-        font-family: 'Oswald'; 
-        color: #F8C545; 
-        font-size: 1.8rem; /* Ajustado */
-        margin-bottom: 20px; 
-        text-align: center; 
-        margin-top: 10px; 
-    }
-
-    /* Tarjetas ajustadas */
-    .cards-grid { 
-        display: flex; 
-        flex-wrap: wrap; 
-        justify-content: center; 
-        gap: 15px; 
-        width: 100%; 
-        max-width: 1000px; 
-    }
-    
-    .menu-card { 
-        background-color: #F8C545; 
-        color: black; 
-        width: 46%; /* Para que quepan 2 bien en pantallas chicas */
-        max-width: 160px;
-        height: 150px; 
-        border-radius: 15px; 
-        padding: 10px; 
-        display: flex; 
-        flex-direction: column; 
-        justify-content: center; 
-        align-items: center; 
-        text-align: center; 
-        box-shadow: 0 4px 10px rgba(248, 215, 131, 0.2); 
-        cursor: pointer; 
-        transition: transform 0.2s; 
-    }
+    .welcome-section h1 { font-family: 'Oswald'; color: #F8C545; font-size: 1.8rem; margin-bottom: 20px; text-align: center; margin-top: 10px; }
+    .cards-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; width: 100%; max-width: 1000px; }
+    .menu-card { background-color: #F8C545; color: black; width: 46%; max-width: 160px; height: 150px; border-radius: 15px; padding: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; box-shadow: 0 4px 10px rgba(248, 215, 131, 0.2); cursor: pointer; transition: transform 0.2s; }
     .menu-card:active { transform: scale(0.95); }
     .menu-card h3 { font-family: 'Oswald'; font-size: 0.9rem; font-weight: bold; margin: 0; line-height: 1.2; }
     .menu-card p { font-size: 0.65rem; font-family: 'Roboto'; line-height: 1.1; margin-top: 4px; }
     .card-icon { font-size: 2rem; margin-bottom: 8px; }
-
-    /* Badges y botones */
     .yellow-highlight { background: #F8C545 !important; color: black !important; border: 2px solid white; animation: pulseBorder 2s infinite; position: relative; }
     .yellow-highlight h3, .yellow-highlight p, .yellow-highlight i { color: black !important; }
     .live-badge { position: absolute; top: 8px; right: 8px; background: red; color: white; font-size: 0.55rem; padding: 2px 5px; border-radius: 4px; font-weight: bold; }
-
     .footer-brand { margin-top: auto; padding: 20px; color: #F8C545; font-family: 'Oswald'; }
-    
-    /* Alerta de pago */
     .payment-alert { margin-bottom: 15px; padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 10px; width: 100%; max-width: 600px; }
     .payment-alert.warning { background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%); color: black; }
     .payment-alert.expired { background: linear-gradient(90deg, #dc3545 0%, #c82333 100%); color: white; }
     .alert-icon { font-size: 1.2rem; }
     .alert-text { flex: 1; display: flex; flex-direction: column; font-size: 0.8rem; }
-
-    /* Menú y Notificaciones */
     .main-menu-wrapper { position: relative; cursor: pointer; display: flex; align-items: center; gap: 10px; }
     .user-name { font-size: 0.9rem; font-weight: bold; display: none; }
     @@media(min-width: 768px) { .user-name { display: block; } }
@@ -791,7 +785,6 @@
     .dropdown-item { padding: 12px 20px; color: #ffffff !important; cursor: pointer; font-family: 'Roboto', sans-serif; font-size: 0.9rem; display: flex; align-items: center; gap: 12px; transition: background 0.2s; }
     .dropdown-item:hover { background-color: #333; color: #F8C545 !important; }
     .dropdown-divider { height: 1px; background: #333; margin: 5px 0; }
-    
     .noti-wrapper { position: relative; cursor: pointer; }
     .noti-icon { font-size: 1.3rem; color: white; }
     .noti-dot { position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; background: red; border-radius: 50%; border: 2px solid #0d0d0d; }
@@ -799,78 +792,16 @@
     .noti-dropdown { position: absolute; top: 35px; right: -50px; width: 280px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); overflow: hidden; z-index: 1000; max-height: 300px; overflow-y: auto; }
     .noti-item { padding: 12px; border-bottom: 1px solid #333; font-size: 0.8rem; display: flex; align-items: center; gap: 10px; color: #ccc; }
     .noti-item.unread { background: #2a2a2a; color: white; border-left: 3px solid #F8C545; }
-
-    /* Modales */
-    .modal-overlay { 
-        position: fixed; 
-        top: 0; 
-        left: 0; 
-        width: 100%; 
-        height: 100%; 
-        background: rgba(0,0,0,0.85); 
-        z-index: 3000; 
-        display: flex; 
-        justify-content: center; 
-        align-items: center; 
-        backdrop-filter: blur(4px); 
-        padding: 20px; /* Margen de seguridad para que no toque los bordes */
-    }
-
-    .custom-modal { 
-        background: #1a1a1a; 
-        width: 100%; 
-        max-width: 400px; 
-        border-radius: 12px; 
-        border: 1px solid #F8C545; 
-        display: flex; 
-        flex-direction: column; 
-        color: white; 
-        
-        /* LÍMITE DE ALTURA CLAVE */
-        max-height: 85vh; 
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-
-    .modal-header { 
-        padding: 15px; 
-        background: #222; 
-        border-bottom: 1px solid #333; 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        flex-shrink: 0; /* No se aplasta */
-    }
-
-    .modal-body { 
-        padding: 20px; 
-        
-        /* SCROLL INTERNO AUTOMÁTICO */
-        overflow-y: auto; 
-        flex-grow: 1; /* Ocupa el espacio disponible */
-        
-        /* Suavizado en iOS */
-        -webkit-overflow-scrolling: touch; 
-    }
-
-    .modal-footer { 
-        padding: 15px; 
-        background: #222; 
-        border-top: 1px solid #333; 
-        display: flex; 
-        gap: 10px; 
-        flex-shrink: 0; /* No se aplasta */
-    }
-
-    /* Resto de estilos de botones y campos */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); padding: 20px; }
+    .custom-modal { background: #1a1a1a; width: 100%; max-width: 400px; border-radius: 12px; border: 1px solid #F8C545; display: flex; flex-direction: column; color: white; max-height: 85vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .modal-header { padding: 15px; background: #222; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .modal-body { padding: 20px; overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; padding-bottom: 250px;}
+    .modal-footer { padding: 15px; background: #222; border-top: 1px solid #333; display: flex; gap: 10px; flex-shrink: 0; }
     .btn-close-custom { background: none; border: none; color: white; font-size: 1.2rem; }
     .btn-confirm { background: #F8C545; color: black; border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
     .btn-cancel { background: #333; color: white; border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
-    .input-dark { background: #333 !important; color: white !important; border: 1px solid #666; }
-    /* Eliminar cuenta */
     .delete-account-container { width: 100%; max-width: 1000px; display: flex; justify-content: center; margin-top: 30px; margin-bottom: 10px; padding: 0 20px; }
     .btn-delete-account { background: transparent; border: 1px solid #ff4444; color: #ff4444; font-family: 'Oswald', sans-serif; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; padding: 8px 20px; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; letter-spacing: 1px; opacity: 0.8; }
-
-    /* Animaciones y Otros */
     @@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     @@keyframes ring { 0% { transform: rotate(0); } 5% { transform: rotate(30deg); } 10% { transform: rotate(-28deg); } 15% { transform: rotate(34deg); } 20% { transform: rotate(-32deg); } 25% { transform: rotate(30deg); } 30% { transform: rotate(-28deg); } 35% { transform: rotate(26deg); } 40% { transform: rotate(-24deg); } 45% { transform: rotate(22deg); } 50% { transform: rotate(-20deg); } 100% { transform: rotate(0); } }
     @@keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
@@ -881,14 +812,10 @@
     .alert-conflict h4 { color: white; font-family: 'Oswald'; letter-spacing: 1px; margin-bottom: 10px; }
     .alert-conflict p { color: #ccc; margin-bottom: 5px; }
     .fade-in { animation: fadeIn 0.3s ease-in; }
-    
-    /* MODAL WOD */
     .modal-dialog-centered { display: flex; align-items: center; min-height: calc(100% - 1rem); }
     .horario-row { display: flex; justify-content: space-between; align-items: center; background-color: #222; padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #333; }
     .horario-text { color: white; font-weight: bold; font-family: 'Oswald'; }
     .btn-delete-mini { background: none; border: none; color: #dc3545; cursor: pointer; padding: 5px; }
-    
-    /* AVISOS POPUP */
     .aviso-content { width: 90%; max-width: 400px; background: #1a1a1a; border-radius: 12px; text-align: center; border: 2px solid #F8C545; padding-bottom: 20px; box-shadow: 0 0 20px rgba(248, 197, 69, 0.3); animation: bounceIn 0.6s; overflow: hidden; }
     .aviso-icon { font-size: 3rem; color: #F8C545; margin-top: 20px; animation: pulse 2s infinite; }
     .aviso-title { font-family: 'Oswald'; color: white; font-size: 1.5rem; margin: 10px 20px; text-transform: uppercase; }
@@ -898,6 +825,30 @@
 </style>
 
 @code {
+    
+    // --- CLASES AUXILIARES ---
+    public class EjercicioEditorViewModel
+    {
+        // Inputs del Usuario
+        public string Reps { get; set; }
+        public string NombreBase { get; set; }
+        public string PesoH { get; set; }
+        public string PesoM { get; set; }
+
+        public bool MostrarPopupPeso { get; set; } = false;
+
+        // Visual
+        public bool TienePesos => !string.IsNullOrEmpty(PesoH) || !string.IsNullOrEmpty(PesoM);
+    }
+
+    public class BloqueEditorViewModel
+    {
+        public Guid SegmentoClaseID { get; set; }
+        public string NombreSegmento { get; set; } // Necesario para el backend
+        public List<EjercicioEditorViewModel> Ejercicios { get; set; } = new List<EjercicioEditorViewModel>();
+    }
+
+    // --- VARIABLES DE ESTADO ---
     private bool abriendoCamara = false;
     private bool procesandoLectura = false;
     private bool mostrarMenuPrincipal = false;
@@ -914,7 +865,12 @@
     private bool wodExiste = false;
     private bool cargandoOperacionWod = false;
     private bool mostrarModalWod = false;
-    private ProgramacionWodViewModel nuevoWod = new ProgramacionWodViewModel();
+    
+    // Usamos esto para la fecha
+    private ProgramacionWodViewModel nuevoWod = new ProgramacionWodViewModel(); 
+    // Usamos esto para la UI del editor
+    private List<BloqueEditorViewModel> listaBloquesEditor = new List<BloqueEditorViewModel>();
+
     private List<SegmentoDto> listaSegmentos = new List<SegmentoDto>();
 
     private bool boxTieneMP = false; 
@@ -942,7 +898,6 @@
     private string tipoInputNew = "password";
     private string tipoInputConfirm = "password";
 
-    // NUEVO: Horarios
     private bool mostrarModalHorarios = false;
     private string nuevoHorarioTexto = "";
     private List<HorarioDto> listaHorariosAdmin; 
@@ -973,79 +928,231 @@
         try { listaPlanes = await Http.GetFromJsonAsync<List<PlanDto>>("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/pagosapi/planes");} catch { }
     }
 
-    private async Task AbrirModalHorarios()
-    {
-        mostrarMenuPrincipal = false;
-        mostrarModalHorarios = true;
-        await CargarHorariosAdmin();
+    // --- LOGICA MODAL WOD ---
+    private async void AbrirModalWod() 
+    { 
+        mostrarMenuPrincipal = false; 
+        nuevoWod = new ProgramacionWodViewModel { FechaProgramacion = DateTime.Today }; 
+        mostrarModalWod = true; 
+        await VerificarWodExistente(DateTime.Today); 
     }
 
-    private async Task CargarHorariosAdmin()
+    private async Task AlCambiarFechaWod(ChangeEventArgs e) 
+    { 
+        if (DateTime.TryParse(e.Value.ToString(), out DateTime fecha)) 
+        { 
+            nuevoWod.FechaProgramacion = fecha; 
+            await VerificarWodExistente(fecha); 
+        } 
+    }
+
+    private async Task VerificarWodExistente(DateTime fecha) 
+    { 
+        cargandoOperacionWod = true; wodExiste = false; StateHasChanged(); 
+        try 
+        { 
+            var fechaStr = fecha.ToString("yyyy-MM-dd"); 
+            wodExiste = await Http.GetFromJsonAsync<bool>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/existe/{Sesion.Usuario.BoxID}/{fechaStr}"); 
+            
+            if (!wodExiste) 
+            {
+                // Limpiar editor si no existe wod
+                listaBloquesEditor = new List<BloqueEditorViewModel>();
+                AgregarBloque(); 
+            } 
+        } 
+        catch 
+        { 
+            wodExiste = false; 
+            listaBloquesEditor = new List<BloqueEditorViewModel>();
+            AgregarBloque(); 
+        } 
+        finally 
+        { 
+            cargandoOperacionWod = false; 
+            StateHasChanged(); 
+        } 
+    }
+
+    private async Task CargarWodParaEditar() 
+    { 
+        cargandoOperacionWod = true; 
+        try 
+        { 
+            var fechaStr = nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd"); 
+            var wodExistente = await Http.GetFromJsonAsync<ProgramacionWodViewModel>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/obtener/{Sesion.Usuario.BoxID}/{fechaStr}"); 
+            
+            if (wodExistente != null) 
+            { 
+                nuevoWod = wodExistente; 
+                wodExiste = false; 
+                
+                // Convertir al modelo del Editor
+                listaBloquesEditor = new List<BloqueEditorViewModel>();
+                foreach(var b in wodExistente.Bloques)
+                {
+                    var bloqueEdit = new BloqueEditorViewModel 
+                    { 
+                        SegmentoClaseID = b.SegmentoClaseID,
+                        NombreSegmento = b.NombreSegmento,
+                        Ejercicios = new List<EjercicioEditorViewModel>()
+                    };
+
+                    foreach(var ej in b.Ejercicios)
+                    {
+                        // Aquí habría que parsear el string guardado para separar pesos
+                        // Por simplicidad, ponemos todo en NombreBase o Reps según corresponda
+                        // Si quieres editar pesos guardados, necesitarías un parser inverso.
+                        // Para este ejemplo, cargamos simple:
+                        bloqueEdit.Ejercicios.Add(new EjercicioEditorViewModel 
+                        {
+                            Reps = ej.PesoRepeticiones,
+                            NombreBase = ej.Descripcion
+                        });
+                    }
+                    listaBloquesEditor.Add(bloqueEdit);
+                }
+            } 
+        } 
+        catch (Exception ex) 
+        { 
+            await App.Current.MainPage.DisplayAlert("Error", "No se pudo cargar el WOD: " + ex.Message, "OK"); 
+        } 
+        finally 
+        { 
+            cargandoOperacionWod = false; 
+        } 
+    }
+
+    private async Task EliminarWodActual() 
+    { 
+        bool confirmar = await App.Current.MainPage.DisplayAlert("Confirmar", "¿Eliminar WOD completo?", "Sí", "No"); 
+        if (confirmar) 
+        { 
+            cargandoOperacionWod = true; 
+            try 
+            { 
+                var fechaStr = nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd"); 
+                var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/eliminar-dia/{Sesion.Usuario.BoxID}/{fechaStr}", null); 
+                if (response.IsSuccessStatusCode) 
+                { 
+                    await App.Current.MainPage.DisplayAlert("Éxito", "WOD eliminado.", "OK"); 
+                    wodExiste = false; 
+                    listaBloquesEditor = new List<BloqueEditorViewModel>();
+                    AgregarBloque(); 
+                } 
+                else 
+                { 
+                    string error = await response.Content.ReadAsStringAsync(); 
+                    await App.Current.MainPage.DisplayAlert("Error", error, "OK"); 
+                } 
+            } 
+            catch (Exception ex) 
+            { 
+                await App.Current.MainPage.DisplayAlert("Excepción", ex.Message, "OK"); 
+            } 
+            finally 
+            { 
+                cargandoOperacionWod = false; 
+            } 
+        } 
+    }
+
+    // --- LOGICA EDITOR ---
+    private void AgregarBloque() => listaBloquesEditor.Add(new BloqueEditorViewModel { Ejercicios = new List<EjercicioEditorViewModel> { new EjercicioEditorViewModel() } });
+    private void EliminarBloque(BloqueEditorViewModel b) => listaBloquesEditor.Remove(b);
+    private void AgregarEjercicio(BloqueEditorViewModel b) => b.Ejercicios.Add(new EjercicioEditorViewModel());
+    private void EliminarEjercicio(BloqueEditorViewModel b, EjercicioEditorViewModel e) => b.Ejercicios.Remove(e);
+    private void TogglePesoPopup(EjercicioEditorViewModel ej) => ej.MostrarPopupPeso = !ej.MostrarPopupPeso;
+
+    private async Task GuardarProgramacion()
     {
+        if (listaBloquesEditor.Count == 0)
+        {
+            await App.Current.MainPage.DisplayAlert("Faltan datos", "Agrega al menos un bloque.", "OK");
+            return;
+        }
+
+        if (listaBloquesEditor.Any(b => b.SegmentoClaseID == Guid.Empty))
+        {
+            await App.Current.MainPage.DisplayAlert("Faltan datos", "Selecciona el TIPO DE SEGMENTO en todos los bloques.", "OK");
+            return;
+        }
+
+        // CONVERTIR EDITOR -> MODELO API
+        nuevoWod.Bloques = new List<BloqueWodViewModel>();
+        
+        foreach (var bEdit in listaBloquesEditor)
+        {
+            var bloqueApi = new BloqueWodViewModel 
+            { 
+                SegmentoClaseID = bEdit.SegmentoClaseID,
+                Ejercicios = new List<EjercicioViewModel>()
+            };
+
+            // Nombre Segmento
+            var infoSegmento = listaSegmentos.FirstOrDefault(s => s.Id == bEdit.SegmentoClaseID);
+            bloqueApi.NombreSegmento = infoSegmento != null ? infoSegmento.Nombre : "General";
+
+            foreach (var ejEdit in bEdit.Ejercicios)
+            {
+                // Formatear descripción: "Sentadillas (135/95)"
+                string descFinal = ejEdit.NombreBase;
+                if (ejEdit.TienePesos)
+                {
+                    descFinal += $" ({ejEdit.PesoH}/{ejEdit.PesoM})";
+                }
+
+                bloqueApi.Ejercicios.Add(new EjercicioViewModel
+                {
+                    PesoRepeticiones = ejEdit.Reps,
+                    Descripcion = descFinal
+                });
+            }
+            nuevoWod.Bloques.Add(bloqueApi);
+        }
+
+        cargandoOperacionWod = true;
+        StateHasChanged();
+
         try
         {
-            listaHorariosAdmin = await Http.GetFromJsonAsync<List<HorarioDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/AgendaApi/lista-horarios/{Sesion.Usuario.BoxID}");
-        }
-        catch { listaHorariosAdmin = new List<HorarioDto>(); }
-    }
+            nuevoWod.BoxID = Sesion.Usuario.BoxID;
+            var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/guardar", nuevoWod);
 
-    private async Task AgregarHorario()
-    {
-        if (string.IsNullOrWhiteSpace(nuevoHorarioTexto)) return;
-        try
+            if (r.IsSuccessStatusCode)
+            {
+                mostrarModalWod = false;
+                await App.Current.MainPage.DisplayAlert("¡Éxito!", "WOD Guardado correctamente.", "OK");
+                
+                // Reset
+                nuevoWod = new ProgramacionWodViewModel { FechaProgramacion = DateTime.Today };
+                listaBloquesEditor = new List<BloqueEditorViewModel>();
+                AgregarBloque();
+            }
+            else
+            {
+                var errorMsg = await r.Content.ReadAsStringAsync();
+                await App.Current.MainPage.DisplayAlert("Error del Servidor", errorMsg, "OK");
+            }
+        }
+        catch (Exception ex)
         {
-            var nuevo = new HorarioDto { BoxID = Sesion.Usuario.BoxID, Descripcion = nuevoHorarioTexto };
-            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/AgendaApi/crear-horario", nuevo);
-            if (response.IsSuccessStatusCode) { nuevoHorarioTexto = ""; await CargarHorariosAdmin(); }
-            else await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar.", "OK");
+            await App.Current.MainPage.DisplayAlert("Error de App", ex.Message, "OK");
         }
-        catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }
-    }
-
-    private async Task EliminarHorario(Guid id)
-    {
-        bool confirmar = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Seguro?", "Sí", "No");
-        if (!confirmar) return;
-        try
+        finally
         {
-            var response = await Http.DeleteAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/AgendaApi/eliminar-horario/{id}");
-            if (response.IsSuccessStatusCode) await CargarHorariosAdmin();
-            else await App.Current.MainPage.DisplayAlert("Error", "No se pudo eliminar.", "OK");
+            cargandoOperacionWod = false;
+            StateHasChanged();
         }
-        catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }
     }
-    
-    private async Task ConfirmarEliminarCuenta()
-    {
-       bool confirmacion = await App.Current.MainPage.DisplayAlert(
-           "⚠️ Eliminar Cuenta",
-           "¿Estás seguro de que quieres eliminar tu cuenta permanentemente? Perderás todo tu historial, fotos y pagos. Esta acción NO se puede deshacer.",
-           "Sí, Eliminar",
-           "Cancelar");
 
-       if (confirmacion)
-       {
-           try
-           {
-               var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/eliminar-definitivo/{Sesion.Usuario.UsuarioID}", null);
-
-               if (response.IsSuccessStatusCode)
-               {
-                   await App.Current.MainPage.DisplayAlert("Cuenta Eliminada", "Lamentamos que te vayas. Tu cuenta ha sido borrada.", "Adiós");
-                   CerrarSesion();
-               }
-               else
-               {
-                   string mensajeError = await response.Content.ReadAsStringAsync();
-                   await App.Current.MainPage.DisplayAlert("Error", $"No se pudo eliminar: {mensajeError}", "OK");
-               }
-           }
-           catch (Exception ex)
-           {
-               await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK");
-           }
-       }
-    }
+    // --- RESTO DE FUNCIONES (Horarios, Avisos, Pagos...) ---
+    private async Task AbrirModalHorarios() { mostrarMenuPrincipal = false; mostrarModalHorarios = true; await CargarHorariosAdmin(); }
+    private async Task CargarHorariosAdmin() { try { listaHorariosAdmin = await Http.GetFromJsonAsync<List<HorarioDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/AgendaApi/lista-horarios/{Sesion.Usuario.BoxID}"); } catch { listaHorariosAdmin = new List<HorarioDto>(); } }
+    private async Task AgregarHorario() { if (string.IsNullOrWhiteSpace(nuevoHorarioTexto)) return; try { var nuevo = new HorarioDto { BoxID = Sesion.Usuario.BoxID, Descripcion = nuevoHorarioTexto }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/AgendaApi/crear-horario", nuevo); if (response.IsSuccessStatusCode) { nuevoHorarioTexto = ""; await CargarHorariosAdmin(); } else await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar.", "OK"); } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } }
+    private async Task EliminarHorario(Guid id) { bool confirmar = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Seguro?", "Sí", "No"); if (!confirmar) return; try { var response = await Http.DeleteAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/AgendaApi/eliminar-horario/{id}"); if (response.IsSuccessStatusCode) await CargarHorariosAdmin(); else await App.Current.MainPage.DisplayAlert("Error", "No se pudo eliminar.", "OK"); } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } }
+    private async Task ConfirmarEliminarCuenta() { bool confirmacion = await App.Current.MainPage.DisplayAlert("⚠️ Eliminar Cuenta", "¿Estás seguro de que quieres eliminar tu cuenta permanentemente? Perderás todo tu historial, fotos y pagos. Esta acción NO se puede deshacer.", "Sí, Eliminar", "Cancelar"); if (confirmacion) { try { var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/eliminar-definitivo/{Sesion.Usuario.UsuarioID}", null); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("Cuenta Eliminada", "Lamentamos que te vayas. Tu cuenta ha sido borrada.", "Adiós"); CerrarSesion(); } else { string mensajeError = await response.Content.ReadAsStringAsync(); await App.Current.MainPage.DisplayAlert("Error", $"No se pudo eliminar: {mensajeError}", "OK"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK"); } } }
     private void AbrirModalPassword() { passOld = ""; passNew = ""; passConfirm = ""; msgErrorPass = ""; procesandoPass = false; mostrarMenuPrincipal = false; mostrarModalPassword = true; }
     private void ToggleVerPass(int campo) { if (campo == 1) tipoInputOld = tipoInputOld == "password" ? "text" : "password"; if (campo == 2) tipoInputNew = tipoInputNew == "password" ? "text" : "password"; if (campo == 3) tipoInputConfirm = tipoInputConfirm == "password" ? "text" : "password"; }
     private async Task GuardarNuevaPassword() { if(string.IsNullOrWhiteSpace(passOld) || string.IsNullOrWhiteSpace(passNew) || string.IsNullOrWhiteSpace(passConfirm)) { msgErrorPass = "Todos los campos son obligatorios"; return; } if(passNew != passConfirm) { msgErrorPass = "La contraseña nueva y la confirmación no coinciden"; return; } procesandoPass = true; msgErrorPass = ""; try { var req = new { UsuarioID = Sesion.Usuario.UsuarioID, OldPassword = passOld, NewPassword = passNew, ConfirmPassword = passConfirm }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/cambiar-password", req); if(response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("¡Éxito!", "Tu contraseña ha sido actualizada.", "OK"); mostrarModalPassword = false; } else { var errorJson = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>(); if(errorJson.TryGetProperty("mensaje", out var msg)) msgErrorPass = msg.GetString(); else msgErrorPass = "Error al actualizar la contraseña"; } } catch(Exception ex) { msgErrorPass = "Error de conexión: " + ex.Message; } finally { procesandoPass = false; } }
@@ -1071,87 +1178,8 @@
     private async Task PublicarAviso() { if (string.IsNullOrEmpty(nuevoAviso.Titulo)) return; try { nuevoAviso.BoxID = Sesion.Usuario.BoxID; var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/crear", nuevoAviso); if (r.IsSuccessStatusCode) { mostrarModalCrearAviso = false; await App.Current.MainPage.DisplayAlert("Éxito", "Publicado", "OK"); } } catch {} }
     private async Task CargarUltimoAviso() { try { var r = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/ultimo/{Sesion.Usuario.BoxID}"); if (r.StatusCode == System.Net.HttpStatusCode.NoContent) return; if (r.IsSuccessStatusCode) { ultimoAviso = await r.Content.ReadFromJsonAsync<Avisos>(); if (ultimoAviso != null) { var idVisto = await JS.InvokeAsync<string>("localStorage.getItem", "ultimoAvisoVisto"); if (idVisto != ultimoAviso.AvisoID.ToString()) mostrarAvisoPopUp = true; } } } catch {} }
     private async Task CerrarAviso() { if(ultimoAviso!=null) await JS.InvokeVoidAsync("localStorage.setItem", "ultimoAvisoVisto", ultimoAviso.AvisoID.ToString()); mostrarAvisoPopUp = false; }
-    private async void AbrirModalWod() { mostrarMenuPrincipal = false; nuevoWod = new ProgramacionWodViewModel { FechaProgramacion = DateTime.Today }; mostrarModalWod = true; await VerificarWodExistente(DateTime.Today); }
-    private async Task AlCambiarFechaWod(ChangeEventArgs e) { if (DateTime.TryParse(e.Value.ToString(), out DateTime fecha)) { nuevoWod.FechaProgramacion = fecha; await VerificarWodExistente(fecha); } }
-    private async Task VerificarWodExistente(DateTime fecha) { cargandoOperacionWod = true; wodExiste = false; StateHasChanged(); try { var fechaStr = fecha.ToString("yyyy-MM-dd"); wodExiste = await Http.GetFromJsonAsync<bool>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/existe/{Sesion.Usuario.BoxID}/{fechaStr}"); if (!wodExiste && (nuevoWod.Bloques == null || nuevoWod.Bloques.Count == 0)) { nuevoWod.Bloques = new List<BloqueWodViewModel>(); AgregarBloque(); } } catch { wodExiste = false; if (nuevoWod.Bloques.Count == 0) AgregarBloque(); } finally { cargandoOperacionWod = false; StateHasChanged(); } }
-    private async Task CargarWodParaEditar() { cargandoOperacionWod = true; try { var fechaStr = nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd"); var wodExistente = await Http.GetFromJsonAsync<ProgramacionWodViewModel>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/obtener/{Sesion.Usuario.BoxID}/{fechaStr}"); if (wodExistente != null) { nuevoWod = wodExistente; wodExiste = false; } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", "No se pudo cargar el WOD: " + ex.Message, "OK"); } finally { cargandoOperacionWod = false; } }
-    private async Task EliminarWodActual() { bool confirmar = await App.Current.MainPage.DisplayAlert("Confirmar", "¿Eliminar WOD completo?", "Sí", "No"); if (confirmar) { cargandoOperacionWod = true; try { var fechaStr = nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd"); var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/eliminar-dia/{Sesion.Usuario.BoxID}/{fechaStr}", null); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("Éxito", "WOD eliminado.", "OK"); wodExiste = false; nuevoWod.Bloques = new List<BloqueWodViewModel>(); AgregarBloque(); } else { string error = await response.Content.ReadAsStringAsync(); await App.Current.MainPage.DisplayAlert("Error", error, "OK"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Excepción", ex.Message, "OK"); } finally { cargandoOperacionWod = false; } } }
     private async Task AbrirEscanerParaEntrar() { if (abriendoCamara) return; abriendoCamara = true; StateHasChanged(); await Task.Delay(100); try { var scannerPage = new EscanerPage(); Action<string> escanearHandler = null; escanearHandler = async (resultadoQr) => { scannerPage.OnScanResult -= escanearHandler; await Application.Current.Dispatcher.DispatchAsync(async () => { try { await Application.Current.MainPage.Navigation.PopModalAsync(); await Task.Delay(400); await ProcesarCheckIn(resultadoQr); } catch (Exception ex) { Console.WriteLine("Error cerrando cámara: " + ex.Message); } }); }; scannerPage.OnScanResult += escanearHandler; if (Application.Current.MainPage != null) { await Application.Current.MainPage.Navigation.PushModalAsync(scannerPage); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", "No se pudo iniciar la cámara.", "OK"); } finally { abriendoCamara = false; StateHasChanged(); } }
     private async Task ProcesarCheckIn(string boxIdLeido) { if (string.IsNullOrWhiteSpace(boxIdLeido)) { await App.Current.MainPage.DisplayAlert("QR Inválido", "No se detectó información en el código.", "OK"); return; } try { var request = new { UsuarioId = Sesion.Usuario.UsuarioID, QrData = boxIdLeido }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/liveapi/checkin-qr", request); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("¡Bienvenido! 💪", "Has entrado a la clase correctamente.", "A ENTRENAR"); } else { string msg = await response.Content.ReadAsStringAsync(); await App.Current.MainPage.DisplayAlert("Ups", "No se pudo registrar entrada: " + msg, "Intentar de nuevo"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error de Conexión", "Revisa tu internet.", "OK"); } }
-    private void AgregarBloque() => nuevoWod.Bloques.Add(new BloqueWodViewModel { Ejercicios = new List<EjercicioViewModel> { new EjercicioViewModel() } });
-    private void EliminarBloque(BloqueWodViewModel b) => nuevoWod.Bloques.Remove(b);
-    private void AgregarEjercicio(BloqueWodViewModel b) => b.Ejercicios.Add(new EjercicioViewModel());
-    private void EliminarEjercicio(BloqueWodViewModel b, EjercicioViewModel e) => b.Ejercicios.Remove(e);
-    private async Task GuardarProgramacion()
-    {
-        // 1. Validaciones básicas (IDs vacíos, sin bloques, etc)
-        if (nuevoWod.Bloques == null || nuevoWod.Bloques.Count == 0)
-        {
-            await App.Current.MainPage.DisplayAlert("Faltan datos", "Agrega al menos un bloque.", "OK");
-            return;
-        }
-
-        if (nuevoWod.Bloques.Any(b => b.SegmentoClaseID == Guid.Empty))
-        {
-            await App.Current.MainPage.DisplayAlert("Faltan datos", "Selecciona el TIPO DE SEGMENTO en todos los bloques.", "OK");
-            return;
-        }
-
-        // =========================================================================
-        // 2. PARCHE DE ORO (AQUÍ ESTÁ LA SOLUCIÓN AL ERROR DE LA IMAGEN) 🛠️
-        // =========================================================================
-        // El servidor exige que enviemos el "NombreSegmento", aunque ya tenga el ID.
-        // Así que lo buscamos en la lista y lo asignamos manualmente antes de enviar.
-        foreach (var bloque in nuevoWod.Bloques)
-        {
-            var infoSegmento = listaSegmentos.FirstOrDefault(s => s.Id == bloque.SegmentoClaseID);
-            if (infoSegmento != null)
-            {
-                bloque.NombreSegmento = infoSegmento.Nombre;
-            }
-            else
-            {
-                bloque.NombreSegmento = "General"; // Valor por defecto para que no falle
-            }
-        }
-        // =========================================================================
-
-        cargandoOperacionWod = true;
-        StateHasChanged();
-
-        try
-        {
-            nuevoWod.BoxID = Sesion.Usuario.BoxID;
-
-            // Enviamos al servidor
-            var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/guardar", nuevoWod);
-
-            if (r.IsSuccessStatusCode)
-            {
-                mostrarModalWod = false;
-                await App.Current.MainPage.DisplayAlert("¡Éxito!", "WOD Guardado correctamente.", "OK");
-
-                // Limpiar formulario
-                nuevoWod = new ProgramacionWodViewModel { FechaProgramacion = DateTime.Today };
-                AgregarBloque();
-            }
-            else
-            {
-                // Si falla, mostramos el error que manda el servidor
-                var errorMsg = await r.Content.ReadAsStringAsync();
-                await App.Current.MainPage.DisplayAlert("Error del Servidor", errorMsg, "OK");
-            }
-        }
-        catch (Exception ex)
-        {
-            await App.Current.MainPage.DisplayAlert("Error de App", ex.Message, "OK");
-        }
-        finally
-        {
-            cargandoOperacionWod = false;
-            StateHasChanged();
-        }
-    }
     private async Task CargarSegmentos() { try { var r = await Http.GetAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/segmentos"); if(r.IsSuccessStatusCode) listaSegmentos = await r.Content.ReadFromJsonAsync<List<SegmentoDto>>(); } catch {} }
     private async Task CargarNotificaciones() { try { misNotificaciones = await Http.GetFromJsonAsync<List<NotificacionDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/notificaciones/{Sesion.Usuario.UsuarioID}"); hayNuevas = misNotificaciones.Any(n => !n.Leido); } catch {} }
     private string GetIcono(string t) => t == "MATCH_MUTUO" ? "fas fa-heart text-danger" : "fas fa-bell";
