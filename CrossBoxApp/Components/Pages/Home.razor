@@ -2,6 +2,7 @@
 @using System.Net.Http.Json
 @using CrossBoxApp.Models
 @using CrossBoxApp.Models.Social
+@using Microsoft.Maui.Devices
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject CrossBoxApp.Models.Services.SesionService Sesion
@@ -14,7 +15,10 @@
         <div class="right-actions">
             <div class="noti-wrapper" @onclick="ToggleNotificaciones">
                 <i class="fas fa-bell noti-icon @(hayNuevas ? "bell-ring" : "")"></i>
-                @if (hayNuevas) { <span class="noti-dot"></span> }
+                @if (hayNuevas)
+                {
+                    <span class="noti-dot"></span>
+                }
                 @if (mostrarNotis)
                 {
                     <div class="noti-dropdown">
@@ -124,7 +128,7 @@
     </div>
 
     <div class="scrollable-content">
-        
+
         @if (diasRestantes <= 3)
         {
             <div class="payment-alert @(diasRestantes <= 0 ? "expired" : "warning")" @onclick="IrAPagar">
@@ -292,11 +296,12 @@
                 Eliminar mi cuenta
             </button>
         </div>
-        
+
         <div style="height: 40px;"></div>
     </div>
 </div>
 
+@* --- MODAL CAMBIAR PASSWORD --- *@
 @if (mostrarModalPassword)
 {
     <div class="modal-overlay">
@@ -334,13 +339,22 @@
             <div class="modal-footer">
                 <button class="btn-cancel" @onclick="() => mostrarModalPassword = false">Cancelar</button>
                 <button class="btn-confirm" @onclick="GuardarNuevaPassword" disabled="@procesandoPass">
-                    @if (procesandoPass) { <span><i class="fas fa-spinner fa-spin"></i> Guardando...</span> } else { <span>GUARDAR</span> }
+                    @if (procesandoPass)
+                    {
+                        <span><i class="fas fa-spinner fa-spin"></i> Guardando...</span>
+                    }
+                    else
+                    {
+
+                        <span>GUARDAR</span>
+                    }
                 </button>
             </div>
         </div>
     </div>
 }
 
+@* --- MODAL PLANES (ADMIN) --- *@
 @if (mostrarModalPlanesAdmin)
 {
     <div class="modal-overlay">
@@ -383,6 +397,8 @@
         </div>
     </div>
 }
+
+@* --- MODAL MODULOS --- *@
 @if (mostrarModalModulos)
 {
     <div class="modal-overlay">
@@ -417,7 +433,7 @@
     </div>
 }
 
-@* --- MODAL DE PROGRAMACIÓN WOD (REDISEÑADO & CORREGIDO) --- *@
+@* --- MODAL WOD PRINCIPAL --- *@
 @if (mostrarModalWod)
 {
     <div class="modal-overlay">
@@ -428,8 +444,7 @@
                 <button class="btn-close-custom" @onclick="() => mostrarModalWod = false"><i class="fas fa-times"></i></button>
             </div>
 
-            @* IMPORTANTE: Padding-bottom grande para que el popover del último ejercicio no se corte *@
-            <div class="modal-body" style="padding-bottom: 300px;">
+            <div class="modal-body" style="padding-bottom: 50px;">
                 <div class="mb-4">
                     <label style="color:#aaa; font-size:0.8rem;">Fecha del WOD:</label>
                     <input type="date" value="@nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd")" @onchange="AlCambiarFechaWod" class="form-control input-dark" />
@@ -460,12 +475,12 @@
                         @foreach (var bloque in listaBloquesEditor)
                         {
                             <div class="card p-2 mb-3" style="background-color: #252525; border: 1px solid #444;">
-                                
+
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <span style="color:#F8C545; font-weight:bold; font-family:'Oswald'">BLOQUE</span>
                                     <button class="btn-icon delete-btn" @onclick="() => EliminarBloque(bloque)"><i class="fas fa-trash"></i></button>
                                 </div>
-                                
+
                                 <select @bind="bloque.SegmentoClaseID" class="form-control input-dark mb-2">
                                     <option value="@Guid.Empty" selected disabled>-- Selecciona Segmento --</option>
                                     @foreach (var seg in listaSegmentos)
@@ -473,11 +488,11 @@
                                         <option value="@seg.Id">@seg.Nombre</option>
                                     }
                                 </select>
-                                
+
                                 @foreach (var ejercicio in bloque.Ejercicios)
                                 {
                                     <div class="ejercicio-row fade-in">
-                                        
+
                                         @* 1. REPS *@
                                         <div class="input-group-reps">
                                             <input type="text" @bind="ejercicio.Reps" class="form-control input-dark text-center" placeholder="Reps" />
@@ -488,35 +503,16 @@
                                             <input type="text" @bind="ejercicio.NombreBase" class="form-control input-dark" placeholder="Ejercicio" />
                                         </div>
 
-                                        @* 3. BOTÓN PESOS (Action Wrapper) *@
-                                        <div class="action-wrapper">
-                                            <button class="btn-icon weight-btn @(ejercicio.TienePesos ? "active" : "")" 
-                                                    @onclick="() => TogglePesoPopup(ejercicio)">
+                                        @* 3. BOTÓN PESOS (SOLUCIONADO: ABRE MODAL APARTE) *@
+                                        <div>
+                                            <button class="btn-icon weight-btn @(ejercicio.TienePesos ? "active" : "")"
+                                                    @onclick="() => AbrirEditorPeso(ejercicio)">
                                                 <i class="fas fa-dumbbell"></i>
-                                                @if(ejercicio.TienePesos) { <span class="dot-indicator"></span> }
+                                                @if (ejercicio.TienePesos)
+                                                {
+                                                    <span class="dot-indicator"></span>
+                                                }
                                             </button>
-
-                                            @if (ejercicio.MostrarPopupPeso)
-                                            {
-                                                <div class="weight-popover slide-up-fast">
-                                                    <div class="popover-header">PESOS (Rx)</div>
-                                                    <div class="popover-body">
-                                                        <div class="weight-input">
-                                                            <label>H</label>
-                                                            <input type="text" @bind="ejercicio.PesoH" placeholder="lbs/kg" />
-                                                        </div>
-                                                        <div class="weight-input">
-                                                            <label>M</label>
-                                                            <input type="text" @bind="ejercicio.PesoM" placeholder="lbs/kg" />
-                                                        </div>
-                                                    </div>
-                                                    <button class="btn-popover-close" @onclick="() => TogglePesoPopup(ejercicio)">
-                                                        <i class="fas fa-check"></i> LISTO
-                                                    </button>
-                                                </div>
-                                                @* Backdrop transparente para cerrar al hacer clic fuera *@
-                                                <div class="popover-backdrop" @onclick="() => TogglePesoPopup(ejercicio)"></div>
-                                            }
                                         </div>
 
                                         @* 4. ELIMINAR *@
@@ -532,7 +528,7 @@
                                 </button>
                             </div>
                         }
-                        
+
                         <button class="btn btn-outline-warning w-100 py-2" @onclick="AgregarBloque">+ Bloque</button>
                     </div>
                 }
@@ -548,6 +544,39 @@
     </div>
 }
 
+@* --- NUEVO: MODAL EXCLUSIVO PARA EDITAR PESOS (NO TAPA NADA) --- *@
+@if (mostrarModalPeso && ejercicioEnEdicion != null)
+{
+    <div class="modal-overlay" style="z-index: 4000;">
+        <div class="modal-content custom-modal" style="max-height: auto; height: auto;">
+            <div class="modal-header">
+                <h5 style="margin:0; color:#F8C545; font-weight:bold;">PESOS (Rx)</h5>
+                <button class="btn-close-custom" @onclick="CerrarEditorPeso"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="color:#ccc; font-size:0.9rem; text-align:center;">
+                    Configura los pesos sugeridos para <strong>@(string.IsNullOrEmpty(ejercicioEnEdicion.NombreBase) ? "este ejercicio" : ejercicioEnEdicion.NombreBase)</strong>.
+                </p>
+
+                <div class="row mt-3">
+                    <div class="col-6">
+                        <label style="color:#F8C545; font-weight:bold; display:block; text-align:center;">HOMBRE</label>
+                        <input type="text" @bind="ejercicioEnEdicion.PesoH" class="form-control input-dark text-center" style="font-size:1.2rem;" placeholder="lbs/kg" />
+                    </div>
+                    <div class="col-6">
+                        <label style="color:#F8C545; font-weight:bold; display:block; text-align:center;">MUJER</label>
+                        <input type="text" @bind="ejercicioEnEdicion.PesoM" class="form-control input-dark text-center" style="font-size:1.2rem;" placeholder="lbs/kg" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-confirm" @onclick="CerrarEditorPeso">GUARDAR PESOS</button>
+            </div>
+        </div>
+    </div>
+}
+
+@* --- RESTO DE MODALES (Avisos, Horarios) --- *@
 @if (mostrarModalCrearAviso)
 {
     <div class="modal-overlay">
@@ -638,9 +667,8 @@
 }
 
 <style>
-    /* --- TUS ESTILOS ORIGINALES SE MANTIENEN --- */
-    
-    /* --- FILA DE EJERCICIO --- */
+    /* --- ESTILOS DE LIMPIEZA Y ESENCIALES --- */
+
     .ejercicio-row {
         display: flex;
         align-items: center;
@@ -650,12 +678,16 @@
         border-radius: 8px;
         margin-bottom: 8px;
         border: 1px solid #333;
-        position: relative; /* Necesario para el popover */
     }
 
     /* Inputs */
-    .input-group-reps { flex: 0 0 70px; } 
-    .input-group-name { flex: 1; }
+    .input-group-reps {
+        flex: 0 0 70px;
+    }
+
+    .input-group-name {
+        flex: 1;
+    }
 
     .input-dark {
         background: #121212 !important;
@@ -664,168 +696,811 @@
         font-size: 0.9rem;
         height: 38px;
     }
-    .input-dark:focus {
-        border-color: #F8C545;
-        box-shadow: 0 0 5px rgba(248, 197, 69, 0.3);
-    }
+
+        .input-dark:focus {
+            border-color: #F8C545;
+            box-shadow: 0 0 5px rgba(248, 197, 69, 0.3);
+        }
 
     .btn-icon {
-        width: 38px; height: 38px; border: none; border-radius: 6px;
-        display: flex; justify-content: center; align-items: center;
-        cursor: pointer; transition: all 0.2s; position: relative;
+        width: 38px;
+        height: 38px;
+        border: none;
+        border-radius: 6px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
     }
 
-    .weight-btn { background: #333; color: #888; }
-    .weight-btn:hover { background: #444; color: #F8C545; }
-    .weight-btn.active { color: #F8C545; border: 1px solid #F8C545; background: rgba(248, 197, 69, 0.1); }
+    .weight-btn {
+        background: #333;
+        color: #888;
+    }
 
-    .dot-indicator { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: #F8C545; border-radius: 50%; }
-    .delete-btn { background: transparent; color: #666; }
-    .delete-btn:hover { background: rgba(220, 53, 69, 0.2); color: #dc3545; }
+        .weight-btn:hover {
+            background: #444;
+            color: #F8C545;
+        }
 
-    /* --- POPOVER DE PESOS (CORREGIDO) --- */
-    .action-wrapper { position: relative; }
+        .weight-btn.active {
+            color: #F8C545;
+            border: 1px solid #F8C545;
+            background: rgba(248, 197, 69, 0.1);
+        }
 
-    .weight-popover {
+    .dot-indicator {
         position: absolute;
-        top: 45px; /* Abre hacia abajo */
+        top: 4px;
+        right: 4px;
+        width: 6px;
+        height: 6px;
+        background: #F8C545;
+        border-radius: 50%;
+    }
+
+    .delete-btn {
+        background: transparent;
+        color: #666;
+    }
+
+        .delete-btn:hover {
+            background: rgba(220, 53, 69, 0.2);
+            color: #dc3545;
+        }
+
+    .btn-add-ejercicio {
+        width: 100%;
+        background: transparent;
+        border: 1px dashed #555;
+        color: #888;
+        padding: 8px;
+        border-radius: 8px;
+        margin-top: 5px;
+        transition: 0.2s;
+    }
+
+        .btn-add-ejercicio:hover {
+            border-color: #F8C545;
+            color: #F8C545;
+            background: rgba(248, 197, 69, 0.05);
+        }
+
+    /* RESTO DE ESTILOS GLOBALES (Sin cambios mayores, solo lo esencial) */
+    .planes-selection-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        width: 100%;
+    }
+    @@media (min-width: 400px) {
+        .planes-selection-grid
+
+    {
+        flex-direction: row;
+    }
+
+    }
+
+    .plan-option-card {
+        background: #2a2a2a;
+        border: 1px solid #444;
+        border-radius: 12px;
+        padding: 20px;
+        flex: 1;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+        .plan-option-card:hover {
+            background: #333;
+            border-color: #F8C545;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(248, 197, 69, 0.2);
+        }
+
+        .plan-option-card.recommended {
+            border: 2px solid #F8C545;
+            background: rgba(248, 197, 69, 0.05);
+        }
+
+    .badge-save {
+        position: absolute;
+        top: -10px;
+        background: #F8C545;
+        color: black;
+        font-size: 0.65rem;
+        font-weight: bold;
+        padding: 4px 10px;
+        border-radius: 10px;
+        text-transform: uppercase;
+        font-family: 'Oswald';
+        box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    }
+
+    .plan-title {
+        font-family: 'Oswald';
+        font-size: 1.1rem;
+        color: #ddd;
+        margin-bottom: 5px;
+        letter-spacing: 1px;
+    }
+
+    .plan-price {
+        font-family: 'Oswald';
+        font-size: 1.8rem;
+        color: white;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .plan-note {
+        font-size: 0.75rem;
+        color: #888;
+        font-family: 'Roboto';
+    }
+
+    .main-layout {
+        position: fixed;
+        top: 0;
+        left: 0;
         right: 0;
-        width: 180px;
+        bottom: 0;
+        background-color: #0d0d0d;
+        display: flex;
+        flex-direction: column;
+        z-index: 1;
+    }
+
+    .navbar-container {
+        flex-shrink: 0;
+        padding-top: calc(env(safe-area-inset-top) + 5px);
+        padding-bottom: 10px;
+        padding-left: 20px;
+        padding-right: 20px;
+        background-color: #0d0d0d;
+        border-bottom: 1px solid #F8C545;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 100;
+        font-family: 'Oswald';
+        height: auto;
+        min-height: 60px;
+    }
+
+    .scrollable-content {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 40px;
+    }
+
+    .brand {
+        font-size: 1.3rem;
+        font-weight: bold;
+    }
+
+    .right-actions {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .welcome-section h1 {
+        font-family: 'Oswald';
+        color: #F8C545;
+        font-size: 1.8rem;
+        margin-bottom: 20px;
+        text-align: center;
+        margin-top: 10px;
+    }
+
+    .cards-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
+        width: 100%;
+        max-width: 1000px;
+    }
+
+    .menu-card {
+        background-color: #F8C545;
+        color: black;
+        width: 46%;
+        max-width: 160px;
+        height: 150px;
+        border-radius: 15px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(248, 215, 131, 0.2);
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+        .menu-card:active {
+            transform: scale(0.95);
+        }
+
+        .menu-card h3 {
+            font-family: 'Oswald';
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .menu-card p {
+            font-size: 0.65rem;
+            font-family: 'Roboto';
+            line-height: 1.1;
+            margin-top: 4px;
+        }
+
+    .card-icon {
+        font-size: 2rem;
+        margin-bottom: 8px;
+    }
+
+    .yellow-highlight {
+        background: #F8C545 !important;
+        color: black !important;
+        border: 2px solid white;
+        animation: pulseBorder 2s infinite;
+        position: relative;
+    }
+
+        .yellow-highlight h3, .yellow-highlight p, .yellow-highlight i {
+            color: black !important;
+        }
+
+    .live-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: red;
+        color: white;
+        font-size: 0.55rem;
+        padding: 2px 5px;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+
+    .footer-brand {
+        margin-top: auto;
+        padding: 20px;
+        color: #F8C545;
+        font-family: 'Oswald';
+    }
+
+    .payment-alert {
+        margin-bottom: 15px;
+        padding: 12px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        max-width: 600px;
+    }
+
+        .payment-alert.warning {
+            background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%);
+            color: black;
+        }
+
+        .payment-alert.expired {
+            background: linear-gradient(90deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+
+    .alert-icon {
+        font-size: 1.2rem;
+    }
+
+    .alert-text {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        font-size: 0.8rem;
+    }
+
+    .main-menu-wrapper {
+        position: relative;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .user-name {
+        font-size: 0.9rem;
+        font-weight: bold;
+        display: none;
+    }
+    @@media(min - width: 768px)
+
+    {
+        .user-name
+
+    {
+        display: block;
+    }
+
+    }
+
+    .menu-burger {
+        font-size: 1.5rem;
+        color: #F8C545;
+    }
+
+    .main-dropdown {
+        position: absolute;
+        top: 45px;
+        right: 0;
+        width: 260px;
         background: #1a1a1a;
         border: 1px solid #F8C545;
         border-radius: 8px;
-        padding: 0 0 10px 0; /* Sin padding arriba para que el header toque borde */
-        box-shadow: 0 5px 20px rgba(0,0,0,0.9);
-        z-index: 2000; /* Siempre encima */
-    }
-    .weight-popover::after {
-        content: ""; position: absolute; top: -6px; right: 15px; width: 10px; height: 10px;
-        background: #1a1a1a; border-top: 1px solid #F8C545; border-left: 1px solid #F8C545;
-        transform: rotate(45deg);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+        overflow: hidden;
+        z-index: 2000;
+        padding-bottom: 5px;
+        animation: slideDown 0.2s ease-out;
     }
 
-    .popover-header {
-        font-family: 'Oswald'; font-size: 0.8rem;
-        background-color: #F8C545; color: #000; /* Fondo amarillo, letra negra */
-        font-weight: bold; text-align: center;
-        border-top-left-radius: 7px; border-top-right-radius: 7px;
-        padding: 5px 0; margin-bottom: 10px; letter-spacing: 1px;
+    .dropdown-header {
+        font-size: 0.7rem;
+        color: #888;
+        padding: 10px 15px 5px 15px;
+        font-weight: bold;
+        letter-spacing: 1px;
     }
 
-    .popover-body { display: flex; gap: 8px; margin-bottom: 8px; padding: 0 10px; }
-
-    .weight-input { display: flex; flex-direction: column; align-items: center; }
-    .weight-input label { font-size: 0.7rem; color: #aaa; font-weight: bold; }
-    .weight-input input {
-        width: 100%; background: #000; border: 1px solid #444;
-        color: white; text-align: center; border-radius: 4px; font-size: 0.9rem; padding: 4px;
-    }
-    .weight-input input:focus { border-color: #F8C545; outline: none; }
-
-    .btn-popover-close {
-        width: 90%; margin: 0 auto; display: block;
-        background: #F8C545; border: none; color: black;
-        font-weight: bold; font-family: 'Oswald'; font-size: 0.8rem;
-        padding: 4px; border-radius: 4px; cursor: pointer;
+    .admin-header {
+        color: #F8C545;
+        text-transform: uppercase;
+        border-top: 1px solid #333;
+        margin-top: 5px;
     }
 
-    /* Backdrop invisible para cerrar al hacer click fuera */
-    .popover-backdrop {
-        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1500;
+    .dropdown-item {
+        padding: 12px 20px;
+        color: #ffffff !important;
+        cursor: pointer;
+        font-family: 'Roboto', sans-serif;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: background 0.2s;
+    }
+
+        .dropdown-item:hover {
+            background-color: #333;
+            color: #F8C545 !important;
+        }
+
+    .dropdown-divider {
+        height: 1px;
+        background: #333;
+        margin: 5px 0;
+    }
+
+    .noti-wrapper {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .noti-icon {
+        font-size: 1.3rem;
+        color: white;
+    }
+
+    .noti-dot {
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 8px;
+        height: 8px;
+        background: red;
+        border-radius: 50%;
+        border: 2px solid #0d0d0d;
+    }
+
+    .bell-ring {
+        animation: ring 4s .7s ease-in-out infinite;
+        color: #F8C545;
+    }
+
+    .noti-dropdown {
+        position: absolute;
+        top: 35px;
+        right: -50px;
+        width: 280px;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        overflow: hidden;
+        z-index: 1000;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+
+    .noti-item {
+        padding: 12px;
+        border-bottom: 1px solid #333;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #ccc;
+    }
+
+        .noti-item.unread {
+            background: #2a2a2a;
+            color: white;
+            border-left: 3px solid #F8C545;
+        }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.85);
+        z-index: 3000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        backdrop-filter: blur(4px);
+        padding: 20px;
+    }
+
+    .custom-modal {
+        background: #1a1a1a;
+        width: 100%;
+        max-width: 400px;
+        border-radius: 12px;
+        border: 1px solid #F8C545;
+        display: flex;
+        flex-direction: column;
+        color: white;
+        max-height: 85vh;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .modal-header {
+        padding: 15px;
+        background: #222;
+        border-bottom: 1px solid #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .modal-body {
+        padding: 20px;
+        overflow-y: auto;
+        flex-grow: 1;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 100px;
+    }
+
+    .modal-footer {
+        padding: 15px;
+        background: #222;
+        border-top: 1px solid #333;
+        display: flex;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .btn-close-custom {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.2rem;
+    }
+
+    .btn-confirm {
+        background: #F8C545;
+        color: black;
+        border: none;
+        padding: 10px;
+        font-weight: bold;
+        flex: 1;
+        border-radius: 5px;
+    }
+
+    .btn-cancel {
+        background: #333;
+        color: white;
+        border: none;
+        padding: 10px;
+        font-weight: bold;
+        flex: 1;
+        border-radius: 5px;
+    }
+
+    .delete-account-container {
+        width: 100%;
+        max-width: 1000px;
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+        margin-bottom: 10px;
+        padding: 0 20px;
+    }
+
+    .btn-delete-account {
         background: transparent;
+        border: 1px solid #ff4444;
+        color: #ff4444;
+        font-family: 'Oswald', sans-serif;
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        padding: 8px 20px;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        letter-spacing: 1px;
+        opacity: 0.8;
+    }
+    @@keyframes slideDown {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(-10px);
     }
 
-    .btn-add-ejercicio {
-        width: 100%; background: transparent; border: 1px dashed #555;
-        color: #888; padding: 8px; border-radius: 8px; margin-top: 5px;
-        transition: 0.2s;
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
-    .btn-add-ejercicio:hover { border-color: #F8C545; color: #F8C545; background: rgba(248, 197, 69, 0.05); }
 
-    .slide-up-fast { animation: slideUp 0.2s ease-out; }
-    
-    /* RESTO DE ESTILOS GLOBALES */
-    .planes-selection-grid { display: flex; flex-direction: column; gap: 15px; width: 100%; }
-    @@media (min-width: 400px) { .planes-selection-grid { flex-direction: row; } }
-    .plan-option-card { background: #2a2a2a; border: 1px solid #444; border-radius: 12px; padding: 20px; flex: 1; cursor: pointer; transition: all 0.2s ease; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-    .plan-option-card:hover { background: #333; border-color: #F8C545; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(248, 197, 69, 0.2); }
-    .plan-option-card.recommended { border: 2px solid #F8C545; background: rgba(248, 197, 69, 0.05); }
-    .badge-save { position: absolute; top: -10px; background: #F8C545; color: black; font-size: 0.65rem; font-weight: bold; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; font-family: 'Oswald'; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
-    .plan-title { font-family: 'Oswald'; font-size: 1.1rem; color: #ddd; margin-bottom: 5px; letter-spacing: 1px; }
-    .plan-price { font-family: 'Oswald'; font-size: 1.8rem; color: white; font-weight: bold; margin-bottom: 5px; }
-    .plan-note { font-size: 0.75rem; color: #888; font-family: 'Roboto'; }
-    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
-    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; height: auto; min-height: 60px; }
-    .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
-    .brand { font-size: 1.3rem; font-weight: bold; }
-    .right-actions { display: flex; align-items: center; gap: 15px; }
-    .welcome-section h1 { font-family: 'Oswald'; color: #F8C545; font-size: 1.8rem; margin-bottom: 20px; text-align: center; margin-top: 10px; }
-    .cards-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; width: 100%; max-width: 1000px; }
-    .menu-card { background-color: #F8C545; color: black; width: 46%; max-width: 160px; height: 150px; border-radius: 15px; padding: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; box-shadow: 0 4px 10px rgba(248, 215, 131, 0.2); cursor: pointer; transition: transform 0.2s; }
-    .menu-card:active { transform: scale(0.95); }
-    .menu-card h3 { font-family: 'Oswald'; font-size: 0.9rem; font-weight: bold; margin: 0; line-height: 1.2; }
-    .menu-card p { font-size: 0.65rem; font-family: 'Roboto'; line-height: 1.1; margin-top: 4px; }
-    .card-icon { font-size: 2rem; margin-bottom: 8px; }
-    .yellow-highlight { background: #F8C545 !important; color: black !important; border: 2px solid white; animation: pulseBorder 2s infinite; position: relative; }
-    .yellow-highlight h3, .yellow-highlight p, .yellow-highlight i { color: black !important; }
-    .live-badge { position: absolute; top: 8px; right: 8px; background: red; color: white; font-size: 0.55rem; padding: 2px 5px; border-radius: 4px; font-weight: bold; }
-    .footer-brand { margin-top: auto; padding: 20px; color: #F8C545; font-family: 'Oswald'; }
-    .payment-alert { margin-bottom: 15px; padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 10px; width: 100%; max-width: 600px; }
-    .payment-alert.warning { background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%); color: black; }
-    .payment-alert.expired { background: linear-gradient(90deg, #dc3545 0%, #c82333 100%); color: white; }
-    .alert-icon { font-size: 1.2rem; }
-    .alert-text { flex: 1; display: flex; flex-direction: column; font-size: 0.8rem; }
-    .main-menu-wrapper { position: relative; cursor: pointer; display: flex; align-items: center; gap: 10px; }
-    .user-name { font-size: 0.9rem; font-weight: bold; display: none; }
-    @@media(min-width: 768px) { .user-name { display: block; } }
-    .menu-burger { font-size: 1.5rem; color: #F8C545; }
-    .main-dropdown { position: absolute; top: 45px; right: 0; width: 260px; background: #1a1a1a; border: 1px solid #F8C545; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); overflow: hidden; z-index: 2000; padding-bottom: 5px; animation: slideDown 0.2s ease-out; }
-    .dropdown-header { font-size: 0.7rem; color: #888; padding: 10px 15px 5px 15px; font-weight: bold; letter-spacing: 1px; }
-    .admin-header { color: #F8C545; text-transform: uppercase; border-top: 1px solid #333; margin-top: 5px; }
-    .dropdown-item { padding: 12px 20px; color: #ffffff !important; cursor: pointer; font-family: 'Roboto', sans-serif; font-size: 0.9rem; display: flex; align-items: center; gap: 12px; transition: background 0.2s; }
-    .dropdown-item:hover { background-color: #333; color: #F8C545 !important; }
-    .dropdown-divider { height: 1px; background: #333; margin: 5px 0; }
-    .noti-wrapper { position: relative; cursor: pointer; }
-    .noti-icon { font-size: 1.3rem; color: white; }
-    .noti-dot { position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; background: red; border-radius: 50%; border: 2px solid #0d0d0d; }
-    .bell-ring { animation: ring 4s .7s ease-in-out infinite; color: #F8C545; }
-    .noti-dropdown { position: absolute; top: 35px; right: -50px; width: 280px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); overflow: hidden; z-index: 1000; max-height: 300px; overflow-y: auto; }
-    .noti-item { padding: 12px; border-bottom: 1px solid #333; font-size: 0.8rem; display: flex; align-items: center; gap: 10px; color: #ccc; }
-    .noti-item.unread { background: #2a2a2a; color: white; border-left: 3px solid #F8C545; }
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); padding: 20px; }
-    .custom-modal { background: #1a1a1a; width: 100%; max-width: 400px; border-radius: 12px; border: 1px solid #F8C545; display: flex; flex-direction: column; color: white; max-height: 85vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    .modal-header { padding: 15px; background: #222; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-    .modal-body { padding: 20px; overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; padding-bottom: 250px;}
-    .modal-footer { padding: 15px; background: #222; border-top: 1px solid #333; display: flex; gap: 10px; flex-shrink: 0; }
-    .btn-close-custom { background: none; border: none; color: white; font-size: 1.2rem; }
-    .btn-confirm { background: #F8C545; color: black; border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
-    .btn-cancel { background: #333; color: white; border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
-    .delete-account-container { width: 100%; max-width: 1000px; display: flex; justify-content: center; margin-top: 30px; margin-bottom: 10px; padding: 0 20px; }
-    .btn-delete-account { background: transparent; border: 1px solid #ff4444; color: #ff4444; font-family: 'Oswald', sans-serif; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; padding: 8px 20px; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; letter-spacing: 1px; opacity: 0.8; }
-    @@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-    @@keyframes ring { 0% { transform: rotate(0); } 5% { transform: rotate(30deg); } 10% { transform: rotate(-28deg); } 15% { transform: rotate(34deg); } 20% { transform: rotate(-32deg); } 25% { transform: rotate(30deg); } 30% { transform: rotate(-28deg); } 35% { transform: rotate(26deg); } 40% { transform: rotate(-24deg); } 45% { transform: rotate(22deg); } 50% { transform: rotate(-20deg); } 100% { transform: rotate(0); } }
-    @@keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
-    @@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-    @@keyframes pulseBorder {0% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(248, 197, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0); }}
-    .alert-conflict { background: #111; border: 2px solid #dc3545; border-radius: 10px; padding: 30px 20px; text-align: center; animation: fadeIn 0.3s ease-in; }
-    .conflict-icon { font-size: 3rem; color: #dc3545; margin-bottom: 15px; animation: pulse 2s infinite; }
-    .alert-conflict h4 { color: white; font-family: 'Oswald'; letter-spacing: 1px; margin-bottom: 10px; }
-    .alert-conflict p { color: #ccc; margin-bottom: 5px; }
-    .fade-in { animation: fadeIn 0.3s ease-in; }
-    .modal-dialog-centered { display: flex; align-items: center; min-height: calc(100% - 1rem); }
-    .horario-row { display: flex; justify-content: space-between; align-items: center; background-color: #222; padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #333; }
-    .horario-text { color: white; font-weight: bold; font-family: 'Oswald'; }
-    .btn-delete-mini { background: none; border: none; color: #dc3545; cursor: pointer; padding: 5px; }
-    .aviso-content { width: 90%; max-width: 400px; background: #1a1a1a; border-radius: 12px; text-align: center; border: 2px solid #F8C545; padding-bottom: 20px; box-shadow: 0 0 20px rgba(248, 197, 69, 0.3); animation: bounceIn 0.6s; overflow: hidden; }
-    .aviso-icon { font-size: 3rem; color: #F8C545; margin-top: 20px; animation: pulse 2s infinite; }
-    .aviso-title { font-family: 'Oswald'; color: white; font-size: 1.5rem; margin: 10px 20px; text-transform: uppercase; }
-    .aviso-date { color: #888; font-size: 0.8rem; margin-bottom: 15px; }
-    .aviso-body { padding: 0 25px 20px 25px; color: #ddd; }
-    .btn-ok { width: 80%; margin: 0 auto 25px auto; background: linear-gradient(45deg, #F8C545, #ffb300); border: none; padding: 12px; font-weight: bold; border-radius: 30px; color: black; }
+    }
+    @@keyframes ring {
+        0%
+
+    {
+        transform: rotate(0);
+    }
+
+    5% {
+        transform: rotate(30deg);
+    }
+
+    10% {
+        transform: rotate(-28deg);
+    }
+
+    15% {
+        transform: rotate(34deg);
+    }
+
+    20% {
+        transform: rotate(-32deg);
+    }
+
+    25% {
+        transform: rotate(30deg);
+    }
+
+    30% {
+        transform: rotate(-28deg);
+    }
+
+    35% {
+        transform: rotate(26deg);
+    }
+
+    40% {
+        transform: rotate(-24deg);
+    }
+
+    45% {
+        transform: rotate(22deg);
+    }
+
+    50% {
+        transform: rotate(-20deg);
+    }
+
+    100% {
+        transform: rotate(0);
+    }
+
+    }
+    @@keyframes bounceIn {
+        0%
+
+    {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    }
+    @@keyframes pulse {
+        0%
+
+    {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+
+    }
+    @@keyframes pulseBorder {
+        0%
+
+    {
+        box-shadow: 0 0 0 0 rgba(248, 197, 69, 0.7);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(248, 197, 69, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(248, 197, 69, 0);
+    }
+
+    }
+
+    .alert-conflict {
+        background: #111;
+        border: 2px solid #dc3545;
+        border-radius: 10px;
+        padding: 30px 20px;
+        text-align: center;
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    .conflict-icon {
+        font-size: 3rem;
+        color: #dc3545;
+        margin-bottom: 15px;
+        animation: pulse 2s infinite;
+    }
+
+    .alert-conflict h4 {
+        color: white;
+        font-family: 'Oswald';
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+    }
+
+    .alert-conflict p {
+        color: #ccc;
+        margin-bottom: 5px;
+    }
+
+    .fade-in {
+        animation: fadeIn 0.3s ease-in;
+    }
+
+    .modal-dialog-centered {
+        display: flex;
+        align-items: center;
+        min-height: calc(100% - 1rem);
+    }
+
+    .horario-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #222;
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        border: 1px solid #333;
+    }
+
+    .horario-text {
+        color: white;
+        font-weight: bold;
+        font-family: 'Oswald';
+    }
+
+    .btn-delete-mini {
+        background: none;
+        border: none;
+        color: #dc3545;
+        cursor: pointer;
+        padding: 5px;
+    }
+
+    .aviso-content {
+        width: 90%;
+        max-width: 400px;
+        background: #1a1a1a;
+        border-radius: 12px;
+        text-align: center;
+        border: 2px solid #F8C545;
+        padding-bottom: 20px;
+        box-shadow: 0 0 20px rgba(248, 197, 69, 0.3);
+        animation: bounceIn 0.6s;
+        overflow: hidden;
+    }
+
+    .aviso-icon {
+        font-size: 3rem;
+        color: #F8C545;
+        margin-top: 20px;
+        animation: pulse 2s infinite;
+    }
+
+    .aviso-title {
+        font-family: 'Oswald';
+        color: white;
+        font-size: 1.5rem;
+        margin: 10px 20px;
+        text-transform: uppercase;
+    }
+
+    .aviso-date {
+        color: #888;
+        font-size: 0.8rem;
+        margin-bottom: 15px;
+    }
+
+    .aviso-body {
+        padding: 0 25px 20px 25px;
+        color: #ddd;
+    }
+
+    .btn-ok {
+        width: 80%;
+        margin: 0 auto 25px auto;
+        background: linear-gradient(45deg, #F8C545, #ffb300);
+        border: none;
+        padding: 12px;
+        font-weight: bold;
+        border-radius: 30px;
+        color: black;
+    }
 </style>
 
 @code {
-    
+
     // --- CLASES AUXILIARES ---
     public class EjercicioEditorViewModel
     {
@@ -835,7 +1510,7 @@
         public string PesoH { get; set; }
         public string PesoM { get; set; }
 
-        public bool MostrarPopupPeso { get; set; } = false;
+        // La bandera "MostrarPopupPeso" ya no se usa, usamos un editor global
 
         // Visual
         public bool TienePesos => !string.IsNullOrEmpty(PesoH) || !string.IsNullOrEmpty(PesoM);
@@ -861,30 +1536,34 @@
     private bool tieneRunning = false;
     private int diasRestantes = 99;
     private readonly Guid IdCanaHueca = Guid.Parse("39BE552A-4A34-4EF5-9351-193F1D0B1340");
-    
+
     private bool wodExiste = false;
     private bool cargandoOperacionWod = false;
     private bool mostrarModalWod = false;
-    
+
+    // --- VARIABLES NUEVAS PARA EL EDITOR DE PESOS ---
+    private bool mostrarModalPeso = false;
+    private EjercicioEditorViewModel ejercicioEnEdicion;
+
     // Usamos esto para la fecha
-    private ProgramacionWodViewModel nuevoWod = new ProgramacionWodViewModel(); 
+    private ProgramacionWodViewModel nuevoWod = new ProgramacionWodViewModel();
     // Usamos esto para la UI del editor
     private List<BloqueEditorViewModel> listaBloquesEditor = new List<BloqueEditorViewModel>();
 
     private List<SegmentoDto> listaSegmentos = new List<SegmentoDto>();
 
-    private bool boxTieneMP = false; 
+    private bool boxTieneMP = false;
     public class PlanDto { public int PlanID { get; set; } public string Nombre { get; set; } public decimal Precio { get; set; } }
     private List<PlanDto> listaPlanes = new List<PlanDto>();
     private bool mostrarModalPlanesAdmin = false;
-    
+
     private bool mostrarModalCrearAviso = false;
     private bool mostrarAvisoPopUp = false;
     private Avisos nuevoAviso = new Avisos();
     private Avisos ultimoAviso;
     private static bool avisoVistoEnSesion = false;
 
-    private bool mostrarModalModulos = false; 
+    private bool mostrarModalModulos = false;
     public class BoxConfigDTO { public bool EstaVinculadoMP { get; set; } }
     private List<ModuloConfig> listaConfiguracion = new List<ModuloConfig>();
 
@@ -900,13 +1579,13 @@
 
     private bool mostrarModalHorarios = false;
     private string nuevoHorarioTexto = "";
-    private List<HorarioDto> listaHorariosAdmin; 
+    private List<HorarioDto> listaHorariosAdmin;
     public class HorarioDto { public Guid HorarioID { get; set; } public string Descripcion { get; set; } public Guid BoxID { get; set; } }
 
     protected override async Task OnInitializedAsync()
     {
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
-        EsAdmin = Sesion.Usuario.TipoUsuarioID == 1; 
+        EsAdmin = Sesion.Usuario.TipoUsuarioID == 1;
         await CargarNombreBox();
         await CargarNotificaciones();
         await CargarSegmentos();
@@ -916,95 +1595,97 @@
         try { tieneRunning = await Http.GetFromJsonAsync<bool>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/runningapi/tiene-plan/{Sesion.Usuario.UsuarioID}"); } catch { tieneRunning = false; }
         if (Sesion.Usuario != null)
         {
-            try { 
+            try
+            {
                 var estado = await Http.GetFromJsonAsync<int>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/pagosapi/dias-restantes/{Sesion.Usuario.UsuarioID}");
                 diasRestantes = estado;
-            } catch { }
-            try {
+            }
+            catch { }
+            try
+            {
                 var configBox = await Http.GetFromJsonAsync<BoxConfigDTO>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
-                if(configBox != null) boxTieneMP = configBox.EstaVinculadoMP;
-            } catch { boxTieneMP = false; }
+                if (configBox != null) boxTieneMP = configBox.EstaVinculadoMP;
+            }
+            catch { boxTieneMP = false; }
         }
-        try { listaPlanes = await Http.GetFromJsonAsync<List<PlanDto>>("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/pagosapi/planes");} catch { }
+        try { listaPlanes = await Http.GetFromJsonAsync<List<PlanDto>>("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/pagosapi/planes"); } catch { }
     }
 
     // --- LOGICA MODAL WOD ---
-    private async void AbrirModalWod() 
-    { 
-        mostrarMenuPrincipal = false; 
-        nuevoWod = new ProgramacionWodViewModel { FechaProgramacion = DateTime.Today }; 
-        mostrarModalWod = true; 
-        await VerificarWodExistente(DateTime.Today); 
+    private async void AbrirModalWod()
+    {
+        mostrarMenuPrincipal = false;
+        nuevoWod = new ProgramacionWodViewModel { FechaProgramacion = DateTime.Today };
+        mostrarModalWod = true;
+        await VerificarWodExistente(DateTime.Today);
     }
 
-    private async Task AlCambiarFechaWod(ChangeEventArgs e) 
-    { 
-        if (DateTime.TryParse(e.Value.ToString(), out DateTime fecha)) 
-        { 
-            nuevoWod.FechaProgramacion = fecha; 
-            await VerificarWodExistente(fecha); 
-        } 
+    private async Task AlCambiarFechaWod(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value.ToString(), out DateTime fecha))
+        {
+            nuevoWod.FechaProgramacion = fecha;
+            await VerificarWodExistente(fecha);
+        }
     }
 
-    private async Task VerificarWodExistente(DateTime fecha) 
-    { 
-        cargandoOperacionWod = true; wodExiste = false; StateHasChanged(); 
-        try 
-        { 
-            var fechaStr = fecha.ToString("yyyy-MM-dd"); 
-            wodExiste = await Http.GetFromJsonAsync<bool>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/existe/{Sesion.Usuario.BoxID}/{fechaStr}"); 
-            
-            if (!wodExiste) 
+    private async Task VerificarWodExistente(DateTime fecha)
+    {
+        cargandoOperacionWod = true; wodExiste = false; StateHasChanged();
+        try
+        {
+            var fechaStr = fecha.ToString("yyyy-MM-dd");
+            wodExiste = await Http.GetFromJsonAsync<bool>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/existe/{Sesion.Usuario.BoxID}/{fechaStr}");
+
+            if (!wodExiste)
             {
                 // Limpiar editor si no existe wod
                 listaBloquesEditor = new List<BloqueEditorViewModel>();
-                AgregarBloque(); 
-            } 
-        } 
-        catch 
-        { 
-            wodExiste = false; 
+                AgregarBloque();
+            }
+        }
+        catch
+        {
+            wodExiste = false;
             listaBloquesEditor = new List<BloqueEditorViewModel>();
-            AgregarBloque(); 
-        } 
-        finally 
-        { 
-            cargandoOperacionWod = false; 
-            StateHasChanged(); 
-        } 
+            AgregarBloque();
+        }
+        finally
+        {
+            cargandoOperacionWod = false;
+            StateHasChanged();
+        }
     }
 
-    private async Task CargarWodParaEditar() 
-    { 
-        cargandoOperacionWod = true; 
-        try 
-        { 
-            var fechaStr = nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd"); 
-            var wodExistente = await Http.GetFromJsonAsync<ProgramacionWodViewModel>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/obtener/{Sesion.Usuario.BoxID}/{fechaStr}"); 
-            
-            if (wodExistente != null) 
-            { 
-                nuevoWod = wodExistente; 
-                wodExiste = false; 
-                
+    private async Task CargarWodParaEditar()
+    {
+        cargandoOperacionWod = true;
+        try
+        {
+            var fechaStr = nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd");
+            var wodExistente = await Http.GetFromJsonAsync<ProgramacionWodViewModel>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/obtener/{Sesion.Usuario.BoxID}/{fechaStr}");
+
+            if (wodExistente != null)
+            {
+                nuevoWod = wodExistente;
+                wodExiste = false;
+
                 // Convertir al modelo del Editor
                 listaBloquesEditor = new List<BloqueEditorViewModel>();
-                foreach(var b in wodExistente.Bloques)
+                foreach (var b in wodExistente.Bloques)
                 {
-                    var bloqueEdit = new BloqueEditorViewModel 
-                    { 
+                    var bloqueEdit = new BloqueEditorViewModel
+                    {
                         SegmentoClaseID = b.SegmentoClaseID,
                         NombreSegmento = b.NombreSegmento,
                         Ejercicios = new List<EjercicioEditorViewModel>()
                     };
 
-                    foreach(var ej in b.Ejercicios)
+                    foreach (var ej in b.Ejercicios)
                     {
-                        // Aquí habría que parsear el string guardado para separar pesos
-                        // Por simplicidad, ponemos todo en NombreBase o Reps según corresponda
-                        // Si quieres editar pesos guardados, necesitarías un parser inverso.
-                        // Para este ejemplo, cargamos simple:
-                        bloqueEdit.Ejercicios.Add(new EjercicioEditorViewModel 
+                        // Se carga la descripcion. Si quisieramos separar pesos, habría que parsear
+                        // Por simplicidad, ponemos todo en NombreBase.
+                        bloqueEdit.Ejercicios.Add(new EjercicioEditorViewModel
                         {
                             Reps = ej.PesoRepeticiones,
                             NombreBase = ej.Descripcion
@@ -1012,50 +1693,50 @@
                     }
                     listaBloquesEditor.Add(bloqueEdit);
                 }
-            } 
-        } 
-        catch (Exception ex) 
-        { 
-            await App.Current.MainPage.DisplayAlert("Error", "No se pudo cargar el WOD: " + ex.Message, "OK"); 
-        } 
-        finally 
-        { 
-            cargandoOperacionWod = false; 
-        } 
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", "No se pudo cargar el WOD: " + ex.Message, "OK");
+        }
+        finally
+        {
+            cargandoOperacionWod = false;
+        }
     }
 
-    private async Task EliminarWodActual() 
-    { 
-        bool confirmar = await App.Current.MainPage.DisplayAlert("Confirmar", "¿Eliminar WOD completo?", "Sí", "No"); 
-        if (confirmar) 
-        { 
-            cargandoOperacionWod = true; 
-            try 
-            { 
-                var fechaStr = nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd"); 
-                var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/eliminar-dia/{Sesion.Usuario.BoxID}/{fechaStr}", null); 
-                if (response.IsSuccessStatusCode) 
-                { 
-                    await App.Current.MainPage.DisplayAlert("Éxito", "WOD eliminado.", "OK"); 
-                    wodExiste = false; 
+    private async Task EliminarWodActual()
+    {
+        bool confirmar = await App.Current.MainPage.DisplayAlert("Confirmar", "¿Eliminar WOD completo?", "Sí", "No");
+        if (confirmar)
+        {
+            cargandoOperacionWod = true;
+            try
+            {
+                var fechaStr = nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd");
+                var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/eliminar-dia/{Sesion.Usuario.BoxID}/{fechaStr}", null);
+                if (response.IsSuccessStatusCode)
+                {
+                    await App.Current.MainPage.DisplayAlert("Éxito", "WOD eliminado.", "OK");
+                    wodExiste = false;
                     listaBloquesEditor = new List<BloqueEditorViewModel>();
-                    AgregarBloque(); 
-                } 
-                else 
-                { 
-                    string error = await response.Content.ReadAsStringAsync(); 
-                    await App.Current.MainPage.DisplayAlert("Error", error, "OK"); 
-                } 
-            } 
-            catch (Exception ex) 
-            { 
-                await App.Current.MainPage.DisplayAlert("Excepción", ex.Message, "OK"); 
-            } 
-            finally 
-            { 
-                cargandoOperacionWod = false; 
-            } 
-        } 
+                    AgregarBloque();
+                }
+                else
+                {
+                    string error = await response.Content.ReadAsStringAsync();
+                    await App.Current.MainPage.DisplayAlert("Error", error, "OK");
+                }
+            }
+            catch (Exception ex)
+            {
+                await App.Current.MainPage.DisplayAlert("Excepción", ex.Message, "OK");
+            }
+            finally
+            {
+                cargandoOperacionWod = false;
+            }
+        }
     }
 
     // --- LOGICA EDITOR ---
@@ -1063,7 +1744,19 @@
     private void EliminarBloque(BloqueEditorViewModel b) => listaBloquesEditor.Remove(b);
     private void AgregarEjercicio(BloqueEditorViewModel b) => b.Ejercicios.Add(new EjercicioEditorViewModel());
     private void EliminarEjercicio(BloqueEditorViewModel b, EjercicioEditorViewModel e) => b.Ejercicios.Remove(e);
-    private void TogglePesoPopup(EjercicioEditorViewModel ej) => ej.MostrarPopupPeso = !ej.MostrarPopupPeso;
+
+    // --- NUEVA LÓGICA DE EDITOR DE PESOS ---
+    private void AbrirEditorPeso(EjercicioEditorViewModel ej)
+    {
+        ejercicioEnEdicion = ej;
+        mostrarModalPeso = true;
+    }
+    private void CerrarEditorPeso()
+    {
+        mostrarModalPeso = false;
+        ejercicioEnEdicion = null;
+    }
+
 
     private async Task GuardarProgramacion()
     {
@@ -1081,11 +1774,11 @@
 
         // CONVERTIR EDITOR -> MODELO API
         nuevoWod.Bloques = new List<BloqueWodViewModel>();
-        
+
         foreach (var bEdit in listaBloquesEditor)
         {
-            var bloqueApi = new BloqueWodViewModel 
-            { 
+            var bloqueApi = new BloqueWodViewModel
+            {
                 SegmentoClaseID = bEdit.SegmentoClaseID,
                 Ejercicios = new List<EjercicioViewModel>()
             };
@@ -1124,7 +1817,7 @@
             {
                 mostrarModalWod = false;
                 await App.Current.MainPage.DisplayAlert("¡Éxito!", "WOD Guardado correctamente.", "OK");
-                
+
                 // Reset
                 nuevoWod = new ProgramacionWodViewModel { FechaProgramacion = DateTime.Today };
                 listaBloquesEditor = new List<BloqueEditorViewModel>();
@@ -1151,11 +1844,11 @@
     private async Task AbrirModalHorarios() { mostrarMenuPrincipal = false; mostrarModalHorarios = true; await CargarHorariosAdmin(); }
     private async Task CargarHorariosAdmin() { try { listaHorariosAdmin = await Http.GetFromJsonAsync<List<HorarioDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/AgendaApi/lista-horarios/{Sesion.Usuario.BoxID}"); } catch { listaHorariosAdmin = new List<HorarioDto>(); } }
     private async Task AgregarHorario() { if (string.IsNullOrWhiteSpace(nuevoHorarioTexto)) return; try { var nuevo = new HorarioDto { BoxID = Sesion.Usuario.BoxID, Descripcion = nuevoHorarioTexto }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/AgendaApi/crear-horario", nuevo); if (response.IsSuccessStatusCode) { nuevoHorarioTexto = ""; await CargarHorariosAdmin(); } else await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar.", "OK"); } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } }
-    private async Task EliminarHorario(Guid id) { bool confirmar = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Seguro?", "Sí", "No"); if (!confirmar) return; try { var response = await Http.DeleteAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/AgendaApi/eliminar-horario/{id}"); if (response.IsSuccessStatusCode) await CargarHorariosAdmin(); else await App.Current.MainPage.DisplayAlert("Error", "No se pudo eliminar.", "OK"); } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } }
+    private async Task EliminarHorario(Guid id) { bool confirmar = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Seguro?", "Sí", "No"); if (!confirmar) return; try { var response = await Http.DeleteAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/AgendaApi/eliminar-horario/{id}"); if (response.IsSuccessStatusCode) { await CargarHorariosAdmin(); } else await App.Current.MainPage.DisplayAlert("Error", "No se pudo eliminar.", "OK"); } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } }
     private async Task ConfirmarEliminarCuenta() { bool confirmacion = await App.Current.MainPage.DisplayAlert("⚠️ Eliminar Cuenta", "¿Estás seguro de que quieres eliminar tu cuenta permanentemente? Perderás todo tu historial, fotos y pagos. Esta acción NO se puede deshacer.", "Sí, Eliminar", "Cancelar"); if (confirmacion) { try { var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/eliminar-definitivo/{Sesion.Usuario.UsuarioID}", null); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("Cuenta Eliminada", "Lamentamos que te vayas. Tu cuenta ha sido borrada.", "Adiós"); CerrarSesion(); } else { string mensajeError = await response.Content.ReadAsStringAsync(); await App.Current.MainPage.DisplayAlert("Error", $"No se pudo eliminar: {mensajeError}", "OK"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK"); } } }
     private void AbrirModalPassword() { passOld = ""; passNew = ""; passConfirm = ""; msgErrorPass = ""; procesandoPass = false; mostrarMenuPrincipal = false; mostrarModalPassword = true; }
     private void ToggleVerPass(int campo) { if (campo == 1) tipoInputOld = tipoInputOld == "password" ? "text" : "password"; if (campo == 2) tipoInputNew = tipoInputNew == "password" ? "text" : "password"; if (campo == 3) tipoInputConfirm = tipoInputConfirm == "password" ? "text" : "password"; }
-    private async Task GuardarNuevaPassword() { if(string.IsNullOrWhiteSpace(passOld) || string.IsNullOrWhiteSpace(passNew) || string.IsNullOrWhiteSpace(passConfirm)) { msgErrorPass = "Todos los campos son obligatorios"; return; } if(passNew != passConfirm) { msgErrorPass = "La contraseña nueva y la confirmación no coinciden"; return; } procesandoPass = true; msgErrorPass = ""; try { var req = new { UsuarioID = Sesion.Usuario.UsuarioID, OldPassword = passOld, NewPassword = passNew, ConfirmPassword = passConfirm }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/cambiar-password", req); if(response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("¡Éxito!", "Tu contraseña ha sido actualizada.", "OK"); mostrarModalPassword = false; } else { var errorJson = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>(); if(errorJson.TryGetProperty("mensaje", out var msg)) msgErrorPass = msg.GetString(); else msgErrorPass = "Error al actualizar la contraseña"; } } catch(Exception ex) { msgErrorPass = "Error de conexión: " + ex.Message; } finally { procesandoPass = false; } }
+    private async Task GuardarNuevaPassword() { if (string.IsNullOrWhiteSpace(passOld) || string.IsNullOrWhiteSpace(passNew) || string.IsNullOrWhiteSpace(passConfirm)) { msgErrorPass = "Todos los campos son obligatorios"; return; } if (passNew != passConfirm) { msgErrorPass = "La contraseña nueva y la confirmación no coinciden"; return; } procesandoPass = true; msgErrorPass = ""; try { var req = new { UsuarioID = Sesion.Usuario.UsuarioID, OldPassword = passOld, NewPassword = passNew, ConfirmPassword = passConfirm }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/cambiar-password", req); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("¡Éxito!", "Tu contraseña ha sido actualizada.", "OK"); mostrarModalPassword = false; } else { var errorJson = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>(); if (errorJson.TryGetProperty("mensaje", out var msg)) msgErrorPass = msg.GetString(); else msgErrorPass = "Error al actualizar la contraseña"; } } catch (Exception ex) { msgErrorPass = "Error de conexión: " + ex.Message; } finally { procesandoPass = false; } }
     private async Task CargarNombreBox() { try { var response = await Http.GetFromJsonAsync<Boxes>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/nombre-box/{Sesion.Usuario.BoxID}"); if (response != null && !string.IsNullOrEmpty(response.Nombre)) { NombreBox = response.Nombre.ToUpper(); } } catch { } }
     private void AbrirGestionModulos() { mostrarMenuPrincipal = false; mostrarModalModulos = true; }
     private async Task CargarConfiguracionModulos() { try { listaConfiguracion = await Http.GetFromJsonAsync<List<ModuloConfig>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/modulos/{Sesion.Usuario.BoxID}"); } catch { } }
@@ -1172,16 +1865,58 @@
     private void IrACompaneros() => Nav.NavigateTo("/entrenamos-juntos");
     private void IrARanking() => Nav.NavigateTo("/ranking");
     private void NavegarA(string destino) { mostrarMenuPrincipal = false; switch (destino) { case "test": Nav.NavigateTo("/test-config"); break; case "usuarios": Nav.NavigateTo("/usuarios-view"); break; case "avisos": AbrirCrearAviso(); break; } }
-    private async Task IrAPagar() { if (Sesion.Usuario == null) return; if (Sesion.Usuario.TipoUsuarioID == 2 && Sesion.Usuario.BoxID != IdCanaHueca) { if (boxTieneMP) { await ProcesarPago("Mensualidad", 0); } else { await App.Current.MainPage.DisplayAlert("Pago Presencial", "Tu box no ha configurado pagos en línea. Pasa a recepción.", "Entendido"); } return; } if (Sesion.Usuario.BoxID == IdCanaHueca) { var planPublico = listaPlanes.FirstOrDefault(p => p.PlanID == 3); if (planPublico != null) await ProcesarPago(planPublico.Nombre, planPublico.Precio); return; } if (Sesion.Usuario.TipoUsuarioID == 1) { mostrarModalPlanesAdmin = true; } }
-    private async Task ProcesarPago(string titulo, decimal precio) { try { var datosPago = new { Titulo = titulo, Precio = precio, UsuarioID = Sesion.Usuario.UsuarioID }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/mercadopago/crear-preferencia", datosPago); if (response.IsSuccessStatusCode) { var resultado = await response.Content.ReadFromJsonAsync<RespuestaMercadoPago>(); if (resultado != null && !string.IsNullOrEmpty(resultado.url)) { await Browser.Default.OpenAsync(resultado.url, BrowserLaunchMode.SystemPreferred); mostrarModalPlanesAdmin = false; } } else { string errorMsg = await response.Content.ReadAsStringAsync(); if(errorMsg.Contains("error")) { errorMsg = errorMsg.Replace("{", "").Replace("}", "").Replace("\"", "").Replace("error:", ""); } await App.Current.MainPage.DisplayAlert("Error en Pago", errorMsg, "OK"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK"); } }
+
+    // --- LÓGICA DE PAGOS (ACTUALIZADA PARA IOS) ---
+    private async Task IrAPagar()
+    {
+        if (Sesion.Usuario == null) return;
+
+        // 1. Cliente normal (pago a gimnasio) -> PERMITIDO SIEMPRE (Servicio físico)
+        if (Sesion.Usuario.TipoUsuarioID == 2 && Sesion.Usuario.BoxID != IdCanaHueca)
+        {
+            if (boxTieneMP) { await ProcesarPago("Mensualidad", 0); }
+            else { await App.Current.MainPage.DisplayAlert("Pago Presencial", "Tu box no ha configurado pagos en línea. Pasa a recepción.", "Entendido"); }
+            return;
+        }
+
+        // 2. Cliente de Caña Hueca (especial)
+        if (Sesion.Usuario.BoxID == IdCanaHueca)
+        {
+            var planPublico = listaPlanes.FirstOrDefault(p => p.PlanID == 3);
+            if (planPublico != null) await ProcesarPago(planPublico.Nombre, planPublico.Precio);
+            return;
+        }
+
+        // 3. ADMIN (Pago de Software SaaS) -> BLOQUEAR EN iOS
+        if (Sesion.Usuario.TipoUsuarioID == 1)
+        {
+            // Verificamos si es iOS
+            if (DeviceInfo.Platform == DevicePlatform.iOS)
+            {
+                await App.Current.MainPage.DisplayAlert(
+                    "Renovación",
+                    "Para renovar tu suscripción, por favor visita ontrackcrew.com desde tu navegador.",
+                    "Entendido");
+                // Opcional: Podrías abrir el navegador directo:
+                await Browser.OpenAsync("https://ontrackcrew.com.mx", BrowserLaunchMode.SystemPreferred);
+            }
+            else
+            {
+                // Si es Android, mostramos el modal normal
+                mostrarModalPlanesAdmin = true;
+            }
+        }
+    }
+
+    private async Task ProcesarPago(string titulo, decimal precio) { try { var datosPago = new { Titulo = titulo, Precio = precio, UsuarioID = Sesion.Usuario.UsuarioID }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/mercadopago/crear-preferencia", datosPago); if (response.IsSuccessStatusCode) { var resultado = await response.Content.ReadFromJsonAsync<RespuestaMercadoPago>(); if (resultado != null && !string.IsNullOrEmpty(resultado.url)) { await Browser.Default.OpenAsync(resultado.url, BrowserLaunchMode.SystemPreferred); mostrarModalPlanesAdmin = false; } } else { string errorMsg = await response.Content.ReadAsStringAsync(); if (errorMsg.Contains("error")) { errorMsg = errorMsg.Replace("{", "").Replace("}", "").Replace("\"", "").Replace("error:", ""); } await App.Current.MainPage.DisplayAlert("Error en Pago", errorMsg, "OK"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK"); } }
     private void AbrirCrearAviso() { mostrarMenuPrincipal = false; nuevoAviso = new Avisos(); mostrarModalCrearAviso = true; }
-    private async Task PublicarAviso() { if (string.IsNullOrEmpty(nuevoAviso.Titulo)) return; try { nuevoAviso.BoxID = Sesion.Usuario.BoxID; var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/crear", nuevoAviso); if (r.IsSuccessStatusCode) { mostrarModalCrearAviso = false; await App.Current.MainPage.DisplayAlert("Éxito", "Publicado", "OK"); } } catch {} }
-    private async Task CargarUltimoAviso() { try { var r = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/ultimo/{Sesion.Usuario.BoxID}"); if (r.StatusCode == System.Net.HttpStatusCode.NoContent) return; if (r.IsSuccessStatusCode) { ultimoAviso = await r.Content.ReadFromJsonAsync<Avisos>(); if (ultimoAviso != null) { var idVisto = await JS.InvokeAsync<string>("localStorage.getItem", "ultimoAvisoVisto"); if (idVisto != ultimoAviso.AvisoID.ToString()) mostrarAvisoPopUp = true; } } } catch {} }
-    private async Task CerrarAviso() { if(ultimoAviso!=null) await JS.InvokeVoidAsync("localStorage.setItem", "ultimoAvisoVisto", ultimoAviso.AvisoID.ToString()); mostrarAvisoPopUp = false; }
+    private async Task PublicarAviso() { if (string.IsNullOrEmpty(nuevoAviso.Titulo)) return; try { nuevoAviso.BoxID = Sesion.Usuario.BoxID; var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/crear", nuevoAviso); if (r.IsSuccessStatusCode) { mostrarModalCrearAviso = false; await App.Current.MainPage.DisplayAlert("Éxito", "Publicado", "OK"); } } catch { } }
+    private async Task CargarUltimoAviso() { try { var r = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/ultimo/{Sesion.Usuario.BoxID}"); if (r.StatusCode == System.Net.HttpStatusCode.NoContent) return; if (r.IsSuccessStatusCode) { ultimoAviso = await r.Content.ReadFromJsonAsync<Avisos>(); if (ultimoAviso != null) { var idVisto = await JS.InvokeAsync<string>("localStorage.getItem", "ultimoAvisoVisto"); if (idVisto != ultimoAviso.AvisoID.ToString()) mostrarAvisoPopUp = true; } } } catch { } }
+    private async Task CerrarAviso() { if (ultimoAviso != null) await JS.InvokeVoidAsync("localStorage.setItem", "ultimoAvisoVisto", ultimoAviso.AvisoID.ToString()); mostrarAvisoPopUp = false; }
     private async Task AbrirEscanerParaEntrar() { if (abriendoCamara) return; abriendoCamara = true; StateHasChanged(); await Task.Delay(100); try { var scannerPage = new EscanerPage(); Action<string> escanearHandler = null; escanearHandler = async (resultadoQr) => { scannerPage.OnScanResult -= escanearHandler; await Application.Current.Dispatcher.DispatchAsync(async () => { try { await Application.Current.MainPage.Navigation.PopModalAsync(); await Task.Delay(400); await ProcesarCheckIn(resultadoQr); } catch (Exception ex) { Console.WriteLine("Error cerrando cámara: " + ex.Message); } }); }; scannerPage.OnScanResult += escanearHandler; if (Application.Current.MainPage != null) { await Application.Current.MainPage.Navigation.PushModalAsync(scannerPage); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", "No se pudo iniciar la cámara.", "OK"); } finally { abriendoCamara = false; StateHasChanged(); } }
     private async Task ProcesarCheckIn(string boxIdLeido) { if (string.IsNullOrWhiteSpace(boxIdLeido)) { await App.Current.MainPage.DisplayAlert("QR Inválido", "No se detectó información en el código.", "OK"); return; } try { var request = new { UsuarioId = Sesion.Usuario.UsuarioID, QrData = boxIdLeido }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/liveapi/checkin-qr", request); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("¡Bienvenido! 💪", "Has entrado a la clase correctamente.", "A ENTRENAR"); } else { string msg = await response.Content.ReadAsStringAsync(); await App.Current.MainPage.DisplayAlert("Ups", "No se pudo registrar entrada: " + msg, "Intentar de nuevo"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error de Conexión", "Revisa tu internet.", "OK"); } }
-    private async Task CargarSegmentos() { try { var r = await Http.GetAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/segmentos"); if(r.IsSuccessStatusCode) listaSegmentos = await r.Content.ReadFromJsonAsync<List<SegmentoDto>>(); } catch {} }
-    private async Task CargarNotificaciones() { try { misNotificaciones = await Http.GetFromJsonAsync<List<NotificacionDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/notificaciones/{Sesion.Usuario.UsuarioID}"); hayNuevas = misNotificaciones.Any(n => !n.Leido); } catch {} }
+    private async Task CargarSegmentos() { try { var r = await Http.GetAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/segmentos"); if (r.IsSuccessStatusCode) listaSegmentos = await r.Content.ReadFromJsonAsync<List<SegmentoDto>>(); } catch { } }
+    private async Task CargarNotificaciones() { try { misNotificaciones = await Http.GetFromJsonAsync<List<NotificacionDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/notificaciones/{Sesion.Usuario.UsuarioID}"); hayNuevas = misNotificaciones.Any(n => !n.Leido); } catch { } }
     private string GetIcono(string t) => t == "MATCH_MUTUO" ? "fas fa-heart text-danger" : "fas fa-bell";
     public class RespuestaMercadoPago { public string url { get; set; } }
 }
