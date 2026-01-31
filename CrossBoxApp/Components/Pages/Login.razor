@@ -5,6 +5,7 @@
 @inject HttpClient Http
 @inject CrossBoxApp.Models.Services.SesionService Sesion
 @using CrossBoxApp.Models
+@using Microsoft.Maui.Devices
 
 <div class="login-container-fullscreen">
     <div class="background-overlay"></div>
@@ -155,22 +156,35 @@
                 <input type="password" @bind="registroBox.Password" class="form-control input-dark mb-2" placeholder="Contraseña" />
                 <input type="password" @bind="confirmarPass" class="form-control input-dark mb-2" placeholder="Confirmar Contraseña" />
                 
-                <div style="margin-top: 20px;">
-                    <div class="section-title-small"><i class="fas fa-info-circle"></i> PRECIOS FUTUROS:</div>
-                    @if (listaPlanesSistema != null && listaPlanesSistema.Count > 0)
-                    {
-                        <div class="planes-grid">
-                            @foreach (var plan in listaPlanesSistema)
-                            {
-                                <div class="plan-card info-only">
-                                    <div class="plan-name">@plan.Nombre.ToUpper()</div>
-                                    <div class="plan-price">$@plan.Precio.ToString("N2")</div>
-                                    <div class="plan-desc" style="color:#F8C545; font-size: 0.65rem;">*Al finalizar el mes de prueba.</div>
-                                </div>
-                            }
-                        </div>
-                    }
-                </div>
+                @if (DeviceInfo.Platform != DevicePlatform.iOS)
+                {
+                    <div style="margin-top: 20px;">
+                        <div class="section-title-small"><i class="fas fa-info-circle"></i> PRECIOS FUTUROS:</div>
+                        @if (listaPlanesSistema != null && listaPlanesSistema.Count > 0)
+                        {
+                            <div class="planes-grid">
+                                @foreach (var plan in listaPlanesSistema)
+                                {
+                                    <div class="plan-card info-only">
+                                        <div class="plan-name">@plan.Nombre.ToUpper()</div>
+                                        <div class="plan-price">$@plan.Precio.ToString("N2")</div>
+                                        <div class="plan-desc" style="color:#F8C545; font-size: 0.65rem;">*Al finalizar el mes de prueba.</div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    @* MENSAJE SEGURO PARA iOS *@
+                    <div style="margin-top: 20px; text-align: center;">
+                        <p style="color:#ccc; font-size: 0.8rem;">
+                            <i class="fas fa-info-circle"></i> Al registrarte obtienes <strong>1 MES GRATIS</strong>.
+                            <br>La gestión de tu cuenta se realizará vía web.
+                        </p>
+                    </div>
+                }
             </div>
             
             <div class="modal-footer">
