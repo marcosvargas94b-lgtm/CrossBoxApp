@@ -720,6 +720,19 @@
         background: transparent;
     }
 
+    /* --- MENU DROPDOWN MEJORADO (SCROLL SI ES NECESARIO) --- */
+    .main-dropdown {
+        position: absolute; top: 45px; right: 0; width: 260px;
+        background: #1a1a1a; border: 1px solid #F8C545; border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+        overflow-y: auto; /* IMPORTANTE: Permitir scroll */
+        -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+        max-height: calc(100vh - 80px); /* Ocupar casi todo el alto si es necesario */
+        z-index: 2000;
+        padding-bottom: 5px;
+        animation: slideDown 0.2s ease-out;
+    }
+
     /* --- ESTILOS DE LIMPIEZA Y ESENCIALES --- */
     .ejercicio-row { display: flex; align-items: center; gap: 8px; background: #1f1f1f; padding: 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #333; }
     .input-group-reps { flex: 0 0 70px; }
@@ -772,19 +785,6 @@
     @@media(min-width: 768px) { .user-name { display: block; } }
     .menu-burger { font-size: 1.5rem; color: #F8C545; }
     
-    /* MEJORA: MENÚ CON SCROLL Y MAX-HEIGHT */
-    .main-dropdown {
-        position: absolute; top: 45px; right: 0; width: 260px;
-        background: #1a1a1a; border: 1px solid #F8C545; border-radius: 8px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.9);
-        overflow-y: auto; /* Permitir scroll si es muy largo */
-        overflow-x: hidden;
-        max-height: 70vh; /* Máximo 70% de la altura de pantalla */
-        z-index: 2000;
-        padding-bottom: 5px;
-        animation: slideDown 0.2s ease-out;
-    }
-
     .dropdown-header { font-size: 0.7rem; color: #888; padding: 10px 15px 5px 15px; font-weight: bold; letter-spacing: 1px; }
     .admin-header { color: #F8C545; text-transform: uppercase; border-top: 1px solid #333; margin-top: 5px; }
     .dropdown-item { padding: 12px 20px; color: #ffffff !important; cursor: pointer; font-family: 'Roboto', sans-serif; font-size: 0.9rem; display: flex; align-items: center; gap: 12px; transition: background 0.2s; }
@@ -807,11 +807,11 @@
     .btn-cancel { background: #333; color: white; border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
     .delete-account-container { width: 100%; max-width: 1000px; display: flex; justify-content: center; margin-top: 30px; margin-bottom: 10px; padding: 0 20px; }
     .btn-delete-account { background: transparent; border: 1px solid #ff4444; color: #ff4444; font-family: 'Oswald', sans-serif; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; padding: 8px 20px; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; letter-spacing: 1px; opacity: 0.8; }
-   @@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-   @@keyframes ring { 0% { transform: rotate(0); } 5% { transform: rotate(30deg); } 10% { transform: rotate(-28deg); } 15% { transform: rotate(34deg); } 20% { transform: rotate(-32deg); } 25% { transform: rotate(30deg); } 30% { transform: rotate(-28deg); } 35% { transform: rotate(26deg); } 40% { transform: rotate(-24deg); } 45% { transform: rotate(22deg); } 50% { transform: rotate(-20deg); } 100% { transform: rotate(0); } }
-   @@keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
-   @@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-   @@keyframes pulseBorder { 0% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(248, 197, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0); } }
+    @@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    @@keyframes ring { 0% { transform: rotate(0); } 5% { transform: rotate(30deg); } 10% { transform: rotate(-28deg); } 15% { transform: rotate(34deg); } 20% { transform: rotate(-32deg); } 25% { transform: rotate(30deg); } 30% { transform: rotate(-28deg); } 35% { transform: rotate(26deg); } 40% { transform: rotate(-24deg); } 45% { transform: rotate(22deg); } 50% { transform: rotate(-20deg); } 100% { transform: rotate(0); } }
+    @@keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+    @@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+    @@keyframes pulseBorder { 0% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(248, 197, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0); } }
     .alert-conflict { background: #111; border: 2px solid #dc3545; border-radius: 10px; padding: 30px 20px; text-align: center; animation: fadeIn 0.3s ease-in; }
     .conflict-icon { font-size: 3rem; color: #dc3545; margin-bottom: 15px; animation: pulse 2s infinite; }
     .alert-conflict h4 { color: white; font-family: 'Oswald'; letter-spacing: 1px; margin-bottom: 10px; }
