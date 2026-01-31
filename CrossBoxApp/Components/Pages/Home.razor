@@ -10,15 +10,21 @@
 
 <div class="main-layout">
 
+    @* --- CAPA INVISIBLE PARA CERRAR MENÚS AL TOCAR AFUERA --- *@
+    @if (mostrarMenuPrincipal || mostrarNotis)
+    {
+        <div class="menu-overlay" @onclick="CerrarTodosLosMenus"></div>
+    }
+
     <div class="navbar-container">
         <div class="brand">@NombreBox</div>
         <div class="right-actions">
+            
+            @* NOTIFICACIONES *@
             <div class="noti-wrapper" @onclick="ToggleNotificaciones">
                 <i class="fas fa-bell noti-icon @(hayNuevas ? "bell-ring" : "")"></i>
-                @if (hayNuevas)
-                {
-                    <span class="noti-dot"></span>
-                }
+                @if (hayNuevas) { <span class="noti-dot"></span> }
+                
                 @if (mostrarNotis)
                 {
                     <div class="noti-dropdown">
@@ -40,6 +46,7 @@
                 }
             </div>
 
+            @* MENÚ PRINCIPAL *@
             <div class="main-menu-wrapper" @onclick="ToggleMainMenu">
                 <span class="user-name">Hola, @(Sesion.Usuario?.Nombre ?? "Atleta")</span>
                 <i class="fas fa-bars menu-burger"></i>
@@ -503,7 +510,7 @@
                                             <input type="text" @bind="ejercicio.NombreBase" class="form-control input-dark" placeholder="Ejercicio" />
                                         </div>
 
-                                        @* 3. BOTÓN PESOS (SOLUCIONADO: ABRE MODAL APARTE) *@
+                                        @* 3. BOTÓN PESOS (ABRE EL BOTTOM SHEET) *@
                                         <div>
                                             <button class="btn-icon weight-btn @(ejercicio.TienePesos ? "active" : "")"
                                                     @onclick="() => AbrirEditorPeso(ejercicio)">
@@ -544,35 +551,50 @@
     </div>
 }
 
-@* --- NUEVO: MODAL EXCLUSIVO PARA EDITAR PESOS (NO TAPA NADA) --- *@
+@* --- BOTTOM SHEET (EDITOR DE PESOS) --- *@
 @if (mostrarModalPeso && ejercicioEnEdicion != null)
 {
-    <div class="modal-overlay" style="z-index: 4000;">
-        <div class="modal-content custom-modal" style="max-height: auto; height: auto;">
-            <div class="modal-header">
-                <h5 style="margin:0; color:#F8C545; font-weight:bold;">PESOS (Rx)</h5>
-                <button class="btn-close-custom" @onclick="CerrarEditorPeso"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <p style="color:#ccc; font-size:0.9rem; text-align:center;">
-                    Configura los pesos sugeridos para <strong>@(string.IsNullOrEmpty(ejercicioEnEdicion.NombreBase) ? "este ejercicio" : ejercicioEnEdicion.NombreBase)</strong>.
-                </p>
+    @* Fondo oscuro (Backdrop) *@
+    <div class="sheet-backdrop visible" @onclick="CerrarEditorPeso"></div>
 
-                <div class="row mt-3">
-                    <div class="col-6">
-                        <label style="color:#F8C545; font-weight:bold; display:block; text-align:center;">HOMBRE</label>
-                        <input type="text" @bind="ejercicioEnEdicion.PesoH" class="form-control input-dark text-center" style="font-size:1.2rem;" placeholder="lbs/kg" />
-                    </div>
-                    <div class="col-6">
-                        <label style="color:#F8C545; font-weight:bold; display:block; text-align:center;">MUJER</label>
-                        <input type="text" @bind="ejercicioEnEdicion.PesoM" class="form-control input-dark text-center" style="font-size:1.2rem;" placeholder="lbs/kg" />
-                    </div>
+    @* El Panel Deslizante *@
+    <div class="bottom-sheet slide-in-bottom">
+        
+        <div class="sheet-handle"></div>
+
+        <div class="text-center mb-4">
+            <h5 style="color:#F8C545; font-family:'Oswald'; margin:0;">PESOS (Rx)</h5>
+            <p style="color:#888; font-size:0.8rem; margin-top:5px;">
+                @(string.IsNullOrEmpty(ejercicioEnEdicion.NombreBase) ? "Ejercicio" : ejercicioEnEdicion.NombreBase)
+            </p>
+        </div>
+
+        <div class="row">
+            <div class="col-6">
+                <label style="color:white; font-size:0.8rem; display:block; text-align:center;">HOMBRE</label>
+                <div class="input-group-animated">
+                    <input type="text" @bind="ejercicioEnEdicion.PesoH" 
+                           class="form-control input-dark text-center" 
+                           style="font-size:1.5rem; color:#F8C545; font-weight:bold; border: 1px solid #333;" 
+                           placeholder="--" />
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn-confirm" @onclick="CerrarEditorPeso">GUARDAR PESOS</button>
+            <div class="col-6">
+                <label style="color:white; font-size:0.8rem; display:block; text-align:center;">MUJER</label>
+                <div class="input-group-animated">
+                    <input type="text" @bind="ejercicioEnEdicion.PesoM" 
+                           class="form-control input-dark text-center" 
+                           style="font-size:1.5rem; color:#F8C545; font-weight:bold; border: 1px solid #333;" 
+                           placeholder="--" />
+                </div>
             </div>
         </div>
+
+        <button class="btn btn-warning w-100 mt-4 py-3" 
+                style="background:#F8C545; font-weight:bold; border-radius:50px;" 
+                @onclick="CerrarEditorPeso">
+            GUARDAR <i class="fas fa-check"></i>
+        </button>
     </div>
 }
 
@@ -667,836 +689,144 @@
 }
 
 <style>
-    /* --- ESTILOS DE LIMPIEZA Y ESENCIALES --- */
-
-    .ejercicio-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        background: #1f1f1f;
-        padding: 8px;
-        border-radius: 8px;
-        margin-bottom: 8px;
-        border: 1px solid #333;
+    /* --- ESTILOS BOTTOM SHEET (NUEVO) --- */
+    .sheet-backdrop {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.6); z-index: 4000;
+        opacity: 0; visibility: hidden; transition: opacity 0.3s ease;
     }
+    .sheet-backdrop.visible { opacity: 1; visibility: visible; }
 
-    /* Inputs */
-    .input-group-reps {
-        flex: 0 0 70px;
-    }
-
-    .input-group-name {
-        flex: 1;
-    }
-
-    .input-dark {
-        background: #121212 !important;
-        border: 1px solid #444;
-        color: white !important;
-        font-size: 0.9rem;
-        height: 38px;
-    }
-
-        .input-dark:focus {
-            border-color: #F8C545;
-            box-shadow: 0 0 5px rgba(248, 197, 69, 0.3);
-        }
-
-    .btn-icon {
-        width: 38px;
-        height: 38px;
-        border: none;
-        border-radius: 6px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        transition: all 0.2s;
-        position: relative;
-    }
-
-    .weight-btn {
-        background: #333;
-        color: #888;
-    }
-
-        .weight-btn:hover {
-            background: #444;
-            color: #F8C545;
-        }
-
-        .weight-btn.active {
-            color: #F8C545;
-            border: 1px solid #F8C545;
-            background: rgba(248, 197, 69, 0.1);
-        }
-
-    .dot-indicator {
-        position: absolute;
-        top: 4px;
-        right: 4px;
-        width: 6px;
-        height: 6px;
-        background: #F8C545;
-        border-radius: 50%;
-    }
-
-    .delete-btn {
-        background: transparent;
-        color: #666;
-    }
-
-        .delete-btn:hover {
-            background: rgba(220, 53, 69, 0.2);
-            color: #dc3545;
-        }
-
-    .btn-add-ejercicio {
-        width: 100%;
-        background: transparent;
-        border: 1px dashed #555;
-        color: #888;
-        padding: 8px;
-        border-radius: 8px;
-        margin-top: 5px;
-        transition: 0.2s;
-    }
-
-        .btn-add-ejercicio:hover {
-            border-color: #F8C545;
-            color: #F8C545;
-            background: rgba(248, 197, 69, 0.05);
-        }
-
-    /* RESTO DE ESTILOS GLOBALES (Sin cambios mayores, solo lo esencial) */
-    .planes-selection-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        width: 100%;
-    }
-    @@media (min-width: 400px) {
-        .planes-selection-grid
-
-    {
-        flex-direction: row;
-    }
-
-    }
-
-    .plan-option-card {
-        background: #2a2a2a;
-        border: 1px solid #444;
-        border-radius: 12px;
-        padding: 20px;
-        flex: 1;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }
-
-        .plan-option-card:hover {
-            background: #333;
-            border-color: #F8C545;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(248, 197, 69, 0.2);
-        }
-
-        .plan-option-card.recommended {
-            border: 2px solid #F8C545;
-            background: rgba(248, 197, 69, 0.05);
-        }
-
-    .badge-save {
-        position: absolute;
-        top: -10px;
-        background: #F8C545;
-        color: black;
-        font-size: 0.65rem;
-        font-weight: bold;
-        padding: 4px 10px;
-        border-radius: 10px;
-        text-transform: uppercase;
-        font-family: 'Oswald';
-        box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-    }
-
-    .plan-title {
-        font-family: 'Oswald';
-        font-size: 1.1rem;
-        color: #ddd;
-        margin-bottom: 5px;
-        letter-spacing: 1px;
-    }
-
-    .plan-price {
-        font-family: 'Oswald';
-        font-size: 1.8rem;
-        color: white;
-        font-weight: bold;
-        margin-bottom: 5px;
-    }
-
-    .plan-note {
-        font-size: 0.75rem;
-        color: #888;
-        font-family: 'Roboto';
-    }
-
-    .main-layout {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #0d0d0d;
-        display: flex;
-        flex-direction: column;
-        z-index: 1;
-    }
-
-    .navbar-container {
-        flex-shrink: 0;
-        padding-top: calc(env(safe-area-inset-top) + 5px);
-        padding-bottom: 10px;
-        padding-left: 20px;
-        padding-right: 20px;
-        background-color: #0d0d0d;
-        border-bottom: 1px solid #F8C545;
-        color: white;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 100;
-        font-family: 'Oswald';
-        height: auto;
-        min-height: 60px;
-    }
-
-    .scrollable-content {
-        flex-grow: 1;
-        overflow-y: auto;
-        padding: 15px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 40px;
-    }
-
-    .brand {
-        font-size: 1.3rem;
-        font-weight: bold;
-    }
-
-    .right-actions {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-
-    .welcome-section h1 {
-        font-family: 'Oswald';
-        color: #F8C545;
-        font-size: 1.8rem;
-        margin-bottom: 20px;
-        text-align: center;
-        margin-top: 10px;
-    }
-
-    .cards-grid {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 15px;
-        width: 100%;
-        max-width: 1000px;
-    }
-
-    .menu-card {
-        background-color: #F8C545;
-        color: black;
-        width: 46%;
-        max-width: 160px;
-        height: 150px;
-        border-radius: 15px;
-        padding: 10px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        box-shadow: 0 4px 10px rgba(248, 215, 131, 0.2);
-        cursor: pointer;
-        transition: transform 0.2s;
-    }
-
-        .menu-card:active {
-            transform: scale(0.95);
-        }
-
-        .menu-card h3 {
-            font-family: 'Oswald';
-            font-size: 0.9rem;
-            font-weight: bold;
-            margin: 0;
-            line-height: 1.2;
-        }
-
-        .menu-card p {
-            font-size: 0.65rem;
-            font-family: 'Roboto';
-            line-height: 1.1;
-            margin-top: 4px;
-        }
-
-    .card-icon {
-        font-size: 2rem;
-        margin-bottom: 8px;
-    }
-
-    .yellow-highlight {
-        background: #F8C545 !important;
-        color: black !important;
-        border: 2px solid white;
-        animation: pulseBorder 2s infinite;
-        position: relative;
-    }
-
-        .yellow-highlight h3, .yellow-highlight p, .yellow-highlight i {
-            color: black !important;
-        }
-
-    .live-badge {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        background: red;
-        color: white;
-        font-size: 0.55rem;
-        padding: 2px 5px;
-        border-radius: 4px;
-        font-weight: bold;
-    }
-
-    .footer-brand {
-        margin-top: auto;
-        padding: 20px;
-        color: #F8C545;
-        font-family: 'Oswald';
-    }
-
-    .payment-alert {
-        margin-bottom: 15px;
-        padding: 12px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        width: 100%;
-        max-width: 600px;
-    }
-
-        .payment-alert.warning {
-            background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%);
-            color: black;
-        }
-
-        .payment-alert.expired {
-            background: linear-gradient(90deg, #dc3545 0%, #c82333 100%);
-            color: white;
-        }
-
-    .alert-icon {
-        font-size: 1.2rem;
-    }
-
-    .alert-text {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        font-size: 0.8rem;
-    }
-
-    .main-menu-wrapper {
-        position: relative;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .user-name {
-        font-size: 0.9rem;
-        font-weight: bold;
-        display: none;
-    }
-    @@media(min - width: 768px)
-
-    {
-        .user-name
-
-    {
-        display: block;
-    }
-
-    }
-
-    .menu-burger {
-        font-size: 1.5rem;
-        color: #F8C545;
-    }
-
-    .main-dropdown {
-        position: absolute;
-        top: 45px;
-        right: 0;
-        width: 260px;
+    .bottom-sheet {
+        position: fixed; bottom: 0; left: 0; width: 100%;
         background: #1a1a1a;
-        border: 1px solid #F8C545;
-        border-radius: 8px;
+        border-top-left-radius: 25px; border-top-right-radius: 25px;
+        border-top: 3px solid #F8C545;
+        padding: 25px 20px 40px 20px;
+        z-index: 4001;
+        box-shadow: 0 -5px 25px rgba(0,0,0,0.8);
+    }
+    .slide-in-bottom { animation: slideInBottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    @@keyframes slideInBottom { from { bottom: -100%; } to { bottom: 0; } }
+
+    .sheet-handle {
+        width: 50px; height: 5px; background: #444; border-radius: 10px; margin: 0 auto 20px auto;
+    }
+
+    /* --- CAPA TRANSPARENTE PARA CERRAR MENÚ (NUEVO) --- */
+    .menu-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        z-index: 1500; /* Debajo del menú (2000) pero encima de todo lo demás */
+        background: transparent;
+    }
+
+    /* --- ESTILOS DE LIMPIEZA Y ESENCIALES --- */
+    .ejercicio-row { display: flex; align-items: center; gap: 8px; background: #1f1f1f; padding: 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #333; }
+    .input-group-reps { flex: 0 0 70px; }
+    .input-group-name { flex: 1; }
+    .input-dark { background: #121212 !important; border: 1px solid #444; color: white !important; font-size: 0.9rem; height: 38px; }
+    .input-dark:focus { border-color: #F8C545; box-shadow: 0 0 5px rgba(248, 197, 69, 0.3); }
+    .btn-icon { width: 38px; height: 38px; border: none; border-radius: 6px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s; position: relative; }
+    .weight-btn { background: #333; color: #888; }
+    .weight-btn:hover { background: #444; color: #F8C545; }
+    .weight-btn.active { color: #F8C545; border: 1px solid #F8C545; background: rgba(248, 197, 69, 0.1); }
+    .dot-indicator { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: #F8C545; border-radius: 50%; }
+    .delete-btn { background: transparent; color: #666; }
+    .delete-btn:hover { background: rgba(220, 53, 69, 0.2); color: #dc3545; }
+    .btn-add-ejercicio { width: 100%; background: transparent; border: 1px dashed #555; color: #888; padding: 8px; border-radius: 8px; margin-top: 5px; transition: 0.2s; }
+    .btn-add-ejercicio:hover { border-color: #F8C545; color: #F8C545; background: rgba(248, 197, 69, 0.05); }
+
+    /* ESTILOS GLOBALES */
+    .planes-selection-grid { display: flex; flex-direction: column; gap: 15px; width: 100%; }
+    @@media (min-width: 400px) { .planes-selection-grid { flex-direction: row; } }
+    .plan-option-card { background: #2a2a2a; border: 1px solid #444; border-radius: 12px; padding: 20px; flex: 1; cursor: pointer; transition: all 0.2s ease; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .plan-option-card:hover { background: #333; border-color: #F8C545; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(248, 197, 69, 0.2); }
+    .plan-option-card.recommended { border: 2px solid #F8C545; background: rgba(248, 197, 69, 0.05); }
+    .badge-save { position: absolute; top: -10px; background: #F8C545; color: black; font-size: 0.65rem; font-weight: bold; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; font-family: 'Oswald'; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+    .plan-title { font-family: 'Oswald'; font-size: 1.1rem; color: #ddd; margin-bottom: 5px; letter-spacing: 1px; }
+    .plan-price { font-family: 'Oswald'; font-size: 1.8rem; color: white; font-weight: bold; margin-bottom: 5px; }
+    .plan-note { font-size: 0.75rem; color: #888; font-family: 'Roboto'; }
+    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; height: auto; min-height: 60px; }
+    .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
+    .brand { font-size: 1.3rem; font-weight: bold; }
+    .right-actions { display: flex; align-items: center; gap: 15px; }
+    .welcome-section h1 { font-family: 'Oswald'; color: #F8C545; font-size: 1.8rem; margin-bottom: 20px; text-align: center; margin-top: 10px; }
+    .cards-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; width: 100%; max-width: 1000px; }
+    .menu-card { background-color: #F8C545; color: black; width: 46%; max-width: 160px; height: 150px; border-radius: 15px; padding: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; box-shadow: 0 4px 10px rgba(248, 215, 131, 0.2); cursor: pointer; transition: transform 0.2s; }
+    .menu-card:active { transform: scale(0.95); }
+    .menu-card h3 { font-family: 'Oswald'; font-size: 0.9rem; font-weight: bold; margin: 0; line-height: 1.2; }
+    .menu-card p { font-size: 0.65rem; font-family: 'Roboto'; line-height: 1.1; margin-top: 4px; }
+    .card-icon { font-size: 2rem; margin-bottom: 8px; }
+    .yellow-highlight { background: #F8C545 !important; color: black !important; border: 2px solid white; animation: pulseBorder 2s infinite; position: relative; }
+    .yellow-highlight h3, .yellow-highlight p, .yellow-highlight i { color: black !important; }
+    .live-badge { position: absolute; top: 8px; right: 8px; background: red; color: white; font-size: 0.55rem; padding: 2px 5px; border-radius: 4px; font-weight: bold; }
+    .footer-brand { margin-top: auto; padding: 20px; color: #F8C545; font-family: 'Oswald'; }
+    .payment-alert { margin-bottom: 15px; padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 10px; width: 100%; max-width: 600px; }
+    .payment-alert.warning { background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%); color: black; }
+    .payment-alert.expired { background: linear-gradient(90deg, #dc3545 0%, #c82333 100%); color: white; }
+    .alert-icon { font-size: 1.2rem; }
+    .alert-text { flex: 1; display: flex; flex-direction: column; font-size: 0.8rem; }
+    .main-menu-wrapper { position: relative; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+    .user-name { font-size: 0.9rem; font-weight: bold; display: none; }
+    @@media(min-width: 768px) { .user-name { display: block; } }
+    .menu-burger { font-size: 1.5rem; color: #F8C545; }
+    
+    /* MEJORA: MENÚ CON SCROLL Y MAX-HEIGHT */
+    .main-dropdown {
+        position: absolute; top: 45px; right: 0; width: 260px;
+        background: #1a1a1a; border: 1px solid #F8C545; border-radius: 8px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.9);
-        overflow: hidden;
+        overflow-y: auto; /* Permitir scroll si es muy largo */
+        overflow-x: hidden;
+        max-height: 70vh; /* Máximo 70% de la altura de pantalla */
         z-index: 2000;
         padding-bottom: 5px;
         animation: slideDown 0.2s ease-out;
     }
 
-    .dropdown-header {
-        font-size: 0.7rem;
-        color: #888;
-        padding: 10px 15px 5px 15px;
-        font-weight: bold;
-        letter-spacing: 1px;
-    }
-
-    .admin-header {
-        color: #F8C545;
-        text-transform: uppercase;
-        border-top: 1px solid #333;
-        margin-top: 5px;
-    }
-
-    .dropdown-item {
-        padding: 12px 20px;
-        color: #ffffff !important;
-        cursor: pointer;
-        font-family: 'Roboto', sans-serif;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        transition: background 0.2s;
-    }
-
-        .dropdown-item:hover {
-            background-color: #333;
-            color: #F8C545 !important;
-        }
-
-    .dropdown-divider {
-        height: 1px;
-        background: #333;
-        margin: 5px 0;
-    }
-
-    .noti-wrapper {
-        position: relative;
-        cursor: pointer;
-    }
-
-    .noti-icon {
-        font-size: 1.3rem;
-        color: white;
-    }
-
-    .noti-dot {
-        position: absolute;
-        top: -2px;
-        right: -2px;
-        width: 8px;
-        height: 8px;
-        background: red;
-        border-radius: 50%;
-        border: 2px solid #0d0d0d;
-    }
-
-    .bell-ring {
-        animation: ring 4s .7s ease-in-out infinite;
-        color: #F8C545;
-    }
-
-    .noti-dropdown {
-        position: absolute;
-        top: 35px;
-        right: -50px;
-        width: 280px;
-        background: #1a1a1a;
-        border: 1px solid #333;
-        border-radius: 8px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-        overflow: hidden;
-        z-index: 1000;
-        max-height: 300px;
-        overflow-y: auto;
-    }
-
-    .noti-item {
-        padding: 12px;
-        border-bottom: 1px solid #333;
-        font-size: 0.8rem;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        color: #ccc;
-    }
-
-        .noti-item.unread {
-            background: #2a2a2a;
-            color: white;
-            border-left: 3px solid #F8C545;
-        }
-
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.85);
-        z-index: 3000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        backdrop-filter: blur(4px);
-        padding: 20px;
-    }
-
-    .custom-modal {
-        background: #1a1a1a;
-        width: 100%;
-        max-width: 400px;
-        border-radius: 12px;
-        border: 1px solid #F8C545;
-        display: flex;
-        flex-direction: column;
-        color: white;
-        max-height: 85vh;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    }
-
-    .modal-header {
-        padding: 15px;
-        background: #222;
-        border-bottom: 1px solid #333;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-shrink: 0;
-    }
-
-    .modal-body {
-        padding: 20px;
-        overflow-y: auto;
-        flex-grow: 1;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 100px;
-    }
-
-    .modal-footer {
-        padding: 15px;
-        background: #222;
-        border-top: 1px solid #333;
-        display: flex;
-        gap: 10px;
-        flex-shrink: 0;
-    }
-
-    .btn-close-custom {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 1.2rem;
-    }
-
-    .btn-confirm {
-        background: #F8C545;
-        color: black;
-        border: none;
-        padding: 10px;
-        font-weight: bold;
-        flex: 1;
-        border-radius: 5px;
-    }
-
-    .btn-cancel {
-        background: #333;
-        color: white;
-        border: none;
-        padding: 10px;
-        font-weight: bold;
-        flex: 1;
-        border-radius: 5px;
-    }
-
-    .delete-account-container {
-        width: 100%;
-        max-width: 1000px;
-        display: flex;
-        justify-content: center;
-        margin-top: 30px;
-        margin-bottom: 10px;
-        padding: 0 20px;
-    }
-
-    .btn-delete-account {
-        background: transparent;
-        border: 1px solid #ff4444;
-        color: #ff4444;
-        font-family: 'Oswald', sans-serif;
-        font-size: 0.8rem;
-        font-weight: bold;
-        text-transform: uppercase;
-        padding: 8px 20px;
-        border-radius: 50px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        letter-spacing: 1px;
-        opacity: 0.8;
-    }
-    @@keyframes slideDown {
-        from
-
-    {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    }
-    @@keyframes ring {
-        0%
-
-    {
-        transform: rotate(0);
-    }
-
-    5% {
-        transform: rotate(30deg);
-    }
-
-    10% {
-        transform: rotate(-28deg);
-    }
-
-    15% {
-        transform: rotate(34deg);
-    }
-
-    20% {
-        transform: rotate(-32deg);
-    }
-
-    25% {
-        transform: rotate(30deg);
-    }
-
-    30% {
-        transform: rotate(-28deg);
-    }
-
-    35% {
-        transform: rotate(26deg);
-    }
-
-    40% {
-        transform: rotate(-24deg);
-    }
-
-    45% {
-        transform: rotate(22deg);
-    }
-
-    50% {
-        transform: rotate(-20deg);
-    }
-
-    100% {
-        transform: rotate(0);
-    }
-
-    }
-    @@keyframes bounceIn {
-        0%
-
-    {
-        transform: scale(0.3);
-        opacity: 0;
-    }
-
-    50% {
-        transform: scale(1.05);
-    }
-
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
-
-    }
-    @@keyframes pulse {
-        0%
-
-    {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.1);
-    }
-
-    100% {
-        transform: scale(1);
-    }
-
-    }
-    @@keyframes pulseBorder {
-        0%
-
-    {
-        box-shadow: 0 0 0 0 rgba(248, 197, 69, 0.7);
-    }
-
-    70% {
-        box-shadow: 0 0 0 10px rgba(248, 197, 69, 0);
-    }
-
-    100% {
-        box-shadow: 0 0 0 0 rgba(248, 197, 69, 0);
-    }
-
-    }
-
-    .alert-conflict {
-        background: #111;
-        border: 2px solid #dc3545;
-        border-radius: 10px;
-        padding: 30px 20px;
-        text-align: center;
-        animation: fadeIn 0.3s ease-in;
-    }
-
-    .conflict-icon {
-        font-size: 3rem;
-        color: #dc3545;
-        margin-bottom: 15px;
-        animation: pulse 2s infinite;
-    }
-
-    .alert-conflict h4 {
-        color: white;
-        font-family: 'Oswald';
-        letter-spacing: 1px;
-        margin-bottom: 10px;
-    }
-
-    .alert-conflict p {
-        color: #ccc;
-        margin-bottom: 5px;
-    }
-
-    .fade-in {
-        animation: fadeIn 0.3s ease-in;
-    }
-
-    .modal-dialog-centered {
-        display: flex;
-        align-items: center;
-        min-height: calc(100% - 1rem);
-    }
-
-    .horario-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background-color: #222;
-        padding: 12px 15px;
-        border-radius: 8px;
-        margin-bottom: 8px;
-        border: 1px solid #333;
-    }
-
-    .horario-text {
-        color: white;
-        font-weight: bold;
-        font-family: 'Oswald';
-    }
-
-    .btn-delete-mini {
-        background: none;
-        border: none;
-        color: #dc3545;
-        cursor: pointer;
-        padding: 5px;
-    }
-
-    .aviso-content {
-        width: 90%;
-        max-width: 400px;
-        background: #1a1a1a;
-        border-radius: 12px;
-        text-align: center;
-        border: 2px solid #F8C545;
-        padding-bottom: 20px;
-        box-shadow: 0 0 20px rgba(248, 197, 69, 0.3);
-        animation: bounceIn 0.6s;
-        overflow: hidden;
-    }
-
-    .aviso-icon {
-        font-size: 3rem;
-        color: #F8C545;
-        margin-top: 20px;
-        animation: pulse 2s infinite;
-    }
-
-    .aviso-title {
-        font-family: 'Oswald';
-        color: white;
-        font-size: 1.5rem;
-        margin: 10px 20px;
-        text-transform: uppercase;
-    }
-
-    .aviso-date {
-        color: #888;
-        font-size: 0.8rem;
-        margin-bottom: 15px;
-    }
-
-    .aviso-body {
-        padding: 0 25px 20px 25px;
-        color: #ddd;
-    }
-
-    .btn-ok {
-        width: 80%;
-        margin: 0 auto 25px auto;
-        background: linear-gradient(45deg, #F8C545, #ffb300);
-        border: none;
-        padding: 12px;
-        font-weight: bold;
-        border-radius: 30px;
-        color: black;
-    }
+    .dropdown-header { font-size: 0.7rem; color: #888; padding: 10px 15px 5px 15px; font-weight: bold; letter-spacing: 1px; }
+    .admin-header { color: #F8C545; text-transform: uppercase; border-top: 1px solid #333; margin-top: 5px; }
+    .dropdown-item { padding: 12px 20px; color: #ffffff !important; cursor: pointer; font-family: 'Roboto', sans-serif; font-size: 0.9rem; display: flex; align-items: center; gap: 12px; transition: background 0.2s; }
+    .dropdown-item:hover { background-color: #333; color: #F8C545 !important; }
+    .dropdown-divider { height: 1px; background: #333; margin: 5px 0; }
+    .noti-wrapper { position: relative; cursor: pointer; }
+    .noti-icon { font-size: 1.3rem; color: white; }
+    .noti-dot { position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; background: red; border-radius: 50%; border: 2px solid #0d0d0d; }
+    .bell-ring { animation: ring 4s .7s ease-in-out infinite; color: #F8C545; }
+    .noti-dropdown { position: absolute; top: 35px; right: -50px; width: 280px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); overflow: hidden; z-index: 1000; max-height: 300px; overflow-y: auto; }
+    .noti-item { padding: 12px; border-bottom: 1px solid #333; font-size: 0.8rem; display: flex; align-items: center; gap: 10px; color: #ccc; }
+    .noti-item.unread { background: #2a2a2a; color: white; border-left: 3px solid #F8C545; }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); padding: 20px; }
+    .custom-modal { background: #1a1a1a; width: 100%; max-width: 400px; border-radius: 12px; border: 1px solid #F8C545; display: flex; flex-direction: column; color: white; max-height: 85vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .modal-header { padding: 15px; background: #222; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .modal-body { padding: 20px; overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; padding-bottom: 100px; }
+    .modal-footer { padding: 15px; background: #222; border-top: 1px solid #333; display: flex; gap: 10px; flex-shrink: 0; }
+    .btn-close-custom { background: none; border: none; color: white; font-size: 1.2rem; }
+    .btn-confirm { background: #F8C545; color: black; border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
+    .btn-cancel { background: #333; color: white; border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
+    .delete-account-container { width: 100%; max-width: 1000px; display: flex; justify-content: center; margin-top: 30px; margin-bottom: 10px; padding: 0 20px; }
+    .btn-delete-account { background: transparent; border: 1px solid #ff4444; color: #ff4444; font-family: 'Oswald', sans-serif; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; padding: 8px 20px; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; letter-spacing: 1px; opacity: 0.8; }
+   @@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+   @@keyframes ring { 0% { transform: rotate(0); } 5% { transform: rotate(30deg); } 10% { transform: rotate(-28deg); } 15% { transform: rotate(34deg); } 20% { transform: rotate(-32deg); } 25% { transform: rotate(30deg); } 30% { transform: rotate(-28deg); } 35% { transform: rotate(26deg); } 40% { transform: rotate(-24deg); } 45% { transform: rotate(22deg); } 50% { transform: rotate(-20deg); } 100% { transform: rotate(0); } }
+   @@keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+   @@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+   @@keyframes pulseBorder { 0% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(248, 197, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0); } }
+    .alert-conflict { background: #111; border: 2px solid #dc3545; border-radius: 10px; padding: 30px 20px; text-align: center; animation: fadeIn 0.3s ease-in; }
+    .conflict-icon { font-size: 3rem; color: #dc3545; margin-bottom: 15px; animation: pulse 2s infinite; }
+    .alert-conflict h4 { color: white; font-family: 'Oswald'; letter-spacing: 1px; margin-bottom: 10px; }
+    .alert-conflict p { color: #ccc; margin-bottom: 5px; }
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    .modal-dialog-centered { display: flex; align-items: center; min-height: calc(100% - 1rem); }
+    .horario-row { display: flex; justify-content: space-between; align-items: center; background-color: #222; padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #333; }
+    .horario-text { color: white; font-weight: bold; font-family: 'Oswald'; }
+    .btn-delete-mini { background: none; border: none; color: #dc3545; cursor: pointer; padding: 5px; }
+    .aviso-content { width: 90%; max-width: 400px; background: #1a1a1a; border-radius: 12px; text-align: center; border: 2px solid #F8C545; padding-bottom: 20px; box-shadow: 0 0 20px rgba(248, 197, 69, 0.3); animation: bounceIn 0.6s; overflow: hidden; }
+    .aviso-icon { font-size: 3rem; color: #F8C545; margin-top: 20px; animation: pulse 2s infinite; }
+    .aviso-title { font-family: 'Oswald'; color: white; font-size: 1.5rem; margin: 10px 20px; text-transform: uppercase; }
+    .aviso-date { color: #888; font-size: 0.8rem; margin-bottom: 15px; }
+    .aviso-body { padding: 0 25px 20px 25px; color: #ddd; }
+    .btn-ok { width: 80%; margin: 0 auto 25px auto; background: linear-gradient(45deg, #F8C545, #ffb300); border: none; padding: 12px; font-weight: bold; border-radius: 30px; color: black; }
 </style>
 
 @code {
@@ -1504,22 +834,17 @@
     // --- CLASES AUXILIARES ---
     public class EjercicioEditorViewModel
     {
-        // Inputs del Usuario
         public string Reps { get; set; }
         public string NombreBase { get; set; }
         public string PesoH { get; set; }
         public string PesoM { get; set; }
-
-        // La bandera "MostrarPopupPeso" ya no se usa, usamos un editor global
-
-        // Visual
         public bool TienePesos => !string.IsNullOrEmpty(PesoH) || !string.IsNullOrEmpty(PesoM);
     }
 
     public class BloqueEditorViewModel
     {
         public Guid SegmentoClaseID { get; set; }
-        public string NombreSegmento { get; set; } // Necesario para el backend
+        public string NombreSegmento { get; set; } 
         public List<EjercicioEditorViewModel> Ejercicios { get; set; } = new List<EjercicioEditorViewModel>();
     }
 
@@ -1611,10 +936,37 @@
         try { listaPlanes = await Http.GetFromJsonAsync<List<PlanDto>>("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/pagosapi/planes"); } catch { }
     }
 
+    // --- FUNCIONES MENÚS Y OVERLAY ---
+    private void CerrarTodosLosMenus()
+    {
+        mostrarMenuPrincipal = false;
+        mostrarNotis = false;
+    }
+
+    private void ToggleMainMenu()
+    {
+        mostrarMenuPrincipal = !mostrarMenuPrincipal;
+        if (mostrarMenuPrincipal) mostrarNotis = false;
+    }
+
+    private void ToggleNotificaciones()
+    {
+        mostrarNotis = !mostrarNotis;
+        if (mostrarNotis)
+        {
+            mostrarMenuPrincipal = false;
+            if (hayNuevas)
+            {
+                hayNuevas = false;
+                _ = Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/notificaciones/leer/{Sesion.Usuario.UsuarioID}", null);
+            }
+        }
+    }
+
     // --- LOGICA MODAL WOD ---
     private async void AbrirModalWod()
     {
-        mostrarMenuPrincipal = false;
+        CerrarTodosLosMenus();
         nuevoWod = new ProgramacionWodViewModel { FechaProgramacion = DateTime.Today };
         mostrarModalWod = true;
         await VerificarWodExistente(DateTime.Today);
@@ -1639,7 +991,6 @@
 
             if (!wodExiste)
             {
-                // Limpiar editor si no existe wod
                 listaBloquesEditor = new List<BloqueEditorViewModel>();
                 AgregarBloque();
             }
@@ -1670,7 +1021,6 @@
                 nuevoWod = wodExistente;
                 wodExiste = false;
 
-                // Convertir al modelo del Editor
                 listaBloquesEditor = new List<BloqueEditorViewModel>();
                 foreach (var b in wodExistente.Bloques)
                 {
@@ -1683,8 +1033,6 @@
 
                     foreach (var ej in b.Ejercicios)
                     {
-                        // Se carga la descripcion. Si quisieramos separar pesos, habría que parsear
-                        // Por simplicidad, ponemos todo en NombreBase.
                         bloqueEdit.Ejercicios.Add(new EjercicioEditorViewModel
                         {
                             Reps = ej.PesoRepeticiones,
@@ -1757,7 +1105,6 @@
         ejercicioEnEdicion = null;
     }
 
-
     private async Task GuardarProgramacion()
     {
         if (listaBloquesEditor.Count == 0)
@@ -1772,7 +1119,6 @@
             return;
         }
 
-        // CONVERTIR EDITOR -> MODELO API
         nuevoWod.Bloques = new List<BloqueWodViewModel>();
 
         foreach (var bEdit in listaBloquesEditor)
@@ -1783,13 +1129,11 @@
                 Ejercicios = new List<EjercicioViewModel>()
             };
 
-            // Nombre Segmento
             var infoSegmento = listaSegmentos.FirstOrDefault(s => s.Id == bEdit.SegmentoClaseID);
             bloqueApi.NombreSegmento = infoSegmento != null ? infoSegmento.Nombre : "General";
 
             foreach (var ejEdit in bEdit.Ejercicios)
             {
-                // Formatear descripción: "Sentadillas (135/95)"
                 string descFinal = ejEdit.NombreBase;
                 if (ejEdit.TienePesos)
                 {
@@ -1817,8 +1161,6 @@
             {
                 mostrarModalWod = false;
                 await App.Current.MainPage.DisplayAlert("¡Éxito!", "WOD Guardado correctamente.", "OK");
-
-                // Reset
                 nuevoWod = new ProgramacionWodViewModel { FechaProgramacion = DateTime.Today };
                 listaBloquesEditor = new List<BloqueEditorViewModel>();
                 AgregarBloque();
@@ -1840,22 +1182,21 @@
         }
     }
 
-    // --- RESTO DE FUNCIONES (Horarios, Avisos, Pagos...) ---
-    private async Task AbrirModalHorarios() { mostrarMenuPrincipal = false; mostrarModalHorarios = true; await CargarHorariosAdmin(); }
+    // --- RESTO DE FUNCIONES ---
+    private async Task AbrirModalHorarios() { CerrarTodosLosMenus(); mostrarModalHorarios = true; await CargarHorariosAdmin(); }
     private async Task CargarHorariosAdmin() { try { listaHorariosAdmin = await Http.GetFromJsonAsync<List<HorarioDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/AgendaApi/lista-horarios/{Sesion.Usuario.BoxID}"); } catch { listaHorariosAdmin = new List<HorarioDto>(); } }
     private async Task AgregarHorario() { if (string.IsNullOrWhiteSpace(nuevoHorarioTexto)) return; try { var nuevo = new HorarioDto { BoxID = Sesion.Usuario.BoxID, Descripcion = nuevoHorarioTexto }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/AgendaApi/crear-horario", nuevo); if (response.IsSuccessStatusCode) { nuevoHorarioTexto = ""; await CargarHorariosAdmin(); } else await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar.", "OK"); } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } }
     private async Task EliminarHorario(Guid id) { bool confirmar = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Seguro?", "Sí", "No"); if (!confirmar) return; try { var response = await Http.DeleteAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/AgendaApi/eliminar-horario/{id}"); if (response.IsSuccessStatusCode) { await CargarHorariosAdmin(); } else await App.Current.MainPage.DisplayAlert("Error", "No se pudo eliminar.", "OK"); } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } }
     private async Task ConfirmarEliminarCuenta() { bool confirmacion = await App.Current.MainPage.DisplayAlert("⚠️ Eliminar Cuenta", "¿Estás seguro de que quieres eliminar tu cuenta permanentemente? Perderás todo tu historial, fotos y pagos. Esta acción NO se puede deshacer.", "Sí, Eliminar", "Cancelar"); if (confirmacion) { try { var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/eliminar-definitivo/{Sesion.Usuario.UsuarioID}", null); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("Cuenta Eliminada", "Lamentamos que te vayas. Tu cuenta ha sido borrada.", "Adiós"); CerrarSesion(); } else { string mensajeError = await response.Content.ReadAsStringAsync(); await App.Current.MainPage.DisplayAlert("Error", $"No se pudo eliminar: {mensajeError}", "OK"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK"); } } }
-    private void AbrirModalPassword() { passOld = ""; passNew = ""; passConfirm = ""; msgErrorPass = ""; procesandoPass = false; mostrarMenuPrincipal = false; mostrarModalPassword = true; }
+    private void AbrirModalPassword() { CerrarTodosLosMenus(); passOld = ""; passNew = ""; passConfirm = ""; msgErrorPass = ""; procesandoPass = false; mostrarModalPassword = true; }
     private void ToggleVerPass(int campo) { if (campo == 1) tipoInputOld = tipoInputOld == "password" ? "text" : "password"; if (campo == 2) tipoInputNew = tipoInputNew == "password" ? "text" : "password"; if (campo == 3) tipoInputConfirm = tipoInputConfirm == "password" ? "text" : "password"; }
     private async Task GuardarNuevaPassword() { if (string.IsNullOrWhiteSpace(passOld) || string.IsNullOrWhiteSpace(passNew) || string.IsNullOrWhiteSpace(passConfirm)) { msgErrorPass = "Todos los campos son obligatorios"; return; } if (passNew != passConfirm) { msgErrorPass = "La contraseña nueva y la confirmación no coinciden"; return; } procesandoPass = true; msgErrorPass = ""; try { var req = new { UsuarioID = Sesion.Usuario.UsuarioID, OldPassword = passOld, NewPassword = passNew, ConfirmPassword = passConfirm }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/cambiar-password", req); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("¡Éxito!", "Tu contraseña ha sido actualizada.", "OK"); mostrarModalPassword = false; } else { var errorJson = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>(); if (errorJson.TryGetProperty("mensaje", out var msg)) msgErrorPass = msg.GetString(); else msgErrorPass = "Error al actualizar la contraseña"; } } catch (Exception ex) { msgErrorPass = "Error de conexión: " + ex.Message; } finally { procesandoPass = false; } }
     private async Task CargarNombreBox() { try { var response = await Http.GetFromJsonAsync<Boxes>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/nombre-box/{Sesion.Usuario.BoxID}"); if (response != null && !string.IsNullOrEmpty(response.Nombre)) { NombreBox = response.Nombre.ToUpper(); } } catch { } }
-    private void AbrirGestionModulos() { mostrarMenuPrincipal = false; mostrarModalModulos = true; }
+    private void AbrirGestionModulos() { CerrarTodosLosMenus(); mostrarModalModulos = true; }
     private async Task CargarConfiguracionModulos() { try { listaConfiguracion = await Http.GetFromJsonAsync<List<ModuloConfig>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/modulos/{Sesion.Usuario.BoxID}"); } catch { } }
     private async Task ToggleModulo(ModuloConfig mod) { mod.Activo = !mod.Activo; try { await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/actualizar", mod); } catch { } }
     private bool EstaActivo(string clave) { if (listaConfiguracion == null || listaConfiguracion.Count == 0) return true; var mod = listaConfiguracion.FirstOrDefault(m => m.ModuloClave == clave); return mod == null ? true : mod.Activo; }
-    private void ToggleMainMenu() { mostrarMenuPrincipal = !mostrarMenuPrincipal; if (mostrarMenuPrincipal) mostrarNotis = false; }
-    private void ToggleNotificaciones() { mostrarNotis = !mostrarNotis; if (mostrarNotis) { mostrarMenuPrincipal = false; if (hayNuevas) { hayNuevas = false; _ = Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/notificaciones/leer/{Sesion.Usuario.UsuarioID}", null); } } }
+    
     private void CerrarSesion() { diasRestantes = 99; SecureStorage.Default.Remove("auth_token"); Sesion.Usuario = null; Nav.NavigateTo("/"); }
     private void IrAPerfil() => Nav.NavigateTo("/mi-perfil");
     private void IrAAgenda() => Nav.NavigateTo("/agenda-view");
@@ -1864,52 +1205,39 @@
     private void IrASeEntreno() => Nav.NavigateTo("/se-entreno");
     private void IrACompaneros() => Nav.NavigateTo("/entrenamos-juntos");
     private void IrARanking() => Nav.NavigateTo("/ranking");
-    private void NavegarA(string destino) { mostrarMenuPrincipal = false; switch (destino) { case "test": Nav.NavigateTo("/test-config"); break; case "usuarios": Nav.NavigateTo("/usuarios-view"); break; case "avisos": AbrirCrearAviso(); break; } }
+    private void NavegarA(string destino) { CerrarTodosLosMenus(); switch (destino) { case "test": Nav.NavigateTo("/test-config"); break; case "usuarios": Nav.NavigateTo("/usuarios-view"); break; case "avisos": AbrirCrearAviso(); break; } }
 
-    // --- LÓGICA DE PAGOS (ACTUALIZADA PARA IOS) ---
     private async Task IrAPagar()
     {
         if (Sesion.Usuario == null) return;
-
-        // 1. Cliente normal (pago a gimnasio) -> PERMITIDO SIEMPRE (Servicio físico)
         if (Sesion.Usuario.TipoUsuarioID == 2 && Sesion.Usuario.BoxID != IdCanaHueca)
         {
             if (boxTieneMP) { await ProcesarPago("Mensualidad", 0); }
             else { await App.Current.MainPage.DisplayAlert("Pago Presencial", "Tu box no ha configurado pagos en línea. Pasa a recepción.", "Entendido"); }
             return;
         }
-
-        // 2. Cliente de Caña Hueca (especial)
         if (Sesion.Usuario.BoxID == IdCanaHueca)
         {
             var planPublico = listaPlanes.FirstOrDefault(p => p.PlanID == 3);
             if (planPublico != null) await ProcesarPago(planPublico.Nombre, planPublico.Precio);
             return;
         }
-
-        // 3. ADMIN (Pago de Software SaaS) -> BLOQUEAR EN iOS
         if (Sesion.Usuario.TipoUsuarioID == 1)
         {
-            // Verificamos si es iOS
             if (DeviceInfo.Platform == DevicePlatform.iOS)
             {
-                await App.Current.MainPage.DisplayAlert(
-                    "Renovación",
-                    "Para renovar tu suscripción, por favor visita ontrackcrew.com desde tu navegador.",
-                    "Entendido");
-                // Opcional: Podrías abrir el navegador directo:
+                await App.Current.MainPage.DisplayAlert("Renovación", "Para renovar tu suscripción, por favor visita ontrackcrew.com desde tu navegador.", "Entendido");
                 await Browser.OpenAsync("https://ontrackcrew.com.mx", BrowserLaunchMode.SystemPreferred);
             }
             else
             {
-                // Si es Android, mostramos el modal normal
                 mostrarModalPlanesAdmin = true;
             }
         }
     }
 
     private async Task ProcesarPago(string titulo, decimal precio) { try { var datosPago = new { Titulo = titulo, Precio = precio, UsuarioID = Sesion.Usuario.UsuarioID }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/mercadopago/crear-preferencia", datosPago); if (response.IsSuccessStatusCode) { var resultado = await response.Content.ReadFromJsonAsync<RespuestaMercadoPago>(); if (resultado != null && !string.IsNullOrEmpty(resultado.url)) { await Browser.Default.OpenAsync(resultado.url, BrowserLaunchMode.SystemPreferred); mostrarModalPlanesAdmin = false; } } else { string errorMsg = await response.Content.ReadAsStringAsync(); if (errorMsg.Contains("error")) { errorMsg = errorMsg.Replace("{", "").Replace("}", "").Replace("\"", "").Replace("error:", ""); } await App.Current.MainPage.DisplayAlert("Error en Pago", errorMsg, "OK"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK"); } }
-    private void AbrirCrearAviso() { mostrarMenuPrincipal = false; nuevoAviso = new Avisos(); mostrarModalCrearAviso = true; }
+    private void AbrirCrearAviso() { CerrarTodosLosMenus(); nuevoAviso = new Avisos(); mostrarModalCrearAviso = true; }
     private async Task PublicarAviso() { if (string.IsNullOrEmpty(nuevoAviso.Titulo)) return; try { nuevoAviso.BoxID = Sesion.Usuario.BoxID; var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/crear", nuevoAviso); if (r.IsSuccessStatusCode) { mostrarModalCrearAviso = false; await App.Current.MainPage.DisplayAlert("Éxito", "Publicado", "OK"); } } catch { } }
     private async Task CargarUltimoAviso() { try { var r = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/ultimo/{Sesion.Usuario.BoxID}"); if (r.StatusCode == System.Net.HttpStatusCode.NoContent) return; if (r.IsSuccessStatusCode) { ultimoAviso = await r.Content.ReadFromJsonAsync<Avisos>(); if (ultimoAviso != null) { var idVisto = await JS.InvokeAsync<string>("localStorage.getItem", "ultimoAvisoVisto"); if (idVisto != ultimoAviso.AvisoID.ToString()) mostrarAvisoPopUp = true; } } } catch { } }
     private async Task CerrarAviso() { if (ultimoAviso != null) await JS.InvokeVoidAsync("localStorage.setItem", "ultimoAvisoVisto", ultimoAviso.AvisoID.ToString()); mostrarAvisoPopUp = false; }
