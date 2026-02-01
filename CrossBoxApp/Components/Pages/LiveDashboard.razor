@@ -10,6 +10,7 @@
 @inject IJSRuntime JS 
 @implements IAsyncDisposable
 
+@* --- AVISO DE GIRO PARA MÓVIL --- *@
 <div class="rotate-warning">
     <div class="phone-animation">
         <i class="fas fa-mobile-alt"></i>
@@ -20,10 +21,12 @@
 
 <div class="dashboard-container @(wodExpandido ? "wod-wide" : "")">
     
+    @* SONIDOS *@
     <audio id="audio-beep" src="Sonidos/beep.mp3" preload="auto"></audio>
     <audio id="audio-go" src="Sonidos/go.mp3" preload="auto"></audio>
     <audio id="audio-medio" src="Sonidos/medio.mp3" preload="auto"></audio>
 
+    @* --- PANEL 1: TIMER --- *@
     <div class="panel timer-panel @(verTimer ? "" : "collapsed")">
         @if (verTimer)
         {
@@ -118,11 +121,11 @@
         else { <div class="vertical-bar" @onclick="() => verTimer = true"><span class="v-text">TIMER</span><i class="fas fa-stopwatch v-icon"></i></div> }
     </div>
 
+    @* --- PANEL 2: WOD (CON MARCA DE AGUA) --- *@
     <div class="panel wod-panel @(verWod ? "" : "collapsed")">
         @if (verWod)
         {
             <div class="panel-header">
-                @* CAMBIO 1: El Select ahora vive aquí *@
                 @if (wodHoy != null && wodHoy.Bloques != null && wodHoy.Bloques.Count > 0)
                 {
                     <div class="header-select-wrapper">
@@ -154,18 +157,21 @@
                 </div>
             </div>
 
+            @* MARCA DE AGUA EN EL FONDO DEL WOD (SOLO SI HAY URL) *@
+            @if (!string.IsNullOrEmpty(UrlLogoBox))
+            {
+                <div class="wod-watermark" style="background-image: url('@UrlLogoBox');"></div>
+            }
+
             <div class="panel-content scroll-custom">
                 @if (wodHoy != null && wodHoy.Bloques != null && wodHoy.Bloques.Count > 0)
                 {
-                    @* Ya no necesitamos el select aquí, así que vamos directo a los bloques *@
                     <div class="bloques-container">
                         @foreach (var bloque in wodHoy.Bloques)
                         {
                             @if (segmentoSeleccionadoID == Guid.Empty || bloque.SegmentoClaseID == segmentoSeleccionadoID)
                             {
                                 <div class="wod-block fade-in">
-
-                                    @* CAMBIO 2: Título elegante sin fondo amarillo *@
                                     <h4 class="block-title">
                                         @(string.IsNullOrEmpty(bloque.NombreSegmento) ? "BLOQUE" : bloque.NombreSegmento.ToUpper())
                                     </h4>
@@ -175,11 +181,9 @@
                                         <div class="exercises-wrapper">
                                             @foreach (var ej in bloque.Ejercicios)
                                             {
-                                                @* CAMBIO 3: Filas limpias sin bordes *@
                                                 <div class="ejercicio-row-clean">
                                                     <span class="ej-reps">@ej.PesoRepeticiones</span>
                                                     <div class="ej-nombre">
-                                                        @* Usamos MarkupString para que Blazor entienda el HTML que vamos a inyectar *@
                                                         @((MarkupString)FormatearPesoPlateado(ej.Descripcion))
                                                     </div>
                                                 </div>
@@ -203,6 +207,7 @@
         }
     </div>
 
+    @* --- PANEL 3: LISTA ATLETAS --- *@
     <div class="panel list-panel @(verLista ? "" : "collapsed")">
         @if (verLista) {
             <div class="panel-header">
@@ -238,6 +243,7 @@
     </div>
 </div>
 
+@* --- MODAL BUSCAR ATLETAS --- *@
 @if (mostrarModalAtletas)
 {
     <div class="modal-overlay">
@@ -279,141 +285,63 @@
         </div>
     </div>
 }
+
 <style>
-    /* --- 1. AVISO DE ROTACIÓN (SOLO MÓVIL VERTICAL) --- */
+    /* --- 1. AVISO DE ROTACIÓN --- */
     .rotate-warning { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; color: #F8C545; text-align: center; padding: 40px; }
     .phone-animation { font-size: 4rem; margin-bottom: 20px; animation: rotarCelular 2s infinite ease-in-out; }
     @@keyframes rotarCelular { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
     @@media (orientation: portrait) { .rotate-warning { display: flex; } .dashboard-container { display: none !important; } }
 
-    /* --- 2. CONTENEDOR PRINCIPAL (FLEXBOX) --- */
-    .dashboard-container { 
-        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
-        background-color: #0d0d0d; color: white; 
-        display: flex; flex-direction: row; 
-        padding: 15px; gap: 15px; box-sizing: border-box; overflow: hidden;
-    }
+    /* --- 2. LAYOUT PRINCIPAL --- */
+    .dashboard-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0d0d0d; color: white; display: flex; flex-direction: row; padding: 15px; gap: 15px; box-sizing: border-box; overflow: hidden; }
 
-    /* --- 3. PANELES GENERALES --- */
-    .panel { 
-        flex: 1; /* Normal: 33% */
-        display: flex; flex-direction: column; 
-        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); 
-        background: #111; overflow: hidden; border-radius: 15px; 
-        border: 1px solid #222; box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
-        min-width: 0; 
-    }
-
-    .panel.collapsed { 
-        flex: 0 0 60px !important; min-width: 60px; 
-        background: #000; cursor: pointer; border-color: #333; 
-    }
+    /* --- 3. PANELES --- */
+    .panel { flex: 1; display: flex; flex-direction: column; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); background: #111; overflow: hidden; border-radius: 15px; border: 1px solid #222; box-shadow: 0 4px 15px rgba(0,0,0,0.5); min-width: 0; position: relative; } /* position relative es importante para la marca de agua */
+    .panel.collapsed { flex: 0 0 60px !important; min-width: 60px; background: #000; cursor: pointer; border-color: #333; }
     .panel.collapsed:hover { background: #1a1a1a; }
-    /* Ocultar contenido al colapsar */
-    .panel.collapsed .panel-content, 
-    .panel.collapsed .panel-header .header-left, 
-    .panel.collapsed .panel-header span, 
-    .panel.collapsed .panel-header .header-select-wrapper { display: none; opacity: 0; }
-
-    /* Header Genérico */
-    .panel-header { height: 50px; background: #1a1a1a; border-bottom: 2px solid #F8C545; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; font-family: 'Oswald'; font-size: 1.1rem; color: #F8C545; white-space: nowrap; flex-shrink: 0; }
-    .panel-content { flex: 1; padding: 15px; overflow-y: auto; position: relative; }
+    .panel.collapsed .panel-content, .panel.collapsed .panel-header .header-left, .panel.collapsed .panel-header span, .panel.collapsed .panel-header .header-select-wrapper { display: none; opacity: 0; }
+    .panel-header { height: 50px; background: #1a1a1a; border-bottom: 2px solid #F8C545; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; font-family: 'Oswald'; font-size: 1.1rem; color: #F8C545; white-space: nowrap; flex-shrink: 0; z-index: 2; position: relative; }
+    
+    /* Panel content: z-index para estar encima de la marca de agua */
+    .panel-content { flex: 1; padding: 15px; overflow-y: auto; position: relative; z-index: 1; }
     .btn-icon-header { background: none; border: none; color: #888; font-size: 1rem; cursor: pointer; }
 
-    /* --- 4. SELECTOR EN HEADER (WOD) --- */
-    .header-select-wrapper {
-        display: flex; align-items: center; background-color: #000; border: 1px solid #333;
-        border-radius: 4px; padding: 0 10px; height: 32px; position: relative; min-width: 160px;
+    /* --- 4. MARCA DE AGUA (NUEVO) --- */
+    .wod-watermark {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 70%; height: 70%;
+        background-repeat: no-repeat; background-position: center; background-size: contain;
+        opacity: 0.1; /* Transparencia */
+        pointer-events: none; z-index: 0; 
     }
+
+    /* --- 5. SELECTOR WOD --- */
+    .header-select-wrapper { display: flex; align-items: center; background-color: #000; border: 1px solid #333; border-radius: 4px; padding: 0 10px; height: 32px; position: relative; min-width: 160px; }
     .select-icon { font-size: 0.8rem; color: #F8C545; margin-right: 8px; }
-    .header-select {
-        background: transparent; border: none; color: white; font-family: 'Oswald'; font-size: 0.95rem;
-        font-weight: bold; appearance: none; -webkit-appearance: none; width: 100%;
-        cursor: pointer; outline: none;
-    }
+    .header-select { background: transparent; border: none; color: white; font-family: 'Oswald'; font-size: 0.95rem; font-weight: bold; appearance: none; -webkit-appearance: none; width: 100%; cursor: pointer; outline: none; }
     .header-select option { background-color: #1a1a1a; color: white; padding: 10px; }
     .select-arrow { font-size: 0.7rem; color: #666; margin-left: 5px; pointer-events: none; }
 
-    /* --- 5. ESTILOS WOD LIMPIOS & ALINEADOS --- */
-    .wod-block { 
-        margin-bottom: 25px; 
-        /* Mantiene unido el título con sus ejercicios al cambiar columna */
-        break-inside: avoid; 
-        -webkit-column-break-inside: avoid;
-    }
-    
-    .block-title {
-        color: #F8C545; /* Texto Amarillo */
-        background: transparent; 
-        padding: 2px 10px; margin: 0 0 12px 0;
-        font-size: 1.1rem; font-weight: bold; font-family: 'Oswald';
-        border-left: 4px solid #F8C545; /* Distintivo vertical */
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Línea sutil divisoria */
-        text-transform: uppercase; letter-spacing: 1px;
-    }
+    /* --- 6. ESTILOS WOD --- */
+    .wod-block { margin-bottom: 25px; break-inside: avoid; -webkit-column-break-inside: avoid; }
+    .block-title { color: #F8C545; background: transparent; padding: 2px 10px; margin: 0 0 12px 0; font-size: 1.1rem; font-weight: bold; font-family: 'Oswald'; border-left: 4px solid #F8C545; border-bottom: 1px solid rgba(255, 255, 255, 0.1); text-transform: uppercase; letter-spacing: 1px; }
+    .ejercicio-row-clean { display: grid; grid-template-columns: 110px 1fr; gap: 15px; align-items: baseline; padding: 4px 0; margin-bottom: 2px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); -webkit-column-break-inside: avoid; page-break-inside: avoid; break-inside: avoid; }
+    .ej-reps { color: #F8C545; font-weight: 900; font-family: 'Oswald'; font-size: 1.1rem; text-align: right; white-space: nowrap; }
+    .ej-nombre { color: #e0e0e0; font-family: 'Roboto', sans-serif; font-size: 1rem; font-weight: 500; line-height: 1.3; text-align: left; }
+    .scroll-custom::-webkit-scrollbar { width: 6px; } .scroll-custom::-webkit-scrollbar-track { background: #111; } .scroll-custom::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
 
-    /* FILA DE EJERCICIO: USAMOS GRID PARA ALINEACIÓN PERFECTA */
-    .ejercicio-row-clean {
-        display: grid;
-        /* Columna 1 (Amarillo): 110px fijos. Columna 2 (Texto): El resto */
-        grid-template-columns: 110px 1fr;
-        gap: 15px; /* Espacio entre número y nombre */
-        align-items: baseline; /* Alinea textos por su base */
-        
-        padding: 4px 0;
-        margin-bottom: 2px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05); /* Línea muy sutil para guiar al ojo */
-        
-        /* Evita que un ejercicio se parta a la mitad entre columnas */
-        -webkit-column-break-inside: avoid;
-        page-break-inside: avoid;
-        break-inside: avoid;
-    }
+    /* WOD EXPANDIDO */
+    .dashboard-container.wod-wide .list-panel { flex: 0 0 0 !important; width: 0 !important; padding: 0 !important; border: none !important; margin: 0 !important; }
+    .dashboard-container.wod-wide .wod-panel { flex: 2; }
+    .dashboard-container.wod-wide .exercises-wrapper { display: block; column-width: 380px; column-gap: 50px; column-rule: 1px solid rgba(255, 255, 255, 0.1); width: 100%; padding-top: 10px; }
 
-    .ej-reps {
-        color: #F8C545; font-weight: 900; font-family: 'Oswald'; font-size: 1.1rem;
-        text-align: right; /* Alineado a la derecha para pegar con el texto */
-        white-space: nowrap; /* No permite saltos de línea en el peso/reps */
-    }
-
-    .ej-nombre {
-        color: #e0e0e0;
-        font-family: 'Roboto', sans-serif;
-        font-size: 1rem;
-        font-weight: 500;
-        line-height: 1.3;
-        text-align: left;
-    }
-    /* Scroll Personalizado */
-    .scroll-custom::-webkit-scrollbar { width: 6px; }
-    .scroll-custom::-webkit-scrollbar-track { background: #111; }
-    .scroll-custom::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-
-    /* --- 6. ESTADO "WOD EXPANDIDO" (COLUMNAS DINÁMICAS) --- */
-    .dashboard-container.wod-wide .list-panel { 
-        flex: 0 0 0 !important; width: 0 !important; padding: 0 !important; border: none !important; margin: 0 !important; 
-    }
-    .dashboard-container.wod-wide .wod-panel { 
-        flex: 2; /* Ocupa el espacio extra */
-    }
-    
-    /* LÓGICA DE COLUMNAS ESTILO PERIÓDICO */
-    .dashboard-container.wod-wide .exercises-wrapper {
-        display: block; 
-        /* Ancho mínimo de columna. El navegador decidirá si caben 2, 3 o 4 */
-        column-width: 380px; 
-        column-gap: 50px;
-        column-rule: 1px solid rgba(255, 255, 255, 0.1); 
-        width: 100%;
-        padding-top: 10px;
-    }
-
-    /* --- BARRA VERTICAL (Estado Colapsado) --- */
+    /* BARRA VERTICAL */
     .vertical-bar { height: 100%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; animation: fadeIn 0.5s; }
     .v-text { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); font-family: 'Oswald'; font-size: 1.2rem; letter-spacing: 3px; white-space: nowrap; margin-bottom: 10px; }
     .v-icon { font-size: 1.5rem; }
 
-    /* --- 7. TIMER STYLES --- */
+    /* TIMER */
     .flex-center-vertical { display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0 10px; }
     .timer-type-selector { display: flex; background: #222; border-radius: 25px; padding: 4px; margin-bottom: 20px; width: 100%; border: 1px solid #444; }
     .type-btn { flex: 1; background: transparent; border: none; color: #888; padding: 8px; border-radius: 20px; font-family: 'Oswald'; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; }
@@ -426,7 +354,6 @@
     .time-inputs input:focus { outline: none; color: #F8C545; }
     .single-input { width: 100%; font-size: 1.5rem; background: #222; border: 1px solid #333; color: white; text-align: center; font-family: 'Oswald'; border-radius: 10px; }
     .btn-save-timer { width: 100%; background: #28a745; color: white; border: none; padding: 12px; font-weight: bold; font-family: 'Oswald'; border-radius: 8px; font-size: 1.1rem; cursor: pointer; }
-    
     .timer-display { font-family: 'Oswald'; font-weight: bold; color: white; line-height: 1; font-size: clamp(3rem, 12vw, 8rem); text-shadow: 0 0 20px rgba(255,255,255,0.1); margin: 10px 0; }
     .timer-display.running { color: #28a745; text-shadow: 0 0 30px rgba(40, 167, 69, 0.4); }
     .timer-display.resting { color: #dc3545; text-shadow: 0 0 30px rgba(220, 53, 69, 0.4); }
@@ -438,8 +365,8 @@
     .start { background: #28a745; color: white; } .stop { background: #dc3545; color: white; } .reset { background: #333; color: white; }
     .btn-control:active { transform: scale(0.95); }
     .prep-display { text-align: center; } .prep-label { font-family: 'Oswald'; font-size: 2rem; color: #888; } .prep-number { font-size: 8rem; color: #F8C545; font-family: 'Oswald'; font-weight: bold; line-height: 1; }
-    
-    /* --- 8. LISTA ATLETAS --- */
+
+    /* ATLETAS */
     .atletas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 10px; }
     .atleta-card { background: #222; border: 1px solid #444; border-radius: 8px; padding: 10px 5px; text-align: center; transition: 0.2s; }
     .avatar { width: 45px; height: 45px; background: #333; color: #F8C545; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; margin: 0 auto 5px auto; border: 2px solid #F8C545; position: relative; }
@@ -447,7 +374,7 @@
     .btn-terminate { width: 100%; padding: 15px; background: #dc3545; color: white; font-weight: bold; font-family: 'Oswald'; border: none; cursor: pointer; margin-top: auto; border-radius: 0; }
     .empty-state { text-align: center; color: #444; margin-top: 50px; } .empty-state i { font-size: 3rem; margin-bottom: 10px; }
 
-    /* --- 9. MODAL ATLETAS --- */
+    /* MODAL */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
     .custom-modal { background: #111; width: 90%; max-width: 500px; border-radius: 10px; border: 1px solid #333; display: flex; flex-direction: column; overflow: hidden; height: 80vh; }
     .modal-header { height: auto; padding: 15px; border-bottom: 1px solid #333; }
@@ -459,7 +386,7 @@
     .lista-atletas-scroll { max-height: 50vh; overflow-y: auto; margin-top: 10px; }
     .atleta-info { display: flex; align-items: center; flex: 1; gap: 10px; }
 
-    /* Animaciones */
+    /* ANIMACIONES & HELPERS */
     .fade-in { animation: fadeIn 0.3s ease-in; } .slide-in { animation: slideIn 0.3s ease-out; }
     @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @@keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -467,29 +394,12 @@
     @@keyframes pulseBig { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
     .last-round-alert { color: #dc3545 !important; animation: pulseRed 1s infinite; }
     @@keyframes pulseRed { 0% { transform: scale(1); } 50% { transform: scale(1.05); text-shadow: 0 0 10px red; } 100% { transform: scale(1); } }
-
-    .peso-highlight {
-        color: #F8C545; /* Amarillo Box */
-        font-weight: 900; /* Negrita */
-        font-family: 'Oswald', sans-serif; /* Fuente condensada para números */
-        font-size: 0.95em;
-        margin-left: 5px;
-    }
-
-    .peso-silver {
-    color: #C0C0C0; 
-    font-weight: 800; /* Negrita para que se note bien */
-    font-family: 'Oswald', sans-serif; /* Usamos la misma fuente de números */
-    font-size: 0.95em; /* Un pelín más pequeño que el nombre */
-    letter-spacing: 0.5px; /* Un poco de espacio para leer mejor los números */
-    margin-left: 6px; /* Separarlo un poco del nombre del ejercicio */
-    
-    /* Opcional: Una sombra sutil para darle efecto metálico */
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5); 
-}
-
+    .peso-highlight { color: #F8C545; font-weight: 900; font-family: 'Oswald', sans-serif; font-size: 0.95em; margin-left: 5px; }
+    .peso-silver { color: #C0C0C0; font-weight: 800; font-family: 'Oswald', sans-serif; font-size: 0.95em; letter-spacing: 0.5px; margin-left: 6px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
 </style>
+
 @code {
+    // --- VARIABLES DE ESTADO ---
     private bool wodExpandido = false;
     private bool verTimer = true;
     private bool verWod = true;
@@ -500,12 +410,26 @@
     private string mensajeWod = "Cargando WOD...";
     private Guid segmentoSeleccionadoID;
 
+    // --- VARIABLES PARA EL LOGO ---
+    private Guid? logoGuidReal; 
+    
+    // Propiedad calculada segura: Si no hay logo real, devuelve vacío
+    private string UrlLogoBox
+    {
+        get
+        {
+            if (logoGuidReal == null) return "";
+            return $"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/Imagenes/Logos/{logoGuidReal}.jpg";
+        }
+    }
+
     private bool mostrarModalAtletas = false;
-    private List<UsuarioListDto> listaTodosAtletas; 
+    private List<UsuarioListDto> listaTodosAtletas;
     private List<UsuarioListDto> listaAtletasFiltrada;
     private string filtroAtleta = "";
 
-    private int tipoTimer = 1; 
+    // Timer Variables...
+    private int tipoTimer = 1;
     private int inputMinutos = 10; private int inputSegundos = 0;
     private int inputRondas = 1; private int inputMinDescanso = 0; private int inputSegDescanso = 0;
     private System.Timers.Timer _timer;
@@ -516,37 +440,71 @@
     private bool enDescanso = false;
     private bool enConteoPrevio = false;
     private int tiempoPrevio = 7;
-    private int tiempoTotalSegmentoActual = 0; 
+    private int tiempoTotalSegmentoActual = 0;
     private int tiempoTrabajoConfig = 0;
     private int tiempoDescansoConfig = 0;
 
     protected override async Task OnInitializedAsync()
     {
+        // 1. Configurar Timer
         _timer = new System.Timers.Timer(1000);
         _timer.Elapsed += (sender, e) => Tick();
         _timer.AutoReset = true;
-        
-        GuardarConfiguracion(); 
-        await CargarWodHoy();
+        GuardarConfiguracion();
+
+        // 2. Cargas Asíncronas
+        if (Sesion.Usuario != null)
+        {
+            // Ejecutamos las dos cargas en paralelo para que sea rápido
+            await Task.WhenAll(
+                CargarWodHoy(),
+                CargarInfoBox() // <--- Llamada para obtener el logo
+            );
+        }
     }
+
+    // --- NUEVO: Cargar Info del Box (Logo correcto) ---
+    private async Task CargarInfoBox()
+    {
+        try
+        {
+            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/nombre-box/{Sesion.Usuario.BoxID}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var info = await response.Content.ReadFromJsonAsync<BoxInfoSimple>();
+                if (info != null)
+                {
+                    logoGuidReal = info.Logo;
+                    StateHasChanged(); 
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("No se pudo cargar el logo: " + ex.Message);
+        }
+    }
+
+    // Clase simple para deserializar la respuesta del box
+    public class BoxInfoSimple
+    {
+        public string Nombre { get; set; }
+        public Guid? Logo { get; set; }
+    }
+
+    // --- MÉTODOS EXISTENTES (INTACTOS) ---
 
     private string FormatearNombreConPeso(string descripcion)
     {
         if (string.IsNullOrEmpty(descripcion)) return "";
-
-        // Buscamos si hay paréntesis con pesos, ej: "Deadlift (135/95)"
-        // Usamos una expresión regular simple o búsqueda de índice
         int indiceParentesis = descripcion.IndexOf('(');
-
         if (indiceParentesis > 0)
         {
             string nombre = descripcion.Substring(0, indiceParentesis);
             string peso = descripcion.Substring(indiceParentesis);
-
-            // Devolvemos HTML formateado: Nombre normal + Peso en Amarillo/Bold
             return $"{nombre} <span class='peso-highlight'>{peso}</span>";
         }
-
         return descripcion;
     }
 
@@ -579,12 +537,14 @@
     private async Task AbrirModalAtletas()
     {
         mostrarModalAtletas = true;
-        filtroAtleta = ""; 
+        filtroAtleta = "";
         if (listaTodosAtletas == null)
         {
-            try {
+            try
+            {
                 listaTodosAtletas = await Http.GetFromJsonAsync<List<UsuarioListDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/usuariosapi/buscador/{Sesion.Usuario.BoxID}");
-            } catch { listaTodosAtletas = new List<UsuarioListDto>(); }
+            }
+            catch { listaTodosAtletas = new List<UsuarioListDto>(); }
         }
         listaAtletasFiltrada = listaTodosAtletas;
     }
@@ -592,22 +552,13 @@
     private string FormatearPesoPlateado(string descripcionBase)
     {
         if (string.IsNullOrEmpty(descripcionBase)) return "";
-
-        // Buscamos dónde empieza el paréntesis "("
         int indiceInicio = descripcionBase.IndexOf('(');
-
-        // Si encontramos un paréntesis, separamos el texto
         if (indiceInicio > 0)
         {
             string nombreEjercicio = descripcionBase.Substring(0, indiceInicio);
-            // El resto es el peso (ej: "(135/95)")
             string partePeso = descripcionBase.Substring(indiceInicio);
-
-            // Inyectamos un <span> con la clase CSS plateada
             return $"{nombreEjercicio} <span class='peso-silver'>{partePeso}</span>";
         }
-
-        // Si no tiene pesos, devolvemos el nombre normal
         return descripcionBase;
     }
 
@@ -632,7 +583,8 @@
     private void ToggleExpandirWod()
     {
         wodExpandido = !wodExpandido;
-        if (wodExpandido) {
+        if (wodExpandido)
+        {
             verWod = true;
         }
     }
@@ -646,7 +598,7 @@
                 UsuarioId = usuario.UsuarioId,
                 BoxId = Sesion.Usuario.BoxID,
                 NombreCompleto = usuario.NombreCompleto,
-                FotoUrl = usuario.FotoUrl 
+                FotoUrl = usuario.FotoUrl
             });
         }
         mostrarModalAtletas = false;
