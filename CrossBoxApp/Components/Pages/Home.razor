@@ -27,7 +27,7 @@
                 
                 @if (mostrarNotis)
                 {
-                    <div class="noti-dropdown">
+                    <div class="noti-dropdown" @onclick:stopPropagation="true">
                         @if (misNotificaciones == null || misNotificaciones.Count == 0)
                         {
                             <div class="noti-item empty">Sin novedades...</div>
@@ -53,7 +53,8 @@
 
                 @if (mostrarMenuPrincipal)
                 {
-                    <div class="main-dropdown">
+                    @* CORRECCIÓN AQUÍ: @onclick:stopPropagation="true" *@
+                    <div class="main-dropdown" @onclick:stopPropagation="true">
                         <div class="dropdown-header">GENERAL</div>
                         <div class="dropdown-item" @onclick="IrAPerfil">
                             <i class="fas fa-user-edit"></i> Modificar Perfil
