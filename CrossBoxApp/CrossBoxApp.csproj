@@ -6,7 +6,7 @@
         <!-- Uncomment to also build the tizen app. You will need to install tizen by following this: https://github.com/Samsung/Tizen.NET -->
         <!-- <TargetFrameworks>$(TargetFrameworks);net9.0-tizen</TargetFrameworks> -->
 
-        <!-- Note for MacCatalyst:
+        <!-- Note for MacCatalyst:s
             The default runtime is maccatalyst-x64, except in Release config, in which case the default is maccatalyst-x64;maccatalyst-arm64.
             When specifying both architectures, use the plural <RuntimeIdentifiers> instead of the singular <RuntimeIdentifier>.
             The Mac App Store will NOT accept apps with ONLY maccatalyst-arm64 indicated;
@@ -25,7 +25,7 @@
         <ApplicationTitle>AFTRACK</ApplicationTitle>
 
         <!-- App Identifier -->
-		<ApplicationId>com.alfafit.app</ApplicationId>
+		<ApplicationId>com.alfafit.aftrack</ApplicationId>
 
         <!-- Versions -->
         <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
@@ -56,7 +56,7 @@
 
     <PropertyGroup Condition="'$(TargetFramework)'=='net9.0-ios'">
       <CodesignKey>Apple Development: Created via API (H8CV994AF7)</CodesignKey>
-      <CodesignProvision>VS: com.alfafit.app Development</CodesignProvision>
+      <CodesignProvision>VS: com.alfafit.aftrack Development</CodesignProvision>
     </PropertyGroup>
 
 
