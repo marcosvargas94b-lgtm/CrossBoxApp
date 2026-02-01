@@ -691,14 +691,14 @@
 
 <style>
     /* --- ESTILOS BOTTOM SHEET (NUEVO) --- */
-    .sheet-backdrop {
+   .sheet-backdrop {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.6); z-index: 4000;
         opacity: 0; visibility: hidden; transition: opacity 0.3s ease;
     }
     .sheet-backdrop.visible { opacity: 1; visibility: visible; }
 
-    .bottom-sheet {
+   .bottom-sheet {
         position: fixed; bottom: 0; left: 0; width: 100%;
         background: #1a1a1a;
         border-top-left-radius: 25px; border-top-right-radius: 25px;
@@ -717,19 +717,19 @@
     /* --- CAPA TRANSPARENTE PARA CERRAR MENÚ (NUEVO) --- */
     .menu-overlay {
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        z-index: 1500; /* Debajo del menú (2000) pero encima de todo lo demás */
+        z-index: 90; /* Debajo del menú (2000) pero encima de todo lo demás */
         background: transparent;
     }
 
     /* --- MENU DROPDOWN MEJORADO (SCROLL SI ES NECESARIO) --- */
-    .main-dropdown {
+ .main-dropdown {
         position: absolute; top: 45px; right: 0; width: 260px;
         background: #1a1a1a; border: 1px solid #F8C545; border-radius: 8px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.9);
-        overflow-y: auto; /* IMPORTANTE: Permitir scroll */
-        -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
-        max-height: calc(100vh - 80px); /* Ocupar casi todo el alto si es necesario */
-        z-index: 2000;
+        overflow-y: auto; 
+        -webkit-overflow-scrolling: touch;
+        max-height: calc(100vh - 80px); /* Evita que se corte en pantallas chicas */
+        z-index: 2000; /* Muy por encima de todo */
         padding-bottom: 5px;
         animation: slideDown 0.2s ease-out;
     }
@@ -761,7 +761,24 @@
     .plan-price { font-family: 'Oswald'; font-size: 1.8rem; color: white; font-weight: bold; margin-bottom: 5px; }
     .plan-note { font-size: 0.75rem; color: #888; font-family: 'Roboto'; }
     .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
-    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; height: auto; min-height: 60px; }
+    .navbar-container { 
+        position: relative; /* Asegura contexto de apilamiento */
+        flex-shrink: 0; 
+        padding-top: calc(env(safe-area-inset-top) + 5px); 
+        padding-bottom: 10px; 
+        padding-left: 20px; 
+        padding-right: 20px; 
+        background-color: #0d0d0d; 
+        border-bottom: 1px solid #F8C545; 
+        color: white; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        z-index: 100; /* CORREGIDO: Mayor que el Overlay (90) */
+        font-family: 'Oswald'; 
+        height: auto; 
+        min-height: 60px; 
+    }
     .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
     .brand { font-size: 1.3rem; font-weight: bold; }
     .right-actions { display: flex; align-items: center; gap: 15px; }
