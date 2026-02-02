@@ -25,7 +25,7 @@
         <ApplicationTitle>AFTRACK</ApplicationTitle>
 
         <!-- App Identifier -->
-		<ApplicationId>com.alfafit.app</ApplicationId>
+		<ApplicationId>com.alfafit.aftrack</ApplicationId>
 
         <!-- Versions -->
         <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
