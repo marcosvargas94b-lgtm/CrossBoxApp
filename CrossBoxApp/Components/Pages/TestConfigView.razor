@@ -229,7 +229,7 @@
 
         await CargarDatos();
         try {
-            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/testapi/catalogos");
+            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/testapi/catalogos");
             if (response.IsSuccessStatusCode) catalogos = await response.Content.ReadFromJsonAsync<TestConfigCatalogsDto>();
         } catch {}
     }
@@ -238,7 +238,7 @@
     {
         try {
             cargando = true;
-            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/testapi/configuracion/{Sesion.Usuario.BoxID}");
+            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/testapi/configuracion/{Sesion.Usuario.BoxID}");
             if (response.IsSuccessStatusCode) listaTests = await response.Content.ReadFromJsonAsync<List<TestGroupDto>>();
         } finally { cargando = false; }
     }
@@ -254,7 +254,7 @@
         }
         try {
             nuevoTest.BoxID = Sesion.Usuario.BoxID;
-            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/testapi/crear", nuevoTest);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/testapi/crear", nuevoTest);
             if (response.IsSuccessStatusCode) {
                 await App.Current.MainPage.DisplayAlert("Éxito", "Test Creado", "OK");
                 mostrarModal = false; nuevoTest = new CreateTestBoxes(); await CargarDatos();
@@ -267,7 +267,7 @@
         bool confirmar = await App.Current.MainPage.DisplayAlert("Eliminar", $"¿Seguro que deseas eliminar '{item.Nombre}'?", "Sí", "Cancelar");
         if (!confirmar) return;
         try {
-            var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/testapi/eliminar/{item.TestBoxId}", null);
+            var response = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/testapi/eliminar/{item.TestBoxId}", null);
             if (response.IsSuccessStatusCode) await CargarDatos();
             else { var error = await response.Content.ReadAsStringAsync(); await App.Current.MainPage.DisplayAlert("Error", error, "OK"); }
         } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }

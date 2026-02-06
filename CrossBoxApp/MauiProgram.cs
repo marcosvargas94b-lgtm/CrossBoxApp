@@ -26,7 +26,7 @@ namespace CrossBoxApp
 #endif
             builder.Services.AddSingleton<LiveSessionState>();
             builder.Services.AddSingleton<SesionService>();
-            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/") });
+            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/") });
             return builder.Build();
         }
     }

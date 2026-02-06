@@ -149,14 +149,14 @@
     private async Task CargarPendientes()
     {
         try {
-            listaPendientes = await Http.GetFromJsonAsync<List<PendienteDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/usuariosapi/pendientes/{Sesion.Usuario.BoxID}");
+            listaPendientes = await Http.GetFromJsonAsync<List<PendienteDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/pendientes/{Sesion.Usuario.BoxID}");
         } catch { listaPendientes = new List<PendienteDto>(); }
     }
 
     private async Task Aprobar(PendienteDto u)
     {
         try {
-            var r = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/usuariosapi/aprobar/{u.UsuarioID}", null);
+            var r = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/aprobar/{u.UsuarioID}", null);
             if (r.IsSuccessStatusCode) {
                 listaPendientes.Remove(u);
                 await App.Current.MainPage.DisplayAlert("Listo", $"{u.NombreCompleto} aceptado.", "OK");
@@ -170,7 +170,7 @@
         if (!confirm) return;
 
         try {
-            var r = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/usuariosapi/rechazar/{u.UsuarioID}", null);
+            var r = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/rechazar/{u.UsuarioID}", null);
             if (r.IsSuccessStatusCode) listaPendientes.Remove(u);
         } catch { }
     }

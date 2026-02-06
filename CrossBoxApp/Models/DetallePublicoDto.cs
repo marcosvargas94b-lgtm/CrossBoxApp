@@ -16,5 +16,9 @@ namespace CrossBoxApp.Models
         public bool YaLeDiMatch { get; set; }   // ¿Yo ya le di corazón?
         public bool EsMatchMutuo { get; set; }  // ¿Ambos nos dimos?
         public string WhatsappTarget { get; set; } // El número (solo si es mutuo)
+        public string Apodo { get; set; }
+        public bool UsarApodo { get; set; }
+        public string FotoCertificado1Url { get; set; }
+        public string FotoCertificado2Url { get; set; }
     }
 }

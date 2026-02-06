@@ -233,7 +233,7 @@
     {
         try 
         {
-            misPropositos = await Http.GetFromJsonAsync<List<PropositoDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/mis-propositos/{Sesion.Usuario.UsuarioID}");
+            misPropositos = await Http.GetFromJsonAsync<List<PropositoDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/propositosapi/mis-propositos/{Sesion.Usuario.UsuarioID}");
             
             // Detectar si hay un logro nuevo
             var nuevoLogro = misPropositos.FirstOrDefault(p => p.EsNuevoLogro);
@@ -252,7 +252,7 @@
         mostrarAnimacionLogro = false;
         // Marcar como visto
         try {
-            await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/marcar-visto/{idLogroReciente}", null);
+            await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/propositosapi/marcar-visto/{idLogroReciente}", null);
         } catch {}
     }
 
@@ -277,12 +277,12 @@
             if (editandoID == 0)
             {
                 var req = new { UsuarioID = Sesion.Usuario.UsuarioID, Descripcion = textoProposito };
-                await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/crear", req);
+                await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/propositosapi/crear", req);
             }
             else
             {
                 var req = new { PropositoID = editandoID, Descripcion = textoProposito };
-                await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/propositosapi/editar", req);
+                await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/propositosapi/editar", req);
             }
             
             mostrarModal = false;

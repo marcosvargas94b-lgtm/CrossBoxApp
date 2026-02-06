@@ -15,42 +15,67 @@
     </div>
 
     <div class="scrollable-content">
-        
+
         <div class="date-header">
             @DateTime.Now.ToString("dddd, dd MMMM").ToUpper()
         </div>
 
-        @if (lista == null)
+        @* --- SELECTOR DE PESTAÑAS --- *@
+        <div class="filter-tabs fade-in">
+            <button class="tab-btn @(tabActiva == "REPS" ? "active" : "")" @onclick='() => CambiarTab("REPS")'>
+                <i class="fas fa-redo-alt"></i> REPS
+            </button>
+            <button class="tab-btn @(tabActiva == "TIEMPO" ? "active" : "")" @onclick='() => CambiarTab("TIEMPO")'>
+                <i class="fas fa-stopwatch"></i> TIEMPO
+            </button>
+        </div>
+
+        @if (cargando)
         {
             <div class="text-center mt-5">
                 <div class="spinner-border text-warning" role="status"></div>
-                <p class="mt-2 text-muted">Cargando resultados...</p>
+                <p class="mt-2 text-muted">Cargando @(tabActiva == "REPS" ? "repeticiones" : "tiempos")...</p>
             </div>
         }
-        else if (lista.Count == 0)
+        else if (listaActual == null || listaActual.Count == 0)
         {
             <div class="empty-state fade-in">
                 <i class="fas fa-dumbbell" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px;"></i>
                 <h3>SIN RESULTADOS</h3>
-                <p>Aún no hay scores registrados hoy.</p>
+                <p>Aún no hay registros de @(tabActiva == "REPS" ? "AMRAP" : "WOD") para hoy.</p>
             </div>
         }
         else
         {
             <div class="podium-list fade-in">
-                @foreach (var item in lista)
+                @foreach (var item in listaActual)
                 {
-                    <div class="score-row @(item.Posicion == 1 ? "gold" : "")">
-                        
-                        @* 1. POSICIÓN / MEDALLA *@
+                    <div class="score-row @(item.Posicion == 1 ? "gold" : "") @(item.EsEquipo ? "team-border" : "")">
+
+                        @* 1. POSICIÓN *@
                         <div class="pos-column">
-                            @if (item.Posicion == 1) { <i class="fas fa-crown gold-icon"></i> }
-                            else if (item.Posicion == 2) { <i class="fas fa-medal silver-icon"></i> }
-                            else if (item.Posicion == 3) { <i class="fas fa-medal bronze-icon"></i> }
-                            else { <span>@item.Posicion</span> }
+                            @if (item.Posicion == 1)
+                            {
+                                <i class="fas fa-crown gold-icon"></i>
+                            }
+                            else if (item.Posicion == 2)
+                            {
+
+                                <i class="fas fa-medal silver-icon"></i>
+                            }
+                            else if (item.Posicion == 3)
+                            {
+
+                                <i class="fas fa-medal bronze-icon"></i>
+                            }
+                            else
+                            {
+
+                                <span>@item.Posicion</span>
+                            }
                         </div>
-                        
-                        @* 2. FOTO (NUEVO) *@
+
+                        @* 2. AVATAR *@
                         <div class="avatar-column">
                             @if (!string.IsNullOrEmpty(item.Foto))
                             {
@@ -58,94 +83,356 @@
                             }
                             else
                             {
-                                <div class="score-placeholder">@item.Nombre.Substring(0,1)</div>
+                                <div class="score-placeholder">
+                                    @(item.EsEquipo ? "T" : item.Nombre.Substring(0, 1).ToUpper())
+                                </div>
                             }
                         </div>
 
                         @* 3. NOMBRE *@
                         <div class="name-column">
-                            @item.Nombre
+                            <span class="name-text">@item.Nombre</span>
+                            @if (item.EsEquipo)
+                            {
+                                <span class="team-badge">EQUIPO</span>
+                            }
                         </div>
-                        
-                        @* 4. REPS *@
+
+                        @* 4. RESULTADO (DINÁMICO) *@
                         <div class="reps-column">
-                            <span class="reps-val">@item.Reps</span>
-                            <small>REPS</small>
+                            @if (tabActiva == "REPS")
+                            {
+                                <span class="reps-val">@item.Reps</span>
+                                <small>REPS</small>
+                            }
+                            else
+                            {
+                                <span class="reps-val">@item.Tiempo</span>
+                                <small>TIME</small>
+                            }
                         </div>
                     </div>
                 }
             </div>
         }
-        
+
         <div style="height: 40px;"></div>
     </div>
 </div>
 
 <style>
     /* --- ESTRUCTURA BASE --- */
-    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
-    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
-    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
-    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
-    .nav-right { width: 60px; }
-    .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
+    .main-layout {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #0d0d0d;
+        display: flex;
+        flex-direction: column;
+        z-index: 1;
+    }
 
-    /* --- ESTILOS LEADERBOARD --- */
-    .date-header { font-family: 'Oswald'; font-size: 1.5rem; color: white; margin-top: 10px; margin-bottom: 25px; border-bottom: 1px solid #333; padding-bottom: 10px; text-align: center; width: 100%; letter-spacing: 1px; }
-    .podium-list { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 10px; }
+    .navbar-container {
+        flex-shrink: 0;
+        padding-top: calc(env(safe-area-inset-top) + 5px);
+        padding-bottom: 10px;
+        padding-left: 20px;
+        padding-right: 20px;
+        background-color: #0d0d0d;
+        border-bottom: 1px solid #F8C545;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 100;
+        font-family: 'Oswald';
+        min-height: 60px;
+    }
 
-    .score-row { display: flex; align-items: center; background: #1a1a1a; padding: 10px 15px; border-radius: 12px; border: 1px solid #333; transition: transform 0.1s; }
-    .score-row.gold { border: 2px solid #FFD700; background: rgba(255, 215, 0, 0.1); transform: scale(1.02); box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); }
+    .nav-left {
+        color: #F8C545;
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+    }
 
-    /* COLUMNAS */
-    .pos-column { width: 35px; text-align: center; font-family: 'Oswald'; font-weight: bold; font-size: 1.2rem; color: #666; }
-    
-    /* AVATAR */
-    .avatar-column { margin: 0 15px 0 10px; }
-    .score-avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #333; }
-    .score-placeholder { width: 45px; height: 45px; border-radius: 50%; background: #333; color: #888; display: flex; align-items: center; justify-content: center; font-weight: bold; font-family: 'Oswald'; border: 2px solid #444; }
-    .gold .score-avatar, .gold .score-placeholder { border-color: #FFD700; }
+    .nav-title {
+        font-weight: bold;
+        font-size: 1.1rem;
+        color: white;
+        letter-spacing: 1px;
+    }
 
-    .name-column { flex: 1; font-size: 1rem; font-family: 'Roboto', sans-serif; color: #eee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
-    
-    .reps-column { font-family: 'Oswald'; text-align: right; display: flex; align-items: baseline; gap: 5px; }
-    .reps-val { font-size: 1.4rem; color: #F8C545; font-weight: bold; }
-    .reps-column small { font-size: 0.7rem; color: #888; font-weight: bold; }
+    .nav-right {
+        width: 60px;
+    }
 
-    /* ICONOS */
-    .gold-icon { color: #FFD700; font-size: 1.4rem; }
-    .silver-icon { color: #C0C0C0; font-size: 1.3rem; }
-    .bronze-icon { color: #CD7F32; font-size: 1.3rem; }
+    .scrollable-content {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 40px;
+    }
 
-    .empty-state { text-align: center; margin-top: 60px; color: #666; font-family: 'Roboto'; }
-    .fade-in { animation: fadeIn 0.5s ease; }
-    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    /* --- TABS --- */
+    .filter-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        background: #1a1a1a;
+        padding: 5px;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 600px;
+        border: 1px solid #333;
+    }
+
+    .tab-btn {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: #888;
+        padding: 10px;
+        font-family: 'Oswald';
+        font-size: 0.85rem;
+        border-radius: 8px;
+        transition: 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+        .tab-btn.active {
+            background: #F8C545;
+            color: black;
+            font-weight: bold;
+        }
+
+    /* --- LEADERBOARD ITEMS --- */
+    .date-header {
+        font-family: 'Oswald';
+        font-size: 1.3rem;
+        color: #888;
+        margin-bottom: 20px;
+        text-align: center;
+        width: 100%;
+        letter-spacing: 1px;
+    }
+
+    .podium-list {
+        width: 100%;
+        max-width: 600px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .score-row {
+        display: flex;
+        align-items: center;
+        background: #1a1a1a;
+        padding: 12px 15px;
+        border-radius: 15px;
+        border: 1px solid #333;
+        position: relative;
+    }
+
+        .score-row.gold {
+            border: 1px solid #FFD700;
+            background: linear-gradient(90deg, rgba(248, 197, 69, 0.1) 0%, rgba(26, 26, 26, 1) 100%);
+        }
+
+        .score-row.team-border {
+            border-left: 4px solid #F8C545;
+        }
+
+    .pos-column {
+        width: 35px;
+        text-align: center;
+        font-family: 'Oswald';
+        font-weight: bold;
+        font-size: 1.1rem;
+        color: #555;
+    }
+
+    .avatar-column {
+        margin-right: 15px;
+    }
+
+    .score-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #333;
+    }
+
+    .score-placeholder {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #252525;
+        color: #F8C545;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-family: 'Oswald';
+        border: 2px solid #333;
+        font-size: 1.2rem;
+    }
+
+    .name-column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .name-text {
+        font-size: 0.95rem;
+        color: #fff;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .team-badge {
+        font-size: 0.6rem;
+        background: #F8C545;
+        color: black;
+        padding: 1px 6px;
+        border-radius: 4px;
+        width: fit-content;
+        font-weight: bold;
+        margin-top: 3px;
+    }
+
+    .reps-column {
+        text-align: right;
+        font-family: 'Oswald';
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-width: 70px;
+    }
+
+    .reps-val {
+        font-size: 1.3rem;
+        color: #F8C545;
+        font-weight: bold;
+        line-height: 1;
+    }
+
+    .reps-column small {
+        font-size: 0.65rem;
+        color: #666;
+        margin-top: 2px;
+    }
+
+    /* ICONOS PREMIOS */
+    .gold-icon {
+        color: #FFD700;
+        font-size: 1.3rem;
+    }
+
+    .silver-icon {
+        color: #C0C0C0;
+        font-size: 1.2rem;
+    }
+
+    .bronze-icon {
+        color: #CD7F32;
+        font-size: 1.2rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        margin-top: 60px;
+        color: #444;
+    }
+
+    .fade-in {
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 </style>
 
 @code {
-    public class LeaderboardItem 
-    { 
-        public string Nombre { get; set; } 
-        public int Reps { get; set; } 
-        public int Posicion { get; set; } 
-        public string Foto { get; set; } // Propiedad nueva
+    private string tabActiva = "REPS";
+    private bool cargando = true;
+    private List<LeaderboardItem> listaActual = new();
+
+    public class LeaderboardItem
+    {
+        public string Nombre { get; set; }
+        public int Reps { get; set; }
+        public string Tiempo { get; set; }
+        public int Posicion { get; set; }
+        public string Foto { get; set; }
+        public bool EsEquipo { get; set; }
     }
-    
-    private List<LeaderboardItem> lista;
 
     protected override async Task OnInitializedAsync()
     {
-        try 
-        {
-            if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+        if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+        await CargarDatos();
+    }
 
-            // IMPORTANTE: Asegúrate de recompilar el backend con el nuevo código del controlador
-            lista = await Http.GetFromJsonAsync<List<LeaderboardItem>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/scoresapi/leaderboard-hoy/{Sesion.Usuario.BoxID}");
-        } 
-        catch 
-        { 
-            lista = new List<LeaderboardItem>(); 
+    private async Task CargarDatos()
+    {
+        cargando = true;
+        listaActual = new(); // Limpiar lista anterior
+        try
+        {
+            string endpoint = tabActiva == "REPS" ? "leaderboard-hoy" : "leaderboard-tiempo-hoy";
+            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/scoresapi/{endpoint}/{Sesion.Usuario.BoxID}";
+
+            var res = await Http.GetFromJsonAsync<List<LeaderboardItem>>(url);
+            if (res != null)
+            {
+                listaActual = res;
+            }
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error cargando leaderboard: {ex.Message}");
+            listaActual = new List<LeaderboardItem>();
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CambiarTab(string tab)
+    {
+        if (tabActiva == tab) return;
+        tabActiva = tab;
+        await CargarDatos();
     }
 
     private void Volver() => Nav.NavigateTo("/home");

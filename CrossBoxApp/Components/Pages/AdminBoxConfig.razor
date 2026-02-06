@@ -346,14 +346,14 @@
     private bool guardando = false;
     private BoxConfigDTO datosBox = new BoxConfigDTO();
     private string appId = "3844219986795201";
-    private string redirectUri = "https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/marketplace/oauth/callback";
+    private string redirectUri = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/marketplace/oauth/callback";
 
     // --- VARIABLES IMAGEN ---
     private IBrowserFile? archivoSeleccionado;
     private string? previewImagen;
     private bool subiendoImagen = false;
     // URL Base para las imágenes (Ajústala si es diferente)
-    private string urlBaseImagenes = "https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/Imagenes/Logos/";
+    private string urlBaseImagenes = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/Imagenes/Logos/";
 
     protected override void OnInitialized()
     {
@@ -382,7 +382,7 @@
     {
         try
         {
-            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
+            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -450,7 +450,7 @@
             content.Add(fileContent, "logo", archivoSeleccionado.Name);
 
             // Enviamos al endpoint (Asegúrate de crear este endpoint en tu API)
-            var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/boxesAPI/subir-logo/{Sesion.Usuario.BoxID}", content);
+            var response = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/subir-logo/{Sesion.Usuario.BoxID}", content);
 
             if (response.IsSuccessStatusCode)
             {
@@ -489,7 +489,7 @@
         try
         {
             datosBox.BoxID = Sesion.Usuario.BoxID;
-            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/boxesAPI/actualizar-precios", datosBox);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/actualizar-precios", datosBox);
 
             if (response.IsSuccessStatusCode)
                 await App.Current.MainPage.DisplayAlert("¡Éxito!", "Precios actualizados correctamente.", "OK");
@@ -516,7 +516,7 @@
         {
             try
             {
-                var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/boxesAPI/desvincular/{Sesion.Usuario.BoxID}", null);
+                var response = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/desvincular/{Sesion.Usuario.BoxID}", null);
                 if (response.IsSuccessStatusCode) await CargarDatos();
                 else await App.Current.MainPage.DisplayAlert("Error", "No se pudo desconectar.", "OK");
             }

@@ -280,7 +280,7 @@
     {
         try
         {
-            listaStaff = await Http.GetFromJsonAsync<List<StaffDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/staffapi/lista/{Sesion.Usuario.BoxID}");
+            listaStaff = await Http.GetFromJsonAsync<List<StaffDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/staffapi/lista/{Sesion.Usuario.BoxID}");
         }
         catch { }
     }
@@ -289,7 +289,7 @@
     {
         try
         {
-            listaCandidatos = await Http.GetFromJsonAsync<List<StaffDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/staffapi/candidatos/{Sesion.Usuario.BoxID}");
+            listaCandidatos = await Http.GetFromJsonAsync<List<StaffDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/staffapi/candidatos/{Sesion.Usuario.BoxID}");
         }
         catch { listaCandidatos = new List<StaffDto>(); }
     }
@@ -301,7 +301,7 @@
 
         try
         {
-            var resp = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/staffapi/ascender/{atleta.UsuarioID}", null);
+            var resp = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/staffapi/ascender/{atleta.UsuarioID}", null);
             if (resp.IsSuccessStatusCode)
             {
                 await App.Current.MainPage.DisplayAlert("¡Listo!", "Nuevo miembro del equipo agregado.", "OK");
@@ -319,7 +319,7 @@
 
         try
         {
-            var resp = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/staffapi/degradar/{staff.UsuarioID}", null);
+            var resp = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/staffapi/degradar/{staff.UsuarioID}", null);
             if (resp.IsSuccessStatusCode)
             {
                 await CargarStaff();
@@ -352,7 +352,7 @@
         try
         {
             var req = new AsignarPermisoDto { UsuarioID = staff.UsuarioID, ClavePermiso = clave, Activo = nuevoEstado };
-            await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/staffapi/permiso", req);
+            await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/staffapi/permiso", req);
         }
         catch { }
     }

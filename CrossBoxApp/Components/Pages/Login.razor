@@ -332,12 +332,12 @@
     {
         // Carga inicial
         try {
-            var response = await Http.GetAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/boxes");
+            var response = await Http.GetAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/authapi/boxes");
             if (response.IsSuccessStatusCode) listaBoxes = await response.Content.ReadFromJsonAsync<List<Boxes>>();
         } catch { }
         
         try {
-            var resPlanes = await Http.GetAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/boxesAPI/planes-sistema");
+            var resPlanes = await Http.GetAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/planes-sistema");
             if (resPlanes.IsSuccessStatusCode) listaPlanesSistema = await resPlanes.Content.ReadFromJsonAsync<List<PlanSistemaDto>>();
         } catch { }
 
@@ -351,7 +351,7 @@
             var guardado = await SecureStorage.Default.GetAsync("auth_token");
             if (!string.IsNullOrEmpty(guardado))
             {
-                var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/login-por-id/{guardado}");
+                var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/authapi/login-por-id/{guardado}");
                 if (response.IsSuccessStatusCode)
                 {
                     var usuario = await response.Content.ReadFromJsonAsync<UsuarioSesionDto>();
@@ -375,7 +375,7 @@
         try
         {
             var loginData = new { Username = loginUsername, Password = loginPassword };
-            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/login", loginData);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/authapi/login", loginData);
 
             if (response.IsSuccessStatusCode)
             {
@@ -439,7 +439,7 @@
         try
         {
             var data = new { Telefono = telefonoRecuperar };
-            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/recuperar-password", data);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/authapi/recuperar-password", data);
 
             if (response.IsSuccessStatusCode)
             {
@@ -508,7 +508,7 @@
         try
         {
             var nuevoUsuario = new { Nombre = regNombre, Apellidos = regApellidos, CorreoElectronico = regEmail, Telefono = regTelefono, Password = regPass, ConfirmPass = regConfirmPass, BoxID = regBoxId };
-            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/registrar", nuevoUsuario);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/authapi/registrar", nuevoUsuario);
 
             if (response.IsSuccessStatusCode)
             {
@@ -565,7 +565,7 @@
 
         try
         {
-            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/boxesAPI/registrar-nuevo", registroBox);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/registrar-nuevo", registroBox);
             if (response.IsSuccessStatusCode)
             {
                 await App.Current.MainPage.DisplayAlert("¡Bienvenido!", "Tu lugar de entrenamiento ha sido registrado. Tienes 1 MES DE PRUEBA GRATIS.", "OK");

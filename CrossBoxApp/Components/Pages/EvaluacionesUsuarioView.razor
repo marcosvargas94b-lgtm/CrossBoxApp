@@ -259,7 +259,7 @@
         try {
             cargando = true;
             var boxId = Sesion.Usuario.BoxID;
-            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/evaluacionesapi/usuario/{boxId}/{UsuarioId}");
+            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/evaluacionesapi/usuario/{boxId}/{UsuarioId}");
             if (response.IsSuccessStatusCode) 
                 listaEvaluaciones = await response.Content.ReadFromJsonAsync<List<EvaluacionVisualDto>>();
         }
@@ -287,7 +287,7 @@
                 EsNuevaMarca = esModoNuevaMarca 
             };
 
-            var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/evaluacionesapi/guardar", dto);
+            var r = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/evaluacionesapi/guardar", dto);
             
             if (r.IsSuccessStatusCode) 
             { 
@@ -311,7 +311,7 @@
         if (!c) return;
         
         try {
-            var r = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/evaluacionesapi/eliminar-registro/{testUsuarioId}", null);
+            var r = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/evaluacionesapi/eliminar-registro/{testUsuarioId}", null);
             if (r.IsSuccessStatusCode) await CargarDatos();
             else await App.Current.MainPage.DisplayAlert("Error", "No se pudo eliminar.", "OK");
         } 

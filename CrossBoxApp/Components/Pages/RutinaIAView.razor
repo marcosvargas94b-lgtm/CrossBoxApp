@@ -413,7 +413,7 @@
     {
         cargandoInicial = true;
         try {
-            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/IAEntrenador/activa/{Sesion.Usuario.UsuarioID}");
+            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/activa/{Sesion.Usuario.UsuarioID}");
             if (response.StatusCode == System.Net.HttpStatusCode.OK) {
                 rutinaGenerada = await response.Content.ReadFromJsonAsync<RutinaGeneradaDto>();
                 semanaActiva = 1; 
@@ -426,7 +426,7 @@
     {
         if(rutinaGenerada == null) return;
         try {
-            var lista = await Http.GetFromJsonAsync<List<string>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/IAEntrenador/progreso/{rutinaGenerada.IdBaseDatos}");
+            var lista = await Http.GetFromJsonAsync<List<string>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/progreso/{rutinaGenerada.IdBaseDatos}");
             diasCompletados = new HashSet<string>(lista ?? new List<string>());
         } catch {}
     }
@@ -436,7 +436,7 @@
         if (string.IsNullOrWhiteSpace(perfil.Lesiones)) perfil.Lesiones = "Ninguna";
         generando = true; errorMensaje = null;
         try {
-            var response = await Http.PostAsJsonAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/IAEntrenador/generar-rutina/{Sesion.Usuario.UsuarioID}", perfil);
+            var response = await Http.PostAsJsonAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/generar-rutina/{Sesion.Usuario.UsuarioID}", perfil);
             if (response.IsSuccessStatusCode) {
                 rutinaGenerada = await response.Content.ReadFromJsonAsync<RutinaGeneradaDto>();
                 semanaActiva = 1;
@@ -464,7 +464,7 @@
 
         try 
         {
-            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/IAEntrenador/feedback", datos);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/feedback", datos);
             
             if (response.IsSuccessStatusCode)
             {
@@ -522,7 +522,7 @@
                 NombreEjercicio = ejercicioActual.NombreEspanol
             };
 
-            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/IAEntrenador/reemplazar-ejercicio", dto);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/reemplazar-ejercicio", dto);
 
             if (response.IsSuccessStatusCode)
             {
@@ -559,7 +559,7 @@
     {
         cargandoResumen = true;
         try {
-            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/IAEntrenador/resumen-cierre/{rutinaGenerada.IdBaseDatos}");
+            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/resumen-cierre/{rutinaGenerada.IdBaseDatos}");
             if (response.IsSuccessStatusCode) {
                 resumenCierre = await response.Content.ReadFromJsonAsync<ResumenCierreDto>();
                 mostrandoResumen = true; 
@@ -579,12 +579,12 @@
 
         if (accion == "Generar Siguiente Nivel (Mantiene Historial)")
         {
-            await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/IAEntrenador/finalizar/{Sesion.Usuario.UsuarioID}", null);
+            await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/finalizar/{Sesion.Usuario.UsuarioID}", null);
             rutinaGenerada = null;
         }
         else if (accion == "Reiniciar Historial (Empezar de Cero)")
         {
-            await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/IAEntrenador/reiniciar/{Sesion.Usuario.UsuarioID}", null);
+            await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/reiniciar/{Sesion.Usuario.UsuarioID}", null);
             rutinaGenerada = null;
         }
     }

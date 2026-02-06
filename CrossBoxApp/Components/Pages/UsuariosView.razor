@@ -177,21 +177,28 @@
             <div class="modal-body">
                 <div class="mb-3">
                     <label class="form-label text-warning">Nombre *</label>
-                    <input type="text" @bind="nuevoAtleta.Nombre" class="form-control input-dark" placeholder="Ej: Pedro" />
+                    <input type="text" @bind="nuevoAtleta.Nombre" @bind:event="oninput" class="form-control input-dark" placeholder="Ej: Pedro" />
                 </div>
                 <div class="mb-3">
                     <label class="form-label text-warning">Apellidos *</label>
-                    <input type="text" @bind="nuevoAtleta.Apellidos" class="form-control input-dark" placeholder="Ej: Picapiedra" />
+                    <input type="text" @bind="nuevoAtleta.Apellidos" @bind:event="oninput" class="form-control input-dark" placeholder="Ej: Picapiedra" />
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label text-warning">Teléfono</label>
+                    <label class="form-label text-warning">Teléfono *</label>
                     <input type="tel"
-                           @bind="nuevoAtleta.Telefono"
+                           @bind="TelefonoFormateado"
+                           @bind:event="oninput"
                            class="form-control input-dark"
                            placeholder="Ej: 9611234567"
-                           maxlength="10"
-                           oninput="this.value = this.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');" />
+                           maxlength="10" />
+
+                    @if (!string.IsNullOrEmpty(nuevoAtleta.Telefono) && nuevoAtleta.Telefono.Length < 10)
+                    {
+                        <small class="text-danger" style="font-size: 0.7rem;">
+                            Faltan @(10 - nuevoAtleta.Telefono.Length) dígitos...
+                        </small>
+                    }
                 </div>
                 <div class="mb-3">
                     <label class="form-label text-warning">Correo (Opcional)</label>
@@ -206,8 +213,21 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn-cancel" @onclick="() => mostrarModalCrear = false">Cancelar</button>
-                <button class="btn-confirm fw-bold" @onclick="GuardarAtletaManual"><i class="fas fa-save"></i> GUARDAR</button>
+                <button class="btn-cancel" @onclick="() => mostrarModalCrear = false" disabled="@guardandoAtleta">Cancelar</button>
+
+                <button class="btn-confirm fw-bold @(EsFormularioValido ? "btn-valid" : "btn-invalid")"
+                        @onclick="GuardarAtletaManual"
+                        disabled="@(!EsFormularioValido || guardandoAtleta)">
+
+                    @if (guardandoAtleta)
+                    {
+                        <span><i class="fas fa-circle-notch fa-spin"></i> GUARDANDO...</span>
+                    }
+                    else
+                    {
+                        <span><i class="fas fa-save"></i> GUARDAR</span>
+                    }
+                </button>
             </div>
         </div>
     </div>
@@ -367,13 +387,42 @@
     @@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     @@keyframes slideDown { from { transform: scaleY(0); opacity: 0; } to { transform: scaleY(1); opacity: 1; } }
     @@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); } 70% { box-shadow: 0 0 0 6px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
+
+    .btn-confirm.btn-invalid {
+        background-color: #444 !important;
+        color: #888 !important;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
+    }
+
+    /* Botón cuando el formulario SÍ es válido */
+    .btn-confirm.btn-valid {
+        background-color: #F8C545 !important;
+        color: black !important;
+        cursor: pointer;
+        box-shadow: 0 0 15px rgba(248, 197, 69, 0.4);
+        transition: all 0.3s ease;
+    }
+
+        .btn-confirm.btn-valid:hover {
+            transform: scale(1.05);
+            background-color: #ffca28 !important;
+        }
 </style>
 
 @code {
     private string filtroEstado = "TODOS";
     private string textoBusqueda = "";
     private List<AtletaConEstadoDto> listaUsuarios = new List<AtletaConEstadoDto>();
-    
+    private bool EsFormularioValido =>
+    !string.IsNullOrWhiteSpace(nuevoAtleta.Nombre) &&
+    !string.IsNullOrWhiteSpace(nuevoAtleta.Apellidos) &&
+    !string.IsNullOrEmpty(nuevoAtleta.Telefono) &&
+    nuevoAtleta.Telefono.Trim().Length == 10;
+
+    private bool guardandoAtleta = false;
+
     private List<AtletaConEstadoDto> UsuariosFiltrados
     {
         get
@@ -414,7 +463,23 @@
     private DateTime fechaPagoSeleccionada = DateTime.Today;
     private bool mostrarModalCrear = false;
     private CrearAtletaManualDto nuevoAtleta = new CrearAtletaManualDto();
-
+    
+    private string TelefonoFormateado
+    {
+        get => nuevoAtleta.Telefono;
+        set
+        {
+            // Filtramos: Solo permitimos dígitos del 0 al 9
+            if (value != null)
+            {
+                nuevoAtleta.Telefono = new string(value.Where(c => char.IsDigit(c)).ToArray());
+            }
+            else
+            {
+                nuevoAtleta.Telefono = string.Empty;
+            }
+        }
+    }
     public class CrearAtletaManualDto
     {
         public Guid BoxID { get; set; }
@@ -449,7 +514,7 @@
     {
         try {
             cargando = true;
-            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/pagosapi/atletas-status/{Sesion.Usuario.BoxID}");
+            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/atletas-status/{Sesion.Usuario.BoxID}");
             if (response.IsSuccessStatusCode) listaUsuarios = await response.Content.ReadFromJsonAsync<List<AtletaConEstadoDto>>();
         } catch { } finally { cargando = false; }
     }
@@ -484,7 +549,7 @@
     {
         try {
             var req = new RenovarPagoRequest { UsuarioID = usuarioSeleccionado.UsuarioID, NuevaFechaInicio = fechaPagoSeleccionada };
-            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/pagosapi/renovar", req);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/renovar", req);
             if (response.IsSuccessStatusCode) { 
                 await App.Current.MainPage.DisplayAlert("Éxito", "Pago registrado.", "OK"); 
                 mostrarModalPago = false; 
@@ -502,38 +567,31 @@
 
     private async Task GuardarAtletaManual()
     {
-        // 1. Validar Nombre y Apellidos
+        // Si ya se está enviando una petición, ignorar clics extra
+        if (guardandoAtleta) return;
+
+        // 1. Validaciones básicas
         if (string.IsNullOrWhiteSpace(nuevoAtleta.Nombre) || string.IsNullOrWhiteSpace(nuevoAtleta.Apellidos))
         {
             await App.Current.MainPage.DisplayAlert("Error", "Nombre y Apellidos son obligatorios", "OK");
             return;
         }
 
-        // 2. VALIDACIÓN DE TELÉFONO BLINDADA 🛡️
-        if (!string.IsNullOrEmpty(nuevoAtleta.Telefono))
+        // 2. Validación de Teléfono
+        if (string.IsNullOrEmpty(nuevoAtleta.Telefono) || nuevoAtleta.Telefono.Trim().Length != 10 || !long.TryParse(nuevoAtleta.Telefono, out _))
         {
-            // Quitamos espacios en blanco por si acaso
-            nuevoAtleta.Telefono = nuevoAtleta.Telefono.Trim();
-
-            // Verificamos que sean números y que sean exactamente 10
-            if (!long.TryParse(nuevoAtleta.Telefono, out _) || nuevoAtleta.Telefono.Length != 10)
-            {
-                await App.Current.MainPage.DisplayAlert("Teléfono Inválido", "El número debe tener exactamente 10 dígitos numéricos.", "Corregir");
-                return;
-            }
-        }
-        
-        else
-        {
-            await App.Current.MainPage.DisplayAlert("Falta Teléfono", "Debes ingresar un número de 10 dígitos.", "OK");
+            await App.Current.MainPage.DisplayAlert("Teléfono Inválido", "Ingresa un número de 10 dígitos numéricos.", "OK");
             return;
         }
-        
 
         try
         {
+            // ACTIVAR LOADER Y BLOQUEO
+            guardandoAtleta = true;
+            StateHasChanged(); // Forzar actualización de UI
+
             nuevoAtleta.BoxID = Sesion.Usuario.BoxID;
-            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/usuariosapi/crear-manual", nuevoAtleta);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/crear-manual", nuevoAtleta);
 
             if (response.IsSuccessStatusCode)
             {
@@ -546,18 +604,25 @@
                 // Intentar leer error del backend
                 try
                 {
-                    var msg = await response.Content.ReadFromJsonAsync<dynamic>();
-                    await App.Current.MainPage.DisplayAlert("Error", msg.mensaje.ToString(), "OK");
+                    var errorData = await response.Content.ReadFromJsonAsync<dynamic>();
+                    string errorMsg = errorData?.mensaje?.ToString() ?? "Error desconocido en el servidor.";
+                    await App.Current.MainPage.DisplayAlert("Atención", errorMsg, "OK");
                 }
                 catch
                 {
-                    await App.Current.MainPage.DisplayAlert("Error", "No se pudo crear el atleta.", "OK");
+                    await App.Current.MainPage.DisplayAlert("Error", "No se pudo crear el atleta. Revisa el formato de los datos.", "OK");
                 }
             }
         }
         catch (Exception ex)
         {
-            await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK");
+            await App.Current.MainPage.DisplayAlert("Error de Conexión", "No se pudo contactar con el servidor. " + ex.Message, "OK");
+        }
+        finally
+        {
+            // SIEMPRE DESACTIVAR EL LOADER AL FINAL (éxito o error)
+            guardandoAtleta = false;
+            StateHasChanged();
         }
     }
 
@@ -569,7 +634,7 @@
         bool confirm = await App.Current.MainPage.DisplayAlert("⚠️ ELIMINAR", $"Se borrarán datos de {u.NombreCompleto}. ¿Seguro?", "SÍ, BORRAR", "Cancelar"); 
         if (!confirm) return; 
         try { 
-            var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/usuariosapi/eliminar-definitivo/{u.UsuarioID}", null); 
+            var response = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/eliminar-definitivo/{u.UsuarioID}", null); 
             if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("Hecho", "Eliminado.", "OK"); listaUsuarios.Remove(u); } 
             else await App.Current.MainPage.DisplayAlert("Error", "No se pudo borrar.", "OK"); 
         } catch(Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } 

@@ -270,7 +270,7 @@
             }
 
             var boxId = Sesion.Usuario.BoxID;
-            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/obtener-hoy/{boxId}");
+            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/obtener-hoy/{boxId}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -305,7 +305,7 @@
             var boxId = Sesion.Usuario.BoxID;
             var fechaStr = DateTime.Now.ToString("yyyy-MM-dd");
 
-            var response = await Http.DeleteAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/eliminar-dia/{boxId}/{fechaStr}");
+            var response = await Http.DeleteAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/eliminar-dia/{boxId}/{fechaStr}");
 
             if (response.IsSuccessStatusCode)
             {

@@ -269,7 +269,7 @@
             var boxId = Sesion.Usuario.BoxID;
             var miId = Sesion.Usuario.UsuarioID;
             // Nota: Aquí traigo TODOS los compañeros una sola vez
-            lista = await Http.GetFromJsonAsync<List<CompaneroDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/companeros/{boxId}/{miId}");
+            lista = await Http.GetFromJsonAsync<List<CompaneroDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/companeros/{boxId}/{miId}");
         }
         catch (Exception ex)
         {

@@ -340,7 +340,7 @@
 
         try
         {
-            logsDelMes = await Http.GetFromJsonAsync<List<RunningLogs>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/runningapi/plan/{Sesion.Usuario.UsuarioID}/{fechaActual.Month}/{fechaActual.Year}");
+            logsDelMes = await Http.GetFromJsonAsync<List<RunningLogs>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/plan/{Sesion.Usuario.UsuarioID}/{fechaActual.Month}/{fechaActual.Year}");
         }
         catch { logsDelMes = new List<RunningLogs>(); }
     }
@@ -380,7 +380,7 @@
     {
         try
         {
-            var resp = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/runningapi/guardar-feedback", logSeleccionado);
+            var resp = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/guardar-feedback", logSeleccionado);
             if (resp.IsSuccessStatusCode)
             {
                 mostrarModal = false;

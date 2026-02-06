@@ -32,11 +32,31 @@
 
     <script src="_framework/blazor.webview.js" autostart="false"></script>
     <script>
-        window.reproducirSonido = (idElemento) => {
-            var audio = document.getElementById(idElemento);
+        window.audioUnlocked = false;
+
+        window.prepararAudio = () => {
+            if (window.audioUnlocked) return;
+
+            const audios = ['audio-beep', 'audio-go', 'audio-medio'];
+            audios.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.volume = 0; // Silencio momentáneo
+                    el.play().then(() => {
+                        el.pause();
+                        el.currentTime = 0;
+                        el.volume = 1; // Restaurar volumen
+                    }).catch(e => console.log("Esperando toque usuario..."));
+                }
+            });
+            window.audioUnlocked = true;
+        };
+
+        window.reproducirSonido = (id) => {
+            const audio = document.getElementById(id);
             if (audio) {
                 audio.currentTime = 0;
-                audio.play().catch(e => console.log("Error audio:", e));
+                audio.play().catch(e => console.log("Audio bloqueado:", e));
             }
         };
     </script>

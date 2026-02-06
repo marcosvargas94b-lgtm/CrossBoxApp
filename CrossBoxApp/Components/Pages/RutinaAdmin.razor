@@ -239,7 +239,7 @@
     private async Task CargarRutinas()
     {
         try {
-            rutinas = await Http.GetFromJsonAsync<List<RutinaAdminDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/rutinasapi/semana/{UsuarioId}");
+            rutinas = await Http.GetFromJsonAsync<List<RutinaAdminDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/semana/{UsuarioId}");
         } catch { rutinas = new List<RutinaAdminDto>(); }
     }
 
@@ -270,7 +270,7 @@
             Descripcion = textoEditando 
         };
 
-        var resp = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/rutinasapi/guardar", req);
+        var resp = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/guardar", req);
         
         if (resp.IsSuccessStatusCode)
         {
@@ -288,7 +288,7 @@
         bool confirm = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Borrar rutina de este día?", "Sí", "No");
         if (confirm)
         {
-            await Http.DeleteAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/rutinasapi/eliminar/{UsuarioId}/{dia}");
+            await Http.DeleteAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/eliminar/{UsuarioId}/{dia}");
             await CargarRutinas();
         }
     }

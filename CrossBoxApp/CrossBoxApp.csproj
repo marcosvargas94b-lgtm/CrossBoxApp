@@ -55,7 +55,7 @@
 
 
     <PropertyGroup Condition="'$(TargetFramework)'=='net9.0-ios'">
-      <CodesignKey>Apple Development: Created via API (H8CV994AF7)</CodesignKey>
+      <CodesignKey>Apple Development: Created via API (9G8X59256X)</CodesignKey>
       <CodesignProvision>VS: com.alfafit.aftrack Development</CodesignProvision>
     </PropertyGroup>
 
@@ -94,7 +94,9 @@
     </ItemGroup>
 
     <ItemGroup>
-      <MauiAsset Include="wwwroot\Sonidos\beep.mp3" />
+      <MauiAsset Include="wwwroot\Sonidos\beep.mp3">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </MauiAsset>
       <MauiAsset Include="wwwroot\Sonidos\medio.mp3" />
     </ItemGroup>
 

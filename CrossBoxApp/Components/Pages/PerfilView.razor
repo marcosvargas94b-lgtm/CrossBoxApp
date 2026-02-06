@@ -12,7 +12,7 @@
         <div class="nav-left" @onclick="Volver">
             <i class="fas fa-arrow-left"></i> VOLVER
         </div>
-        <div class="nav-title">MI PERFIL</div>
+        <div class="nav-title">EDITAR PERFIL</div>
         <div class="nav-right"></div>
     </div>
 
@@ -20,63 +20,135 @@
         
         <div class="profile-wrapper fade-in">
             
+            @* --- FOTO DE PERFIL (AVATAR) --- *@
             <div class="photo-section">
-                <div class="image-wrapper" @onclick="SeleccionarFotoNativa">
+                <div class="image-wrapper" @onclick='() => SeleccionarFoto("Avatar")'>
                     
-                    @if (abriendoGaleria)
+                    @* Loader Específico para Avatar *@
+                    @if (cargandoAvatar)
                     {
-                        <div class="loading-overlay">
-                            <div class="spinner-border text-warning" role="status"></div>
-                        </div>
+                        <div class="loading-overlay"><div class="spinner-border text-warning"></div></div>
                     }
 
-                    @if (!string.IsNullOrEmpty(previewImagen))
+                    @if (!string.IsNullOrEmpty(previewAvatar))
                     {
-                        <img src="@previewImagen" class="profile-img" />
+                        <img src="@previewAvatar" class="profile-img" />
                     }
                     else
                     {
-                        <img src="https://via.placeholder.com/150/000000/F8C545?text=FOTO" class="profile-img" />
+                        <div class="avatar-placeholder">@(miPerfil.Nombre?.Substring(0,1) ?? "A")</div>
                     }
                     
                     <div class="upload-btn">
                         <i class="fas fa-camera"></i>
                     </div>
                 </div>
-                <p class="username">@(Sesion.Usuario?.Nombre + " " + Sesion.Usuario?.Apellidos ?? "ATLETA")</p>
-                <small class="text-muted">Toca el círculo para cambiar foto</small>
+                <p class="username">@(Sesion.Usuario?.Nombre + " " + Sesion.Usuario?.Apellidos)</p>
+                <small class="text-muted">Toca para cambiar foto</small>
             </div>
 
             <div class="form-section">
-                <label class="lbl-input">Acerca de mí</label>
-                <textarea @bind="miPerfil.Descripcion" class="input-dark text-area" placeholder="Ej: Gymrat, Crossfitero, Runner..."></textarea>
+                
+                @* --- DATOS PERSONALES --- *@
+                <h5 class="section-subtitle">DATOS PERSONALES <span style="color:red">*</span></h5>
 
-                <label class="lbl-input">WhatsApp de Contacto (Para Matches)</label>
-                
-                @* --- DISEÑO TIPO "INPUT GROUP" CON ÍCONO SÓLIDO ESTILO WHATSAPP --- *@
-                <div class="whatsapp-input-group">
-                    <div class="ws-icon-box">
-                        @* Usamos un icono sólido (fas) genérico para evitar desfases, pero sobre fondo verde *@
-                        <i class="fas fa-comment-dots"></i>
+                <label class="lbl-input">Nombre <span class="text-danger">*</span></label>
+                <input type="text" @bind="miPerfil.Nombre" class="input-dark mb-3" placeholder="Obligatorio" />
+
+                <label class="lbl-input">Apellidos <span class="text-danger">*</span></label>
+                <input type="text" @bind="miPerfil.Apellidos" class="input-dark mb-3" placeholder="Obligatorio" />
+
+                <div class="row-switch">
+                    <div style="flex:1; margin-right:10px;">
+                        <label class="lbl-input">Apodo (Nickname)</label>
+                        <input type="text" @bind="miPerfil.Apodo" class="input-dark" placeholder="Opcional (Ej. La Bestia)" />
                     </div>
-                    <input type="number" 
-                           @bind="miPerfil.Whatsapp" 
-                           class="ws-input-field" 
-                           placeholder="Número a 10 dígitos" />
+                    <div class="switch-container">
+                        <label class="lbl-small">¿USAR?</label>
+                        <label class="switch">
+                            <input type="checkbox" @bind="miPerfil.UsarApodo">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
                 </div>
-                
-                <button class="btn-save" @onclick="GuardarPerfil" disabled="@guardando">
+                <small class="text-info-app mb-4"><i class="fas fa-info-circle"></i> Si activas esto, aparecerás con tu apodo en los resultados.</small>
+
+                <label class="lbl-input">Acerca de mí</label>
+                <textarea @bind="miPerfil.Descripcion" class="input-dark text-area" placeholder="Opcional: Gymrat, Crossfitero..."></textarea>
+
+                <label class="lbl-input">WhatsApp (Contacto para Matches)</label>
+                <div class="whatsapp-input-group">
+                    <div class="ws-icon-box"><i class="fas fa-comment-dots"></i></div>
+                    <input type="number" @bind="miPerfil.Whatsapp" class="ws-input-field" placeholder="Opcional (10 dígitos)" />
+                </div>
+
+                @* --- FOTOS CERTIFICADO --- *@
+                <h5 class="section-subtitle mt-4"><i class="fas fa-certificate text-warning"></i> FOTOS CERTIFICADO</h5>
+                <p class="text-muted small mb-3">Opcionales. Se usarán para generar tus certificados y mostrar en perfiles.</p>
+
+                <div class="cert-grid">
+                    @* FOTO 1 *@
+                    <div class="cert-box">
+                        <label>FOTO 1 (Acción)</label>
+                        <div class="cert-preview" @onclick='() => SeleccionarFoto("Cert1")' 
+                             style="@(!string.IsNullOrEmpty(previewCert1) ? $"background-image:url('{previewCert1}')" : "")">
+                            
+                            @* Loader Específico Foto 1 *@
+                            @if (cargandoCert1)
+                            {
+                                <div class="loading-overlay-square"><div class="spinner-border text-warning spinner-sm"></div></div>
+                            }
+
+                            @if (string.IsNullOrEmpty(previewCert1) && !cargandoCert1)
+                            {
+                                <i class="fas fa-plus fa-2x text-muted"></i>
+                            }
+                            
+                            @if (!string.IsNullOrEmpty(previewCert1) && !cargandoCert1)
+                            {
+                                <button class="btn-delete-img" @onclick:stopPropagation="true" @onclick='() => EliminarFoto("Cert1")'>
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    @* FOTO 2 *@
+                    <div class="cert-box">
+                        <label>FOTO 2 (Pose)</label>
+                        <div class="cert-preview" @onclick='() => SeleccionarFoto("Cert2")'
+                             style="@(!string.IsNullOrEmpty(previewCert2) ? $"background-image:url('{previewCert2}')" : "")">
+                            
+                            @* Loader Específico Foto 2 *@
+                            @if (cargandoCert2)
+                            {
+                                <div class="loading-overlay-square"><div class="spinner-border text-warning spinner-sm"></div></div>
+                            }
+
+                            @if (string.IsNullOrEmpty(previewCert2) && !cargandoCert2)
+                            {
+                                <i class="fas fa-plus fa-2x text-muted"></i>
+                            }
+                            
+                            @if (!string.IsNullOrEmpty(previewCert2) && !cargandoCert2)
+                            {
+                                <button class="btn-delete-img" @onclick:stopPropagation="true" @onclick='() => EliminarFoto("Cert2")'>
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                @* --- BOTÓN GUARDAR --- *@
+                <button class="btn-save mt-4" @onclick="GuardarTodo" disabled="@guardando">
                     @if (guardando)
                     {
                         <span><i class="fas fa-spinner fa-spin"></i> GUARDANDO...</span>
                     }
-                    else if (esEdicion)
-                    {
-                        <span><i class="fas fa-edit"></i> ACTUALIZAR DATOS</span>
-                    }
                     else
                     {
-                        <span>GUARDAR PERFIL</span>
+                        <span>GUARDAR CAMBIOS</span>
                     }
                 </button>
             </div>
@@ -88,236 +160,223 @@
 </div>
 
 <style>
-    /* --- ESTRUCTURA BASE --- */
-    .main-layout {
-        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1;
-    }
+    /* Estructura */
+    .main-layout { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0d0d0d; display: flex; flex-direction: column; }
+    .navbar-container { background: #1a1a1a; padding: 15px; border-bottom: 1px solid #F8C545; display: flex; justify-content: space-between; color: white; font-family: 'Oswald'; align-items: center; flex-shrink: 0; }
+    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; }
+    .nav-title { font-size: 1.2rem; font-weight: bold; letter-spacing: 1px; }
+    .nav-right { width: 50px; }
+    .scrollable-content { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; }
+    .profile-wrapper { width: 100%; max-width: 500px; }
 
-    .navbar-container {
-        flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px);
-        padding-bottom: 10px; padding-left: 20px; padding-right: 20px;
-        background-color: #0d0d0d; border-bottom: 1px solid #F8C545;
-        color: white; display: flex; justify-content: space-between; align-items: center;
-        z-index: 100; font-family: 'Oswald'; min-height: 60px;
-    }
-
-    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
-    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
-    .nav-right { width: 60px; }
-
-    .scrollable-content {
-        flex-grow: 1; overflow-y: auto; padding: 20px;
-        display: flex; flex-direction: column; align-items: center;
-        -webkit-overflow-scrolling: touch; padding-bottom: 40px;
-    }
-
-    /* --- ESTILOS DE PERFIL --- */
-    .profile-wrapper { width: 100%; max-width: 500px; display: flex; flex-direction: column; align-items: center; }
-
-    .photo-section { text-align: center; margin-bottom: 30px; margin-top: 20px; }
-
-    .image-wrapper {
-        position: relative; width: 150px; height: 150px; margin: 0 auto 10px auto;
-        cursor: pointer; border-radius: 50%; transition: transform 0.1s;
-    }
-    .image-wrapper:active { transform: scale(0.95); opacity: 0.8; }
-
-    .profile-img {
-        width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
-        border: 4px solid #F8C545; background-color: #222; box-shadow: 0 0 20px rgba(248,197,69,0.2);
-    }
-
-    .upload-btn {
-        position: absolute; bottom: 5px; right: 5px; background-color: #F8C545; color: black;
-        width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.5); pointer-events: none;
-    }
-
-    .loading-overlay {
-        position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7);
-        border-radius: 50%; display: flex; justify-content: center; align-items: center; z-index: 10; backdrop-filter: blur(2px);
-    }
-
-    .username { font-family: 'Oswald'; font-size: 1.5rem; color: #F8C545; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
-    .text-muted { color: #888; font-size: 0.8rem; }
-
-    .form-section { width: 100%; }
-
-    .lbl-input { color: #F8C545; font-size: 0.9rem; margin-bottom: 5px; display: block; font-weight: bold; font-family: 'Oswald'; letter-spacing: 0.5px; }
-
-    .input-dark {
-        width: 100%; background-color: #1a1a1a; border: 1px solid #444; color: white;
-        padding: 12px; border-radius: 8px; margin-bottom: 20px; outline: none; font-family: 'Roboto';
-    }
-    .input-dark:focus { border-color: #F8C545; }
-    .text-area { height: 100px; resize: none; }
-
-    /* --- NUEVO ESTILO WHATSAPP (Input Group Sólido) --- */
-    .whatsapp-input-group {
-        display: flex;
-        align-items: center;
-        background-color: #1a1a1a;
-        border: 1px solid #444;
-        border-radius: 8px;
-        overflow: hidden; /* Para que el borde redondeado corte las esquinas */
-        margin-bottom: 20px;
-        height: 50px;
-    }
+    /* Avatar */
+    .photo-section { text-align: center; margin-bottom: 20px; }
+    .image-wrapper { position: relative; width: 120px; height: 120px; margin: 0 auto 10px auto; cursor: pointer; border-radius: 50%; }
+    .profile-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid #F8C545; }
+    .avatar-placeholder { width: 100%; height: 100%; border-radius: 50%; background: #333; color: white; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; font-family: 'Oswald'; border: 3px solid #F8C545; }
+    .upload-btn { position: absolute; bottom: 0; right: 0; background-color: #F8C545; color: black; width: 35px; height: 35px; border-radius: 50%; display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
+    .username { font-family: 'Oswald'; font-size: 1.2rem; color: #F8C545; margin: 0; text-transform: uppercase; }
     
-    .whatsapp-input-group:focus-within {
-        border-color: #25D366; /* Borde verde al escribir, estilo WhatsApp */
-        box-shadow: 0 0 10px rgba(37, 211, 102, 0.2);
-    }
+    /* Inputs */
+    .section-subtitle { color: #888; font-size: 0.9rem; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 15px; font-weight: bold; font-family: 'Oswald'; letter-spacing: 1px; }
+    .lbl-input { color: #F8C545; font-size: 0.85rem; margin-bottom: 4px; display: block; font-weight: bold; font-family: 'Roboto'; }
+    .input-dark { width: 100%; background-color: #1a1a1a; border: 1px solid #444; color: white; padding: 10px; border-radius: 8px; outline: none; font-family: 'Roboto'; font-size: 1rem; }
+    .input-dark:focus { border-color: #F8C545; }
+    .text-area { height: 80px; resize: none; margin-bottom: 15px; }
+    .mb-3 { margin-bottom: 15px; }
+    .text-danger { color: #dc3545; }
 
-    .ws-icon-box {
-        background-color: #25D366; /* Fondo VERDE WhatsApp */
-        color: white; /* Icono blanco para contraste */
-        width: 50px;
-        height: 100%; /* Ocupa toda la altura */
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 1.5rem;
-        flex-shrink: 0; /* Evita que se aplaste */
-    }
+    /* Switch Apodo */
+    .row-switch { display: flex; align-items: center; margin-bottom: 5px; }
+    .switch-container { display: flex; flex-direction: column; align-items: center; }
+    .lbl-small { font-size: 0.65rem; color: #ccc; margin-bottom: 2px; }
+    .switch { position: relative; display: inline-block; width: 46px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: #F8C545; }
+    input:checked + .slider:before { transform: translateX(22px); background-color: black; }
+    .text-info-app { display: block; font-size: 0.75rem; color: #888; }
 
-    .ws-input-field {
-        flex-grow: 1; /* Ocupa el resto del espacio */
-        background: transparent;
-        border: none;
-        color: white;
-        padding: 0 15px;
-        height: 100%;
-        outline: none;
-        font-family: 'Roboto';
-        font-size: 1rem;
-    }
-    /* Quitamos las flechas del input number */
-    .ws-input-field::-webkit-outer-spin-button,
-    .ws-input-field::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    /* WhatsApp Style */
+    .whatsapp-input-group { display: flex; align-items: center; background-color: #1a1a1a; border: 1px solid #444; border-radius: 8px; overflow: hidden; height: 45px; margin-bottom: 20px; }
+    .ws-icon-box { background-color: #25D366; color: white; width: 45px; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 1.3rem; }
+    .ws-input-field { flex-grow: 1; background: transparent; border: none; color: white; padding: 0 15px; height: 100%; outline: none; font-size: 1rem; }
+    .ws-input-field::-webkit-outer-spin-button, .ws-input-field::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .ws-input-field { -moz-appearance: textfield; }
 
+    /* Certificados */
+    .cert-grid { display: flex; gap: 15px; }
+    .cert-box { flex: 1; text-align: center; }
+    .cert-box label { color: #ccc; font-size: 0.75rem; display: block; margin-bottom: 5px; }
+    .cert-preview { width: 100%; height: 100px; background-color: #1a1a1a; border: 2px dashed #444; border-radius: 10px; display: flex; justify-content: center; align-items: center; cursor: pointer; background-size: cover; background-position: center; position: relative; overflow: hidden; }
+    .btn-delete-img { position: absolute; top: 0; right: 0; background: rgba(220, 53, 69, 0.8); color: white; border: none; width: 30px; height: 30px; border-bottom-left-radius: 10px; font-size: 0.9rem; display: flex; justify-content: center; align-items: center; }
+
+    /* Loaders */
+    .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); border-radius: 50%; display: flex; justify-content: center; align-items: center; z-index: 10; }
+    .loading-overlay-square { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 10; }
+    .spinner-sm { width: 1.5rem; height: 1.5rem; border-width: 0.2em; }
 
     /* Botón Guardar */
-    .btn-save {
-        width: 100%; background: linear-gradient(45deg, #F8C545, #e0a800); color: black;
-        font-family: 'Oswald'; font-size: 1.1rem; border: none; padding: 14px;
-        border-radius: 8px; font-weight: bold; margin-top: 10px; letter-spacing: 1px;
-        box-shadow: 0 4px 15px rgba(248,197,69,0.3);
-    }
+    .btn-save { width: 100%; background: linear-gradient(45deg, #F8C545, #e0a800); color: black; font-family: 'Oswald'; font-size: 1.1rem; border: none; padding: 14px; border-radius: 8px; font-weight: bold; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(248,197,69,0.3); }
     .btn-save:disabled { background: #333; color: #666; box-shadow: none; }
-    .btn-save:active { transform: scale(0.98); }
 
     .fade-in { animation: fadeIn 0.5s ease; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 @code {
-    private PerfilDto miPerfil = new PerfilDto();
-    private string previewImagen = "";
+    public class PerfilEdicionDto
+    {
+        public Guid UsuarioID { get; set; }
+        public string Nombre { get; set; }
+        public string Apellidos { get; set; }
+        public string Descripcion { get; set; }
+        public string Whatsapp { get; set; }
+        public string FotoPerfilUrl { get; set; }
+        public string Apodo { get; set; }
+        public bool UsarApodo { get; set; }
+        public string FotoCertificado1Url { get; set; }
+        public string FotoCertificado2Url { get; set; }
+    }
+
+    private PerfilEdicionDto miPerfil = new PerfilEdicionDto();
+    
+    // Previews
+    private string previewAvatar = "";
+    private string previewCert1 = "";
+    private string previewCert2 = "";
+
+    // Archivos seleccionados
+    private FileResult fileAvatar;
+    private FileResult fileCert1;
+    private FileResult fileCert2;
+
+    // Flags de borrado
+    private bool borrarCert1 = false;
+    private bool borrarCert2 = false;
+
+    // Estados de Carga
     private bool guardando = false;
-    private bool esEdicion = false;
-    private FileResult archivoSeleccionadoNativo;
-    private bool abriendoGaleria = false; 
+    private bool cargandoAvatar = false;
+    private bool cargandoCert1 = false;
+    private bool cargandoCert2 = false;
 
     protected override async Task OnInitializedAsync()
     {
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
-        await CargarPerfilExistente();
+        await CargarDatos();
     }
 
-    private async Task SeleccionarFotoNativa()
+    private async Task CargarDatos()
     {
-        if (abriendoGaleria) return;
-        abriendoGaleria = true;
-        StateHasChanged(); 
-        await Task.Delay(100); 
-
-        if (DeviceInfo.Platform != DevicePlatform.WinUI)
+        try
         {
-            if (!await VerificarPermisosGaleria()) 
+            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/PerfilApi/obtener-edicion/{Sesion.Usuario.UsuarioID}");
+            if (response.IsSuccessStatusCode)
             {
-                abriendoGaleria = false;
-                StateHasChanged();
-                return;
+                miPerfil = await response.Content.ReadFromJsonAsync<PerfilEdicionDto>();
+                
+                // Cargar previews iniciales (evitando nulls para que no truene)
+                previewAvatar = miPerfil.FotoPerfilUrl ?? "";
+                previewCert1 = miPerfil.FotoCertificado1Url ?? "";
+                previewCert2 = miPerfil.FotoCertificado2Url ?? "";
             }
         }
+        catch { /* Error silencioso */ }
+    }
+
+    private async Task SeleccionarFoto(string tipo)
+    {
+        // 1. Activar loader correspondiente
+        if (tipo == "Avatar") cargandoAvatar = true;
+        else if (tipo == "Cert1") cargandoCert1 = true;
+        else if (tipo == "Cert2") cargandoCert2 = true;
+        
+        StateHasChanged(); // Forzar refresco UI para mostrar loader
 
         try
         {
+            // 2. Uso seguro de MediaPicker en MainThread para evitar errores en Android
             FileResult resultado = null;
-            if (DeviceInfo.Platform == DevicePlatform.WinUI)
+            await MainThread.InvokeOnMainThreadAsync(async () => 
             {
-                var opciones = new PickOptions { PickerTitle = "Selecciona una imagen", FileTypes = FilePickerFileType.Images };
-                await MainThread.InvokeOnMainThreadAsync(async () => { 
-                    try { resultado = await FilePicker.Default.PickAsync(opciones); } catch {} 
-                });
-            }
-            else
-            {
-                resultado = await MediaPicker.Default.PickPhotoAsync();
-            }
+                // NOTA: Si esto falla en Android, asegúrate de tener permisos en AndroidManifest.xml
+                // <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+                // <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+                try {
+                    resultado = await MediaPicker.Default.PickPhotoAsync();
+                } catch (Exception ex) {
+                    // Si el usuario cancela o no hay permisos
+                    Console.WriteLine("PickPhoto error: " + ex.Message);
+                }
+            });
 
             if (resultado != null)
             {
                 using var stream = await resultado.OpenReadAsync();
-                using var memoryStream = new MemoryStream();
-                await stream.CopyToAsync(memoryStream);
-                memoryStream.Position = 0;
-                var buffer = memoryStream.ToArray();
-                previewImagen = $"data:image/png;base64,{Convert.ToBase64String(buffer)}";
-                archivoSeleccionadoNativo = resultado;
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                
+                var base64 = Convert.ToBase64String(ms.ToArray());
+                var previewUrl = $"data:image/jpeg;base64,{base64}";
+
+                if (tipo == "Avatar") 
+                {
+                    fileAvatar = resultado;
+                    previewAvatar = previewUrl;
+                }
+                else if (tipo == "Cert1") 
+                {
+                    fileCert1 = resultado;
+                    previewCert1 = previewUrl;
+                    borrarCert1 = false; // Ya no borramos, reemplazamos
+                }
+                else if (tipo == "Cert2") 
+                {
+                    fileCert2 = resultado;
+                    previewCert2 = previewUrl;
+                    borrarCert2 = false;
+                }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error foto: " + ex.Message);
+            await App.Current.MainPage.DisplayAlert("Aviso", "No se pudo cargar la imagen. Verifica los permisos de la app.", "OK");
         }
         finally
         {
-            abriendoGaleria = false;
+            // 3. Apagar loader
+            if (tipo == "Avatar") cargandoAvatar = false;
+            else if (tipo == "Cert1") cargandoCert1 = false;
+            else if (tipo == "Cert2") cargandoCert2 = false;
+            
             StateHasChanged();
         }
     }
 
-    private async Task<bool> VerificarPermisosGaleria()
+    private void EliminarFoto(string tipo)
     {
-        var estado = await Permissions.CheckStatusAsync<Permissions.Photos>();
-        if (estado != PermissionStatus.Granted) estado = await Permissions.RequestAsync<Permissions.Photos>();
-        if (estado != PermissionStatus.Granted)
+        if (tipo == "Cert1")
         {
-            await App.Current.MainPage.DisplayAlert("Permiso Requerido", "Necesitamos acceso a tus fotos.", "Entendido");
-            return false;
+            previewCert1 = "";
+            fileCert1 = null;
+            borrarCert1 = true;
         }
-        return true;
+        else if (tipo == "Cert2")
+        {
+            previewCert2 = "";
+            fileCert2 = null;
+            borrarCert2 = true;
+        }
     }
 
-    private async Task CargarPerfilExistente()
+    private async Task GuardarTodo()
     {
-        try
+        // 1. VALIDACIÓN ÚNICA: Solo Nombre y Apellido
+        if (string.IsNullOrWhiteSpace(miPerfil.Nombre) || string.IsNullOrWhiteSpace(miPerfil.Apellidos))
         {
-            var userId = Sesion.Usuario.UsuarioID;
-            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/PerfilApi/obtener/{userId}");
-            if (response.IsSuccessStatusCode)
-            {
-                var perfilEncontrado = await response.Content.ReadFromJsonAsync<PerfilDto>();
-                if (perfilEncontrado != null)
-                {
-                    miPerfil = perfilEncontrado;
-                    esEdicion = true;
-                    if (!string.IsNullOrEmpty(miPerfil.FotoPerfil)) previewImagen = miPerfil.FotoPerfil;
-                }
-            }
-        }
-        catch { }
-    }
-
-    private async Task GuardarPerfil()
-    {
-        if (string.IsNullOrWhiteSpace(miPerfil.Descripcion) || string.IsNullOrWhiteSpace(miPerfil.Whatsapp))
-        {
-            await App.Current.MainPage.DisplayAlert("Faltan Datos", "Descripción y WhatsApp obligatorios.", "OK");
+            await App.Current.MainPage.DisplayAlert("Datos Obligatorios", "Por favor ingresa tu Nombre y Apellidos.", "OK");
             return;
         }
 
@@ -327,38 +386,56 @@
         try
         {
             var contenido = new MultipartFormDataContent();
+            
+            // Datos Texto (Manejamos nulos enviando cadenas vacías si es necesario, pero el server ya acepta nulos)
             contenido.Add(new StringContent(Sesion.Usuario.UsuarioID.ToString()), "UsuarioID");
-            contenido.Add(new StringContent(miPerfil.Descripcion), "Descripcion");
-            contenido.Add(new StringContent(miPerfil.Whatsapp), "Whatsapp");
+            contenido.Add(new StringContent(miPerfil.Nombre ?? ""), "Nombre");
+            contenido.Add(new StringContent(miPerfil.Apellidos ?? ""), "Apellidos");
+            contenido.Add(new StringContent(miPerfil.Descripcion ?? ""), "Descripcion");
+            contenido.Add(new StringContent(miPerfil.Whatsapp ?? ""), "Whatsapp");
+            contenido.Add(new StringContent(miPerfil.Apodo ?? ""), "Apodo");
+            contenido.Add(new StringContent(miPerfil.UsarApodo.ToString().ToLower()), "UsarApodo");
+            
+            // Flags de borrado
+            contenido.Add(new StringContent(borrarCert1.ToString().ToLower()), "EliminarFotoCert1");
+            contenido.Add(new StringContent(borrarCert2.ToString().ToLower()), "EliminarFotoCert2");
 
-            if (archivoSeleccionadoNativo != null)
+            // Helper para agregar archivos
+            async Task AgregarArchivo(FileResult archivo, string nombreCampo)
             {
-                using var stream = await archivoSeleccionadoNativo.OpenReadAsync();
-                using var memoryStream = new MemoryStream();
-                await stream.CopyToAsync(memoryStream);
-                memoryStream.Position = 0;
-                var fileContent = new ByteArrayContent(memoryStream.ToArray());
-                fileContent.Headers.ContentType = new MediaTypeHeaderValue(archivoSeleccionadoNativo.ContentType ?? "image/jpeg");
-                contenido.Add(fileContent, "archivoFoto", archivoSeleccionadoNativo.FileName);
+                if (archivo != null)
+                {
+                    var s = await archivo.OpenReadAsync();
+                    var content = new StreamContent(s);
+                    content.Headers.ContentType = new MediaTypeHeaderValue(archivo.ContentType);
+                    contenido.Add(content, nombreCampo, archivo.FileName);
+                }
             }
 
-            var response = await Http.PostAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/PerfilApi/guardar", contenido);
+            await AgregarArchivo(fileAvatar, "archivoAvatar");
+            await AgregarArchivo(fileCert1, "archivoCert1");
+            await AgregarArchivo(fileCert2, "archivoCert2");
+
+            var response = await Http.PostAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/PerfilApi/guardar-completo", contenido);
 
             if (response.IsSuccessStatusCode)
             {
+                // Actualizar sesión local (Solo nombre real)
+                Sesion.Usuario.Nombre = miPerfil.Nombre;
+                Sesion.Usuario.Apellidos = miPerfil.Apellidos;
+                
                 await App.Current.MainPage.DisplayAlert("¡Listo!", "Perfil actualizado.", "OK");
-                await CargarPerfilExistente();
-                archivoSeleccionadoNativo = null;
+                Nav.NavigateTo("/home");
             }
             else
             {
-                string errorMsg = await response.Content.ReadAsStringAsync();
-                await App.Current.MainPage.DisplayAlert("Error", errorMsg, "OK");
+                string error = await response.Content.ReadAsStringAsync();
+                await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar: " + error, "OK");
             }
         }
         catch (Exception ex)
         {
-            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+            await App.Current.MainPage.DisplayAlert("Error", "Error de conexión: " + ex.Message, "OK");
         }
         finally
         {

@@ -302,7 +302,7 @@
             var boxId = Sesion.Usuario.BoxID;
             var miId = Sesion.Usuario.UsuarioID;
 
-            rankingList = await Http.GetFromJsonAsync<List<RankingDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/ranking/{boxId}/{miId}");
+            rankingList = await Http.GetFromJsonAsync<List<RankingDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/ranking/{boxId}/{miId}");
         }
         catch (Exception ex)
         {

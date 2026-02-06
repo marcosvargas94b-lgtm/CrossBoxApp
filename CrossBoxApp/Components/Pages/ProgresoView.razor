@@ -371,7 +371,7 @@
             var boxId = Sesion.Usuario.BoxID;
             var userId = Sesion.Usuario.UsuarioID;
 
-            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/evaluacionesapi/usuario/{boxId}/{userId}");
+            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/evaluacionesapi/usuario/{boxId}/{userId}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -402,7 +402,7 @@
         try
         {
             var userId = Sesion.Usuario.UsuarioID;
-            historialCargado = await Http.GetFromJsonAsync<List<HistorialDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/Evaluacionesapi/historial/{userId}/{testBoxId}");
+            historialCargado = await Http.GetFromJsonAsync<List<HistorialDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/Evaluacionesapi/historial/{userId}/{testBoxId}");
         }
         catch (Exception ex)
         {

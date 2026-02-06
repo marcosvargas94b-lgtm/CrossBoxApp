@@ -850,7 +850,7 @@
     // --- NUEVO: GUARDAR ID DEL LOGO ---
     private Guid? LogoBoxId; 
     // Generar URL (igual que en ConfigBox)
-    private string UrlLogo => LogoBoxId.HasValue ? $"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/Imagenes/Logos/{LogoBoxId}.jpg" : "";
+    private string UrlLogo => LogoBoxId.HasValue ? $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/Imagenes/Logos/{LogoBoxId}.jpg" : "";
 
     private bool tieneRutina = false;
     private bool mostrarNotis = false;
@@ -914,24 +914,24 @@
         await CargarSegmentos();
         await CargarConfiguracionModulos();
         if (!avisoVistoEnSesion) await CargarUltimoAviso();
-        try { tieneRutina = await Http.GetFromJsonAsync<bool>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/rutinasapi/tiene-rutina/{Sesion.Usuario.UsuarioID}"); } catch { tieneRutina = false; }
-        try { tieneRunning = await Http.GetFromJsonAsync<bool>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/runningapi/tiene-plan/{Sesion.Usuario.UsuarioID}"); } catch { tieneRunning = false; }
+        try { tieneRutina = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/tiene-rutina/{Sesion.Usuario.UsuarioID}"); } catch { tieneRutina = false; }
+        try { tieneRunning = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/tiene-plan/{Sesion.Usuario.UsuarioID}"); } catch { tieneRunning = false; }
         if (Sesion.Usuario != null)
         {
             try
             {
-                var estado = await Http.GetFromJsonAsync<int>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/pagosapi/dias-restantes/{Sesion.Usuario.UsuarioID}");
+                var estado = await Http.GetFromJsonAsync<int>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/dias-restantes/{Sesion.Usuario.UsuarioID}");
                 diasRestantes = estado;
             }
             catch { }
             try
             {
-                var configBox = await Http.GetFromJsonAsync<BoxConfigDTO>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
+                var configBox = await Http.GetFromJsonAsync<BoxConfigDTO>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
                 if (configBox != null) boxTieneMP = configBox.EstaVinculadoMP;
             }
             catch { boxTieneMP = false; }
         }
-        try { listaPlanes = await Http.GetFromJsonAsync<List<PlanDto>>("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/pagosapi/planes"); } catch { }
+        try { listaPlanes = await Http.GetFromJsonAsync<List<PlanDto>>("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/planes"); } catch { }
     }
 
     // --- FUNCIONES MENÚS Y OVERLAY ---
@@ -956,7 +956,7 @@
             if (hayNuevas)
             {
                 hayNuevas = false;
-                _ = Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/notificaciones/leer/{Sesion.Usuario.UsuarioID}", null);
+                _ = Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/notificaciones/leer/{Sesion.Usuario.UsuarioID}", null);
             }
         }
     }
@@ -985,7 +985,7 @@
         try
         {
             var fechaStr = fecha.ToString("yyyy-MM-dd");
-            wodExiste = await Http.GetFromJsonAsync<bool>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/existe/{Sesion.Usuario.BoxID}/{fechaStr}");
+            wodExiste = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/existe/{Sesion.Usuario.BoxID}/{fechaStr}");
 
             if (!wodExiste)
             {
@@ -1012,7 +1012,7 @@
         try
         {
             var fechaStr = nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd");
-            var wodExistente = await Http.GetFromJsonAsync<ProgramacionWodViewModel>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/obtener/{Sesion.Usuario.BoxID}/{fechaStr}");
+            var wodExistente = await Http.GetFromJsonAsync<ProgramacionWodViewModel>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/obtener/{Sesion.Usuario.BoxID}/{fechaStr}");
 
             if (wodExistente != null)
             {
@@ -1060,7 +1060,7 @@
             try
             {
                 var fechaStr = nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd");
-                var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/eliminar-dia/{Sesion.Usuario.BoxID}/{fechaStr}", null);
+                var response = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/eliminar-dia/{Sesion.Usuario.BoxID}/{fechaStr}", null);
                 if (response.IsSuccessStatusCode)
                 {
                     await App.Current.MainPage.DisplayAlert("Éxito", "WOD eliminado.", "OK");
@@ -1105,33 +1105,66 @@
 
     private async Task GuardarProgramacion()
     {
+        // 1. Validar que existan bloques visuales
         if (listaBloquesEditor.Count == 0)
         {
-            await App.Current.MainPage.DisplayAlert("Faltan datos", "Agrega al menos un bloque.", "OK");
+            await App.Current.MainPage.DisplayAlert("Faltan datos", "Agrega al menos un bloque para el WOD.", "Entendido");
             return;
         }
 
+        // 2. Validar que todos los bloques tengan un segmento seleccionado
         if (listaBloquesEditor.Any(b => b.SegmentoClaseID == Guid.Empty))
         {
-            await App.Current.MainPage.DisplayAlert("Faltan datos", "Selecciona el TIPO DE SEGMENTO en todos los bloques.", "OK");
+            await App.Current.MainPage.DisplayAlert("Faltan datos", "Por favor, selecciona el TIPO DE SEGMENTO (Ej: Calentamiento, WOD, Fuerza) en todos los bloques.", "Entendido");
             return;
         }
 
+        // 3. Construir el objeto para la API y validar ejercicios uno por uno
         nuevoWod.Bloques = new List<BloqueWodViewModel>();
 
         foreach (var bEdit in listaBloquesEditor)
         {
+            // Obtenemos el nombre del segmento para que el error sea específico
+            var infoSegmento = listaSegmentos.FirstOrDefault(s => s.Id == bEdit.SegmentoClaseID);
+            string nombreSeg = infoSegmento != null ? infoSegmento.Nombre : "un bloque";
+
             var bloqueApi = new BloqueWodViewModel
             {
                 SegmentoClaseID = bEdit.SegmentoClaseID,
+                NombreSegmento = nombreSeg,
                 Ejercicios = new List<EjercicioViewModel>()
             };
 
-            var infoSegmento = listaSegmentos.FirstOrDefault(s => s.Id == bEdit.SegmentoClaseID);
-            bloqueApi.NombreSegmento = infoSegmento != null ? infoSegmento.Nombre : "General";
-
             foreach (var ejEdit in bEdit.Ejercicios)
             {
+                bool tieneReps = !string.IsNullOrWhiteSpace(ejEdit.Reps);
+                bool tieneNombre = !string.IsNullOrWhiteSpace(ejEdit.NombreBase);
+
+                // CASO A: Fila totalmente vacía -> La ignoramos (no se guarda, no da error)
+                if (!tieneReps && !tieneNombre)
+                {
+                    continue;
+                }
+
+                // CASO B: Tiene Reps pero no Nombre -> ERROR AMIGABLE
+                if (tieneReps && !tieneNombre)
+                {
+                    await App.Current.MainPage.DisplayAlert("Información Incompleta",
+                        $"En el bloque de '{nombreSeg}', escribiste las repeticiones ('{ejEdit.Reps}') pero falta el NOMBRE del ejercicio.",
+                        "Corregir");
+                    return; // Detenemos todo para que el usuario corrija
+                }
+
+                // CASO C: Tiene Nombre pero no Reps -> ERROR AMIGABLE
+                if (!tieneReps && tieneNombre)
+                {
+                    await App.Current.MainPage.DisplayAlert("Información Incompleta",
+                        $"En el bloque de '{nombreSeg}', escribiste el ejercicio '{ejEdit.NombreBase}' pero faltan las REPETICIONES (o tiempo).",
+                        "Corregir");
+                    return; // Detenemos todo
+                }
+
+                // CASO D: Todo correcto -> Agregamos al envío
                 string descFinal = ejEdit.NombreBase;
                 if (ejEdit.TienePesos)
                 {
@@ -1144,34 +1177,50 @@
                     Descripcion = descFinal
                 });
             }
+
+            // 4. Validar que el bloque no se haya quedado vacío (ej. el usuario agregó un bloque pero dejó todas las filas en blanco)
+            if (bloqueApi.Ejercicios.Count == 0)
+            {
+                await App.Current.MainPage.DisplayAlert("Bloque Vacío",
+                    $"El bloque '{nombreSeg}' no tiene ejercicios válidos. Agrégale ejercicios o elimina el bloque.",
+                    "Entendido");
+                return;
+            }
+
             nuevoWod.Bloques.Add(bloqueApi);
         }
 
+        // 5. Si pasamos todas las validaciones, enviamos al servidor
         cargandoOperacionWod = true;
         StateHasChanged();
 
         try
         {
             nuevoWod.BoxID = Sesion.Usuario.BoxID;
-            var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/guardar", nuevoWod);
+            var r = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/guardar", nuevoWod);
 
             if (r.IsSuccessStatusCode)
             {
                 mostrarModalWod = false;
-                await App.Current.MainPage.DisplayAlert("¡Éxito!", "WOD Guardado correctamente.", "OK");
+                await App.Current.MainPage.DisplayAlert("¡Éxito!", "El WOD se ha guardado correctamente.", "OK");
+
+                // Resetear formulario
                 nuevoWod = new ProgramacionWodViewModel { FechaProgramacion = DateTime.Today };
                 listaBloquesEditor = new List<BloqueEditorViewModel>();
                 AgregarBloque();
             }
             else
             {
+                // Error controlado del servidor (ej. validación de negocio)
                 var errorMsg = await r.Content.ReadAsStringAsync();
-                await App.Current.MainPage.DisplayAlert("Error del Servidor", errorMsg, "OK");
+                await App.Current.MainPage.DisplayAlert("Aviso", "No se pudo guardar: " + errorMsg, "OK");
             }
         }
         catch (Exception ex)
         {
-            await App.Current.MainPage.DisplayAlert("Error de App", ex.Message, "OK");
+            // Error de conexión o caída grave
+            await App.Current.MainPage.DisplayAlert("Problema de Conexión", "Verifica tu internet e inténtalo de nuevo.", "OK");
+            Console.WriteLine(ex.Message); // Log interno solo para ti
         }
         finally
         {
@@ -1182,20 +1231,20 @@
 
     // --- RESTO DE FUNCIONES ---
     private async Task AbrirModalHorarios() { CerrarTodosLosMenus(); mostrarModalHorarios = true; await CargarHorariosAdmin(); }
-    private async Task CargarHorariosAdmin() { try { listaHorariosAdmin = await Http.GetFromJsonAsync<List<HorarioDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/AgendaApi/lista-horarios/{Sesion.Usuario.BoxID}"); } catch { listaHorariosAdmin = new List<HorarioDto>(); } }
-    private async Task AgregarHorario() { if (string.IsNullOrWhiteSpace(nuevoHorarioTexto)) return; try { var nuevo = new HorarioDto { BoxID = Sesion.Usuario.BoxID, Descripcion = nuevoHorarioTexto }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/AgendaApi/crear-horario", nuevo); if (response.IsSuccessStatusCode) { nuevoHorarioTexto = ""; await CargarHorariosAdmin(); } else await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar.", "OK"); } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } }
-    private async Task EliminarHorario(Guid id) { bool confirmar = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Seguro?", "Sí", "No"); if (!confirmar) return; try { var response = await Http.DeleteAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/AgendaApi/eliminar-horario/{id}"); if (response.IsSuccessStatusCode) { await CargarHorariosAdmin(); } else await App.Current.MainPage.DisplayAlert("Error", "No se pudo eliminar.", "OK"); } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } }
-    private async Task ConfirmarEliminarCuenta() { bool confirmacion = await App.Current.MainPage.DisplayAlert("⚠️ Eliminar Cuenta", "¿Estás seguro de que quieres eliminar tu cuenta permanentemente? Perderás todo tu historial, fotos y pagos. Esta acción NO se puede deshacer.", "Sí, Eliminar", "Cancelar"); if (confirmacion) { try { var response = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/eliminar-definitivo/{Sesion.Usuario.UsuarioID}", null); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("Cuenta Eliminada", "Lamentamos que te vayas. Tu cuenta ha sido borrada.", "Adiós"); CerrarSesion(); } else { string mensajeError = await response.Content.ReadAsStringAsync(); await App.Current.MainPage.DisplayAlert("Error", $"No se pudo eliminar: {mensajeError}", "OK"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK"); } } }
+    private async Task CargarHorariosAdmin() { try { listaHorariosAdmin = await Http.GetFromJsonAsync<List<HorarioDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/AgendaApi/lista-horarios/{Sesion.Usuario.BoxID}"); } catch { listaHorariosAdmin = new List<HorarioDto>(); } }
+    private async Task AgregarHorario() { if (string.IsNullOrWhiteSpace(nuevoHorarioTexto)) return; try { var nuevo = new HorarioDto { BoxID = Sesion.Usuario.BoxID, Descripcion = nuevoHorarioTexto }; var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/AgendaApi/crear-horario", nuevo); if (response.IsSuccessStatusCode) { nuevoHorarioTexto = ""; await CargarHorariosAdmin(); } else await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar.", "OK"); } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } }
+    private async Task EliminarHorario(Guid id) { bool confirmar = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Seguro?", "Sí", "No"); if (!confirmar) return; try { var response = await Http.DeleteAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/AgendaApi/eliminar-horario/{id}"); if (response.IsSuccessStatusCode) { await CargarHorariosAdmin(); } else await App.Current.MainPage.DisplayAlert("Error", "No se pudo eliminar.", "OK"); } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } }
+    private async Task ConfirmarEliminarCuenta() { bool confirmacion = await App.Current.MainPage.DisplayAlert("⚠️ Eliminar Cuenta", "¿Estás seguro de que quieres eliminar tu cuenta permanentemente? Perderás todo tu historial, fotos y pagos. Esta acción NO se puede deshacer.", "Sí, Eliminar", "Cancelar"); if (confirmacion) { try { var response = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/authapi/eliminar-definitivo/{Sesion.Usuario.UsuarioID}", null); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("Cuenta Eliminada", "Lamentamos que te vayas. Tu cuenta ha sido borrada.", "Adiós"); CerrarSesion(); } else { string mensajeError = await response.Content.ReadAsStringAsync(); await App.Current.MainPage.DisplayAlert("Error", $"No se pudo eliminar: {mensajeError}", "OK"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK"); } } }
     private void AbrirModalPassword() { CerrarTodosLosMenus(); passOld = ""; passNew = ""; passConfirm = ""; msgErrorPass = ""; procesandoPass = false; mostrarModalPassword = true; }
     private void ToggleVerPass(int campo) { if (campo == 1) tipoInputOld = tipoInputOld == "password" ? "text" : "password"; if (campo == 2) tipoInputNew = tipoInputNew == "password" ? "text" : "password"; if (campo == 3) tipoInputConfirm = tipoInputConfirm == "password" ? "text" : "password"; }
-    private async Task GuardarNuevaPassword() { if (string.IsNullOrWhiteSpace(passOld) || string.IsNullOrWhiteSpace(passNew) || string.IsNullOrWhiteSpace(passConfirm)) { msgErrorPass = "Todos los campos son obligatorios"; return; } if (passNew != passConfirm) { msgErrorPass = "La contraseña nueva y la confirmación no coinciden"; return; } procesandoPass = true; msgErrorPass = ""; try { var req = new { UsuarioID = Sesion.Usuario.UsuarioID, OldPassword = passOld, NewPassword = passNew, ConfirmPassword = passConfirm }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/authapi/cambiar-password", req); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("¡Éxito!", "Tu contraseña ha sido actualizada.", "OK"); mostrarModalPassword = false; } else { var errorJson = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>(); if (errorJson.TryGetProperty("mensaje", out var msg)) msgErrorPass = msg.GetString(); else msgErrorPass = "Error al actualizar la contraseña"; } } catch (Exception ex) { msgErrorPass = "Error de conexión: " + ex.Message; } finally { procesandoPass = false; } }
+    private async Task GuardarNuevaPassword() { if (string.IsNullOrWhiteSpace(passOld) || string.IsNullOrWhiteSpace(passNew) || string.IsNullOrWhiteSpace(passConfirm)) { msgErrorPass = "Todos los campos son obligatorios"; return; } if (passNew != passConfirm) { msgErrorPass = "La contraseña nueva y la confirmación no coinciden"; return; } procesandoPass = true; msgErrorPass = ""; try { var req = new { UsuarioID = Sesion.Usuario.UsuarioID, OldPassword = passOld, NewPassword = passNew, ConfirmPassword = passConfirm }; var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/authapi/cambiar-password", req); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("¡Éxito!", "Tu contraseña ha sido actualizada.", "OK"); mostrarModalPassword = false; } else { var errorJson = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>(); if (errorJson.TryGetProperty("mensaje", out var msg)) msgErrorPass = msg.GetString(); else msgErrorPass = "Error al actualizar la contraseña"; } } catch (Exception ex) { msgErrorPass = "Error de conexión: " + ex.Message; } finally { procesandoPass = false; } }
     
     // --- ACTUALIZADO PARA CARGAR EL LOGO ---
     private async Task CargarNombreBox()
     {
         try
         {
-            var response = await Http.GetFromJsonAsync<Boxes>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/nombre-box/{Sesion.Usuario.BoxID}");
+            var response = await Http.GetFromJsonAsync<Boxes>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/configapi/nombre-box/{Sesion.Usuario.BoxID}");
             if (response != null)
             {
                 if (!string.IsNullOrEmpty(response.Nombre))
@@ -1210,8 +1259,8 @@
     }
 
     private void AbrirGestionModulos() { CerrarTodosLosMenus(); mostrarModalModulos = true; }
-    private async Task CargarConfiguracionModulos() { try { listaConfiguracion = await Http.GetFromJsonAsync<List<ModuloConfig>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/modulos/{Sesion.Usuario.BoxID}"); } catch { } }
-    private async Task ToggleModulo(ModuloConfig mod) { mod.Activo = !mod.Activo; try { await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/configapi/actualizar", mod); } catch { } }
+    private async Task CargarConfiguracionModulos() { try { listaConfiguracion = await Http.GetFromJsonAsync<List<ModuloConfig>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/configapi/modulos/{Sesion.Usuario.BoxID}"); } catch { } }
+    private async Task ToggleModulo(ModuloConfig mod) { mod.Activo = !mod.Activo; try { await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/configapi/actualizar", mod); } catch { } }
     private bool EstaActivo(string clave) { if (listaConfiguracion == null || listaConfiguracion.Count == 0) return true; var mod = listaConfiguracion.FirstOrDefault(m => m.ModuloClave == clave); return mod == null ? true : mod.Activo; }
     
     private void CerrarSesion() { diasRestantes = 99; SecureStorage.Default.Remove("auth_token"); Sesion.Usuario = null; Nav.NavigateTo("/"); }
@@ -1253,15 +1302,15 @@
         }
     }
 
-    private async Task ProcesarPago(string titulo, decimal precio) { try { var datosPago = new { Titulo = titulo, Precio = precio, UsuarioID = Sesion.Usuario.UsuarioID }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/mercadopago/crear-preferencia", datosPago); if (response.IsSuccessStatusCode) { var resultado = await response.Content.ReadFromJsonAsync<RespuestaMercadoPago>(); if (resultado != null && !string.IsNullOrEmpty(resultado.url)) { await Browser.Default.OpenAsync(resultado.url, BrowserLaunchMode.SystemPreferred); mostrarModalPlanesAdmin = false; } } else { string errorMsg = await response.Content.ReadAsStringAsync(); if (errorMsg.Contains("error")) { errorMsg = errorMsg.Replace("{", "").Replace("}", "").Replace("\"", "").Replace("error:", ""); } await App.Current.MainPage.DisplayAlert("Error en Pago", errorMsg, "OK"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK"); } }
+    private async Task ProcesarPago(string titulo, decimal precio) { try { var datosPago = new { Titulo = titulo, Precio = precio, UsuarioID = Sesion.Usuario.UsuarioID }; var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/mercadopago/crear-preferencia", datosPago); if (response.IsSuccessStatusCode) { var resultado = await response.Content.ReadFromJsonAsync<RespuestaMercadoPago>(); if (resultado != null && !string.IsNullOrEmpty(resultado.url)) { await Browser.Default.OpenAsync(resultado.url, BrowserLaunchMode.SystemPreferred); mostrarModalPlanesAdmin = false; } } else { string errorMsg = await response.Content.ReadAsStringAsync(); if (errorMsg.Contains("error")) { errorMsg = errorMsg.Replace("{", "").Replace("}", "").Replace("\"", "").Replace("error:", ""); } await App.Current.MainPage.DisplayAlert("Error en Pago", errorMsg, "OK"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK"); } }
     private void AbrirCrearAviso() { CerrarTodosLosMenus(); nuevoAviso = new Avisos(); mostrarModalCrearAviso = true; }
-    private async Task PublicarAviso() { if (string.IsNullOrEmpty(nuevoAviso.Titulo)) return; try { nuevoAviso.BoxID = Sesion.Usuario.BoxID; var r = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/crear", nuevoAviso); if (r.IsSuccessStatusCode) { mostrarModalCrearAviso = false; await App.Current.MainPage.DisplayAlert("Éxito", "Publicado", "OK"); } } catch { } }
-    private async Task CargarUltimoAviso() { try { var r = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/avisosapi/ultimo/{Sesion.Usuario.BoxID}"); if (r.StatusCode == System.Net.HttpStatusCode.NoContent) return; if (r.IsSuccessStatusCode) { ultimoAviso = await r.Content.ReadFromJsonAsync<Avisos>(); if (ultimoAviso != null) { var idVisto = await JS.InvokeAsync<string>("localStorage.getItem", "ultimoAvisoVisto"); if (idVisto != ultimoAviso.AvisoID.ToString()) mostrarAvisoPopUp = true; } } } catch { } }
+    private async Task PublicarAviso() { if (string.IsNullOrEmpty(nuevoAviso.Titulo)) return; try { nuevoAviso.BoxID = Sesion.Usuario.BoxID; var r = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/avisosapi/crear", nuevoAviso); if (r.IsSuccessStatusCode) { mostrarModalCrearAviso = false; await App.Current.MainPage.DisplayAlert("Éxito", "Publicado", "OK"); } } catch { } }
+    private async Task CargarUltimoAviso() { try { var r = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/avisosapi/ultimo/{Sesion.Usuario.BoxID}"); if (r.StatusCode == System.Net.HttpStatusCode.NoContent) return; if (r.IsSuccessStatusCode) { ultimoAviso = await r.Content.ReadFromJsonAsync<Avisos>(); if (ultimoAviso != null) { var idVisto = await JS.InvokeAsync<string>("localStorage.getItem", "ultimoAvisoVisto"); if (idVisto != ultimoAviso.AvisoID.ToString()) mostrarAvisoPopUp = true; } } } catch { } }
     private async Task CerrarAviso() { if (ultimoAviso != null) await JS.InvokeVoidAsync("localStorage.setItem", "ultimoAvisoVisto", ultimoAviso.AvisoID.ToString()); mostrarAvisoPopUp = false; }
     private async Task AbrirEscanerParaEntrar() { if (abriendoCamara) return; abriendoCamara = true; StateHasChanged(); await Task.Delay(100); try { var scannerPage = new EscanerPage(); Action<string> escanearHandler = null; escanearHandler = async (resultadoQr) => { scannerPage.OnScanResult -= escanearHandler; await Application.Current.Dispatcher.DispatchAsync(async () => { try { await Application.Current.MainPage.Navigation.PopModalAsync(); await Task.Delay(400); await ProcesarCheckIn(resultadoQr); } catch (Exception ex) { Console.WriteLine("Error cerrando cámara: " + ex.Message); } }); }; scannerPage.OnScanResult += escanearHandler; if (Application.Current.MainPage != null) { await Application.Current.MainPage.Navigation.PushModalAsync(scannerPage); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", "No se pudo iniciar la cámara.", "OK"); } finally { abriendoCamara = false; StateHasChanged(); } }
-    private async Task ProcesarCheckIn(string boxIdLeido) { if (string.IsNullOrWhiteSpace(boxIdLeido)) { await App.Current.MainPage.DisplayAlert("QR Inválido", "No se detectó información en el código.", "OK"); return; } try { var request = new { UsuarioId = Sesion.Usuario.UsuarioID, QrData = boxIdLeido }; var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/liveapi/checkin-qr", request); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("¡Bienvenido! 💪", "Has entrado a la clase correctamente.", "A ENTRENAR"); } else { string msg = await response.Content.ReadAsStringAsync(); await App.Current.MainPage.DisplayAlert("Ups", "No se pudo registrar entrada: " + msg, "Intentar de nuevo"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error de Conexión", "Revisa tu internet.", "OK"); } }
-    private async Task CargarSegmentos() { try { var r = await Http.GetAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/wodapi/segmentos"); if (r.IsSuccessStatusCode) listaSegmentos = await r.Content.ReadFromJsonAsync<List<SegmentoDto>>(); } catch { } }
-    private async Task CargarNotificaciones() { try { misNotificaciones = await Http.GetFromJsonAsync<List<NotificacionDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/notificaciones/{Sesion.Usuario.UsuarioID}"); hayNuevas = misNotificaciones.Any(n => !n.Leido); } catch { } }
+    private async Task ProcesarCheckIn(string boxIdLeido) { if (string.IsNullOrWhiteSpace(boxIdLeido)) { await App.Current.MainPage.DisplayAlert("QR Inválido", "No se detectó información en el código.", "OK"); return; } try { var request = new { UsuarioId = Sesion.Usuario.UsuarioID, QrData = boxIdLeido }; var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/liveapi/checkin-qr", request); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("¡Bienvenido! 💪", "Has entrado a la clase correctamente.", "A ENTRENAR"); } else { string msg = await response.Content.ReadAsStringAsync(); await App.Current.MainPage.DisplayAlert("Ups", "No se pudo registrar entrada: " + msg, "Intentar de nuevo"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error de Conexión", "Revisa tu internet.", "OK"); } }
+    private async Task CargarSegmentos() { try { var r = await Http.GetAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/segmentos"); if (r.IsSuccessStatusCode) listaSegmentos = await r.Content.ReadFromJsonAsync<List<SegmentoDto>>(); } catch { } }
+    private async Task CargarNotificaciones() { try { misNotificaciones = await Http.GetFromJsonAsync<List<NotificacionDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/notificaciones/{Sesion.Usuario.UsuarioID}"); hayNuevas = misNotificaciones.Any(n => !n.Leido); } catch { } }
     private string GetIcono(string t) => t == "MATCH_MUTUO" ? "fas fa-heart text-danger" : "fas fa-bell";
     public class RespuestaMercadoPago { public string url { get; set; } }
 }

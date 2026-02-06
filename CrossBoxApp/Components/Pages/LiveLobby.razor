@@ -195,7 +195,7 @@
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
 
         hubConnection = new HubConnectionBuilder()
-            .WithUrl("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/livehub")
+            .WithUrl("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/livehub")
             .WithAutomaticReconnect()
             .Build();
 

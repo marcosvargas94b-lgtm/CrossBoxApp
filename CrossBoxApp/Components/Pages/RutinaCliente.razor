@@ -145,7 +145,7 @@
     protected override async Task OnInitializedAsync()
     {
         try {
-            rutinas = await Http.GetFromJsonAsync<List<RutinaDiaDto>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/rutinasapi/semana/{Sesion.Usuario.UsuarioID}");
+            rutinas = await Http.GetFromJsonAsync<List<RutinaDiaDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/semana/{Sesion.Usuario.UsuarioID}");
         } catch { rutinas = new List<RutinaDiaDto>(); }
     }
     

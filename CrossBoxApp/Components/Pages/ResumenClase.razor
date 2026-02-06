@@ -390,7 +390,7 @@
     .btn-close-session:disabled { background: #555; color: #888; cursor: not-allowed; transform: none; box-shadow: none; }
 
     /* ========================================= */
-    /* --- PODIUM STYLES --- */
+    /* --- PODIUM STYLES (AJUSTADOS PARA TV) --- */
     /* ========================================= */
     .podium-overlay { 
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
@@ -407,7 +407,20 @@
     }
     .btn-close-overlay:hover { background: #F8C545; color: black; transform: rotate(90deg); border-color: #F8C545; }
 
-    .victory-container { width: 95%; max-width: 900px; display: flex; flex-direction: column; align-items: center; z-index: 1; height: 90vh; justify-content: center; }
+    /* CAMBIOS AQUÍ PARA BAJAR EL CONTENIDO EN TV */
+    .victory-container { 
+        width: 95%; 
+        max-width: 1200px; /* Más ancho para que quepan bien */
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        z-index: 1; 
+        height: 100vh; 
+        
+        /* Alineación superior + Padding para empujar hacia abajo */
+        justify-content: flex-start; 
+        padding-top: 15vh; /* 15% del alto de la pantalla hacia abajo */
+    }
 
     .victory-layout-main { display: flex; flex-direction: row; gap: 40px; width: 100%; height: 60%; align-items: flex-end; justify-content: center; }
     .podium-area { display: flex; justify-content: center; align-items: flex-end; height: 100%; }
@@ -436,7 +449,7 @@
 
     .rank-num { position: absolute; top: 5px; font-size: 4rem; font-weight: 900; opacity: 0.2; font-family: 'Oswald'; color: black; mix-blend-mode: overlay; pointer-events: none; }
     
-    /* PILARES - OVERFLOW VISIBLE ES CLAVE PARA QUE LOS NOMBRES SALGAN */
+    /* PILARES */
     .podium-pillar { 
         width: 100%; border-radius: 10px 10px 0 0; 
         display: flex; flex-direction: column; justify-content: flex-end; 
@@ -444,7 +457,6 @@
         overflow: visible; 
     }
     
-    /* BAR CONTENT: Flexbox para apilar texto y empujar arriba */
     .bar-content { 
         width: 100%; height: 100%; 
         display: flex; flex-direction: column; 
@@ -457,18 +469,18 @@
     .silver { background: linear-gradient(180deg, #E0E0E0 0%, #7f8c8d 100%); border: 2px solid #FFF; }
     .bronze { background: linear-gradient(180deg, #CD7F32 0%, #8B4513 100%); border: 2px solid #FFDAB9; }
 
-    /* TEXTO GANADORES - COLOR BLANCO Y SOMBRA FUERTE */
+    /* TEXTO GANADORES */
     .winner-info { 
         z-index: 50; text-align: center; width: 100%; padding: 0 2px; 
         display: flex; flex-direction: column; align-items: center; justify-content: center;
-        margin-top: 10px; /* Separacion de la base */
+        margin-top: 10px; 
     }
     
     .winner-name { 
         display: block; font-family: 'Oswald'; font-size: 0.85rem; font-weight: 800; 
         color: white; 
         text-transform: uppercase; line-height: 1; margin-bottom: 2px;
-        text-shadow: 0 0 3px #000, 0 0 3px #000; /* DOBLE SOMBRA NEGRA PARA CONTRASTE EXTREMO */
+        text-shadow: 0 0 3px #000, 0 0 3px #000; 
     }
     .main-winner .winner-name { font-size: 1rem; }
     
@@ -576,13 +588,12 @@
                     EsEquipo = (item.Atletas.Count > 1),
                     TiempoFinal = item.Finalizado ? item.TiempoFinal : "DNF",
                     Reps = 0,
-                    NombreEquipo = item.NombreEquipo ?? "Equipo" // Protección por si acaso
+                    NombreEquipo = item.NombreEquipo ?? "Equipo"
                 });
             }
         }
         else
         {
-            // --- MODO MANUAL (Aquí estaba el error) ---
             foreach (var item in listaLocal)
             {
                 payload.Resultados.Add(new ResultadoAtletaDto
@@ -591,8 +602,6 @@
                     EsEquipo = false,
                     Reps = modoScore ? item.Reps : 0,
                     TiempoFinal = null,
-
-                    // 🔥 SOLUCIÓN: Asignamos un valor por defecto para que la API no llore
                     NombreEquipo = "Individual"
                 });
             }
@@ -600,10 +609,7 @@
 
         try
         {
-            // Usa la URL de producción si ya tienes los permisos en el servidor,
-            // o localhost si estás probando localmente y ya arreglaste el CORS.
-            var url = "https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/scoresapi/guardar-clase";
-
+            var url = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/scoresapi/guardar-clase";
             await Http.PostAsJsonAsync(url, payload);
         }
         catch (Exception ex)

@@ -8,7 +8,7 @@
 
 <div class="main-layout">
 
-    @* NAVBAR FIJA SUPERIOR *@
+    @* NAVBAR *@
     <div class="navbar-container">
         <div class="nav-left" @onclick="Volver">
             <i class="fas fa-arrow-left"></i> VOLVER
@@ -17,7 +17,6 @@
         <div class="nav-right"></div>
     </div>
 
-    @* CONTENEDOR DE SCROLL *@
     <div class="scrollable-content">
         
         @if (perfil == null)
@@ -28,10 +27,11 @@
         }
         else
         {
+            @* --- HERO IMAGE (FOTO PERFIL) --- *@
             <div class="hero-image-container">
                 @if (!string.IsNullOrEmpty(perfil.FotoUrl))
                 {
-                    <img src="@perfil.FotoUrl" class="hero-image" />
+                    <img src="@perfil.FotoUrl" class="hero-image" @onclick='() => VerImagenFull(perfil.FotoUrl)' />
                 }
                 else
                 {
@@ -41,52 +41,86 @@
                 }
                 
                 <div class="hero-overlay-info">
-                    <h1 class="user-name">@perfil.NombreCompleto</h1>
+                    @* --- LÓGICA DE NOMBRE VS APODO --- *@
+                    <h1 class="user-name">@NombrePrincipal</h1>
+                    
+                    @if (perfil.UsarApodo && !string.IsNullOrEmpty(perfil.Apodo))
+                    {
+                        <p class="real-name">(@perfil.NombreCompleto)</p>
+                    }
                 </div>
             </div>
 
             <div class="info-section">
                 
-                @* DISEÑO DE LIKES RECUPERADO Y MEJORADO *@
+                @* BADGE LIKES *@
                 <div class="likes-badge-premium">
                     <i class="fas fa-heart"></i>
                     <span class="likes-count">@perfil.TotalLikes</span>
                     <span class="likes-text">LIKES ACUMULADOS</span>
                 </div>
 
+                @* BIOGRAFÍA *@
                 <div class="bio-box">
                     <label>SOBRE MÍ:</label>
                     <p>@(string.IsNullOrEmpty(perfil.Descripcion) ? "Sin descripción..." : perfil.Descripcion)</p>
                 </div>
 
-                @if (perfil.EsMatchMutuo)
+                @* --- GALERÍA DE FOTOS (CERTIFICADOS) --- *@
+                @if (!string.IsNullOrEmpty(perfil.FotoCertificado1Url) || !string.IsNullOrEmpty(perfil.FotoCertificado2Url))
                 {
-                    <div class="match-success-box fade-in">
-                        <div class="match-badge">¡YA HAN HECHO MATCH!</div>
+                    <div class="gallery-section fade-in">
+                        <h4 class="gallery-title"><i class="fas fa-images"></i> GALERÍA</h4>
                         
-                        <div class="whatsapp-pill" @onclick="AbrirWhatsApp">
-                            <i class="fas fa-comment-dots"></i>
-                            <div class="btn-text-container">
-                                <span class="main-btn-text">CLICK PARA CHATEAR POR WHATSAPP</span>
-                                <span class="sub-btn-text">TELÉFONO: @perfil.WhatsappTarget</span>
-                            </div>
+                        <div class="gallery-grid">
+                            @if (!string.IsNullOrEmpty(perfil.FotoCertificado1Url))
+                            {
+                                <div class="gallery-item" @onclick='() => VerImagenFull(perfil.FotoCertificado1Url)'>
+                                    <img src="@perfil.FotoCertificado1Url" />
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(perfil.FotoCertificado2Url))
+                            {
+                                <div class="gallery-item" @onclick='() => VerImagenFull(perfil.FotoCertificado2Url)'>
+                                    <img src="@perfil.FotoCertificado2Url" />
+                                </div>
+                            }
                         </div>
                     </div>
                 }
-                else if (perfil.YaLeDiMatch)
-                {
-                    <div class="match-sent-box pulse">
-                        <i class="fas fa-check-circle"></i>
-                        <span>MATCH ENVIADO</span>
-                        <small>Esperando respuesta...</small>
-                    </div>
-                }
-                else
-                {
-                    <button class="btn-match" @onclick="HacerMatch">
-                        <i class="fas fa-heart"></i> HACER MATCH
-                    </button>
-                }
+
+                @* --- ACCIONES (MATCH / WHATSAPP) --- *@
+                <div class="actions-area mt-4">
+                    @if (perfil.EsMatchMutuo)
+                    {
+                        <div class="match-success-box fade-in">
+                            <div class="match-badge">¡YA HAN HECHO MATCH!</div>
+                            
+                            <div class="whatsapp-pill" @onclick="AbrirWhatsApp">
+                                <i class="fas fa-comment-dots"></i>
+                                <div class="btn-text-container">
+                                    <span class="main-btn-text">CLICK PARA CHATEAR POR WHATSAPP</span>
+                                    <span class="sub-btn-text">TELÉFONO: @perfil.WhatsappTarget</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else if (perfil.YaLeDiMatch)
+                    {
+                        <div class="match-sent-box pulse">
+                            <i class="fas fa-check-circle"></i>
+                            <span>MATCH ENVIADO</span>
+                            <small>Esperando respuesta...</small>
+                        </div>
+                    }
+                    else
+                    {
+                        <button class="btn-match" @onclick="HacerMatch">
+                            <i class="fas fa-heart"></i> HACER MATCH
+                        </button>
+                    }
+                </div>
+
             </div>
         }
         
@@ -94,94 +128,85 @@
     </div>
 </div>
 
+@* --- MODAL ZOOM IMAGEN --- *@
+@if (!string.IsNullOrEmpty(imagenZoomUrl))
+{
+    <div class="image-zoom-overlay" @onclick="CerrarZoom">
+        <button class="btn-close-zoom"><i class="fas fa-times"></i></button>
+        <img src="@imagenZoomUrl" class="zoomed-image" @onclick:stopPropagation="true" />
+    </div>
+}
+
 <style>
-    /* --- ESTRUCTURA BASE --- */
-    .main-layout {
-        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1;
-    }
+    /* ... (Estilos Base iguales a los anteriores) ... */
+    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: #1a1a1a; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
+    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
+    .nav-right { width: 60px; }
+    .scrollable-content { flex-grow: 1; overflow-y: auto; background-color: #0d0d0d; display: flex; flex-direction: column; -webkit-overflow-scrolling: touch; }
 
-    .navbar-container {
-        flex-shrink: 0;
-        padding-top: calc(env(safe-area-inset-top) + 5px);
-        padding-bottom: 10px; padding-left: 20px; padding-right: 20px;
-        background-color: #1a1a1a; border-bottom: 1px solid #F8C545;
-        color: white; display: flex; justify-content: space-between; align-items: center;
-        z-index: 100; font-family: 'Oswald'; min-height: 60px;
-    }
+    /* HERO & NOMBRE */
+    .hero-image-container { width: 100%; height: 400px; position: relative; background: #000; flex-shrink: 0; cursor: pointer; }
+    .hero-image { width: 100%; height: 100%; object-fit: cover; mask-image: linear-gradient(to bottom, black 60%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%); }
+    .hero-initial-placeholder { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background: #222; color: #333; font-size: 8rem; font-family: 'Oswald'; font-weight: bold; }
+    
+    .hero-overlay-info { position: absolute; bottom: 20px; left: 0; right: 0; text-align: center; padding: 0 10px; text-shadow: 2px 2px 10px black; }
+    .user-name { font-family: 'Oswald'; font-size: 2.8rem; color: #F8C545; text-transform: uppercase; margin: 0; line-height: 1; }
+    .real-name { font-size: 1rem; color: #ddd; margin: 5px 0 0 0; font-weight: bold; letter-spacing: 1px; }
 
-    .scrollable-content {
-        flex-grow: 1; overflow-y: auto; 
-        background-color: #0d0d0d;
-        display: flex; flex-direction: column; 
-        -webkit-overflow-scrolling: touch;
-    }
+    .info-section { padding: 20px; display: flex; flex-direction: column; align-items: center; width: 100%; }
 
-    /* --- HERO --- */
-    .hero-image-container {
-        width: 100%; height: 380px; position: relative; background: #000; flex-shrink: 0;
-    }
-
-    .hero-image {
-        width: 100%; height: 100%; object-fit: cover;
-        mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
-        -webkit-mask-image: linear-gradient(to bottom, black 75%, transparent 100%);
-    }
-
-    .hero-overlay-info { position: absolute; bottom: 15px; left: 0; right: 0; text-align: center; }
-    .user-name { font-family: 'Oswald'; font-size: 2.6rem; color: #F8C545; text-transform: uppercase; text-shadow: 2px 2px 12px rgba(0,0,0,1); margin: 0; }
-
-    /* --- NUEVO DISEÑO LIKES BADGE --- */
-    .likes-badge-premium {
-        background: rgba(255, 255, 255, 0.08);
-        padding: 10px 25px;
-        border-radius: 50px;
-        border: 1px solid rgba(248, 197, 69, 0.3);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    }
-
+    /* LIKES & BIO */
+    .likes-badge-premium { background: rgba(255, 255, 255, 0.08); padding: 10px 25px; border-radius: 50px; border: 1px solid rgba(248, 197, 69, 0.3); display: flex; align-items: center; gap: 10px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
     .likes-badge-premium i { color: #ff4757; font-size: 1.2rem; filter: drop-shadow(0 0 5px rgba(255,71,87,0.5)); }
     .likes-count { color: #F8C545; font-family: 'Oswald'; font-size: 1.4rem; font-weight: bold; }
     .likes-text { color: #eee; font-family: 'Oswald'; font-size: 0.9rem; letter-spacing: 1px; }
-
-    /* --- INFO SECTION --- */
-    .info-section { padding: 20px; display: flex; flex-direction: column; align-items: center; }
-
+    
     .bio-box { width: 100%; background: #1a1a1a; padding: 15px; border-radius: 12px; border-left: 4px solid #F8C545; margin-bottom: 30px; }
     .bio-box label { color: #F8C545; font-size: 0.75rem; font-weight: bold; display: block; margin-bottom: 5px; font-family: 'Oswald'; letter-spacing: 1px; }
     .bio-box p { color: #ccc; font-style: italic; margin: 0; font-size: 0.95rem; }
 
-    /* --- WHATSAPP PILL CORREGIDA --- */
-    .whatsapp-pill {
-        background: #25D366; color: #000; padding: 12px 20px; border-radius: 12px; 
-        display: flex; align-items: center; gap: 15px; cursor: pointer; 
-        transition: 0.3s; margin-top: 15px; width: 100%; box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-    }
+    /* GALERÍA DE FOTOS */
+    .gallery-section { width: 100%; margin-bottom: 20px; }
+    .gallery-title { color: white; font-family: 'Oswald'; font-size: 1.1rem; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 15px; }
+    .gallery-grid { display: flex; flex-direction: column; gap: 15px; width: 100%; }
+    .gallery-item { width: 100%; border-radius: 12px; overflow: hidden; border: 1px solid #333; box-shadow: 0 5px 15px rgba(0,0,0,0.5); cursor: pointer; transition: transform 0.2s; max-height: 400px; display: flex; justify-content: center; background: #000; }
+    .gallery-item:active { transform: scale(0.98); }
+    .gallery-item img { width: 100%; height: auto; object-fit: contain; max-height: 400px; }
 
+    /* ACCIONES (Match) */
+    .actions-area { width: 100%; }
+    .whatsapp-pill { background: #25D366; color: #000; padding: 12px 20px; border-radius: 12px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: 0.3s; margin-top: 15px; width: 100%; box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
     .whatsapp-pill i { font-size: 1.8rem; }
     .btn-text-container { display: flex; flex-direction: column; text-align: left; }
     .main-btn-text { font-family: 'Oswald'; font-weight: bold; font-size: 0.85rem; line-height: 1.2; }
     .sub-btn-text { font-family: 'Roboto'; font-size: 0.8rem; font-weight: 900; opacity: 0.8; }
-
     .match-success-box { width: 100%; background: rgba(37, 211, 102, 0.05); border: 1px solid #25D366; border-radius: 15px; padding: 20px; text-align: center; }
     .match-badge { color: #25D366; font-family: 'Oswald'; font-size: 1.3rem; font-weight: bold; margin-bottom: 5px; }
-
-    .btn-match {
-        width: 100%; padding: 16px; background: linear-gradient(45deg, #F8C545, #ff9f43);
-        border: none; border-radius: 50px; color: black; font-weight: 900; font-family: 'Oswald';
-        font-size: 1.4rem; box-shadow: 0 4px 15px rgba(248, 197, 69, 0.3);
-    }
+    .match-sent-box { background: #222; border: 1px dashed #666; color: #aaa; padding: 15px; border-radius: 10px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .match-sent-box i { font-size: 1.5rem; color: #F8C545; }
+    
+    .btn-match { width: 100%; padding: 16px; background: linear-gradient(45deg, #F8C545, #ff9f43); border: none; border-radius: 50px; color: black; font-weight: 900; font-family: 'Oswald'; font-size: 1.4rem; box-shadow: 0 4px 15px rgba(248, 197, 69, 0.3); transition: transform 0.1s; }
+    .btn-match:active { transform: scale(0.95); }
 
     .spinner-container { display: flex; justify-content: center; align-items: center; padding-top: 100px; width: 100%; }
+    .fade-in { animation: fadeIn 0.5s ease; }
+    .pulse { animation: pulse 2s infinite; }
+    @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+
+    /* ZOOM OVERLAY */
+    .image-zoom-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); z-index: 5000; display: flex; justify-content: center; align-items: center; animation: fadeIn 0.3s; }
+    .zoomed-image { max-width: 95%; max-height: 90vh; border-radius: 5px; box-shadow: 0 0 20px black; }
+    .btn-close-zoom { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; justify-content: center; align-items: center; }
 </style>
+
 @code {
     [Parameter] public Guid TargetUserId { get; set; }
     private DetallePublicoDto perfil;
     private bool mostrarAnimacionMatch = false;
+    private string imagenZoomUrl = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -193,15 +218,32 @@
     {
         try {
             var miId = Sesion.Usuario.UsuarioID;
-            perfil = await Http.GetFromJsonAsync<DetallePublicoDto>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/detalle-publico/{TargetUserId}/{miId}");
+            // Asegúrate que tu API devuelva los nuevos campos: Apodo, UsarApodo, FotoCertificado1Url, etc.
+            perfil = await Http.GetFromJsonAsync<DetallePublicoDto>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/detalle-publico/{TargetUserId}/{miId}");
         } catch { }
+    }
+
+    // Lógica para decidir qué nombre mostrar
+    private string NombrePrincipal
+    {
+        get
+        {
+            if (perfil == null) return "";
+            // Si el usuario activó UsarApodo Y tiene uno configurado, úsalo.
+            if (perfil.UsarApodo && !string.IsNullOrWhiteSpace(perfil.Apodo))
+            {
+                return perfil.Apodo;
+            }
+            // Si no, usa el nombre real
+            return perfil.NombreCompleto;
+        }
     }
 
     private async Task HacerMatch()
     {
         try {
             var req = new LikeRequest { LikerID = Sesion.Usuario.UsuarioID, FotoID = TargetUserId };
-            var resp = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/SocialApi/hacer-match", req);
+            var resp = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/hacer-match", req);
             if (resp.IsSuccessStatusCode) {
                 var result = await resp.Content.ReadFromJsonAsync<MatchResponseDto>();
                 if (result.EsMatchMutuo) {
@@ -222,6 +264,16 @@
             var url = $"https://wa.me/{perfil.WhatsappTarget.Replace("+", "").Replace(" ", "")}";
             await Browser.Default.OpenAsync(url, BrowserLaunchMode.External);
         } catch { }
+    }
+
+    private void VerImagenFull(string url)
+    {
+        imagenZoomUrl = url;
+    }
+
+    private void CerrarZoom()
+    {
+        imagenZoomUrl = null;
     }
 
     private void CerrarMatch() => mostrarAnimacionMatch = false;

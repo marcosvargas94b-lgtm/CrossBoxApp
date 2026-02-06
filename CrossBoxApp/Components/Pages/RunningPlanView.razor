@@ -385,7 +385,7 @@
 
         try
         {
-            logsDelMes = await Http.GetFromJsonAsync<List<RunningLogs>>($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/runningapi/plan/{TargetUserId}/{fechaActual.Month}/{fechaActual.Year}");
+            logsDelMes = await Http.GetFromJsonAsync<List<RunningLogs>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/plan/{TargetUserId}/{fechaActual.Month}/{fechaActual.Year}");
         }
         catch { logsDelMes = new List<RunningLogs>(); }
     }
@@ -448,7 +448,7 @@
 
         try
         {
-            var resp = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/runningapi/guardar", logEditando);
+            var resp = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/guardar", logEditando);
             if (resp.IsSuccessStatusCode)
             {
                 mostrarModal = false;
@@ -470,7 +470,7 @@
 
         try
         {
-            var resp = await Http.PostAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/runningapi/eliminar/{logEditando.RunningLogID}", null);
+            var resp = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/eliminar/{logEditando.RunningLogID}", null);
             if (resp.IsSuccessStatusCode)
             {
                 mostrarModal = false;

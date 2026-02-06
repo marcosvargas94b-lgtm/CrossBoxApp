@@ -321,7 +321,7 @@
 
             var boxId = Sesion.Usuario.BoxID;
             var userId = Sesion.Usuario.UsuarioID;
-            var response = await Http.GetAsync($"https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/agendaapi/visual/{boxId}/{userId}");
+            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/agendaapi/visual/{boxId}/{userId}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -368,7 +368,7 @@
                 Fecha = DateTime.Now
             };
 
-            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/agendaapi/reservar", reserva);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/agendaapi/reservar", reserva);
 
             if (response.IsSuccessStatusCode)
             {
@@ -401,7 +401,7 @@
                 Fecha = DateTime.Now
             };
 
-            var response = await Http.PostAsJsonAsync("https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/agendaapi/cancelar", reserva);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/agendaapi/cancelar", reserva);
 
             if (response.IsSuccessStatusCode)
             {

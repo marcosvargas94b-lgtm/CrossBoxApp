@@ -200,7 +200,7 @@
     private string telefonoInput = "";
 
     private string boxId => Sesion.Usuario.BoxID.ToString();
-    private string ApiUrl = "https://apitcb.pladse.dsistemas.educacionchiapas.gob.mx/api/whatsapp";
+    private string ApiUrl = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/whatsapp";
 
     protected override async Task OnInitializedAsync()
     {
@@ -258,18 +258,43 @@
             if (response.IsSuccessStatusCode)
             {
                 var base64Raw = await response.Content.ReadAsStringAsync();
+                
+                // VALIDACIÓN 1: Si llega vacío o nulo
+                if (string.IsNullOrWhiteSpace(base64Raw) || base64Raw == "\"\"")
+                {
+                    await App.Current.MainPage.DisplayAlert("Iniciando motor...", "El sistema de WhatsApp se está despertando. Por favor, toca 'Generar QR' de nuevo en 5 segundos.", "Entendido");
+                    return; // Salimos sin error técnico
+                }
+
                 string limpio = base64Raw.Replace("\"", "").Trim();
                 qrCodeBase64 = limpio;
             }
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                await App.Current.MainPage.DisplayAlert("Error", $"No se pudo generar QR: {error}", "OK");
+                
+                // VALIDACIÓN 2: Si es un error feo de JSON o serialización
+                if (string.IsNullOrWhiteSpace(error) || error.Contains("Json") || error.Contains("JSON") || error.Contains("Object reference"))
+                {
+                    await App.Current.MainPage.DisplayAlert("Reintentar", "Estamos estableciendo conexión segura con WhatsApp. Por favor, intenta de nuevo.", "OK");
+                }
+                else
+                {
+                    await App.Current.MainPage.DisplayAlert("Error", $"No se pudo generar QR: {error}", "OK");
+                }
             }
         }
         catch (Exception ex)
         {
-            await App.Current.MainPage.DisplayAlert("Error App", ex.Message, "OK");
+            // VALIDACIÓN 3: Excepciones de código
+            if (ex.Message.Contains("Json") || ex.Message.Contains("JSON") || ex.Message.Contains("reference"))
+            {
+                 await App.Current.MainPage.DisplayAlert("Reintentar", "La conexión está inicializando. Por favor intenta generar el QR nuevamente.", "OK");
+            }
+            else
+            {
+                await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK");
+            }
         }
         finally
         {
@@ -293,7 +318,7 @@
             }
             else
             {
-                await App.Current.MainPage.DisplayAlert("Error", "No pudimos confirmar la conexión. Intenta de nuevo.", "OK");
+                await App.Current.MainPage.DisplayAlert("Error", "No pudimos confirmar la conexión. Asegúrate de haber escaneado el código.", "OK");
             }
         }
         catch (Exception ex)
@@ -326,7 +351,18 @@
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                await App.Current.MainPage.DisplayAlert("Error", $"No se pudo desconectar: {error}", "OK");
+                // Filtramos error feo también al desconectar
+                if (error.Contains("Json") || error.Contains("JSON")) 
+                {
+                     // Si falla al desconectar por error de JSON, asumimos que ya estaba desconectado o el server se reinició
+                     conectado = false;
+                     if (Sesion.Usuario.Box != null) Sesion.Usuario.Box.WhatsappActivo = false;
+                     await App.Current.MainPage.DisplayAlert("Listo", "Sesión cerrada.", "OK");
+                }
+                else
+                {
+                    await App.Current.MainPage.DisplayAlert("Error", $"No se pudo desconectar: {error}", "OK");
+                }
             }
         }
         catch (Exception ex)
@@ -357,7 +393,7 @@
             {
                 BoxId = boxId,
                 Telefono = numeroFinal,
-                Mensaje = "¡Hola! 🤖 Si lees esto, tu App AFTRACK ya está conectada al WhatsApp. 🥊"
+                Mensaje = "¡Hola! 🤖 Si lees esto, tu App AFTRACK ya está conectada al WhatsApp."
             };
 
             var response = await Http.PostAsJsonAsync($"{ApiUrl}/enviar-prueba", datos);
