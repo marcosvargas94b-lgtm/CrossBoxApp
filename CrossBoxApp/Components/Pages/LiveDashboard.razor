@@ -1764,7 +1764,24 @@
 
     // --- LOGICA TIMER ---
     private async Task Sonar(string idAudio) { try { await JS.InvokeVoidAsync("reproducirSonido", idAudio); } catch { } }
-    private void IniciarSecuencia() { enConteoPrevio = true; tiempoPrevio = 7; _timer.Start(); timerCorriendo = true; }
+    private async void IniciarSecuencia() // Cambia void a async void para poder usar await
+    {
+        // 1. DESBLOQUEAR AUDIO EN IOS (Vital)
+        try
+        {
+            await JS.InvokeVoidAsync("prepararAudio");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error preparando audio: " + ex.Message);
+        }
+
+        // 2. Tu lógica normal
+        enConteoPrevio = true;
+        tiempoPrevio = 7;
+        _timer.Start();
+        timerCorriendo = true;
+    }
     private void PausarTimer() { _timer.Stop(); timerCorriendo = false; }
     private void ResetTimer()
     {

@@ -32,31 +32,40 @@
 
     <script src="_framework/blazor.webview.js" autostart="false"></script>
     <script>
-        window.audioUnlocked = false;
+        window.audioContext = null;
 
+        // Función para desbloquear el audio en iOS
         window.prepararAudio = () => {
-            if (window.audioUnlocked) return;
-
             const audios = ['audio-beep', 'audio-go', 'audio-medio'];
+
             audios.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
-                    el.volume = 0; // Silencio momentáneo
-                    el.play().then(() => {
-                        el.pause();
-                        el.currentTime = 0;
-                        el.volume = 1; // Restaurar volumen
-                    }).catch(e => console.log("Esperando toque usuario..."));
+                    // Truco para iOS: forzar carga y play/pause silencioso
+                    el.load();
+                    el.muted = true; // Importante para que deje reproducir sin user gesture la primera vez
+                    const promise = el.play();
+
+                    if (promise !== undefined) {
+                        promise.then(_ => {
+                            el.pause();
+                            el.currentTime = 0;
+                            el.muted = false; // Quitamos el mute para cuando lo necesitemos real
+                        }).catch(error => {
+                            console.log("Autoplay bloqueado (normal hasta click):", error);
+                        });
+                    }
                 }
             });
-            window.audioUnlocked = true;
         };
 
         window.reproducirSonido = (id) => {
             const audio = document.getElementById(id);
             if (audio) {
                 audio.currentTime = 0;
-                audio.play().catch(e => console.log("Audio bloqueado:", e));
+                // Aseguramos volumen al 100%
+                audio.volume = 1.0;
+                audio.play().catch(e => console.log("Error reproduciendo: " + id, e));
             }
         };
     </script>

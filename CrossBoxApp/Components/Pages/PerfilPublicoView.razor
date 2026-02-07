@@ -132,6 +132,7 @@
 @if (!string.IsNullOrEmpty(imagenZoomUrl))
 {
     <div class="image-zoom-overlay" @onclick="CerrarZoom">
+        @* La X ahora está más abajo para no chocar con el notch *@
         <button class="btn-close-zoom"><i class="fas fa-times"></i></button>
         <img src="@imagenZoomUrl" class="zoomed-image" @onclick:stopPropagation="true" />
     </div>
@@ -199,7 +200,27 @@
     /* ZOOM OVERLAY */
     .image-zoom-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); z-index: 5000; display: flex; justify-content: center; align-items: center; animation: fadeIn 0.3s; }
     .zoomed-image { max-width: 95%; max-height: 90vh; border-radius: 5px; box-shadow: 0 0 20px black; }
-    .btn-close-zoom { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+    
+    /* --- CORRECCIÓN BOTÓN CERRAR ZOOM --- */
+    .btn-close-zoom { 
+        position: absolute; 
+        /* Usamos env() para saltar el notch y sumamos 40px extras para que baje bien */
+        top: calc(env(safe-area-inset-top) + 40px); 
+        right: 20px; 
+        background: rgba(255,255,255,0.2); 
+        border: none; 
+        color: white; 
+        width: 50px; /* Un poco más grande para el dedo */
+        height: 50px; 
+        border-radius: 50%; 
+        font-size: 1.5rem; 
+        cursor: pointer; 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        z-index: 5001; /* Asegurar que esté encima de todo */
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
 </style>
 
 @code {

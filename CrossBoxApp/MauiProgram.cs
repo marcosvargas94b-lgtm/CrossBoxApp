@@ -2,7 +2,12 @@
 using CrossBoxApp.Models.Services;
 using Microsoft.Extensions.Logging;
 using ZXing.Net.Maui.Controls;
+using Microsoft.Maui.LifecycleEvents;
 
+#if IOS
+using AVFoundation;
+using UIKit;
+#endif
 namespace CrossBoxApp
 {
     public static class MauiProgram
@@ -17,7 +22,20 @@ namespace CrossBoxApp
                 {
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 });
-
+            // --- AGREGA ESTE BLOQUE EXACTAMENTE AQUÍ ---
+#if IOS
+    builder.ConfigureLifecycleEvents(events =>
+    {
+        events.AddiOS(ios => ios.FinishedLaunching((app, launchOptions) =>
+        {
+            // Esto fuerza al iPhone a usar el volumen de "Media" y ignorar el switch de silencio
+            var session = AVAudioSession.SharedInstance();
+            session.SetCategory(AVAudioSessionCategory.Playback);
+            session.SetActive(true);
+            return true;
+        }));
+    });
+#endif
             builder.Services.AddMauiBlazorWebView();
 
 #if DEBUG

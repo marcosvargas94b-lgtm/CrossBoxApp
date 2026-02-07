@@ -7,6 +7,7 @@
 
 <div class="main-layout">
 
+    @* --- NAVBAR (PROTEGIDO PARA NOTCH) --- *@
     <div class="navbar-container">
         <div class="nav-left" @onclick="Volver">
             <i class="fas fa-arrow-left"></i> VOLVER
@@ -17,7 +18,20 @@
 
     <div class="scrollable-content">
         
-        <h2 class="date-header">@DateTime.Now.ToString("dddd, dd MMMM").ToUpper()</h2>
+        @* --- TABS DE FECHA (HOY / MAÑANA) --- *@
+        <div class="date-tabs-container fade-in">
+            <button class="tab-date @(EsHoy ? "active" : "")" @onclick="SeleccionarHoy">
+                <span>HOY</span>
+                <small>@DateTime.Now.ToString("dd MMM").ToUpper()</small>
+            </button>
+            <button class="tab-date @(!EsHoy ? "active" : "")" @onclick="SeleccionarManana">
+                <span>MAÑANA</span>
+                <small>@DateTime.Now.AddDays(1).ToString("dd MMM").ToUpper()</small>
+            </button>
+        </div>
+
+        @* --- TÍTULO DE LA FECHA SELECCIONADA --- *@
+        <h2 class="date-header">@fechaSeleccionada.ToString("dddd, dd MMMM").ToUpper()</h2>
 
         <div class="booking-section fade-in">
             @if (miReservaActualId == Guid.Empty)
@@ -40,7 +54,9 @@
                     <div class="success-icon">
                         <i class="fas fa-check-circle"></i>
                     </div>
-                    <p class="success-text">Ya tienes clase reservada.</p>
+                    <p class="success-text">
+                        Ya tienes clase reservada para @(EsHoy ? "HOY" : "MAÑANA").
+                    </p>
                     <button class="btn-cancelar w-100" @onclick="CancelarReserva">
                         CANCELAR MI RESERVACIÓN
                     </button>
@@ -60,6 +76,11 @@
         else
         {
             <div class="cards-grid">
+                @if(agendaData.Count == 0)
+                {
+                     <div class="text-center text-muted mt-4">No hay horarios disponibles para este día.</div>
+                }
+
                 @foreach (var horario in agendaData)
                 {
                     <div class="schedule-card fade-in">
@@ -95,7 +116,7 @@
 </div>
 
 <style>
-    /* --- ESTRUCTURA BASE (IDÉNTICA A HOME) --- */
+    /* --- ESTRUCTURA BASE (PROTECCIÓN NOTCH) --- */
     .main-layout {
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
@@ -107,9 +128,9 @@
 
     .navbar-container {
         flex-shrink: 0;
-        /* Padding exacto del Home */
-        padding-top: calc(env(safe-area-inset-top) + 5px);
-        padding-bottom: 10px;
+        /* --- AQUÍ ESTÁ LA PROTECCIÓN DEL NOTCH --- */
+        padding-top: calc(env(safe-area-inset-top) + 15px); /* Un poco más de aire para seguridad */
+        padding-bottom: 15px;
         padding-left: 20px;
         padding-right: 20px;
         
@@ -121,7 +142,7 @@
         align-items: center;
         z-index: 100;
         font-family: 'Oswald';
-        min-height: 60px;
+        min-height: 80px; /* Un poco más alto para compensar el notch */
     }
 
     .nav-left {
@@ -149,154 +170,70 @@
         padding: 20px;
         display: flex;
         flex-direction: column;
-        
         -webkit-overflow-scrolling: touch;
         padding-bottom: 40px;
     }
 
-    /* --- ESTILOS DE AGENDA --- */
-    
-    .date-header {
-        font-family: 'Oswald';
-        text-align: center;
-        color: #F8C545;
-        font-size: 1.5rem;
-        margin-top: 10px;
-        margin-bottom: 20px;
-        letter-spacing: 1px;
-    }
-
-    .booking-section {
-        background: #1a1a1a;
-        padding: 20px;
-        border-radius: 15px;
-        border: 1px solid #333;
-        margin-bottom: 20px;
-        width: 100%;
-        max-width: 600px;
-        align-self: center; /* Centramos este bloque */
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    }
-
-    .lbl-input {
-        color: #aaa;
-        font-size: 0.9rem;
-        margin-bottom: 8px;
-        display: block;
-    }
-
-    .input-group {
+    /* --- TABS FECHAS --- */
+    .date-tabs-container {
         display: flex;
-        gap: 10px;
+        gap: 15px;
+        margin-bottom: 15px;
+        justify-content: center;
     }
 
-    .input-dark {
-        background: #333 !important;
-        color: white !important;
-        border: 1px solid #555;
+    .tab-date {
         flex: 1;
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 10px;
         padding: 10px;
-        border-radius: 8px;
-        font-size: 1rem;
-    }
-    
-    .btn-reservar {
-        background-color: #F8C545;
-        color: black;
-        font-weight: bold;
-        border: none;
-        padding: 0 20px;
-        border-radius: 8px;
-        font-family: 'Oswald';
-        transition: transform 0.2s;
-    }
-    .btn-reservar:active { transform: scale(0.95); }
-
-    /* Estado Confirmado */
-    .success-icon { font-size: 3rem; color: #28a745; margin-bottom: 10px; }
-    .success-text { color: #eee; font-size: 1.1rem; margin-bottom: 15px; font-weight: bold; }
-    
-    .btn-cancelar {
-        background: transparent;
-        border: 1px solid #dc3545;
-        color: #dc3545;
-        padding: 10px;
-        border-radius: 50px;
-        font-weight: bold;
-        transition: all 0.2s;
-    }
-    .btn-cancelar:active { background: #dc3545; color: white; }
-
-    .divider {
-        width: 100%;
-        height: 1px;
-        background: #333;
-        margin: 10px 0 20px 0;
-    }
-
-    /* Lista de Horarios */
-    .cards-grid {
+        color: #888;
         display: flex;
         flex-direction: column;
-        gap: 15px;
-        width: 100%;
-        max-width: 600px;
-        align-self: center;
-    }
-
-    .schedule-card {
-        background: #1a1a1a;
-        border: 1px solid #333;
-        border-radius: 12px;
-        overflow: hidden;
-    }
-
-    .card-header {
-        background: #252525;
-        padding: 12px 15px;
-        display: flex;
-        justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid #333;
+        cursor: pointer;
+        transition: all 0.3s ease;
     }
 
-    .time-text {
-        font-family: 'Oswald';
-        font-size: 1.1rem;
-        color: white;
-        font-weight: bold;
-    }
+    .tab-date span { font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; }
+    .tab-date small { font-size: 0.75rem; font-family: 'Roboto'; }
 
-    .badge-count {
+    .tab-date.active {
         background: #F8C545;
         color: black;
-        padding: 3px 10px;
-        border-radius: 10px;
-        font-size: 0.8rem;
-        font-weight: bold;
+        border-color: #F8C545;
+        box-shadow: 0 0 15px rgba(248, 197, 69, 0.2);
+        transform: scale(1.02);
     }
 
-    .card-body { padding: 15px; }
-
-    .user-list {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .user-item {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #333;
-        color: #ccc;
-        font-size: 0.95rem;
-    }
-    .user-item:last-child { border-bottom: none; padding-bottom: 0; }
+    /* --- RESTO DE ESTILOS --- */
+    .date-header { font-family: 'Oswald'; text-align: center; color: #F8C545; font-size: 1.5rem; margin-top: 5px; margin-bottom: 20px; letter-spacing: 1px; }
+    .booking-section { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; width: 100%; max-width: 600px; align-self: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+    .lbl-input { color: #aaa; font-size: 0.9rem; margin-bottom: 8px; display: block; }
+    .input-group { display: flex; gap: 10px; }
+    .input-dark { background: #333 !important; color: white !important; border: 1px solid #555; flex: 1; padding: 10px; border-radius: 8px; font-size: 1rem; }
+    .btn-reservar { background-color: #F8C545; color: black; font-weight: bold; border: none; padding: 0 20px; border-radius: 8px; font-family: 'Oswald'; transition: transform 0.2s; }
+    .btn-reservar:active { transform: scale(0.95); }
     
+    .success-icon { font-size: 3rem; color: #28a745; margin-bottom: 10px; }
+    .success-text { color: #eee; font-size: 1.1rem; margin-bottom: 15px; font-weight: bold; }
+    .btn-cancelar { background: transparent; border: 1px solid #dc3545; color: #dc3545; padding: 10px; border-radius: 50px; font-weight: bold; transition: all 0.2s; }
+    .btn-cancelar:active { background: #dc3545; color: white; }
+    
+    .divider { width: 100%; height: 1px; background: #333; margin: 10px 0 20px 0; }
+    
+    .cards-grid { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 600px; align-self: center; }
+    .schedule-card { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; overflow: hidden; }
+    .card-header { background: #252525; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+    .time-text { font-family: 'Oswald'; font-size: 1.1rem; color: white; font-weight: bold; }
+    .badge-count { background: #F8C545; color: black; padding: 3px 10px; border-radius: 10px; font-size: 0.8rem; font-weight: bold; }
+    .card-body { padding: 15px; }
+    .user-list { display: flex; flex-direction: column; gap: 8px; }
+    .user-item { display: flex; align-items: center; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid #333; color: #ccc; font-size: 0.95rem; }
+    .user-item:last-child { border-bottom: none; padding-bottom: 0; }
     .user-item i { color: #F8C545; }
-
+    
     .fade-in { animation: fadeIn 0.5s ease; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
@@ -306,9 +243,27 @@
     private Guid horarioSeleccionado;
     private bool cargando = true;
     private Guid miReservaActualId = Guid.Empty;
+    
+    // --- LÓGICA DE FECHAS ---
+    private DateTime fechaSeleccionada = DateTime.Today;
+    private bool EsHoy => fechaSeleccionada.Date == DateTime.Today;
 
     protected override async Task OnInitializedAsync()
     {
+        await CargarDatos();
+    }
+
+    private async Task SeleccionarHoy()
+    {
+        if (EsHoy) return;
+        fechaSeleccionada = DateTime.Today;
+        await CargarDatos();
+    }
+
+    private async Task SeleccionarManana()
+    {
+        if (!EsHoy) return;
+        fechaSeleccionada = DateTime.Today.AddDays(1);
         await CargarDatos();
     }
 
@@ -317,26 +272,32 @@
         try
         {
             cargando = true;
+            // Reiniciamos selecciones al cambiar de día
+            horarioSeleccionado = Guid.Empty;
+            miReservaActualId = Guid.Empty;
+            agendaData.Clear();
+            StateHasChanged(); 
+
             if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
 
             var boxId = Sesion.Usuario.BoxID;
             var userId = Sesion.Usuario.UsuarioID;
-            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/agendaapi/visual/{boxId}/{userId}");
+            
+            // Enviamos la fecha seleccionada en formato "yyyy-MM-dd"
+            string fechaStr = fechaSeleccionada.ToString("yyyy-MM-dd");
+
+            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/agendaapi/visual/{boxId}/{userId}/{fechaStr}");
 
             if (response.IsSuccessStatusCode)
             {
                 agendaData = await response.Content.ReadFromJsonAsync<List<AgendaVisualDto>>();
 
+                // Verificar si YA tengo reserva en ESTE día
                 var miHorario = agendaData.FirstOrDefault(x => x.EsMiReserva);
                 if (miHorario != null)
                 {
                     miReservaActualId = miHorario.HorarioId;
                     horarioSeleccionado = miReservaActualId;
-                }
-                else
-                {
-                    miReservaActualId = Guid.Empty;
-                    horarioSeleccionado = Guid.Empty;
                 }
             }
         }
@@ -354,7 +315,7 @@
     {
         if (horarioSeleccionado == Guid.Empty)
         {
-            await App.Current.MainPage.DisplayAlert("Atención", "Selecciona un horario primero.", "OK");
+            await App.Current.MainPage.DisplayAlert("Atención", "Selecciona un horario.", "OK");
             return;
         }
 
@@ -365,20 +326,23 @@
                 UsuarioId = Sesion.Usuario.UsuarioID,
                 BoxId = Sesion.Usuario.BoxID,
                 HorarioId = horarioSeleccionado,
-                Fecha = DateTime.Now
+                Fecha = fechaSeleccionada // Enviamos la fecha del Tab activo (Hoy o Mañana)
             };
 
             var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/agendaapi/reservar", reserva);
 
             if (response.IsSuccessStatusCode)
             {
-                await App.Current.MainPage.DisplayAlert("¡Listo!", "Tu clase ha sido reservada.", "OK");
+                string dia = EsHoy ? "hoy" : "mañana";
+                await App.Current.MainPage.DisplayAlert("¡Listo!", $"Clase reservada para {dia}.", "OK");
                 await CargarDatos();
             }
             else
             {
                 var errorMsg = await response.Content.ReadFromJsonAsync<dynamic>();
-                await App.Current.MainPage.DisplayAlert("Aviso", errorMsg.mensaje.ToString(), "OK");
+                string mensaje = errorMsg.ToString();
+                try { mensaje = errorMsg.GetProperty("mensaje").GetString(); } catch { }
+                await App.Current.MainPage.DisplayAlert("Aviso", mensaje, "OK");
             }
         }
         catch (Exception ex)
@@ -389,7 +353,7 @@
 
     private async Task CancelarReserva()
     {
-        bool confirmar = await App.Current.MainPage.DisplayAlert("Cancelar", "¿Seguro que quieres cancelar tu clase?", "Sí", "No");
+        bool confirmar = await App.Current.MainPage.DisplayAlert("Cancelar", "¿Seguro que quieres cancelar?", "Sí", "No");
         if (!confirmar) return;
 
         try
@@ -398,7 +362,7 @@
             {
                 UsuarioId = Sesion.Usuario.UsuarioID,
                 BoxId = Sesion.Usuario.BoxID,
-                Fecha = DateTime.Now
+                Fecha = fechaSeleccionada // Importante para cancelar la del día correcto
             };
 
             var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/agendaapi/cancelar", reserva);
