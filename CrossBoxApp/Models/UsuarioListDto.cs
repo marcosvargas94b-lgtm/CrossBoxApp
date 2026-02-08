@@ -20,6 +20,7 @@ namespace CrossBoxApp.Models
         public bool MostrarMenu { get; set; }
         public bool Pagado { get; set; }
         public string FotoUrl { get; set; }
+        public DateTime? ProximoCorte { get; set; }
 
     }
 

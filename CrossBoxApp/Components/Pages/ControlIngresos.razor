@@ -1,0 +1,263 @@
+﻿@page "/control-ingresos"
+@using System.Globalization
+@inject HttpClient Http
+@inject SesionService Sesion
+@inject NavigationManager Nav
+
+<div class="main-layout">
+    @* NAVBAR *@
+    <div class="navbar-container">
+        <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
+            <i class="fas fa-arrow-left"></i> VOLVER
+        </div>
+        <div class="nav-title">CONTROL FINANCIERO</div>
+        <div class="nav-right"></div>
+    </div>
+
+    <div class="scrollable-content">
+        <div class="finance-wrapper">
+            
+            @* TABS *@
+            <div class="tabs-header">
+                <div class="tab-item @(tabActiva == 1 ? "active" : "")" @onclick="() => CambiarTab(1)">
+                    MOVIMIENTOS
+                </div>
+                <div class="tab-item @(tabActiva == 2 ? "active" : "")" @onclick="() => CambiarTab(2)">
+                    HISTÓRICO
+                </div>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="spinner-container"><div class="spinner-border text-warning"></div></div>
+            }
+            else
+            {
+                @if (tabActiva == 1)
+                {
+                    @* --- VISTA DE LISTA MENSUAL --- *@
+                    <div class="filters-area">
+                        <label class="lbl-filter">Seleccionar Mes:</label>
+                        <input type="month" @bind="fechaFiltro" class="input-dark-month" @bind:after="CargarMovimientos" />
+                    </div>
+
+                    <div class="total-card">
+                        <span class="total-lbl">TOTAL RECAUDADO</span>
+                        <span class="total-amount">@totalMes.ToString("C", CultureInfo.CurrentCulture)</span>
+                    </div>
+
+                    <div class="transactions-list">
+                        @if (listaMovimientos.Count == 0)
+                        {
+                            <div class="empty-state">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                                <p>No hay movimientos registrados en este mes.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <table class="table-finanzas">
+                                <thead>
+                                    <tr>
+                                        <th>DÍA</th>
+                                        <th>NOMBRE</th>
+                                        <th style="text-align:right">MONTO</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var m in listaMovimientos)
+                                    {
+                                        <tr>
+                                            <td class="td-date">
+                                                <div class="date-box">
+                                                    <span>@m.FechaPago.Day</span>
+                                                    <small>@m.FechaPago.ToString("MMM")</small>
+                                                </div>
+                                            </td>
+                                            <td class="td-info">
+                                                <div class="user-name">@m.NombreUsuario</div>
+                                                <div class="pay-method">
+                                                    @if (m.MetodoPago == "MERCADOPAGO")
+                                                    {
+                                                        <span class="badge-mp"><i class="fas fa-hand-holding-usd"></i> MercadoPago</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge-cash"><i class="fas fa-money-bill-wave"></i> Efectivo</span>
+                                                    }
+                                                </div>
+                                            </td>
+                                            <td class="td-amount">+@m.Monto.ToString("N0")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                    </div>
+                }
+                else
+                {
+                    @* --- VISTA DE GRÁFICA --- *@
+                    <div class="chart-section fade-in">
+                        <h4 class="chart-title">INGRESOS ÚLTIMOS 6 MESES</h4>
+                        
+                        <div class="bar-chart-container">
+                            @if (datosGrafica.Count == 0)
+                            {
+                                <p class="text-muted text-center">No hay datos históricos suficientes.</p>
+                            }
+                            else
+                            {
+                                <div class="bars-flex">
+                                    @foreach (var g in datosGrafica)
+                                    {
+                                        // Calcular altura (con un mínimo visual de 5px)
+                                        double porcentaje = maxValGrafica > 0 ? (double)g.Total / (double)maxValGrafica * 100 : 0;
+                                        if (porcentaje < 2 && g.Total > 0) porcentaje = 2;
+
+                                        <div class="bar-group">
+                                            <div class="bar-val">@g.Total.ToString("N0")</div> <div class="bar-visual" style="height: @porcentaje%;"></div>
+                                            <div class="bar-lbl">@g.Etiqueta</div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    /* LAYOUT GENERAL */
+    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom: 10px; padding-left: 15px; padding-right: 15px; background-color: #1a1a1a; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
+    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
+    .scrollable-content { flex-grow: 1; overflow-y: auto; background-color: #0d0d0d; padding: 15px; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
+
+    /* TABS */
+    .finance-wrapper { max-width: 600px; margin: 0 auto; }
+    .tabs-header { display: flex; background: #1a1a1a; border-radius: 10px; padding: 5px; margin-bottom: 20px; border: 1px solid #333; }
+    .tab-item { flex: 1; text-align: center; padding: 10px; font-family: 'Oswald'; color: #666; cursor: pointer; border-radius: 8px; transition: 0.3s; }
+    .tab-item.active { background: #F8C545; color: black; font-weight: bold; box-shadow: 0 2px 10px rgba(248,197,69,0.2); }
+
+    /* FILTROS Y TOTAL */
+    .filters-area { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; }
+    .lbl-filter { color: #aaa; font-size: 0.9rem; font-family: 'Roboto'; margin-right: 10px; }
+    .input-dark-month { background: #000; border: 1px solid #444; color: white; padding: 5px 10px; border-radius: 5px; font-family: 'Oswald'; outline: none; }
+    
+    .total-card { background: linear-gradient(45deg, #1a1a1a, #222); border-left: 5px solid #F8C545; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; flex-direction: column; align-items: flex-end; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    .total-lbl { color: #888; font-size: 0.8rem; letter-spacing: 1px; font-family: 'Oswald'; }
+    .total-amount { color: #F8C545; font-size: 2rem; font-weight: bold; font-family: 'Oswald'; line-height: 1; }
+
+    /* LISTA */
+    .transactions-list { min-height: 200px; }
+    .empty-state { text-align: center; color: #444; margin-top: 50px; }
+    .empty-state i { font-size: 3rem; margin-bottom: 10px; }
+    
+    .table-finanzas { width: 100%; border-collapse: collapse; }
+    .table-finanzas th { text-align: left; color: #666; font-size: 0.75rem; padding-bottom: 10px; border-bottom: 1px solid #333; font-family: 'Oswald'; letter-spacing: 1px; }
+    .table-finanzas td { padding: 15px 0; border-bottom: 1px solid #222; vertical-align: middle; }
+    
+    .td-date { width: 50px; }
+    .date-box { background: #222; width: 45px; height: 45px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Oswald'; border: 1px solid #444; }
+    .date-box span { font-size: 1.1rem; font-weight: bold; color: white; line-height: 1; }
+    .date-box small { font-size: 0.65rem; color: #F8C545; text-transform: uppercase; line-height: 1; }
+
+    .td-info { padding-left: 10px; }
+    .user-name { color: #eee; font-weight: bold; font-size: 0.95rem; margin-bottom: 3px; }
+    .pay-method { display: flex; gap: 5px; }
+    .badge-mp { background: rgba(0, 158, 227, 0.15); color: #009EE3; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; border: 1px solid rgba(0, 158, 227, 0.3); }
+    .badge-cash { background: rgba(46, 204, 113, 0.15); color: #2ecc71; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; border: 1px solid rgba(46, 204, 113, 0.3); }
+
+    .td-amount { text-align: right; color: #2ecc71; font-family: 'Oswald'; font-size: 1.1rem; font-weight: bold; }
+
+    /* GRÁFICA */
+    .chart-section { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-top: 10px; }
+    .chart-title { color: white; font-family: 'Oswald'; text-align: center; margin-bottom: 20px; font-size: 1.1rem; border-bottom: 1px solid #333; padding-bottom: 10px; }
+    .bar-chart-container { height: 300px; display: flex; align-items: flex-end; justify-content: center; width: 100%; }
+    .bars-flex { display: flex; justify-content: space-around; align-items: flex-end; width: 100%; height: 100%; }
+    .bar-group { display: flex; flex-direction: column; align-items: center; width: 14%; height: 100%; justify-content: flex-end; }
+    .bar-val { font-size: 0.7rem; color: #fff; margin-bottom: 5px; font-family: 'Oswald'; }
+    .bar-visual { width: 100%; background: linear-gradient(to top, #F8C545, #ffca28); border-radius: 5px 5px 0 0; transition: height 0.6s ease-out; opacity: 0.9; }
+    .bar-lbl { margin-top: 8px; font-size: 0.65rem; color: #888; font-family: 'Oswald'; text-align: center; }
+
+    .fade-in { animation: fadeIn 0.5s ease; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .spinner-container { display: flex; justify-content: center; padding: 50px; }
+</style>
+
+@code {
+    private int tabActiva = 1;
+    private bool cargando = false;
+    private DateTime fechaFiltro = DateTime.Today;
+
+    // DTOs Locales para mapear respuesta
+    class MovimientoDto { public Guid PagoID { get; set; } public string NombreUsuario { get; set; } public DateTime FechaPago { get; set; } public decimal Monto { get; set; } public string MetodoPago { get; set; } }
+    class GraficaDto { public string Etiqueta { get; set; } public decimal Total { get; set; } }
+    class ResponseMovimientos { public List<MovimientoDto> Lista { get; set; } public decimal Total { get; set; } }
+
+    private List<MovimientoDto> listaMovimientos = new();
+    private List<GraficaDto> datosGrafica = new();
+    private decimal totalMes = 0;
+    private decimal maxValGrafica = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Validación de Admin
+        if (Sesion.Usuario == null || Sesion.Usuario.RolID != 1) 
+        { 
+            Nav.NavigateTo("/home"); 
+            return; 
+        }
+        await CargarMovimientos();
+    }
+
+    private async Task CambiarTab(int tab)
+    {
+        tabActiva = tab;
+        if (tab == 1) await CargarMovimientos();
+        else await CargarGrafica();
+    }
+
+    private async Task CargarMovimientos()
+    {
+        cargando = true;
+        try
+        {
+            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/finanzas/movimientos/{Sesion.Usuario.BoxID}/{fechaFiltro.Year}/{fechaFiltro.Month}";
+            var respuesta = await Http.GetFromJsonAsync<ResponseMovimientos>(url);
+            listaMovimientos = respuesta.Lista ?? new();
+            totalMes = respuesta.Total;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error cargando movimientos: " + ex.Message);
+        }
+        cargando = false;
+    }
+
+    private async Task CargarGrafica()
+    {
+        cargando = true;
+        try
+        {
+            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/finanzas/grafica-ingresos/{Sesion.Usuario.BoxID}";
+            datosGrafica = await Http.GetFromJsonAsync<List<GraficaDto>>(url);
+
+            if (datosGrafica != null && datosGrafica.Any())
+            {
+                maxValGrafica = datosGrafica.Max(x => x.Total);
+                if (maxValGrafica == 0) maxValGrafica = 1; // Evitar división por cero
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error cargando gráfica: " + ex.Message);
+        }
+        cargando = false;
+    }
+}
