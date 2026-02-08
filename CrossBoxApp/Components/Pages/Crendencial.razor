@@ -1,0 +1,272 @@
+﻿@page "/credencial"
+@using System.Globalization
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject CrossBoxApp.Models.Services.SesionService Sesion
+
+<div class="credential-layout">
+
+    @* --- PANTALLA INSTRUCCIÓN (VERTICAL) --- *@
+    <div class="rotate-instruction">
+        <div class="rotate-content">
+            <div class="phone-animation">
+                <i class="fas fa-mobile-alt"></i>
+            </div>
+            <h3>GIRA TU CELULAR</h3>
+            <p>Ponlo en horizontal para ver tu ID.</p>
+            <button class="btn-back-simple" @onclick="Volver">Cancelar</button>
+        </div>
+    </div>
+
+    @* --- VISOR TARJETA (HORIZONTAL) --- *@
+    <div class="card-viewer">
+        <div class="gold-card-container">
+            <div class="glow-back"></div>
+
+            <div class="gold-card">
+                <div class="hologram-shine"></div>
+
+                <div class="card-header-row">
+                    <div class="box-brand">
+                        @if (!string.IsNullOrEmpty(urlLogoBox))
+                        {
+                            <img src="@urlLogoBox" class="box-logo-img" />
+                        }
+                        <span class="box-name">@nombreBox</span>
+                    </div>
+                    <div class="status-indicator">
+                        <div class="led-light @(esActivo ? "led-green" : "led-red")"></div>
+                        <span class="status-text">@(esActivo ? "ACTIVO" : "INACTIVO")</span>
+                    </div>
+                </div>
+
+                <div class="card-body-row">
+                    <div class="photo-frame">
+                        @if (!string.IsNullOrEmpty(fotoUsuarioUrl))
+                        {
+                            <img src="@fotoUsuarioUrl" class="user-photo" />
+                        }
+                        else
+                        {
+                            <div class="user-photo-placeholder">
+                                @(Sesion.Usuario?.Nombre?.Substring(0, 1) ?? "A")
+                            </div>
+                        }
+                    </div>
+
+                    <div class="user-details">
+                        <div class="names-block">
+                            <h2 class="user-fullname">@Sesion.Usuario?.Nombre</h2>
+                            <h2 class="user-lastname">@Sesion.Usuario?.Apellidos</h2>
+                        </div>
+                        
+                        <div class="membership-info">
+                            <div class="info-item">
+                                <label>ID ATLETA</label>
+                                <span>#@Sesion.Usuario?.UsuarioID.ToString().Substring(0, 8).ToUpper()</span>
+                            </div>
+                            <div class="info-item">
+                                <label>ESTATUS / VENCIMIENTO</label>
+                                @* Aquí hacemos la letra más grande y roja si está vencido *@
+                                <span class="vencimiento-text" style="@(esActivo ? "" : "color:#8B0000; font-size:1.3rem !important;")">
+                                    @fechaVencimientoTexto
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer-row">
+                    <div class="live-clock">@horaActual</div>
+                    <div class="app-watermark">AFTRACK DIGITAL ID</div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-close-floating" @onclick="Volver">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+</div>
+
+<style>
+    /* --- LAYOUT PRINCIPAL --- */
+    .credential-layout { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0d0d0d; z-index: 9999; display: flex; justify-content: center; align-items: center; }
+    
+    /* --- PANTALLA VERTICAL (INSTRUCCIONES) --- */
+    .rotate-instruction { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; width: 100%; height: 100%; background: #111; }
+    .phone-animation { font-size: 4rem; color: #F8C545; animation: rotatePhone 2s infinite; margin-bottom: 20px; }
+    .rotate-content h3 { font-family: 'Oswald'; color: #F8C545; margin-bottom: 10px; }
+    .btn-back-simple { margin-top: 30px; background: transparent; border: 1px solid #666; color: #aaa; padding: 10px 30px; border-radius: 50px; }
+
+    /* --- PANTALLA HORIZONTAL (VISOR) --- */
+    .card-viewer { display: none; width: 100%; height: 100%; position: relative; justify-content: center; align-items: center; background: radial-gradient(circle, #222 0%, #000 100%); }
+
+    /* MEDIA QUERIES PARA ORIENTACIÓN */
+    @@media (orientation: portrait) { .rotate-instruction { display: flex; } .card-viewer { display: none; } }
+    @@media (orientation: landscape) { .rotate-instruction { display: none; } .card-viewer { display: flex; } }
+
+    /* --- CONTENEDOR DE LA TARJETA (TAMAÑO AJUSTADO) --- */
+    .gold-card-container { 
+        position: relative; 
+        /* Hacemos la tarjeta más ancha y alta para que quepa todo */
+        width: 85vw; 
+        height: 80vh; 
+        max-width: 650px; 
+        max-height: 380px; 
+    }
+
+    .glow-back { position: absolute; top: -15px; left: -15px; right: -15px; bottom: -15px; background: radial-gradient(circle, rgba(248, 197, 69, 0.5) 0%, rgba(0,0,0,0) 70%); z-index: 1; filter: blur(25px); animation: pulseGlow 3s infinite; }
+    
+    .gold-card { 
+        position: relative; z-index: 2; width: 100%; height: 100%; border-radius: 25px; 
+        /* ORO METÁLICO MÁS INTENSO */
+        background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fbf5b7 75%, #aa771c 100%); 
+        box-shadow: 0 15px 40px rgba(0,0,0,0.9), inset 0 0 0 2px rgba(255,255,255,0.3); 
+        padding: 25px 30px; /* Más padding interno */
+        display: flex; flex-direction: column; overflow: hidden; 
+    }
+
+    .hologram-shine { position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%); transform: skewX(-25deg); z-index: 10; animation: hologramMove 3s infinite; pointer-events: none; }
+
+    /* --- CABECERA --- */
+    .card-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 10px; }
+    .box-brand { display: flex; align-items: center; gap: 15px; }
+    
+    /* LOGO CON FONDO NEGRO */
+    .box-logo-img { 
+        height: 50px; width: 50px; 
+        border-radius: 50%; 
+        border: 2px solid #F8C545; 
+        background-color: #000; /* Fondo negro */
+        object-fit: contain; /* Para que el logo no se deforme dentro del círculo negro */
+        padding: 2px;
+    }
+    
+    .box-name { font-family: 'Oswald'; font-weight: 900; font-size: 1.8rem; color: #1a1a1a; text-shadow: 0 1px 0 rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; }
+    
+    .status-indicator { display: flex; align-items: center; gap: 10px; background: #111; padding: 6px 15px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.3); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .led-light { width: 14px; height: 14px; border-radius: 50%; }
+    .led-green { background-color: #00ff00; box-shadow: 0 0 10px #00ff00; animation: blink 1s infinite; }
+    .led-red { background-color: #ff0000; box-shadow: 0 0 10px #ff0000; animation: blinkFast 0.5s infinite; }
+    .status-text { color: white; font-family: 'Oswald'; font-weight: bold; font-size: 0.9rem; letter-spacing: 1px; }
+
+    /* --- CUERPO (FOTO Y DATOS) --- */
+    .card-body-row { display: flex; gap: 25px; flex: 1; align-items: center; }
+    
+    .photo-frame { 
+        width: 130px; height: 130px; /* Foto más grande */
+        border-radius: 20px; border: 4px solid #111; overflow: hidden; 
+        background: #000; box-shadow: 5px 5px 15px rgba(0,0,0,0.4); flex-shrink: 0; 
+    }
+    .user-photo { width: 100%; height: 100%; object-fit: cover; }
+    .user-photo-placeholder { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; color: #F8C545; font-size: 4rem; font-family: 'Oswald'; }
+    
+    .user-details { flex: 1; display: flex; flex-direction: column; justify-content: space-around; height: 100%; }
+    
+    .names-block { margin-bottom: 10px; }
+    .user-fullname { font-family: 'Oswald'; font-size: 2.2rem; color: #111; line-height: 0.9; margin: 0; font-weight: 800; text-transform: uppercase; text-shadow: 1px 1px 0 rgba(255,255,255,0.4); }
+    .user-lastname { font-family: 'Oswald'; font-size: 1.6rem; color: #333; line-height: 1; margin: 0; font-weight: 600; text-transform: uppercase; }
+    
+    .membership-info { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; background: rgba(255,255,255,0.15); padding: 10px; border-radius: 10px; }
+    .info-item { display: flex; flex-direction: column; }
+    .info-item label { font-size: 0.65rem; color: #444; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
+    .info-item span { font-family: 'Roboto Mono', monospace; font-size: 1.2rem; color: #000; font-weight: 900; }
+    
+    .vencimiento-text { font-family: 'Oswald' !important; font-size: 1.3rem !important; }
+
+    /* --- PIE --- */
+    .card-footer-row { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 10px; }
+    .live-clock { font-family: 'Roboto Mono', monospace; font-size: 1rem; color: #222; font-weight: bold; background: rgba(255,255,255,0.3); padding: 2px 8px; border-radius: 5px; }
+    .app-watermark { font-family: 'Oswald'; font-size: 0.8rem; color: rgba(0,0,0,0.5); letter-spacing: 3px; font-weight: bold; }
+
+    .btn-close-floating { position: absolute; top: 25px; right: 25px; background: rgba(0, 0, 0, 0.6); border: 1px solid #F8C545; color: #F8C545; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; backdrop-filter: blur(5px); transition: 0.2s; z-index: 20; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+    .btn-close-floating:active { transform: scale(0.9); background: #F8C545; color: black; }
+
+    @@keyframes rotatePhone { 0% { transform: rotate(0deg); } 25% { transform: rotate(90deg); } 50% { transform: rotate(90deg); } 75% { transform: rotate(0deg); } 100% { transform: rotate(0deg); } }
+    @@keyframes pulseGlow { 0% { opacity: 0.4; } 50% { opacity: 0.8; } 100% { opacity: 0.4; } }
+    @@keyframes hologramMove { 0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; } }
+    @@keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+    @@keyframes blinkFast { 0% { opacity: 1; } 50% { opacity: 0.1; } 100% { opacity: 1; } }
+</style>
+
+@code {
+    private string nombreBox = "CARGANDO...";
+    private string urlLogoBox = "";
+    private string fotoUsuarioUrl = "";
+    private bool esActivo = false;
+    private string fechaVencimientoTexto = "--/--/----";
+    private string horaActual = DateTime.Now.ToString("HH:mm:ss");
+    private System.Threading.Timer timer;
+
+    class BoxNombreDto { public string Nombre { get; set; } public Guid? Logo { get; set; } }
+
+    protected override async Task OnInitializedAsync()
+    {
+        timer = new System.Threading.Timer((_) => {
+            horaActual = DateTime.Now.ToString("HH:mm:ss");
+            InvokeAsync(StateHasChanged);
+        }, null, 0, 1000);
+
+        if (Sesion.Usuario != null)
+        {
+            // 1. Foto
+            if (!string.IsNullOrEmpty(Sesion.Usuario.FotoPerfil)) 
+            {
+                fotoUsuarioUrl = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/imagenes/perfiles/{Sesion.Usuario.FotoPerfil}";
+            }
+
+            // 2. Info Box
+            try
+            {
+                var box = await Http.GetFromJsonAsync<BoxNombreDto>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/configapi/nombre-box/{Sesion.Usuario.BoxID}");
+                if (box != null)
+                {
+                    nombreBox = box.Nombre.ToUpper();
+                    if (box.Logo.HasValue)
+                    {
+                        urlLogoBox = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/Imagenes/Logos/{box.Logo}.jpg";
+                    }
+                }
+            }
+            catch {}
+
+            // 3. Estatus
+            try
+            {
+                var dias = await Http.GetFromJsonAsync<int>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/dias-restantes/{Sesion.Usuario.UsuarioID}");
+                if (dias >= 0)
+                {
+                    esActivo = true;
+                    if (Sesion.Usuario.ProximoCorte != null)
+                        fechaVencimientoTexto = Sesion.Usuario.ProximoCorte.Value.ToString("dd/MM/yyyy");
+                }
+                else
+                {
+                    esActivo = false;
+                    fechaVencimientoTexto = "VENCIDO";
+                }
+            }
+            catch
+            {
+                // Fallback
+                if (Sesion.Usuario.ProximoCorte != null && Sesion.Usuario.ProximoCorte.Value.Date >= DateTime.Today)
+                {
+                    esActivo = true;
+                    fechaVencimientoTexto = Sesion.Usuario.ProximoCorte.Value.ToString("dd/MM/yyyy");
+                }
+                else
+                {
+                    esActivo = false;
+                    fechaVencimientoTexto = "VENCIDO";
+                }
+            }
+        }
+    }
+
+    private void Volver()
+    {
+        timer?.Dispose();
+        Nav.NavigateTo("/home");
+    }
+}

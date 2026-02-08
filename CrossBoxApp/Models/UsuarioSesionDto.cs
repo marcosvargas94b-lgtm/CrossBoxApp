@@ -18,6 +18,7 @@ namespace CrossBoxApp.Models
         public bool? Validado { get; set; }
         public virtual Boxes? Box { get; set; }
         public DateTime? ProximoCorte { get; set; }
+        public string FotoPerfil { get; set; }
         public List<string> ListaPermisos { get; set; } = new List<string>();
     }
 }
