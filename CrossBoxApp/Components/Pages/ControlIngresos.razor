@@ -208,7 +208,7 @@
     protected override async Task OnInitializedAsync()
     {
         // Validación de Admin
-        if (Sesion.Usuario == null || Sesion.Usuario.RolID != 1) 
+        if (Sesion.Usuario == null || Sesion.Usuario.TipoUsuarioID != 1) 
         { 
             Nav.NavigateTo("/home"); 
             return; 
