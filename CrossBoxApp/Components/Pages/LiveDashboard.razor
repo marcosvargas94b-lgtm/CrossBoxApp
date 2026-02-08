@@ -3,11 +3,13 @@
 @using CrossBoxApp.Models.Services
 @using Microsoft.AspNetCore.SignalR.Client
 @using static CrossBoxApp.Components.Pages.LiveLobby
+@using Plugin.Maui.Audio
 @inject LiveSessionState LiveState
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject SesionService Sesion
 @inject IJSRuntime JS
+@inject IAudioManager AudioManager
 @implements IAsyncDisposable
 
 @* --- AVISO DE GIRO PARA MÓVIL --- *@
@@ -20,11 +22,6 @@
 </div>
 
 <div class="dashboard-container @(wodExpandido ? "wod-wide" : "")">
-
-    @* SONIDOS *@
-    <audio id="audio-beep" src="Sonidos/beep.mp3" preload="auto"></audio>
-    <audio id="audio-go" src="Sonidos/go.mp3" preload="auto"></audio>
-    <audio id="audio-medio" src="Sonidos/medio.mp3" preload="auto"></audio>
 
     @* --- PANEL 1: TIMER --- *@
     <div class="panel timer-panel @(verTimer ? "" : "collapsed")">
@@ -431,9 +428,6 @@
 }
 
 <style>
-    /* ... (Tus estilos existentes aquí, no los repetiré para no llenar, pero úsalos tal cual los tenías) ... */
-    /* ASEGÚRATE DE COPIAR TODOS LOS ESTILOS QUE TE PASÉ ANTES PARA LOS PANELES Y BOTONES */
-    
     .flex-column-layout { display: flex; flex-direction: column; height: 100%; padding: 15px; }
     .timer-visual-group { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; }
     .timer-controls-bottom { margin-top: auto; display: flex; gap: 10px; width: 100%; padding-top: 15px; }
@@ -545,6 +539,10 @@
 </style>
 
 @code {
+    private IAudioPlayer playerBeep;
+    private IAudioPlayer playerGo;
+    private IAudioPlayer playerMedio;
+
     private bool wodExpandido = false;
     private bool verTimer = true;
     private bool verWod = true;
@@ -599,16 +597,20 @@
 
     protected override async Task OnInitializedAsync()
     {
-        ForzarMezclaDeAudio();
-
-#if ANDROID
+        // 1. CARGAR SONIDOS EN MEMORIA (Desde Resources/Raw)
         try
         {
-            var audioManager = (Android.Media.AudioManager)Android.App.Application.Context.GetSystemService(Android.Content.Context.AudioService);
-            audioManager.RequestAudioFocus(null, Android.Media.Stream.Music, Android.Media.AudioFocus.GainTransientMayDuck);
+            playerBeep = AudioManager.CreatePlayer(await FileSystem.OpenAppPackageFileAsync("beep.mp3"));
+            playerGo = AudioManager.CreatePlayer(await FileSystem.OpenAppPackageFileAsync("go.mp3"));
+            playerMedio = AudioManager.CreatePlayer(await FileSystem.OpenAppPackageFileAsync("medio.mp3"));
         }
-        catch (Exception ex) { Console.WriteLine($"Error Android Audio: {ex.Message}"); }
-#endif
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error cargando sonidos: {ex.Message}");
+        }
+
+        // 2. CONFIGURAR SESIÓN DE AUDIO NATIVA PARA MEZCLA
+        ConfigurarAudioNativo();
 
         _timer = new System.Timers.Timer(1000);
         _timer.Elapsed += (sender, e) => Tick();
@@ -632,20 +634,26 @@
         }
     }
 
-    // --- NUEVO MÉTODO PARA FORZAR MEZCLA EN IOS ---
-    private void ForzarMezclaDeAudio()
+    private void ConfigurarAudioNativo()
     {
 #if IOS
         try
         {
-            // Solo le recordamos a la sesión actual que permita mezclar
-            // No llamamos a SetActive(true) de nuevo si ya está activa,
-            // a veces eso causa el "corte" momentáneo.
             var session = AVFoundation.AVAudioSession.SharedInstance();
-            session.SetCategory(AVFoundation.AVAudioSessionCategory.Playback,
-                                AVFoundation.AVAudioSessionCategoryOptions.MixWithOthers);
+            // MixWithOthers (sin DuckOthers) para que Spotify suene al 100% y nuestro audio se mezcle
+            session.SetCategory(AVFoundation.AVAudioSessionCategory.Playback, AVFoundation.AVAudioSessionCategoryOptions.MixWithOthers);
+            session.SetActive(true);
         }
-        catch (Exception ex) { Console.WriteLine("Audio Mix refresh: " + ex.Message); }
+        catch (Exception ex) { Console.WriteLine($"iOS Audio: {ex.Message}"); }
+#endif
+
+#if ANDROID
+        try
+        {
+            var audioManager = (Android.Media.AudioManager)Android.App.Application.Context.GetSystemService(Android.Content.Context.AudioService);
+            audioManager.RequestAudioFocus(null, Android.Media.Stream.Music, Android.Media.AudioFocus.GainTransientMayDuck);
+        }
+        catch (Exception ex) { Console.WriteLine($"Android Audio: {ex.Message}"); }
 #endif
     }
 
@@ -815,15 +823,21 @@
         mostrarModalAtletas = false;
     }
 
-    private async Task Sonar(string idAudio) { try { await JS.InvokeVoidAsync("reproducirSonido", idAudio); } catch { } }
-    
-    private async void IniciarSecuencia()
+    private void Sonar(string tipo)
     {
-        try { await JS.InvokeVoidAsync("prepararAudio"); } catch (Exception ex) { Console.WriteLine("Error preparando audio: " + ex.Message); }
-        
-        // --- AQUÍ REFORZAMOS LA MEZCLA DE AUDIO ---
-        ForzarMezclaDeAudio();
-
+        try
+        {
+            if (tipo == "beep" && playerBeep != null) { playerBeep.Stop(); playerBeep.Play(); }
+            else if (tipo == "go" && playerGo != null) { playerGo.Stop(); playerGo.Play(); }
+            else if (tipo == "medio" && playerMedio != null) { playerMedio.Stop(); playerMedio.Play(); }
+        }
+        catch (Exception ex) { Console.WriteLine("Error Play: " + ex.Message); }
+    }
+    
+    private void IniciarSecuencia()
+    {
+        // Forzamos mezcla de nuevo al iniciar para asegurar que Spotify no se corte
+        ConfigurarAudioNativo();
         enConteoPrevio = true; tiempoPrevio = 7; _timer.Start(); timerCorriendo = true;
     }
     
@@ -844,37 +858,36 @@
             if (tiempoPrevio > 0)
             {
                 tiempoPrevio--;
-                if (tiempoPrevio <= 3) Sonar("audio-beep");
+                if (tiempoPrevio <= 3) Sonar("beep");
             }
             else
             {
-                enConteoPrevio = false; tiempoRestanteActual = tiempoTrabajoConfig; tiempoTotalSegmentoActual = tiempoTrabajoConfig; Sonar("audio-go");
+                enConteoPrevio = false; tiempoRestanteActual = tiempoTrabajoConfig; tiempoTotalSegmentoActual = tiempoTrabajoConfig; Sonar("go");
             }
         }
         else if (tiempoRestanteActual > 0)
         {
             tiempoRestanteActual--; tiempoTranscurrido++;
-            if (!enDescanso && tiempoRestanteActual == (tiempoTotalSegmentoActual / 2)) Sonar("audio-medio");
-            if (tiempoRestanteActual <= 5) Sonar("audio-beep");
+            if (!enDescanso && tiempoRestanteActual == (tiempoTotalSegmentoActual / 2)) Sonar("medio");
+            if (tiempoRestanteActual <= 5) Sonar("beep");
         }
         else GestionarCambioDeRonda();
         InvokeAsync(StateHasChanged);
     }
 
-    private void GestionarCambioDeRonda() { if (!enDescanso) { if (tipoTimer == 2 && tiempoDescansoConfig > 0 && rondaActual < totalRondas) { enDescanso = true; tiempoRestanteActual = tiempoDescansoConfig; tiempoTotalSegmentoActual = tiempoDescansoConfig; Sonar("audio-go"); } else SiguienteRondaOFin(); } else { enDescanso = false; SiguienteRondaOFin(); } }
-    private void SiguienteRondaOFin() { if (rondaActual < totalRondas) { rondaActual++; tiempoRestanteActual = tiempoTrabajoConfig; tiempoTotalSegmentoActual = tiempoTrabajoConfig; enDescanso = false; Sonar("audio-go"); } else TerminarTodo(); }
-    private void TerminarTodo() { _timer.Stop(); timerCorriendo = false; Sonar("audio-go"); }
+    private void GestionarCambioDeRonda() { if (!enDescanso) { if (tipoTimer == 2 && tiempoDescansoConfig > 0 && rondaActual < totalRondas) { enDescanso = true; tiempoRestanteActual = tiempoDescansoConfig; tiempoTotalSegmentoActual = tiempoDescansoConfig; Sonar("go"); } else SiguienteRondaOFin(); } else { enDescanso = false; SiguienteRondaOFin(); } }
+    private void SiguienteRondaOFin() { if (rondaActual < totalRondas) { rondaActual++; tiempoRestanteActual = tiempoTrabajoConfig; tiempoTotalSegmentoActual = tiempoTrabajoConfig; enDescanso = false; Sonar("go"); } else TerminarTodo(); }
+    private void TerminarTodo() { _timer.Stop(); timerCorriendo = false; Sonar("go"); }
     private string FormatoTiempo(int t) => $"{t / 60:00}:{t % 60:00}";
     private void CambiarTipoTimer(int t) { tipoTimer = t; if (t == 2) { inputMinutos = 0; inputSegundos = 20; inputRondas = 8; inputMinDescanso = 0; inputSegDescanso = 10; } else { inputMinutos = 10; inputSegundos = 0; inputRondas = 1; } }
     
-    // --- ESTO ES LO QUE TE FALTABA PARA ARREGLAR EL ERROR ---
     public async ValueTask DisposeAsync()
     {
         if (_timer != null) { _timer.Stop(); _timer.Dispose(); }
-
-#if IOS
-        try { AVFoundation.AVAudioSession.SharedInstance().SetActive(false); } catch { }
-#endif
+        // Liberamos reproductores
+        playerBeep?.Dispose();
+        playerGo?.Dispose();
+        playerMedio?.Dispose();
 
 #if ANDROID
         try 

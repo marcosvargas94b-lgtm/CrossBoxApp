@@ -65,6 +65,24 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Content Remove="wwwroot\Sonidos\beep.mp3" />
+	  <Content Remove="wwwroot\Sonidos\go.mp3" />
+	  <Content Remove="wwwroot\Sonidos\medio.mp3" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiAsset Include="wwwroot\Sonidos\beep.mp3">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </MauiAsset>
+	  <MauiAsset Include="wwwroot\Sonidos\go.mp3">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </MauiAsset>
+	  <MauiAsset Include="wwwroot\Sonidos\medio.mp3">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </MauiAsset>
+	</ItemGroup>
+
+	<ItemGroup>
 		<Content Update="wwwroot\Sonidos\**">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
@@ -75,6 +93,7 @@
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="9.0.0" />
+		<PackageReference Include="Plugin.Maui.Audio" Version="4.0.0" />
 		<PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.0" />
 		<PackageReference Include="ZXing.Net.Maui" Version="0.6.0" />
 		<PackageReference Include="ZXing.Net.Maui.Controls" Version="0.6.0" />
@@ -84,6 +103,18 @@
 		<Compile Update="EscanerPage.xaml.cs">
 			<DependentUpon>EscanerPage.xaml</DependentUpon>
 		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiAsset Update="Resources\Raw\beep.mp3">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </MauiAsset>
+	  <MauiAsset Update="Resources\Raw\go.mp3">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </MauiAsset>
+	  <MauiAsset Update="Resources\Raw\medio.mp3">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </MauiAsset>
 	</ItemGroup>
 
 	<ItemGroup>

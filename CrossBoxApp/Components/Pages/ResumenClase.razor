@@ -13,7 +13,7 @@
         <div class="header-resumen">
             <h2>CLASE FINALIZADA</h2>
             
-            @* --- NUEVO: SWITCH DE CATEGORÍA --- *@
+            @* --- SWITCH DE CATEGORÍA --- *@
             <div class="category-switch-area">
                 <span class="lbl-cat">¿USAR CATEGORÍAS?</span>
                 <label class="switch-cat">
@@ -63,9 +63,11 @@
                         <tbody>
                         @foreach (var res in LiveState.ResultadosJuez)
                         {
-                            // Usamos el ID del primer atleta como clave única para guardar la selección
+                            // Usamos el ID del primer atleta como clave única
                             var key = res.Atletas[0].UsuarioId; 
-                            
+                            string catActual = "";
+                            if (categoriasJuezSeleccionadas.ContainsKey(key)) catActual = categoriasJuezSeleccionadas[key];
+
                             <tr>
                                 <td style="text-align:left;">
                                     @* DATOS DEL ATLETA/EQUIPO *@
@@ -76,8 +78,6 @@
                                                 @foreach(var a in res.Atletas)
                                                 {
                                                     <div class="mini-row">
-                                                        @if(!string.IsNullOrEmpty(a.FotoUrl)) { <img src="@a.FotoUrl" class="avatar-tiny" @onerror="@(e => a.FotoUrl = null)" /> }
-                                                        else { <div class="avatar-tiny-letter">@a.NombreCompleto.Substring(0,1)</div> }
                                                         <span>@a.NombreCompleto</span>
                                                     </div>
                                                 }
@@ -94,17 +94,18 @@
                                         </div>
                                     }
 
-                                    @* --- SELECTOR DE CATEGORÍA (JUEZ) --- *@
+                                    @* --- ETIQUETA CATEGORÍA CLICKEABLE --- *@
                                     @if (usarCategorias)
                                     {
-                                        <div class="cat-selector mt-2">
-                                            <select @onchange="@(e => SetCategoriaJuez(key, e.Value.ToString()))" class="input-cat">
-                                                <option value="" selected disabled>-- Seleccionar Nivel --</option>
-                                                <option value="PRINCIPIANTE">PRINCIPIANTE</option>
-                                                <option value="INTERMEDIO">INTERMEDIO</option>
-                                                <option value="AVANZADO">AVANZADO</option>
-                                                <option value="RX">RX</option>
-                                            </select>
+                                        <div class="cat-badge-container" @onclick="() => AbrirModalCategoria(key, true)">
+                                            @if (string.IsNullOrEmpty(catActual))
+                                            {
+                                                <span class="cat-badge-empty">Categoría (+)</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="cat-badge-filled">@catActual</span>
+                                            }
                                         </div>
                                     }
                                 </td>
@@ -145,7 +146,25 @@
                                             @(atleta.NombreCompleto?.Substring(0, 1).ToUpper() ?? "A")
                                         </div>
                                     }
-                                    <span class="text-truncate">@atleta.NombreCompleto</span>
+                                    
+                                    <div style="display:flex; flex-direction:column; align-items:flex-start;">
+                                        <span class="text-truncate">@atleta.NombreCompleto</span>
+                                        
+                                        @* --- ETIQUETA CATEGORÍA CLICKEABLE (MANUAL) --- *@
+                                        @if (usarCategorias)
+                                        {
+                                            <div class="cat-badge-manual" @onclick="() => AbrirModalCategoria(atleta.UsuarioId, false)">
+                                                @if (string.IsNullOrEmpty(atleta.Categoria))
+                                                {
+                                                    <span class="cat-text-empty">Categoría (+)</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="cat-text-filled">@atleta.Categoria</span>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
                                 </div>
 
                                 @if (modoScore)
@@ -160,20 +179,6 @@
                                     <i class="fas fa-check" style="color:#28a745; margin-right:10px;"></i>
                                 }
                             </div>
-
-                            @* --- SELECTOR DE CATEGORÍA (MANUAL) --- *@
-                            @if (usarCategorias)
-                            {
-                                <div class="cat-selector-row">
-                                    <select @bind="atleta.Categoria" class="input-cat full-width">
-                                        <option value="" selected disabled>-- Seleccionar Nivel --</option>
-                                        <option value="PRINCIPIANTE">PRINCIPIANTE</option>
-                                        <option value="INTERMEDIO">INTERMEDIO</option>
-                                        <option value="AVANZADO">AVANZADO</option>
-                                        <option value="RX">RX</option>
-                                    </select>
-                                </div>
-                            }
                         </div>
                     }
                 }
@@ -195,6 +200,27 @@
     </div>
 </div>
 
+@* --- MODAL SELECCIONAR CATEGORÍA --- *@
+@if (mostrarModalCategoria)
+{
+    <div class="modal-overlay fade-in">
+        <div class="modal-content custom-modal" style="height:auto; max-width:350px;">
+            <div class="modal-header">
+                <h5 style="margin:0; color:#F8C545; font-weight:bold;">SELECCIONAR NIVEL</h5>
+                <button class="btn-icon-header" @onclick="() => mostrarModalCategoria = false"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="cat-buttons-grid">
+                    <button class="btn-cat-opt" @onclick='() => AsignarCategoria("PRINCIPIANTE")'>PRINCIPIANTE</button>
+                    <button class="btn-cat-opt" @onclick='() => AsignarCategoria("INTERMEDIO")'>INTERMEDIO</button>
+                    <button class="btn-cat-opt" @onclick='() => AsignarCategoria("AVANZADO")'>AVANZADO</button>
+                    <button class="btn-cat-opt" @onclick='() => AsignarCategoria("RX")'>RX</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @* --- MODAL DE PODIO FINAL --- *@
 @if (mostrarPodio)
 {
@@ -205,7 +231,6 @@
 
         <div class="victory-bg-effect"></div>
         <div class="victory-container">
-            
             <div class="victory-layout-main">
                 
                 @* --- PODIO --- *@
@@ -227,7 +252,6 @@
                             <div class="podium-pillar silver" style="height: 160px;">
                                 <div class="bar-content">
                                     <span class="rank-num">2</span>
-                                    
                                     @if (top3.Count >= 2)
                                     {
                                         <div class="winner-info">
@@ -267,7 +291,6 @@
                             <div class="podium-pillar gold" style="height: 220px;">
                                 <div class="bar-content">
                                     <span class="rank-num">1</span>
-                                    
                                     @if (top3.Count >= 1)
                                     {
                                         <div class="winner-info main-winner">
@@ -306,7 +329,6 @@
                             <div class="podium-pillar bronze" style="height: 130px;">
                                 <div class="bar-content">
                                     <span class="rank-num">3</span>
-                                    
                                     @if (top3.Count >= 3)
                                     {
                                         <div class="winner-info">
@@ -389,12 +411,17 @@
     input:checked + .slider-cat { background-color: #F8C545; }
     input:checked + .slider-cat:before { transform: translateX(18px); background-color: black; }
 
-    /* ESTILOS SELECTOR CATEGORIA */
-    .input-cat { background: #222; border: 1px solid #555; color: #F8C545; padding: 5px; border-radius: 5px; font-size: 0.8rem; font-family: 'Oswald'; outline: none; width: 100%; text-align: center; }
-    .input-cat.full-width { width: 90%; margin: 0 auto 10px auto; display: block; }
-    .cat-selector-row { width: 100%; text-align: center; padding-bottom: 5px; }
-    .user-row-wrapper { border-bottom: 1px solid #333; }
-    .user-row-wrapper .user-row { border-bottom: none; }
+    /* ESTILOS BOTONES CATEGORIA (MODAL) */
+    .cat-buttons-grid { display: flex; flex-direction: column; gap: 10px; }
+    .btn-cat-opt { background: #222; border: 1px solid #F8C545; color: white; padding: 12px; border-radius: 8px; font-family: 'Oswald'; font-size: 1.1rem; transition: 0.2s; text-transform: uppercase; }
+    .btn-cat-opt:active { background: #F8C545; color: black; transform: scale(0.98); }
+
+    /* ESTILOS BADGE CATEGORIA (EN LISTA) */
+    .cat-badge-container { margin-top: 5px; cursor: pointer; display: inline-block; }
+    .cat-badge-manual { cursor: pointer; margin-top: 2px; }
+    
+    .cat-badge-empty, .cat-text-empty { color: #888; font-size: 0.8rem; font-style: italic; border: 1px dashed #666; padding: 2px 8px; border-radius: 4px; font-family: 'Roboto'; }
+    .cat-badge-filled, .cat-text-filled { background: #F8C545; color: black; font-weight: bold; font-family: 'Oswald'; font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; letter-spacing: 1px; }
 
     /* MODO MANUAL */
     .score-toggle { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; cursor: pointer; }
@@ -405,7 +432,7 @@
     .toggle-thumb { width: 20px; height: 20px; background: white; border-radius: 50%; position: absolute; top: 3px; left: 3px; transition: 0.3s; }
     .toggle-track.on .toggle-thumb { transform: translateX(24px); }
     .user-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 5px; }
-    .user-left { display: flex; align-items: center; gap: 10px; }
+    .user-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
     
     .avatar-list-img, .avatar-list-letter, .avatar-tiny, .avatar-tiny-letter, .avatar-small, .avatar-small-letter { border-radius: 50% !important; object-fit: cover; display: flex; justify-content: center; align-items: center; font-weight: bold; font-family: 'Oswald'; flex-shrink: 0; aspect-ratio: 1/1; }
     .avatar-list-img { width: 35px; height: 35px; border: 2px solid #F8C545; }
@@ -436,7 +463,13 @@
     .btn-close-session:disabled { background: #555; color: #888; cursor: not-allowed; transform: none; box-shadow: none; }
 
     /* PODIO */
-    .podium-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: radial-gradient(circle at center, #222 0%, #000 100%); z-index: 5000; display: flex; justify-content: center; align-items: center; }
+    .podium-overlay, .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); z-index: 5000; display: flex; justify-content: center; align-items: center; }
+    .podium-overlay { background: radial-gradient(circle at center, #222 0%, #000 100%); }
+    .custom-modal { background: #111; width: 90%; max-width: 500px; border-radius: 10px; border: 1px solid #333; display: flex; flex-direction: column; overflow: hidden; }
+    .modal-header { height: auto; padding: 15px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 15px; overflow-y: auto; flex: 1; }
+    .btn-icon-header { background: none; border: none; color: #888; font-size: 1rem; cursor: pointer; }
+
     .victory-bg-effect { position: absolute; width: 100%; height: 100%; opacity: 0.1; background-image: repeating-linear-gradient(45deg, #333 0, #333 1px, transparent 0, transparent 50%); z-index: -1; }
     .btn-close-overlay { position: absolute; top: 25px; right: 25px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); color: white; font-size: 1.5rem; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; z-index: 5001; display: flex; justify-content: center; align-items: center; transition: 0.3s; }
     .btn-close-overlay:hover { background: #F8C545; color: black; transform: rotate(90deg); border-color: #F8C545; }
@@ -528,56 +561,49 @@
     private List<PodiumItem> top3 = new();
     private List<PodiumItem> restoList = new();
 
-    // --- NUEVAS VARIABLES ---
+    // --- NUEVAS VARIABLES PARA MODAL CATEGORÍA ---
     private bool usarCategorias = false; 
-    // Diccionario para guardar selecciones en modo Juez (Key: ID Primer Atleta)
     private Dictionary<Guid, string> categoriasJuezSeleccionadas = new();
+    private bool mostrarModalCategoria = false;
+    private Guid idAtletaEditandoCategoria = Guid.Empty; // Para saber a quién le asignamos
+    private bool esModoJuezEditando = false; // Para saber si editamos en lista juez o lista manual
 
     protected override void OnInitialized()
     {
         if (!LiveState.FueModoJuez) {
-            // Inicializamos lista manual con campo Categoria vacío
             listaLocal = LiveState.AtletasEnClase.Select(a => new AtletaResumen { UsuarioId = a.UsuarioId, BoxId = a.BoxId, NombreCompleto = a.NombreCompleto, FotoUrl = a.FotoUrl, Reps = 0, Categoria = "" }).ToList();
         }
     }
 
-    // Helper para actualizar el diccionario en modo Juez
-    private void SetCategoriaJuez(Guid key, string val)
+    // --- LOGICA MODAL CATEGORÍA ---
+    private void AbrirModalCategoria(Guid id, bool esJuez)
     {
-        if(categoriasJuezSeleccionadas.ContainsKey(key)) categoriasJuezSeleccionadas[key] = val;
-        else categoriasJuezSeleccionadas.Add(key, val);
+        idAtletaEditandoCategoria = id;
+        esModoJuezEditando = esJuez;
+        mostrarModalCategoria = true;
+    }
+
+    private void AsignarCategoria(string cat)
+    {
+        if (esModoJuezEditando)
+        {
+            if(categoriasJuezSeleccionadas.ContainsKey(idAtletaEditandoCategoria)) 
+                categoriasJuezSeleccionadas[idAtletaEditandoCategoria] = cat;
+            else 
+                categoriasJuezSeleccionadas.Add(idAtletaEditandoCategoria, cat);
+        }
+        else
+        {
+            var atleta = listaLocal.FirstOrDefault(x => x.UsuarioId == idAtletaEditandoCategoria);
+            if(atleta != null) atleta.Categoria = cat;
+        }
+        mostrarModalCategoria = false;
     }
 
     private async Task ProcesarYGuardar()
     {
-        // 1. VALIDACIÓN DE OBLIGATORIEDAD (Si el switch está ON, todos deben tener categoría)
-        if (usarCategorias)
-        {
-            bool faltaAlguna = false;
-            if (LiveState.FueModoJuez)
-            {
-                foreach(var res in LiveState.ResultadosJuez)
-                {
-                    // Usamos ID del primer atleta como key
-                    if(!categoriasJuezSeleccionadas.ContainsKey(res.Atletas[0].UsuarioId) || 
-                       string.IsNullOrEmpty(categoriasJuezSeleccionadas[res.Atletas[0].UsuarioId]))
-                    {
-                        faltaAlguna = true; break;
-                    }
-                }
-            }
-            else
-            {
-                if (listaLocal.Any(x => string.IsNullOrEmpty(x.Categoria))) faltaAlguna = true;
-            }
-
-            if (faltaAlguna)
-            {
-                await App.Current.MainPage.DisplayAlert("Atención", "Activaste las categorías. Por favor selecciona una para CADA atleta/equipo.", "OK");
-                return;
-            }
-        }
-
+        // NO BLOQUEAMOS si falta categoría. Si el switch está ON, enviamos "Sin asignar" por defecto.
+        
         guardando = true;
         StateHasChanged();
 
@@ -587,10 +613,13 @@
         {
             foreach (var item in LiveState.ResultadosJuez)
             {
-                // Recuperar la categoría seleccionada
                 string cat = "";
                 if(categoriasJuezSeleccionadas.ContainsKey(item.Atletas[0].UsuarioId)) 
                     cat = categoriasJuezSeleccionadas[item.Atletas[0].UsuarioId];
+                
+                // Aplicar default si está vacío y el switch activo
+                if (usarCategorias && string.IsNullOrEmpty(cat)) cat = "Sin asignar";
+                if (!usarCategorias) cat = "";
 
                 payload.Resultados.Add(new ResultadoAtletaDto
                 {
@@ -600,7 +629,7 @@
                     TiempoFinal = item.Finalizado ? item.TiempoFinal : "DNF",
                     Reps = 0,
                     NombreEquipo = item.NombreEquipo ?? "Equipo",
-                    Categoria = usarCategorias ? cat : "" // Enviamos vacío si el switch está apagado
+                    Categoria = cat
                 });
             }
         }
@@ -608,6 +637,10 @@
         {
             foreach (var item in listaLocal)
             {
+                string cat = item.Categoria;
+                if (usarCategorias && string.IsNullOrEmpty(cat)) cat = "Sin asignar";
+                if (!usarCategorias) cat = "";
+
                 payload.Resultados.Add(new ResultadoAtletaDto
                 {
                     UsuarioUnoId = item.UsuarioId,
@@ -615,7 +648,7 @@
                     Reps = modoScore ? item.Reps : 0,
                     TiempoFinal = null,
                     NombreEquipo = "Individual",
-                    Categoria = usarCategorias ? item.Categoria : "" // Enviamos vacío si el switch está apagado
+                    Categoria = cat
                 });
             }
         }
