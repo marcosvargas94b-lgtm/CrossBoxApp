@@ -89,6 +89,27 @@
                     </div>
                 }
 
+                @* --- SECCIÓN DE PROGRESO (SOLO SI TIENE DATOS) --- *@
+                @if (perfil.RegistrosProgreso != null && perfil.RegistrosProgreso.Any())
+                {
+                    <div class="progress-section fade-in">
+                        <h4 class="section-title"><i class="fas fa-trophy"></i> MEJORES MARCAS</h4>
+
+                        <div class="progress-grid">
+                            @foreach (var record in perfil.RegistrosProgreso)
+                            {
+                                <div class="progress-card">
+                                    <span class="ex-name">@record.NombreEjercicio</span>
+                                    <div class="ex-value">
+                                        <span class="val">@record.MejorMarca</span>
+                                        <span class="unit">@record.Unidad</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
                 @* --- ACCIONES (MATCH / WHATSAPP) --- *@
                 <div class="actions-area mt-4">
                     @if (perfil.EsMatchMutuo)
@@ -221,6 +242,33 @@
         z-index: 5001; /* Asegurar que esté encima de todo */
         box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
+
+    /* PROGRESO PÚBLICO */
+    .progress-section { width: 100%; margin-bottom: 25px; }
+    .section-title { color: white; font-family: 'Oswald'; font-size: 1.1rem; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 15px; }
+    
+    .progress-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+        gap: 10px; 
+    }
+
+    .progress-card {
+        background: #1a1a1a;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .ex-name { color: #aaa; font-size: 0.8rem; margin-bottom: 5px; font-family: 'Roboto'; font-weight: bold; text-transform: uppercase; }
+    
+    .ex-value .val { color: #F8C545; font-family: 'Oswald'; font-size: 1.4rem; font-weight: bold; }
+    .ex-value .unit { color: #666; font-size: 0.8rem; margin-left: 2px; }
 </style>
 
 @code {
@@ -228,6 +276,14 @@
     private DetallePublicoDto perfil;
     private bool mostrarAnimacionMatch = false;
     private string imagenZoomUrl = null;
+
+    // --- IMPORTANTE: Definición local del DTO para evitar el crash si no está en Models ---
+    public class RegistroPublicoDto
+    {
+        public string NombreEjercicio { get; set; }
+        public decimal MejorMarca { get; set; }
+        public string Unidad { get; set; }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -241,7 +297,9 @@
             var miId = Sesion.Usuario.UsuarioID;
             // Asegúrate que tu API devuelva los nuevos campos: Apodo, UsarApodo, FotoCertificado1Url, etc.
             perfil = await Http.GetFromJsonAsync<DetallePublicoDto>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/detalle-publico/{TargetUserId}/{miId}");
-        } catch { }
+        } catch (Exception ex) { 
+            Console.WriteLine("Error cargando perfil público: " + ex.Message);
+        }
     }
 
     // Lógica para decidir qué nombre mostrar

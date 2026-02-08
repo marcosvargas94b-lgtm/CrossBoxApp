@@ -115,7 +115,6 @@
                         }
                     </div>
 
-                    @* BOTONES AL FONDO (STICKY BOTTOM STYLE) *@
                     <div class="timer-controls-bottom">
                         @if (!timerCorriendo)
                         {
@@ -268,7 +267,6 @@
                             <div class="atleta-card slide-in @(p.Finalizado ? "card-finished" : "") @(p.Atletas.Count > 1 ? "card-team" : "")"
                                  @onclick="() => CapturarTiempo(p)">
 
-                                @* --- BOTÓN ELIMINAR (X) --- *@
                                 <div class="delete-badge" @onclick:stopPropagation="true" @onclick="() => SolicitarEliminar(p)">
                                     <i class="fas fa-times"></i>
                                 </div>
@@ -316,7 +314,6 @@
                 }
             </div>
 
-            @* --- NUEVO PIE DE PÁGINA (SPLIT BUTTONS) --- *@
             <div class="bottom-actions-row">
                 <button class="btn-action-home" @onclick="IrAlHome" title="Salir al Inicio">
                     <i class="fas fa-home"></i>
@@ -434,1009 +431,120 @@
 }
 
 <style>
-    /* ... (Estilos previos se mantienen, agrego los nuevos) ... */
-
-    /* MODIFICACIÓN TIMER PANEL */
-    .flex-column-layout {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-        padding: 15px;
-    }
-
-    .timer-visual-group {
-        flex-grow: 1; /* Ocupa el espacio central */
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-    }
-
-    .timer-controls-bottom {
-        margin-top: auto; /* Empuja al fondo */
-        display: flex;
-        gap: 10px;
-        width: 100%;
-        padding-top: 15px;
-    }
-
-    /* BOTONES RECTANGULARES PARA TIMER Y ALERTAS */
-    .btn-control-rect {
-        flex: 1;
-        padding: 15px;
-        border: none;
-        border-radius: 8px;
-        font-family: 'Oswald';
-        font-weight: bold;
-        font-size: 1.1rem;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        transition: transform 0.1s;
-    }
-
-        .btn-control-rect:active {
-            transform: scale(0.98);
-        }
-
-        .btn-control-rect.start {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-control-rect.stop {
-            background: #dc3545;
-            color: white;
-        }
-
-        .btn-control-rect.reset {
-            background: #333;
-            color: white;
-            border: 1px solid #444;
-        }
-
-    /* BOTÓN ELIMINAR EN TARJETA */
-    .delete-badge {
-        position: absolute;
-        top: 5px;
-        right: 5px;
-        width: 20px;
-        height: 20px;
-        background: rgba(255, 0, 0, 0.2);
-        color: #ff6b6b;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.7rem;
-        cursor: pointer;
-        z-index: 5;
-        transition: 0.2s;
-    }
-
-        .delete-badge:hover {
-            background: red;
-            color: white;
-        }
-
-    /* PIE DE PÁGINA DIVIDIDO (HOME / TERMINAR) */
-    .bottom-actions-row {
-        display: flex;
-        width: 100%;
-        margin-top: auto;
-    }
-
-    .btn-action-home {
-        flex: 1; /* 1/4 aprox */
-        background: #333;
-        border: none;
-        border-right: 1px solid #222;
-        color: #888;
-        font-size: 1.2rem;
-        cursor: pointer;
-        padding: 15px;
-    }
-
-        .btn-action-home:hover {
-            background: #444;
-            color: white;
-        }
-
-    .btn-action-finish {
-        flex: 3; /* 3/4 aprox */
-        background: #dc3545;
-        border: none;
-        color: white;
-        font-family: 'Oswald';
-        font-weight: bold;
-        font-size: 1.1rem;
-        cursor: pointer;
-        padding: 15px;
-    }
-
-        .btn-action-finish:hover {
-            background: #bd2130;
-        }
-
-    /* ESTILOS RESTANTES (COPIADOS DE TU CÓDIGO ORIGINAL PARA COMPLETAR) */
-    .rotate-warning {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: #000;
-        z-index: 9999;
-        display: none;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        color: #F8C545;
-        text-align: center;
-        padding: 40px;
-    }
-
-    .phone-animation {
-        font-size: 4rem;
-        margin-bottom: 20px;
-        animation: rotarCelular 2s infinite ease-in-out;
-    }
-
-    @@keyframes rotarCelular {
-        0% {
-            transform: rotate(0deg);
-        }
-
-        50% {
-            transform: rotate(-90deg);
-        }
-
-        100% {
-            transform: rotate(0deg);
-        }
-    }
-
-    @@media (orientation: portrait) {
-        .rotate-warning {
-            display: flex;
-        }
-
-        .dashboard-container {
-            display: none !important;
-        }
-    }
-
-    .dashboard-container {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background-color: #0d0d0d;
-        color: white;
-        display: flex;
-        flex-direction: row;
-        padding: 15px;
-        gap: 15px;
-        box-sizing: border-box;
-        overflow: hidden;
-    }
-
-    .panel {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-        background: #111;
-        overflow: hidden;
-        border-radius: 15px;
-        border: 1px solid #222;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        min-width: 0;
-        position: relative;
-    }
-
-        .panel.collapsed {
-            flex: 0 0 60px !important;
-            min-width: 60px;
-            background: #000;
-            cursor: pointer;
-            border-color: #333;
-        }
-
-            .panel.collapsed:hover {
-                background: #1a1a1a;
-            }
-
-            .panel.collapsed .panel-content, .panel.collapsed .panel-header .header-left, .panel.collapsed .panel-header span, .panel.collapsed .panel-header .header-select-wrapper, .panel.collapsed .panel-header .btn-icon-header {
-                display: none;
-                opacity: 0;
-            }
-
-    .panel-header {
-        height: 50px;
-        background: #1a1a1a;
-        border-bottom: 2px solid #F8C545;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0 15px;
-        font-family: 'Oswald';
-        font-size: 1.1rem;
-        color: #F8C545;
-        white-space: nowrap;
-        flex-shrink: 0;
-        z-index: 2;
-        position: relative;
-    }
-
-    .panel-content {
-        flex: 1;
-        padding: 15px;
-        overflow-y: auto;
-        position: relative;
-        z-index: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .btn-icon-header {
-        background: none;
-        border: none;
-        color: #888;
-        font-size: 1rem;
-        cursor: pointer;
-    }
-
-    .wod-watermark {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 70%;
-        height: 70%;
-        background-repeat: no-repeat;
-        background-position: center;
-        background-size: contain;
-        opacity: 0.1;
-        pointer-events: none;
-        z-index: 0;
-    }
-
-    .header-select-wrapper {
-        display: flex;
-        align-items: center;
-        background-color: #000;
-        border: 1px solid #333;
-        border-radius: 4px;
-        padding: 0 10px;
-        height: 32px;
-        position: relative;
-    }
-
-    .select-icon {
-        font-size: 0.8rem;
-        color: #F8C545;
-        margin-right: 8px;
-    }
-
-    .header-select {
-        background: transparent;
-        border: none;
-        color: white;
-        font-family: 'Oswald';
-        font-size: 0.95rem;
-        font-weight: bold;
-        appearance: none;
-        -webkit-appearance: none;
-        width: 100%;
-        cursor: pointer;
-        outline: none;
-    }
-
-        .header-select option {
-            background-color: #1a1a1a;
-            color: white;
-            padding: 10px;
-        }
-
-    .select-arrow {
-        font-size: 0.7rem;
-        color: #666;
-        margin-left: 5px;
-        pointer-events: none;
-    }
-
-    .font-settings-popover {
-        position: absolute;
-        top: 40px;
-        background: #1a1a1a;
-        padding: 10px;
-        border: 1px solid #444;
-        border-radius: 8px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.8);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        z-index: 100;
-        color: #888;
-    }
-
-        .font-settings-popover input[type=range] {
-            width: 100px;
-            accent-color: #F8C545;
-            cursor: pointer;
-        }
-
-    .wod-block {
-        margin-bottom: 20px;
-        break-inside: avoid;
-        -webkit-column-break-inside: avoid;
-    }
-
-    .block-title {
-        color: #F8C545;
-        background: transparent;
-        padding: 2px 10px;
-        /* Reduje el margen inferior de 5px a 2px para pegar el título a la lista */
-        margin: 0 0 2px 0;
-        font-size: 1.1em;
-        font-weight: bold;
-        font-family: 'Oswald';
-        border-left: 4px solid #F8C545;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    .ejercicio-row-clean {
-        display: grid;
-        grid-template-columns: 60px 1fr;
-        gap: 8px; /* Reduje el gap horizontal un poco */
-        align-items: baseline;
-        /* AQUÍ ESTÁ EL CAMBIO CLAVE: Reduje el padding vertical de 4px a 1px */
-        padding: 1px 0;
-        margin-bottom: 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-        min-height: auto;
-        /* Reduje el line-height para que las letras no ocupen tanto alto invisible */
-        line-height: 1;
-    }
-
-    .ej-reps {
-        color: #F8C545;
-        font-weight: 900;
-        font-family: 'Oswald';
-        font-size: 1.15em;
-        text-align: right;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .ej-nombre {
-        color: #e0e0e0;
-        font-family: 'Roboto', sans-serif;
-        font-size: 1em;
-        font-weight: 500;
-        /* Reduje line-height y quité el padding interno que sobraba */
-        line-height: 1.1;
-        text-align: left;
-        padding: 0;
-    }
-    .scroll-custom::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .scroll-custom::-webkit-scrollbar-track {
-        background: #111;
-    }
-
-    .scroll-custom::-webkit-scrollbar-thumb {
-        background: #333;
-        border-radius: 10px;
-    }
-
-    .dashboard-container.wod-wide .list-panel {
-        flex: 0 0 0 !important;
-        width: 0 !important;
-        padding: 0 !important;
-        border: none !important;
-        margin: 0 !important;
-    }
-
-    .dashboard-container.wod-wide .wod-panel {
-        flex: 2;
-    }
-
-    .dashboard-container.wod-wide .exercises-wrapper {
-        display: block;
-        column-width: 180px;
-        column-gap: 20px;
-        column-rule: 1px solid rgba(255, 255, 255, 0.1);
-        width: 100%;
-        padding-top: 5px;
-    }
-
-    .vertical-bar {
-        height: 100%;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        color: #666;
-        animation: fadeIn 0.5s;
-    }
-
-    .v-text {
-        writing-mode: vertical-rl;
-        text-orientation: mixed;
-        transform: rotate(180deg);
-        font-family: 'Oswald';
-        font-size: 1.2rem;
-        letter-spacing: 3px;
-        white-space: nowrap;
-        margin-bottom: 10px;
-    }
-
-    .v-icon {
-        font-size: 1.5rem;
-    }
-
-    .header-timer-secondary {
-        color: rgba(255,255,255,0.4);
-        font-family: 'Oswald';
-        font-size: 1.2rem;
-        margin-left: 15px;
-        font-weight: bold;
-        letter-spacing: 1px;
-    }
-
-    .timer-type-selector {
-        display: flex;
-        background: #222;
-        border-radius: 25px;
-        padding: 4px;
-        margin-bottom: 20px;
-        width: 100%;
-        border: 1px solid #444;
-    }
-
-    .type-btn {
-        flex: 1;
-        background: transparent;
-        border: none;
-        color: #888;
-        padding: 8px;
-        border-radius: 20px;
-        font-family: 'Oswald';
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-        .type-btn.active {
-            background: #F8C545;
-            color: black;
-            font-weight: bold;
-            box-shadow: 0 2px 8px rgba(248, 197, 69, 0.3);
-        }
-
-    .config-box {
-        background: #1a1a1a;
-        padding: 15px;
-        border-radius: 15px;
-        border: 1px solid #444;
-        width: 100%;
-        max-width: 400px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-        z-index: 10;
-        margin: auto;
-        max-height: 85vh;
-        overflow-y: auto;
-    }
-
-    .inputs-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-        margin-bottom: 20px;
-    }
-
-    .inputs-row {
-        display: flex;
-        gap: 10px;
-        width: 100%;
-    }
-
-        .inputs-row .input-group {
-            flex: 1;
-        }
-
-    .input-group label {
-        display: block;
-        color: #F8C545;
-        font-size: 0.8rem;
-        margin-bottom: 5px;
-        text-align: center;
-        font-weight: bold;
-        font-family: 'Oswald';
-        letter-spacing: 1px;
-    }
-
-    .time-inputs {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 5px;
-        background: #222;
-        padding: 5px 15px;
-        border-radius: 10px;
-        border: 1px solid #333;
-    }
-
-        .time-inputs input {
-            width: 50px;
-            font-size: 1.5rem;
-            background: transparent;
-            border: none;
-            color: white;
-            text-align: center;
-            font-family: 'Oswald';
-        }
-
-            .time-inputs input:focus {
-                outline: none;
-                color: #F8C545;
-            }
-
-    .single-input {
-        width: 100%;
-        font-size: 1.5rem;
-        background: #222;
-        border: 1px solid #333;
-        color: white;
-        text-align: center;
-        font-family: 'Oswald';
-        border-radius: 10px;
-    }
-
-    .btn-save-timer {
-        width: 100%;
-        background: #28a745;
-        color: white;
-        border: none;
-        padding: 12px;
-        font-weight: bold;
-        font-family: 'Oswald';
-        border-radius: 8px;
-        font-size: 1.1rem;
-        cursor: pointer;
-    }
-
-    .timer-display {
-        font-family: 'Oswald';
-        font-weight: bold;
-        color: white;
-        line-height: 0.9;
-        font-size: clamp(3rem, 25vh, 8rem);
-        text-shadow: 0 0 20px rgba(255,255,255,0.1);
-        margin: 5px 0;
-        text-align: center;
-        width: 100%;
-    }
-
-        .timer-display.running {
-            color: #28a745;
-            text-shadow: 0 0 30px rgba(40, 167, 69, 0.4);
-        }
-
-        .timer-display.resting {
-            color: #dc3545;
-            text-shadow: 0 0 30px rgba(220, 53, 69, 0.4);
-        }
-
-    .status-badge {
-        font-family: 'Oswald';
-        font-size: 1.4rem;
-        padding: 5px 20px;
-        border-radius: 5px;
-        letter-spacing: 2px;
-        text-align: center;
-        margin-bottom: 10px;
-    }
-
-        .status-badge.work {
-            color: #28a745;
-            border: 1px solid #28a745;
-            background: rgba(40,167,69,0.1);
-        }
-
-        .status-badge.rest {
-            color: #dc3545;
-            border: 1px solid #dc3545;
-            background: rgba(220,53,69,0.1);
-        }
-
-    .prep-display {
-        text-align: center;
-        margin: auto;
-    }
-
-    .prep-label {
-        font-family: 'Oswald';
-        font-size: 2rem;
-        color: #888;
-    }
-
-    .prep-number {
-        font-size: 8rem;
-        color: #F8C545;
-        font-family: 'Oswald';
-        font-weight: bold;
-        line-height: 1;
-    }
-
-    .atletas-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
-        gap: 10px;
-    }
-
-    .atleta-card {
-        background: #222;
-        border: 1px solid #444;
-        border-radius: 8px;
-        padding: 10px 5px;
-        text-align: center;
-        transition: 0.2s;
-        position: relative;
-        overflow: hidden;
-        cursor: pointer;
-    }
-
-    .avatar {
-        width: 45px;
-        height: 45px;
-        background: #333;
-        color: #F8C545;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 1.2rem;
-        margin: 0 auto 5px auto;
-        border: 2px solid #F8C545;
-        position: relative;
-    }
-
-    .name {
-        font-size: 0.75rem;
-        color: white;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .empty-state {
-        text-align: center;
-        color: #444;
-        margin-top: 50px;
-    }
-
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 10px;
-        }
-
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.9);
-        z-index: 3000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        backdrop-filter: blur(5px);
-    }
-
-    .custom-modal {
-        background: #111;
-        width: 90%;
-        max-width: 500px;
-        border-radius: 10px;
-        border: 1px solid #333;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        height: 80vh;
-    }
-
-    .modal-header {
-        height: auto;
-        padding: 15px;
-        border-bottom: 1px solid #333;
-    }
-
-    .modal-body {
-        padding: 15px;
-        overflow-y: auto;
-        flex: 1;
-    }
-
-    .search-input {
-        padding-left: 10px;
-        background: #222;
-        color: white;
-        border: 1px solid #444;
-        height: 40px;
-        border-radius: 20px;
-        width: 100%;
-        text-indent: 10px;
-    }
-
-    .atleta-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px;
-        border-bottom: 1px solid #222;
-        cursor: pointer;
-    }
-
-    .avatar-mini {
-        width: 35px;
-        height: 35px;
-        background: #444;
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        margin-right: 10px;
-        background-size: cover;
-    }
-
-    .atleta-nombre {
-        color: #F8C545;
-        font-weight: bold;
-        font-family: 'Oswald';
-        font-size: 1rem;
-        line-height: 1;
-    }
-
-    .lista-atletas-scroll {
-        max-height: 50vh;
-        overflow-y: auto;
-        margin-top: 10px;
-    }
-
-    .atleta-info {
-        display: flex;
-        align-items: center;
-        flex: 1;
-        gap: 10px;
-    }
-
-    .switch-juez {
-        position: relative;
-        display: inline-block;
-        width: 40px;
-        height: 20px;
-        margin-right: 10px;
-    }
-
-        .switch-juez input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-    .slider-juez {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #333;
-        transition: .4s;
-    }
-
-        .slider-juez:before {
-            position: absolute;
-            content: "";
-            height: 14px;
-            width: 14px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-        }
-
-    input:checked + .slider-juez {
-        background-color: #F8C545;
-    }
-
-        input:checked + .slider-juez:before {
-            transform: translateX(20px);
-            background-color: black;
-        }
-
-    .slider-juez.round {
-        border-radius: 34px;
-    }
-
-        .slider-juez.round:before {
-            border-radius: 50%;
-        }
-
-    .card-finished {
-        background: #155724 !important;
-        border-color: #28a745 !important;
-        opacity: 0.8;
-    }
-
-    .badge-time {
-        margin-top: 5px;
-        background: black;
-        color: #F8C545;
-        font-family: 'Oswald';
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-weight: bold;
-    }
-
-    .card-team {
-        border: 2px solid #F8C545 !important;
-        background: rgba(248, 197, 69, 0.05);
-    }
-
-    .team-avatars {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 5px;
-    }
-
-    .avatar-mini-team {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        border: 1px solid #F8C545;
-        background-color: #333;
-        color: white;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-size: 0.8rem;
-        margin: 0 -5px;
-        background-size: cover;
-    }
-
-    .team-name {
-        color: #F8C545 !important;
-        font-weight: bold;
-    }
-
-    .team-builder-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    .atleta-select-row {
-        padding: 10px;
-        background: #222;
-        border-radius: 5px;
-        display: flex;
-        justify-content: space-between;
-        cursor: pointer;
-    }
-
-    .selected-yellow {
-        background: #F8C545;
-        color: black;
-        font-weight: bold;
-    }
-
-    .fade-in {
-        animation: fadeIn 0.3s ease-in;
-    }
-
-    .slide-in {
-        animation: slideIn 0.3s ease-out;
-    }
-
-    @@keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-
-        to {
-            opacity: 1;
-        }
-    }
-
-    @@keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .pulse-animation {
-        animation: pulseBig 1s infinite;
-    }
-
-    @@keyframes pulseBig {
-        0% {
-            transform: scale(1);
-        }
-
-        50% {
-            transform: scale(1.05);
-        }
-
-        100% {
-            transform: scale(1);
-        }
-    }
-
-    .last-round-alert {
-        color: #dc3545 !important;
-        animation: pulseRed 1s infinite;
-    }
-
-    @@keyframes pulseRed {
-        0% {
-            transform: scale(1);
-        }
-
-        50% {
-            transform: scale(1.05);
-            text-shadow: 0 0 10px red;
-        }
-
-        100% {
-            transform: scale(1);
-        }
-    }
-
-    .peso-highlight {
-        color: #F8C545;
-        font-weight: 900;
-        font-family: 'Oswald', sans-serif;
-        font-size: 0.95em;
-        margin-left: 5px;
-    }
-
-    .peso-silver {
-        color: #C0C0C0;
-        font-weight: 800;
-        font-family: 'Oswald', sans-serif;
-        font-size: 0.95em;
-        letter-spacing: 0.5px;
-        margin-left: 6px;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-    }
+    /* ... (Tus estilos existentes aquí, no los repetiré para no llenar, pero úsalos tal cual los tenías) ... */
+    /* ASEGÚRATE DE COPIAR TODOS LOS ESTILOS QUE TE PASÉ ANTES PARA LOS PANELES Y BOTONES */
+    
+    .flex-column-layout { display: flex; flex-direction: column; height: 100%; padding: 15px; }
+    .timer-visual-group { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; }
+    .timer-controls-bottom { margin-top: auto; display: flex; gap: 10px; width: 100%; padding-top: 15px; }
+    
+    .btn-control-rect { flex: 1; padding: 15px; border: none; border-radius: 8px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.1s; }
+    .btn-control-rect:active { transform: scale(0.98); }
+    .btn-control-rect.start { background: #28a745; color: white; }
+    .btn-control-rect.stop { background: #dc3545; color: white; }
+    .btn-control-rect.reset { background: #333; color: white; border: 1px solid #444; }
+
+    .delete-badge { position: absolute; top: 5px; right: 5px; width: 20px; height: 20px; background: rgba(255, 0, 0, 0.2); color: #ff6b6b; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; cursor: pointer; z-index: 5; transition: 0.2s; }
+    .delete-badge:hover { background: red; color: white; }
+
+    .bottom-actions-row { display: flex; width: 100%; margin-top: auto; }
+    .btn-action-home { flex: 1; background: #333; border: none; border-right: 1px solid #222; color: #888; font-size: 1.2rem; cursor: pointer; padding: 15px; }
+    .btn-action-home:hover { background: #444; color: white; }
+    .btn-action-finish { flex: 3; background: #dc3545; border: none; color: white; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; cursor: pointer; padding: 15px; }
+    .btn-action-finish:hover { background: #bd2130; }
+
+    /* ROTACIÓN */
+    .rotate-warning { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; color: #F8C545; text-align: center; padding: 40px; }
+    .phone-animation { font-size: 4rem; margin-bottom: 20px; animation: rotarCelular 2s infinite ease-in-out; }
+    @@keyframes rotarCelular { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
+    @@media (orientation: portrait) { .rotate-warning { display: flex; } .dashboard-container { display: none !important; } }
+
+    /* DASHBOARD */
+    .dashboard-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0d0d0d; color: white; display: flex; flex-direction: row; padding: 15px; gap: 15px; box-sizing: border-box; overflow: hidden; }
+    .panel { flex: 1; display: flex; flex-direction: column; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); background: #111; overflow: hidden; border-radius: 15px; border: 1px solid #222; box-shadow: 0 4px 15px rgba(0,0,0,0.5); min-width: 0; position: relative; }
+    .panel.collapsed { flex: 0 0 60px !important; min-width: 60px; background: #000; cursor: pointer; border-color: #333; }
+    .panel.collapsed:hover { background: #1a1a1a; }
+    .panel.collapsed .panel-content, .panel.collapsed .panel-header .header-left, .panel.collapsed .panel-header span, .panel.collapsed .panel-header .header-select-wrapper, .panel.collapsed .panel-header .btn-icon-header { display: none; opacity: 0; }
+    .panel-header { height: 50px; background: #1a1a1a; border-bottom: 2px solid #F8C545; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; font-family: 'Oswald'; font-size: 1.1rem; color: #F8C545; white-space: nowrap; flex-shrink: 0; z-index: 2; position: relative; }
+    .panel-content { flex: 1; padding: 15px; overflow-y: auto; position: relative; z-index: 1; display: flex; flex-direction: column; }
+    .btn-icon-header { background: none; border: none; color: #888; font-size: 1rem; cursor: pointer; }
+    .wod-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 70%; background-repeat: no-repeat; background-position: center; background-size: contain; opacity: 0.1; pointer-events: none; z-index: 0; }
+    .header-select-wrapper { display: flex; align-items: center; background-color: #000; border: 1px solid #333; border-radius: 4px; padding: 0 10px; height: 32px; position: relative; }
+    .select-icon { font-size: 0.8rem; color: #F8C545; margin-right: 8px; }
+    .header-select { background: transparent; border: none; color: white; font-family: 'Oswald'; font-size: 0.95rem; font-weight: bold; appearance: none; -webkit-appearance: none; width: 100%; cursor: pointer; outline: none; }
+    .header-select option { background-color: #1a1a1a; color: white; padding: 10px; }
+    .select-arrow { font-size: 0.7rem; color: #666; margin-left: 5px; pointer-events: none; }
+    .font-settings-popover { position: absolute; top: 40px; background: #1a1a1a; padding: 10px; border: 1px solid #444; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.8); display: flex; align-items: center; gap: 8px; z-index: 100; color: #888; }
+    .font-settings-popover input[type=range] { width: 100px; accent-color: #F8C545; cursor: pointer; }
+    .wod-block { margin-bottom: 20px; break-inside: avoid; -webkit-column-break-inside: avoid; }
+    .block-title { color: #F8C545; background: transparent; padding: 2px 10px; margin: 0 0 2px 0; font-size: 1.1em; font-weight: bold; font-family: 'Oswald'; border-left: 4px solid #F8C545; border-bottom: 1px solid rgba(255, 255, 255, 0.1); text-transform: uppercase; letter-spacing: 1px; }
+    .ejercicio-row-clean { display: grid; grid-template-columns: 60px 1fr; gap: 8px; align-items: baseline; padding: 1px 0; margin-bottom: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.03); min-height: auto; line-height: 1; }
+    .ej-reps { color: #F8C545; font-weight: 900; font-family: 'Oswald'; font-size: 1.15em; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ej-nombre { color: #e0e0e0; font-family: 'Roboto', sans-serif; font-size: 1em; font-weight: 500; line-height: 1.1; text-align: left; padding: 0; }
+    .scroll-custom::-webkit-scrollbar { width: 6px; } .scroll-custom::-webkit-scrollbar-track { background: #111; } .scroll-custom::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+    .dashboard-container.wod-wide .list-panel { flex: 0 0 0 !important; width: 0 !important; padding: 0 !important; border: none !important; margin: 0 !important; }
+    .dashboard-container.wod-wide .wod-panel { flex: 2; }
+    .dashboard-container.wod-wide .exercises-wrapper { display: block; column-width: 180px; column-gap: 20px; column-rule: 1px solid rgba(255, 255, 255, 0.1); width: 100%; padding-top: 5px; }
+    .vertical-bar { height: 100%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; animation: fadeIn 0.5s; }
+    .v-text { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); font-family: 'Oswald'; font-size: 1.2rem; letter-spacing: 3px; white-space: nowrap; margin-bottom: 10px; }
+    .v-icon { font-size: 1.5rem; }
+    .header-timer-secondary { color: rgba(255,255,255,0.4); font-family: 'Oswald'; font-size: 1.2rem; margin-left: 15px; font-weight: bold; letter-spacing: 1px; }
+    .timer-type-selector { display: flex; background: #222; border-radius: 25px; padding: 4px; margin-bottom: 20px; width: 100%; border: 1px solid #444; }
+    .type-btn { flex: 1; background: transparent; border: none; color: #888; padding: 8px; border-radius: 20px; font-family: 'Oswald'; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; }
+    .type-btn.active { background: #F8C545; color: black; font-weight: bold; box-shadow: 0 2px 8px rgba(248, 197, 69, 0.3); }
+    .config-box { background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #444; width: 100%; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); z-index: 10; margin: auto; max-height: 85vh; overflow-y: auto; }
+    .inputs-grid { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
+    .inputs-row { display: flex; gap: 10px; width: 100%; } .inputs-row .input-group { flex: 1; }
+    .input-group label { display: block; color: #F8C545; font-size: 0.8rem; margin-bottom: 5px; text-align: center; font-weight: bold; font-family: 'Oswald'; letter-spacing: 1px; }
+    .time-inputs { display: flex; justify-content: center; align-items: center; gap: 5px; background: #222; padding: 5px 15px; border-radius: 10px; border: 1px solid #333; }
+    .time-inputs input { width: 50px; font-size: 1.5rem; background: transparent; border: none; color: white; text-align: center; font-family: 'Oswald'; } .time-inputs input:focus { outline: none; color: #F8C545; }
+    .single-input { width: 100%; font-size: 1.5rem; background: #222; border: 1px solid #333; color: white; text-align: center; font-family: 'Oswald'; border-radius: 10px; }
+    .btn-save-timer { width: 100%; background: #28a745; color: white; border: none; padding: 12px; font-weight: bold; font-family: 'Oswald'; border-radius: 8px; font-size: 1.1rem; cursor: pointer; }
+    .timer-display { font-family: 'Oswald'; font-weight: bold; color: white; line-height: 0.9; font-size: clamp(3rem, 25vh, 8rem); text-shadow: 0 0 20px rgba(255,255,255,0.1); margin: 5px 0; text-align: center; width: 100%; }
+    .timer-display.running { color: #28a745; text-shadow: 0 0 30px rgba(40, 167, 69, 0.4); }
+    .timer-display.resting { color: #dc3545; text-shadow: 0 0 30px rgba(220, 53, 69, 0.4); }
+    .status-badge { font-family: 'Oswald'; font-size: 1.4rem; padding: 5px 20px; border-radius: 5px; letter-spacing: 2px; text-align: center; margin-bottom: 10px; }
+    .status-badge.work { color: #28a745; border: 1px solid #28a745; background: rgba(40,167,69,0.1); } .status-badge.rest { color: #dc3545; border: 1px solid #dc3545; background: rgba(220,53,69,0.1); }
+    .prep-display { text-align: center; margin: auto; }
+    .prep-label { font-family: 'Oswald'; font-size: 2rem; color: #888; }
+    .prep-number { font-size: 8rem; color: #F8C545; font-family: 'Oswald'; font-weight: bold; line-height: 1; }
+    .atletas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 10px; }
+    .atleta-card { background: #222; border: 1px solid #444; border-radius: 8px; padding: 10px 5px; text-align: center; transition: 0.2s; position: relative; overflow: hidden; cursor: pointer; }
+    .avatar { width: 45px; height: 45px; background: #333; color: #F8C545; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; margin: 0 auto 5px auto; border: 2px solid #F8C545; position: relative; }
+    .name { font-size: 0.75rem; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .empty-state { text-align: center; color: #444; margin-top: 50px; } .empty-state i { font-size: 3rem; margin-bottom: 10px; }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+    .custom-modal { background: #111; width: 90%; max-width: 500px; border-radius: 10px; border: 1px solid #333; display: flex; flex-direction: column; overflow: hidden; height: 80vh; }
+    .modal-header { height: auto; padding: 15px; border-bottom: 1px solid #333; }
+    .modal-body { padding: 15px; overflow-y: auto; flex: 1; }
+    .search-input { padding-left: 10px; background: #222; color: white; border: 1px solid #444; height: 40px; border-radius: 20px; width: 100%; text-indent: 10px; }
+    .atleta-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #222; cursor: pointer; }
+    .avatar-mini { width: 35px; height: 35px; background: #444; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px; background-size: cover; }
+    .atleta-nombre { color: #F8C545; font-weight: bold; font-family: 'Oswald'; font-size: 1rem; line-height: 1; }
+    .lista-atletas-scroll { max-height: 50vh; overflow-y: auto; margin-top: 10px; }
+    .atleta-info { display: flex; align-items: center; flex: 1; gap: 10px; }
+    .switch-juez { position: relative; display: inline-block; width: 40px; height: 20px; margin-right: 10px; } .switch-juez input { opacity: 0; width: 0; height: 0; }
+    .slider-juez { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; } .slider-juez:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; }
+    input:checked + .slider-juez { background-color: #F8C545; } input:checked + .slider-juez:before { transform: translateX(20px); background-color: black; }
+    .slider-juez.round { border-radius: 34px; } .slider-juez.round:before { border-radius: 50%; }
+    .card-finished { background: #155724 !important; border-color: #28a745 !important; opacity: 0.8; }
+    .badge-time { margin-top: 5px; background: black; color: #F8C545; font-family: 'Oswald'; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+    .card-team { border: 2px solid #F8C545 !important; background: rgba(248, 197, 69, 0.05); }
+    .team-avatars { display: flex; justify-content: center; margin-bottom: 5px; }
+    .avatar-mini-team { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #F8C545; background-color: #333; color: white; display: flex; justify-content: center; align-items: center; font-size: 0.8rem; margin: 0 -5px; background-size: cover; }
+    .team-name { color: #F8C545 !important; font-weight: bold; }
+    .team-builder-grid { display: flex; flex-direction: column; gap: 8px; }
+    .atleta-select-row { padding: 10px; background: #222; border-radius: 5px; display: flex; justify-content: space-between; cursor: pointer; }
+    .selected-yellow { background: #F8C545; color: black; font-weight: bold; }
+    .fade-in { animation: fadeIn 0.3s ease-in; } .slide-in { animation: slideIn 0.3s ease-out; }
+    @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } } @@keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .pulse-animation { animation: pulseBig 1s infinite; } @@keyframes pulseBig { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    .last-round-alert { color: #dc3545 !important; animation: pulseRed 1s infinite; } @@keyframes pulseRed { 0% { transform: scale(1); } 50% { transform: scale(1.05); text-shadow: 0 0 10px red; } 100% { transform: scale(1); } }
+    .peso-highlight { color: #F8C545; font-weight: 900; font-family: 'Oswald', sans-serif; font-size: 0.95em; margin-left: 5px; }
+    .peso-silver { color: #C0C0C0; font-weight: 800; font-family: 'Oswald', sans-serif; font-size: 0.95em; letter-spacing: 0.5px; margin-left: 6px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
 </style>
 
 @code {
-    // --- VARIABLES DE ESTADO ---
     private bool wodExpandido = false;
     private bool verTimer = true;
     private bool verWod = true;
@@ -1445,13 +553,11 @@
     private bool mostrarSliderLetra = false;
     private double wodFontSize = 1.0;
 
-    // VARIABLES NUEVAS (JUEZ/EQUIPOS)
     private bool modoJuez = false;
     private bool mostrarModalEquipos = false;
     private bool mostrarModalEliminar = false;
     private ResultadoCapturadoViewModel itemAEliminar = null;
 
-    // Lista Visual para manejar el estado de las tarjetas (Tiempos, Equipos)
     private List<ResultadoCapturadoViewModel> participantesVisuales = new();
     private ResultadoCapturadoViewModel seleccionadoParaEquipo = null;
 
@@ -1475,7 +581,6 @@
     private List<UsuarioListDto> listaAtletasFiltrada;
     private string filtroAtleta = "";
 
-    // Timer Variables...
     private int tipoTimer = 1;
     private int inputMinutos = 10; private int inputSegundos = 0;
     private int inputRondas = 1; private int inputMinDescanso = 0; private int inputSegDescanso = 0;
@@ -1494,22 +599,27 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // 1. Configurar Timer
+        ForzarMezclaDeAudio();
+
+#if ANDROID
+        try
+        {
+            var audioManager = (Android.Media.AudioManager)Android.App.Application.Context.GetSystemService(Android.Content.Context.AudioService);
+            audioManager.RequestAudioFocus(null, Android.Media.Stream.Music, Android.Media.AudioFocus.GainTransientMayDuck);
+        }
+        catch (Exception ex) { Console.WriteLine($"Error Android Audio: {ex.Message}"); }
+#endif
+
         _timer = new System.Timers.Timer(1000);
         _timer.Elapsed += (sender, e) => Tick();
         _timer.AutoReset = true;
         GuardarConfiguracion();
 
-        // 2. Cargas Asíncronas
         if (Sesion.Usuario != null)
         {
-            await Task.WhenAll(
-              CargarWodHoy(),
-              CargarInfoBox()
-            );
+            await Task.WhenAll(CargarWodHoy(), CargarInfoBox());
         }
 
-        // 3. Inicializar lista visual con los atletas que llegan del CheckIn
         if (LiveState.AtletasEnClase.Any())
         {
             foreach (var a in LiveState.AtletasEnClase)
@@ -1522,7 +632,23 @@
         }
     }
 
-    // --- MÉTODOS EQUIPOS ---
+    // --- NUEVO MÉTODO PARA FORZAR MEZCLA EN IOS ---
+    private void ForzarMezclaDeAudio()
+    {
+#if IOS
+        try
+        {
+            // Solo le recordamos a la sesión actual que permita mezclar
+            // No llamamos a SetActive(true) de nuevo si ya está activa,
+            // a veces eso causa el "corte" momentáneo.
+            var session = AVFoundation.AVAudioSession.SharedInstance();
+            session.SetCategory(AVFoundation.AVAudioSessionCategory.Playback,
+                                AVFoundation.AVAudioSessionCategoryOptions.MixWithOthers);
+        }
+        catch (Exception ex) { Console.WriteLine("Audio Mix refresh: " + ex.Message); }
+#endif
+    }
+
     private void AbrirModalEquipos() { mostrarModalEquipos = true; seleccionadoParaEquipo = null; }
     private void CerrarModalEquipos() { mostrarModalEquipos = false; seleccionadoParaEquipo = null; }
 
@@ -1534,11 +660,7 @@
         }
         else
         {
-            if (seleccionadoParaEquipo == p)
-            {
-                seleccionadoParaEquipo = null; // Deseleccionar
-                return;
-            }
+            if (seleccionadoParaEquipo == p) { seleccionadoParaEquipo = null; return; }
 
             string nombre1 = seleccionadoParaEquipo.Atletas[0].NombreCompleto.Split(' ')[0];
             string nombre2 = p.Atletas[0].NombreCompleto.Split(' ')[0];
@@ -1560,51 +682,31 @@
         }
     }
 
-    // --- MÉTODOS ELIMINAR ---
-    private void SolicitarEliminar(ResultadoCapturadoViewModel p)
-    {
-        itemAEliminar = p;
-        mostrarModalEliminar = true;
-    }
-
-    private void CerrarModalEliminar()
-    {
-        mostrarModalEliminar = false;
-        itemAEliminar = null;
-    }
+    private void SolicitarEliminar(ResultadoCapturadoViewModel p) { itemAEliminar = p; mostrarModalEliminar = true; }
+    private void CerrarModalEliminar() { mostrarModalEliminar = false; itemAEliminar = null; }
 
     private void ConfirmarEliminar()
     {
         if (itemAEliminar != null)
         {
-            // 1. Quitar de la lista visual
             participantesVisuales.Remove(itemAEliminar);
-
-            // 2. Quitar del estado global para que no reaparezcan si recarga o algo
-            //    Si es un equipo, quitamos a todos los integrantes de ese equipo del estado
             foreach (var atleta in itemAEliminar.Atletas)
             {
                 var encontrado = LiveState.AtletasEnClase.FirstOrDefault(x => x.UsuarioId == atleta.UsuarioId);
-                if (encontrado != null)
-                {
-                    LiveState.AtletasEnClase.Remove(encontrado);
-                }
+                if (encontrado != null) LiveState.AtletasEnClase.Remove(encontrado);
             }
         }
         CerrarModalEliminar();
     }
 
-    // --- MÉTODO CLICK EN TARJETA (STOPWATCH) ---
     private void CapturarTiempo(ResultadoCapturadoViewModel p)
     {
         if (!modoJuez) return;
         if (p.Finalizado) return;
-
         p.TiempoFinal = FormatoTiempo(tiempoTranscurrido);
         p.Finalizado = true;
     }
 
-    // --- AL TERMINAR ---
     private void IrAResumen()
     {
         LiveState.FueModoJuez = modoJuez;
@@ -1612,39 +714,23 @@
         Nav.NavigateTo("/resumen-clase");
     }
 
-    private void IrAlHome()
-    {
-        Nav.NavigateTo("/home");
-    }
+    private void IrAlHome() { Nav.NavigateTo("/home"); }
 
-    // --- CARGAS Y AUXILIARES ---
     private async Task CargarInfoBox()
     {
         try
         {
             var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/configapi/nombre-box/{Sesion.Usuario.BoxID}");
-
             if (response.IsSuccessStatusCode)
             {
                 var info = await response.Content.ReadFromJsonAsync<BoxInfoSimple>();
-                if (info != null)
-                {
-                    logoGuidReal = info.Logo;
-                    StateHasChanged();
-                }
+                if (info != null) { logoGuidReal = info.Logo; StateHasChanged(); }
             }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine("No se pudo cargar el logo: " + ex.Message);
-        }
+        catch (Exception ex) { Console.WriteLine("Error logo: " + ex.Message); }
     }
 
-    public class BoxInfoSimple
-    {
-        public string Nombre { get; set; }
-        public Guid? Logo { get; set; }
-    }
+    public class BoxInfoSimple { public string Nombre { get; set; } public Guid? Logo { get; set; } }
 
     private string FormatearNombreConPeso(string descripcion)
     {
@@ -1665,7 +751,6 @@
         {
             var fecha = DateTime.Now.ToString("yyyy-MM-dd");
             var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/obtener/{Sesion.Usuario.BoxID}/{fecha}");
-
             if (response.IsSuccessStatusCode)
             {
                 wodHoy = await response.Content.ReadFromJsonAsync<ProgramacionWodViewModel>();
@@ -1673,28 +758,20 @@
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                wodHoy = null;
-                mensajeWod = "¡Día de Descanso!";
+                wodHoy = null; mensajeWod = "¡Día de Descanso!";
             }
         }
         catch { mensajeWod = "Sin conexión."; }
     }
 
-    private void CambiarBloqueVisible(ChangeEventArgs e)
-    {
-        if (Guid.TryParse(e.Value.ToString(), out Guid id)) segmentoSeleccionadoID = id;
-    }
+    private void CambiarBloqueVisible(ChangeEventArgs e) { if (Guid.TryParse(e.Value.ToString(), out Guid id)) segmentoSeleccionadoID = id; }
 
     private async Task AbrirModalAtletas()
     {
-        mostrarModalAtletas = true;
-        filtroAtleta = "";
+        mostrarModalAtletas = true; filtroAtleta = "";
         if (listaTodosAtletas == null)
         {
-            try
-            {
-                listaTodosAtletas = await Http.GetFromJsonAsync<List<UsuarioListDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/buscador/{Sesion.Usuario.BoxID}");
-            }
+            try { listaTodosAtletas = await Http.GetFromJsonAsync<List<UsuarioListDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/buscador/{Sesion.Usuario.BoxID}"); }
             catch { listaTodosAtletas = new List<UsuarioListDto>(); }
         }
         listaAtletasFiltrada = listaTodosAtletas;
@@ -1717,83 +794,47 @@
     {
         filtroAtleta = e.Value?.ToString() ?? "";
         if (listaTodosAtletas == null) return;
-
-        if (string.IsNullOrWhiteSpace(filtroAtleta))
-        {
-            listaAtletasFiltrada = listaTodosAtletas;
-        }
-        else
-        {
-            listaAtletasFiltrada = listaTodosAtletas
-              .Where(x => x.NombreCompleto != null &&
-                    x.NombreCompleto.Contains(filtroAtleta, StringComparison.OrdinalIgnoreCase))
-              .ToList();
-        }
+        if (string.IsNullOrWhiteSpace(filtroAtleta)) listaAtletasFiltrada = listaTodosAtletas;
+        else listaAtletasFiltrada = listaTodosAtletas.Where(x => x.NombreCompleto != null && x.NombreCompleto.Contains(filtroAtleta, StringComparison.OrdinalIgnoreCase)).ToList();
     }
 
     private void ToggleExpandirWod()
     {
         wodExpandido = !wodExpandido;
-        if (wodExpandido)
-        {
-            verWod = true;
-        }
+        if (wodExpandido) verWod = true;
     }
 
     private void AgregarAtletaDesdeLista(UsuarioListDto usuario)
     {
         if (!LiveState.AtletasEnClase.Any(x => x.UsuarioId == usuario.UsuarioId))
         {
-            var nuevoCheckIn = new CheckInDto
-            {
-                UsuarioId = usuario.UsuarioId,
-                BoxId = Sesion.Usuario.BoxID,
-                NombreCompleto = usuario.NombreCompleto,
-                FotoUrl = usuario.FotoUrl
-            };
-
+            var nuevoCheckIn = new CheckInDto { UsuarioId = usuario.UsuarioId, BoxId = Sesion.Usuario.BoxID, NombreCompleto = usuario.NombreCompleto, FotoUrl = usuario.FotoUrl };
             LiveState.AtletasEnClase.Add(nuevoCheckIn);
-
-            participantesVisuales.Add(new ResultadoCapturadoViewModel
-            {
-                Atletas = new List<CheckInDto> { nuevoCheckIn }
-            });
+            participantesVisuales.Add(new ResultadoCapturadoViewModel { Atletas = new List<CheckInDto> { nuevoCheckIn } });
         }
         mostrarModalAtletas = false;
     }
 
-    // --- LOGICA TIMER ---
     private async Task Sonar(string idAudio) { try { await JS.InvokeVoidAsync("reproducirSonido", idAudio); } catch { } }
-    private async void IniciarSecuencia() // Cambia void a async void para poder usar await
+    
+    private async void IniciarSecuencia()
     {
-        // 1. DESBLOQUEAR AUDIO EN IOS (Vital)
-        try
-        {
-            await JS.InvokeVoidAsync("prepararAudio");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error preparando audio: " + ex.Message);
-        }
+        try { await JS.InvokeVoidAsync("prepararAudio"); } catch (Exception ex) { Console.WriteLine("Error preparando audio: " + ex.Message); }
+        
+        // --- AQUÍ REFORZAMOS LA MEZCLA DE AUDIO ---
+        ForzarMezclaDeAudio();
 
-        // 2. Tu lógica normal
-        enConteoPrevio = true;
-        tiempoPrevio = 7;
-        _timer.Start();
-        timerCorriendo = true;
+        enConteoPrevio = true; tiempoPrevio = 7; _timer.Start(); timerCorriendo = true;
     }
+    
     private void PausarTimer() { _timer.Stop(); timerCorriendo = false; }
+    
     private void ResetTimer()
     {
-        _timer.Stop();
-        timerCorriendo = false;
-        enConteoPrevio = false;
-        rondaActual = 1;
-        enDescanso = false;
-        tiempoRestanteActual = tiempoTrabajoConfig;
-        tiempoTotalSegmentoActual = tiempoTrabajoConfig;
-        tiempoTranscurrido = 0;
+        _timer.Stop(); timerCorriendo = false; enConteoPrevio = false; rondaActual = 1; enDescanso = false;
+        tiempoRestanteActual = tiempoTrabajoConfig; tiempoTotalSegmentoActual = tiempoTrabajoConfig; tiempoTranscurrido = 0;
     }
+    
     private void GuardarConfiguracion() { tiempoTrabajoConfig = (inputMinutos * 60) + inputSegundos; tiempoDescansoConfig = (inputMinDescanso * 60) + inputSegDescanso; totalRondas = (tipoTimer == 1) ? 1 : inputRondas; ResetTimer(); modoConfiguracion = false; }
 
     private void Tick()
@@ -1807,16 +848,12 @@
             }
             else
             {
-                enConteoPrevio = false;
-                tiempoRestanteActual = tiempoTrabajoConfig;
-                tiempoTotalSegmentoActual = tiempoTrabajoConfig;
-                Sonar("audio-go");
+                enConteoPrevio = false; tiempoRestanteActual = tiempoTrabajoConfig; tiempoTotalSegmentoActual = tiempoTrabajoConfig; Sonar("audio-go");
             }
         }
         else if (tiempoRestanteActual > 0)
         {
-            tiempoRestanteActual--;
-            tiempoTranscurrido++;
+            tiempoRestanteActual--; tiempoTranscurrido++;
             if (!enDescanso && tiempoRestanteActual == (tiempoTotalSegmentoActual / 2)) Sonar("audio-medio");
             if (tiempoRestanteActual <= 5) Sonar("audio-beep");
         }
@@ -1829,6 +866,23 @@
     private void TerminarTodo() { _timer.Stop(); timerCorriendo = false; Sonar("audio-go"); }
     private string FormatoTiempo(int t) => $"{t / 60:00}:{t % 60:00}";
     private void CambiarTipoTimer(int t) { tipoTimer = t; if (t == 2) { inputMinutos = 0; inputSegundos = 20; inputRondas = 8; inputMinDescanso = 0; inputSegDescanso = 10; } else { inputMinutos = 10; inputSegundos = 0; inputRondas = 1; } }
-    private void TerminarClase() { Nav.NavigateTo("/resumen-clase"); }
-    public async ValueTask DisposeAsync() { if (_timer != null) { _timer.Stop(); _timer.Dispose(); } }
+    
+    // --- ESTO ES LO QUE TE FALTABA PARA ARREGLAR EL ERROR ---
+    public async ValueTask DisposeAsync()
+    {
+        if (_timer != null) { _timer.Stop(); _timer.Dispose(); }
+
+#if IOS
+        try { AVFoundation.AVAudioSession.SharedInstance().SetActive(false); } catch { }
+#endif
+
+#if ANDROID
+        try 
+        {
+            var audioManager = (Android.Media.AudioManager)Android.App.Application.Context.GetSystemService(Android.Content.Context.AudioService);
+            audioManager.AbandonAudioFocus(null);
+        } 
+        catch { }
+#endif
+    }
 }

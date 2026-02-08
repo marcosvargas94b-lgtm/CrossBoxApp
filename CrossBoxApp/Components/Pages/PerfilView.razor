@@ -20,7 +20,6 @@
     @* CONTENIDO PRINCIPAL *@
     <div class="scrollable-content">
 
-        @* --- LOADER DE CARGA INICIAL --- *@
         @if (cargandoDatos)
         {
             <div class="full-screen-loader">
@@ -35,7 +34,6 @@
                 @* --- FOTO DE PERFIL (AVATAR) --- *@
                 <div class="photo-section">
                     <div class="image-wrapper" @onclick='() => SeleccionarFoto("Avatar")'>
-
                         @if (cargandoAvatar)
                         {
                             <div class="loading-overlay"><div class="spinner-border text-warning"></div></div>
@@ -69,6 +67,7 @@
                     <label class="lbl-input">Apellidos <span class="text-danger">*</span></label>
                     <input type="text" @bind="miPerfil.Apellidos" class="input-dark mb-3" placeholder="Obligatorio" />
 
+                    @* --- APODO --- *@
                     <div class="row-switch">
                         <div style="flex:1; margin-right:10px;">
                             <label class="lbl-input">Apodo (Nickname)</label>
@@ -82,7 +81,24 @@
                             </label>
                         </div>
                     </div>
-                    <small class="text-info-app mb-4"><i class="fas fa-info-circle"></i> Si activas esto, aparecerás con tu apodo en los resultados.</small>
+                    <small class="text-info-app mb-2"><i class="fas fa-info-circle"></i> Si activas esto, aparecerás con tu apodo en los resultados.</small>
+
+                    @* --- NUEVO: SWITCH MOSTRAR PRs --- *@
+                    <div class="row-switch mt-3 mb-4" style="background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px dashed #444;">
+                        <div style="flex:1; margin-right:10px;">
+                            <label class="lbl-input" style="margin-bottom:0; color: #F8C545;"><i class="fas fa-trophy"></i> Público: Mis Récords</label>
+                            <small class="text-muted" style="font-size: 0.75rem; display:block; line-height:1.2; margin-top: 4px;">
+                                Permite que otros atletas vean tus mejores marcas en tu perfil público.
+                            </small>
+                        </div>
+                        <div class="switch-container">
+                            <label class="lbl-small">¿MOSTRAR?</label>
+                            <label class="switch">
+                                <input type="checkbox" @bind="miPerfil.MostrarPRS">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
 
                     <label class="lbl-input">Acerca de mí</label>
                     <textarea @bind="miPerfil.Descripcion" class="input-dark text-area" placeholder="Opcional: Gymrat, Crossfitero..."></textarea>
@@ -604,29 +620,23 @@
         public string FotoPerfilUrl { get; set; }
         public string Apodo { get; set; }
         public bool UsarApodo { get; set; }
+        public bool MostrarPRS { get; set; } // <--- NUEVO CAMPO
         public string FotoCertificado1Url { get; set; }
         public string FotoCertificado2Url { get; set; }
     }
 
     private PerfilEdicionDto miPerfil = new PerfilEdicionDto();
 
-    // Previews
     private string previewAvatar = "";
     private string previewCert1 = "";
     private string previewCert2 = "";
-
-    // Archivos seleccionados
     private FileResult fileAvatar;
     private FileResult fileCert1;
     private FileResult fileCert2;
-
-    // Flags de borrado
     private bool borrarCert1 = false;
     private bool borrarCert2 = false;
-
-    // Estados de Carga
     private bool guardando = false;
-    private bool cargandoDatos = true; // Empieza true para mostrar loader
+    private bool cargandoDatos = true;
     private bool cargandoAvatar = false;
     private bool cargandoCert1 = false;
     private bool cargandoCert2 = false;
@@ -646,7 +656,6 @@
             {
                 miPerfil = await response.Content.ReadFromJsonAsync<PerfilEdicionDto>();
 
-                // Cargar previews iniciales
                 previewAvatar = miPerfil.FotoPerfilUrl ?? "";
                 previewCert1 = miPerfil.FotoCertificado1Url ?? "";
                 previewCert2 = miPerfil.FotoCertificado2Url ?? "";
@@ -676,14 +685,7 @@
             FileResult resultado = null;
             await MainThread.InvokeOnMainThreadAsync(async () =>
             {
-                try
-                {
-                    resultado = await MediaPicker.Default.PickPhotoAsync();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("PickPhoto error: " + ex.Message);
-                }
+                try { resultado = await MediaPicker.Default.PickPhotoAsync(); } catch { }
             });
 
             if (resultado != null)
@@ -691,57 +693,28 @@
                 using var stream = await resultado.OpenReadAsync();
                 using var ms = new MemoryStream();
                 await stream.CopyToAsync(ms);
-
                 var base64 = Convert.ToBase64String(ms.ToArray());
                 var previewUrl = $"data:image/jpeg;base64,{base64}";
 
-                if (tipo == "Avatar")
-                {
-                    fileAvatar = resultado;
-                    previewAvatar = previewUrl;
-                }
-                else if (tipo == "Cert1")
-                {
-                    fileCert1 = resultado;
-                    previewCert1 = previewUrl;
-                    borrarCert1 = false;
-                }
-                else if (tipo == "Cert2")
-                {
-                    fileCert2 = resultado;
-                    previewCert2 = previewUrl;
-                    borrarCert2 = false;
-                }
+                if (tipo == "Avatar") { fileAvatar = resultado; previewAvatar = previewUrl; }
+                else if (tipo == "Cert1") { fileCert1 = resultado; previewCert1 = previewUrl; borrarCert1 = false; }
+                else if (tipo == "Cert2") { fileCert2 = resultado; previewCert2 = previewUrl; borrarCert2 = false; }
             }
         }
-        catch (Exception ex)
-        {
-            await App.Current.MainPage.DisplayAlert("Aviso", "No se pudo cargar la imagen.", "OK");
-        }
+        catch { await App.Current.MainPage.DisplayAlert("Aviso", "No se pudo cargar la imagen.", "OK"); }
         finally
         {
             if (tipo == "Avatar") cargandoAvatar = false;
             else if (tipo == "Cert1") cargandoCert1 = false;
             else if (tipo == "Cert2") cargandoCert2 = false;
-
             StateHasChanged();
         }
     }
 
     private void EliminarFoto(string tipo)
     {
-        if (tipo == "Cert1")
-        {
-            previewCert1 = "";
-            fileCert1 = null;
-            borrarCert1 = true;
-        }
-        else if (tipo == "Cert2")
-        {
-            previewCert2 = "";
-            fileCert2 = null;
-            borrarCert2 = true;
-        }
+        if (tipo == "Cert1") { previewCert1 = ""; fileCert1 = null; borrarCert1 = true; }
+        else if (tipo == "Cert2") { previewCert2 = ""; fileCert2 = null; borrarCert2 = true; }
     }
 
     private async Task GuardarTodo()
@@ -766,6 +739,9 @@
             contenido.Add(new StringContent(miPerfil.Whatsapp ?? ""), "Whatsapp");
             contenido.Add(new StringContent(miPerfil.Apodo ?? ""), "Apodo");
             contenido.Add(new StringContent(miPerfil.UsarApodo.ToString().ToLower()), "UsarApodo");
+            
+            // --- NUEVO CAMPO ENVIADO ---
+            contenido.Add(new StringContent(miPerfil.MostrarPRS.ToString().ToLower()), "MostrarPRS");
 
             contenido.Add(new StringContent(borrarCert1.ToString().ToLower()), "EliminarFotoCert1");
             contenido.Add(new StringContent(borrarCert2.ToString().ToLower()), "EliminarFotoCert2");

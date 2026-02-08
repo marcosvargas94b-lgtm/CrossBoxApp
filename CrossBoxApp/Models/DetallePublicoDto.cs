@@ -20,5 +20,6 @@ namespace CrossBoxApp.Models
         public bool UsarApodo { get; set; }
         public string FotoCertificado1Url { get; set; }
         public string FotoCertificado2Url { get; set; }
+        public List<RegistroPublicoDto> RegistrosProgreso { get; set; } = new List<RegistroPublicoDto>();
     }
 }
