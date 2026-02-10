@@ -1,8 +1,45 @@
 ﻿@inherits LayoutComponentBase
+@using CrossBoxApp.Models.Services
+@using System.Globalization
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject HttpClient Http
+@inject SesionService Sesion
 @implements IDisposable
 
+@* --- 1. BLOQUE DE ESTILOS DINÁMICOS (WHITELABEL) --- *@
+<style>
+    :root {
+        /* Color Principal (El que elija el admin) */
+        --app-primary: @ColorPrimario;
+        /* Color Secundario (Oro/Dorado para Rankings) */
+        --app-secondary: @ColorSecundario;
+        /* Color Bronce (Generalmente fijo) */
+        --app-bronze: #cd7f32;
+        /* Variaciones Automáticas */
+        --app-primary-dark: @ColorPrimarioDark;
+        --app-primary-soft: @(ColorPrimario + "1A"); /* 10% transparencia */
+        --app-primary-medium: @(ColorPrimario + "4D"); /* 30% transparencia */
+        /* Texto sobre el color primario (Negro para amarillo, Blanco para azul/rojo) */
+        --app-text-contrast: @ColorTextoContraste;
+    }
+
+    /* Clases de utilidad opcionales */
+    .text-primary-custom {
+        color: var(--app-primary) !important;
+    }
+
+    .bg-primary-custom {
+        background-color: var(--app-primary) !important;
+        color: var(--app-text-contrast) !important;
+    }
+
+    .border-primary-custom {
+        border-color: var(--app-primary) !important;
+    }
+</style>
+
+@* --- 2. ESTRUCTURA VISUAL --- *@
 <div style="width: 100%; min-height: 100vh; margin: 0; padding: 0;">
     <main style="margin: 0; padding: 0;">
         @Body
@@ -10,11 +47,88 @@
 </div>
 
 @code {
+    // --- VARIABLES DE COLOR (Valores por defecto: Tu Amarillo Original) ---
+    private string ColorPrimario = "#F8C545";
+    private string ColorSecundario = "#FFD700";
+    private string ColorPrimarioDark = "#b38600"; // Se calculará automático
+    private string ColorTextoContraste = "#000000"; // Se calculará automático
+
+    // --- CICLO DE VIDA ---
     protected override void OnInitialized()
     {
         Nav.LocationChanged += AlCambiarDePagina;
     }
 
+    protected override async Task OnInitializedAsync()
+    {
+        // Solo cargamos config si hay usuario logueado
+        if (Sesion.Usuario != null)
+        {
+            try
+            {
+                // Llamada real a la API para obtener la configuración del Box
+                // Usamos el endpoint que ya existe "config/{id}" o uno específico de apariencia si creaste otro.
+                // Asumiendo que el endpoint 'api/boxesAPI/config/{id}' devuelve el DTO con colores:
+
+                var config = await Http.GetFromJsonAsync<ConfigBoxSimple>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
+
+                if (config != null)
+                {
+                    // 1. Asignar Color Primario (si es nulo, usa el defecto)
+                    if (!string.IsNullOrEmpty(config.ColorPrimario))
+                    {
+                        ColorPrimario = config.ColorPrimario;
+
+                        // 2. Calcular automáticamente el color oscuro y el contraste
+                        ColorPrimarioDark = OscurecerColor(ColorPrimario, 0.2f); // 20% más oscuro
+                        ColorTextoContraste = EsColorOscuro(ColorPrimario) ? "#FFFFFF" : "#000000";
+                    }
+
+                    // 3. Asignar Color Secundario
+                    if (!string.IsNullOrEmpty(config.ColorSecundario))
+                    {
+                        ColorSecundario = config.ColorSecundario;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Si falla la API, no pasa nada, se quedan los colores amarillos por defecto.
+                Console.WriteLine("Error cargando tema: " + ex.Message);
+            }
+        }
+    }
+
+    // --- UTILIDADES DE COLOR (Matemáticas simples para CSS) ---
+
+    // Determina si un color es oscuro para poner texto blanco encima
+    private bool EsColorOscuro(string hex)
+    {
+        try
+        {
+            var color = System.Drawing.ColorTranslator.FromHtml(hex);
+            // Fórmula de luminancia estándar
+            double luminancia = (0.299 * color.R + 0.587 * color.G + 0.114 * color.B) / 255;
+            return luminancia < 0.5;
+        }
+        catch { return false; }
+    }
+
+    // Genera una versión más oscura del color para gradientes
+    private string OscurecerColor(string hex, float factor)
+    {
+        try
+        {
+            var color = System.Drawing.ColorTranslator.FromHtml(hex);
+            int r = (int)(color.R * (1 - factor));
+            int g = (int)(color.G * (1 - factor));
+            int b = (int)(color.B * (1 - factor));
+            return $"#{r:X2}{g:X2}{b:X2}";
+        }
+        catch { return "#b38600"; } // Fallback
+    }
+
+    // --- TU LÓGICA DE SCROLL ---
     private async void AlCambiarDePagina(object sender, LocationChangedEventArgs e)
     {
         try { await JS.InvokeVoidAsync("window.scrollTo", 0, 0); } catch { }
@@ -23,5 +137,12 @@
     public void Dispose()
     {
         Nav.LocationChanged -= AlCambiarDePagina;
+    }
+
+    // Clase DTO simple para recibir solo lo necesario
+    public class ConfigBoxSimple
+    {
+        public string? ColorPrimario { get; set; }
+        public string? ColorSecundario { get; set; }
     }
 }

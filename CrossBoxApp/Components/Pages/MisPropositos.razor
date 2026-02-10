@@ -126,9 +126,15 @@
     .nav-right { width: 60px; }
 
     .scrollable-content {
-        flex-grow: 1; overflow-y: auto; padding: 20px;
-        display: flex; flex-direction: column; align-items: center;
-        -webkit-overflow-scrolling: touch; padding-bottom: 40px;
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        -webkit-overflow-scrolling: touch;
+        /* CAMBIO AQUÍ: */
+        padding-bottom: 100px; /* Mucho espacio al final para que nada se esconda */
     }
 
     /* --- ESTILOS PROPÓSITOS --- */
