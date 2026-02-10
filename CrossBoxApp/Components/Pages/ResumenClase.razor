@@ -600,81 +600,98 @@
         mostrarModalCategoria = false;
     }
 
-    private async Task ProcesarYGuardar()
+private async Task ProcesarYGuardar()
+{
+    guardando = true;
+    StateHasChanged();
+
+    // Preparamos el payload base
+    var payload = new GuardarResultadosDto { BoxId = Sesion.Usuario.BoxID, WodId = Guid.Empty };
+
+    // CASO 1: MODO JUEZ (Tiempos capturados en vivo)
+    if (LiveState.FueModoJuez)
     {
-        // NO BLOQUEAMOS si falta categoría. Si el switch está ON, enviamos "Sin asignar" por defecto.
-        
-        guardando = true;
-        StateHasChanged();
-
-        var payload = new GuardarResultadosDto { BoxId = Sesion.Usuario.BoxID, WodId = Guid.Empty };
-
-        if (LiveState.FueModoJuez)
+        foreach (var item in LiveState.ResultadosJuez)
         {
-            foreach (var item in LiveState.ResultadosJuez)
+            string cat = "";
+            if(categoriasJuezSeleccionadas.ContainsKey(item.Atletas[0].UsuarioId)) 
+                cat = categoriasJuezSeleccionadas[item.Atletas[0].UsuarioId];
+            
+            if (usarCategorias && string.IsNullOrEmpty(cat)) cat = "Sin asignar";
+            if (!usarCategorias) cat = "";
+
+            payload.Resultados.Add(new ResultadoAtletaDto
             {
-                string cat = "";
-                if(categoriasJuezSeleccionadas.ContainsKey(item.Atletas[0].UsuarioId)) 
-                    cat = categoriasJuezSeleccionadas[item.Atletas[0].UsuarioId];
-                
-                // Aplicar default si está vacío y el switch activo
-                if (usarCategorias && string.IsNullOrEmpty(cat)) cat = "Sin asignar";
-                if (!usarCategorias) cat = "";
-
-                payload.Resultados.Add(new ResultadoAtletaDto
-                {
-                    UsuarioUnoId = item.Atletas[0].UsuarioId,
-                    UsuarioDosId = (item.Atletas.Count > 1) ? item.Atletas[1].UsuarioId : null,
-                    EsEquipo = (item.Atletas.Count > 1),
-                    TiempoFinal = item.Finalizado ? item.TiempoFinal : "DNF",
-                    Reps = 0,
-                    NombreEquipo = item.NombreEquipo ?? "Equipo",
-                    Categoria = cat
-                });
-            }
+                UsuarioUnoId = item.Atletas[0].UsuarioId,
+                UsuarioDosId = (item.Atletas.Count > 1) ? item.Atletas[1].UsuarioId : null,
+                EsEquipo = (item.Atletas.Count > 1),
+                TiempoFinal = item.Finalizado ? item.TiempoFinal : "DNF",
+                Reps = 0,
+                NombreEquipo = item.NombreEquipo ?? "Equipo",
+                Categoria = cat
+            });
         }
-        else
-        {
-            foreach (var item in listaLocal)
-            {
-                string cat = item.Categoria;
-                if (usarCategorias && string.IsNullOrEmpty(cat)) cat = "Sin asignar";
-                if (!usarCategorias) cat = "";
-
-                payload.Resultados.Add(new ResultadoAtletaDto
-                {
-                    UsuarioUnoId = item.UsuarioId,
-                    EsEquipo = false,
-                    Reps = modoScore ? item.Reps : 0,
-                    TiempoFinal = null,
-                    NombreEquipo = "Individual",
-                    Categoria = cat
-                });
-            }
-        }
-
-        try
-        {
-            var url = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/scoresapi/guardar-clase";
-            await Http.PostAsJsonAsync(url, payload);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error enviando: {ex.Message}");
-        }
-
-        if (!LiveState.FueModoJuez && !modoScore)
-        {
-            FinalizarNavegacion();
-        }
-        else
-        {
-            CalcularPodio();
-        }
-
-        guardando = false;
-        StateHasChanged();
     }
+    // CASO 2: MODO LISTA (Manual)
+    else
+    {
+        // Recorremos TODOS los atletas de la lista local
+        foreach (var item in listaLocal)
+        {
+            string cat = item.Categoria;
+            if (usarCategorias && string.IsNullOrEmpty(cat)) cat = "Sin asignar";
+            if (!usarCategorias) cat = "";
+
+            // Lógica para definir si es "Solo Asistencia" o "Score"
+            // Si modoScore es false, mandamos Reps = 0 y Tiempo = null.
+            // El backend detectará esto y solo guardará asistencia.
+            
+            payload.Resultados.Add(new ResultadoAtletaDto
+            {
+                UsuarioUnoId = item.UsuarioId,
+                EsEquipo = false,
+                Reps = modoScore ? item.Reps : 0, // Si no es modo score, va 0
+                TiempoFinal = null, // Siempre null en modo manual por reps
+                NombreEquipo = "Individual",
+                Categoria = cat
+            });
+        }
+    }
+
+    // --- LLAMADA AL API ---
+    try
+    {
+        var url = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/scoresapi/guardar-clase";
+        var response = await Http.PostAsJsonAsync(url, payload);
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            Console.WriteLine("Error al guardar en servidor.");
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error de conexión: {ex.Message}");
+    }
+
+    // --- DECISIÓN DE NAVEGACIÓN ---
+    // Si no hubo competencia (solo asistencia), nos vamos directo a home.
+    // Si hubo competencia (Juez o Score Manual > 0), mostramos podio.
+    
+    bool huboCompetencia = LiveState.FueModoJuez || (modoScore && listaLocal.Any(x => x.Reps > 0));
+
+    if (!huboCompetencia)
+    {
+        FinalizarNavegacion();
+    }
+    else
+    {
+        CalcularPodio();
+    }
+
+    guardando = false;
+    StateHasChanged();
+}
 
     private void CalcularPodio()
     {
