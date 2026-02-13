@@ -13,11 +13,9 @@
 		<Nullable>enable</Nullable>
 
 		<ApplicationTitle>AFTRACK</ApplicationTitle>
-
 		<ApplicationId>com.alfafit.aftrack</ApplicationId>
-
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-		<ApplicationVersion>4</ApplicationVersion>
+		<ApplicationVersion>5</ApplicationVersion>
 
 		<WindowsPackageType>None</WindowsPackageType>
 
@@ -31,6 +29,7 @@
 
 	<PropertyGroup Condition="$(TargetFramework.Contains('-ios'))">
 		<UseInterpreter>true</UseInterpreter>
+		<MtouchInterpreter>-all</MtouchInterpreter>
 		<MtouchLink>SdkOnly</MtouchLink>
 	</PropertyGroup>
 
@@ -40,16 +39,16 @@
 		<EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(TargetFramework)'=='net9.0-ios'">
-		<CodesignKey>Apple Development: Created via API (9G8X59256X)</CodesignKey>
-		<CodesignProvision>VS: com.alfafit.aftrack Development</CodesignProvision>
-	</PropertyGroup>
-
 	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
 		<AndroidUseAapt2>True</AndroidUseAapt2>
 		<AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
 		<AndroidPackageFormat>apk</AndroidPackageFormat>
 		<EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(TargetFramework)'=='net9.0-ios'">
+		<CodesignKey>Apple Development: Created via API (9G8X59256X)</CodesignKey>
+		<CodesignProvision>VS: com.alfafit.aftrack Development</CodesignProvision>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -65,30 +64,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Content Remove="wwwroot\Sonidos\beep.mp3" />
-	  <Content Remove="wwwroot\Sonidos\go.mp3" />
-	  <Content Remove="wwwroot\Sonidos\medio.mp3" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <MauiAsset Include="wwwroot\Sonidos\beep.mp3">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </MauiAsset>
-	  <MauiAsset Include="wwwroot\Sonidos\go.mp3">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </MauiAsset>
-	  <MauiAsset Include="wwwroot\Sonidos\medio.mp3">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </MauiAsset>
-	</ItemGroup>
-
-	<ItemGroup>
-		<Content Update="wwwroot\Sonidos\**">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" />
@@ -97,24 +72,13 @@
 		<PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.0" />
 		<PackageReference Include="ZXing.Net.Maui" Version="0.6.0" />
 		<PackageReference Include="ZXing.Net.Maui.Controls" Version="0.6.0" />
+		<PackageReference Include="Plugin.MauiMTAdmob" Version="1.1.0" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Compile Update="EscanerPage.xaml.cs">
 			<DependentUpon>EscanerPage.xaml</DependentUpon>
 		</Compile>
-	</ItemGroup>
-
-	<ItemGroup>
-	  <MauiAsset Update="Resources\Raw\beep.mp3">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </MauiAsset>
-	  <MauiAsset Update="Resources\Raw\go.mp3">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </MauiAsset>
-	  <MauiAsset Update="Resources\Raw\medio.mp3">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </MauiAsset>
 	</ItemGroup>
 
 	<ItemGroup>
