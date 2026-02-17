@@ -15,7 +15,7 @@
 		<ApplicationTitle>AFTRACK</ApplicationTitle>
 		<ApplicationId>com.alfafit.aftrack</ApplicationId>
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-		<ApplicationVersion>5</ApplicationVersion>
+		<ApplicationVersion>7</ApplicationVersion>
 
 		<WindowsPackageType>None</WindowsPackageType>
 

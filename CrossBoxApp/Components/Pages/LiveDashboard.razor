@@ -23,16 +23,19 @@
 
 <div class="dashboard-container @(wodExpandido ? "wod-wide" : "")">
 
-    @* --- PANEL 1: TIMER --- *@
+    @* --- PANEL 1: TIMER (CON OPCIÓN EMOM AGREGADA) --- *@
     <div class="panel timer-panel @(verTimer ? "" : "collapsed")">
         @if (verTimer)
         {
             <div class="panel-header">
                 <div class="header-left">
                     <span><i class="fas fa-stopwatch"></i> TIMER</span>
-                    @if (tipoTimer == 1 && (timerCorriendo || tiempoTranscurrido > 0))
+                    @if (timerCorriendo || tiempoTranscurrido > 0)
                     {
-                        <span class="header-timer-secondary fade-in">@FormatoTiempo(tiempoTranscurrido)</span>
+                        <span class="header-timer-secondary fade-in">
+                            @if (tipoTimer == 3) { <span>EMOM @rondaActual/@totalRondas</span> }
+                            else { @FormatoTiempo(tiempoTranscurrido) }
+                        </span>
                     }
                     @if (!timerCorriendo)
                     {
@@ -46,6 +49,7 @@
                 @if (modoConfiguracion && !timerCorriendo)
                 {
                     <div class="config-box slide-in">
+                        @* --- SELECCION DE TIPO CON EMOM AGREGADO --- *@
                         <div class="timer-type-selector">
                             <button class="type-btn @(tipoTimer == 1 ? "active" : "")" @onclick="() => CambiarTipoTimer(1)">
                                 <i class="fas fa-hourglass-start"></i> CUENTA ATRÁS
@@ -53,32 +57,41 @@
                             <button class="type-btn @(tipoTimer == 2 ? "active" : "")" @onclick="() => CambiarTipoTimer(2)">
                                 <i class="fas fa-sync-alt"></i> INTERVALOS
                             </button>
+                            <button class="type-btn @(tipoTimer == 3 ? "active" : "")" @onclick="() => CambiarTipoTimer(3)">
+                                <i class="fas fa-redo"></i> EMOM
+                            </button>
                         </div>
 
                         <div class="inputs-grid">
                             <div class="input-group">
-                                <label>TIEMPO TRABAJO</label>
+                                <label>TIEMPO TRABAJO @(tipoTimer == 3 ? "(MINUTO)" : "")</label>
                                 <div class="time-inputs">
                                     <input type="number" @bind="inputMinutos" placeholder="00" />
                                     <span class="colon">:</span>
                                     <input type="number" @bind="inputSegundos" placeholder="00" />
                                 </div>
                             </div>
-                            @if (tipoTimer == 2)
+                            
+                            @if (tipoTimer == 2 || tipoTimer == 3)
                             {
                                 <div class="inputs-row">
                                     <div class="input-group">
-                                        <label>RONDAS</label>
+                                        <label>@(tipoTimer == 3 ? "MINUTOS (RONDAS)" : "RONDAS")</label>
                                         <input type="number" @bind="inputRondas" class="single-input" />
                                     </div>
-                                    <div class="input-group">
-                                        <label>DESCANSO</label>
-                                        <div class="time-inputs">
-                                            <input type="number" @bind="inputMinDescanso" placeholder="00" />
-                                            <span class="colon">:</span>
-                                            <input type="number" @bind="inputSegDescanso" placeholder="00" />
+                                    
+                                    @* Ocultamos descanso si es EMOM *@
+                                    @if (tipoTimer == 2)
+                                    {
+                                        <div class="input-group">
+                                            <label>DESCANSO</label>
+                                            <div class="time-inputs">
+                                                <input type="number" @bind="inputMinDescanso" placeholder="00" />
+                                                <span class="colon">:</span>
+                                                <input type="number" @bind="inputSegDescanso" placeholder="00" />
+                                            </div>
                                         </div>
-                                    </div>
+                                    }
                                 </div>
                             }
                         </div>
@@ -99,10 +112,15 @@
                         }
                         else
                         {
-                            <div class="status-badge @(enDescanso ? "rest" : "work")">@(enDescanso ? "DESCANSO" : "WORK")</div>
+                            <div class="status-badge @(enDescanso ? "rest" : "work")">
+                                @if(tipoTimer == 3) { <span>EMOM</span> }
+                                else { @(enDescanso ? "DESCANSO" : "WORK") }
+                            </div>
+                            
                             <div class="timer-display @(timerCorriendo ? (enDescanso ? "resting" : "running") : "")">
                                 @FormatoTiempo(tiempoRestanteActual)
                             </div>
+                            
                             @if (totalRondas > 1)
                             {
                                 <div class="round-counter @(rondaActual == totalRondas ? "last-round-alert" : "")">
@@ -138,7 +156,7 @@
         }
     </div>
 
-    @* --- PANEL 2: WOD --- *@
+    @* --- PANEL 2: WOD (RECUPERADO SLIDER DE LETRA + NUEVO ZOOM) --- *@
     <div class="panel wod-panel @(verWod ? "" : "collapsed")">
         @if (verWod)
         {
@@ -165,6 +183,8 @@
                 }
 
                 <div style="display:flex; gap:10px; align-items:center; position:relative; flex-shrink: 0;">
+                    
+                    @* --- AQUÍ ESTÁ EL SLIDER QUE RECUPERAMOS --- *@
                     <button class="btn-icon-header" @onclick="() => mostrarSliderLetra = !mostrarSliderLetra" title="Tamaño de letra">
                         <i class="fas fa-text-height"></i>
                     </button>
@@ -176,6 +196,8 @@
                             <i class="fas fa-font" style="font-size: 1rem;"></i>
                         </div>
                     }
+                    @* ------------------------------------------- *@
+
                     <button class="btn-icon-header" @onclick="ToggleExpandirWod">
                         <i class="fas @(wodExpandido ? "fa-compress" : "fa-expand")"></i>
                     </button>
@@ -190,10 +212,14 @@
                 <div class="wod-watermark" style="background-image: url('@UrlLogoBox');"></div>
             }
 
-            <div class="panel-content scroll-custom" style="font-size: @(wodFontSize)rem;">
-                @if (wodHoy != null && wodHoy.Bloques != null && wodHoy.Bloques.Count > 0)
-                {
-                    <div class="bloques-container">
+            @* --- CONTENEDOR DEL WOD CON ZOOM --- *@
+            <div class="panel-content" style="overflow: hidden; position: relative;">
+                
+                @* Este div "wod-zoom-target" es el que se moverá y escalará con JS 
+                   Y TAMBIÉN aplica el tamaño de letra del Slider *@
+                <div id="wod-zoom-target" class="bloques-container" style="transform-origin: 0 0; width: 100%; font-size: @(wodFontSize)rem;">
+                    @if (wodHoy != null && wodHoy.Bloques != null && wodHoy.Bloques.Count > 0)
+                    {
                         @foreach (var bloque in wodHoy.Bloques)
                         {
                             @if (segmentoSeleccionadoID == Guid.Empty || bloque.SegmentoClaseID == segmentoSeleccionadoID)
@@ -219,12 +245,23 @@
                                 </div>
                             }
                         }
-                    </div>
-                }
-                else
-                {
-                    <div class="empty-state"><i class="fas fa-dumbbell"></i><p>@mensajeWod</p></div>
-                }
+                    }
+                    else
+                    {
+                        <div class="empty-state"><i class="fas fa-dumbbell"></i><p>@mensajeWod</p></div>
+                    }
+                </div>
+
+                @* --- BOTONES FLOTANTES DE CONTROL DE ZOOM (ABAJO DERECHA) --- *@
+                <div class="wod-zoom-controls">
+                    <button class="btn-zoom-float" @onclick="ResetearZoomWod" title="Restablecer vista">
+                        <i class="fas fa-compress-arrows-alt"></i>
+                    </button>
+                    <button class="btn-zoom-float @(wodBloqueado ? "locked" : "unlocked")" @onclick="ToggleCandadoWod">
+                        <i class="fas @(wodBloqueado ? "fa-lock" : "fa-lock-open")"></i>
+                    </button>
+                </div>
+
             </div>
         }
         else
@@ -233,7 +270,7 @@
         }
     </div>
 
-    @* --- PANEL 3: LISTA ATLETAS --- *@
+    @* --- PANEL 3: LISTA ATLETAS (INTACTO) --- *@
     <div class="panel list-panel @(verLista ? "" : "collapsed")">
         @if (verLista)
         {
@@ -327,7 +364,7 @@
     </div>
 </div>
 
-@* --- MODAL BUSCAR ATLETAS --- *@
+@* --- MODALES (INTACTOS) --- *@
 @if (mostrarModalAtletas)
 {
     <div class="modal-overlay">
@@ -378,7 +415,6 @@
     </div>
 }
 
-@* --- MODAL CREAR EQUIPOS --- *@
 @if (mostrarModalEquipos)
 {
     <div class="modal-overlay">
@@ -407,7 +443,6 @@
     </div>
 }
 
-@* --- MODAL CONFIRMACIÓN ELIMINAR --- *@
 @if (mostrarModalEliminar)
 {
     <div class="modal-overlay">
@@ -428,6 +463,7 @@
 }
 
 <style>
+    /* ... ESTILOS GENERALES ... */
     .flex-column-layout { display: flex; flex-direction: column; height: 100%; padding: 15px; }
     .timer-visual-group { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; }
     .timer-controls-bottom { margin-top: auto; display: flex; gap: 10px; width: 100%; padding-top: 15px; }
@@ -468,8 +504,19 @@
     .header-select { background: transparent; border: none; color: white; font-family: 'Oswald'; font-size: 0.95rem; font-weight: bold; appearance: none; -webkit-appearance: none; width: 100%; cursor: pointer; outline: none; }
     .header-select option { background-color: #1a1a1a; color: white; padding: 10px; }
     .select-arrow { font-size: 0.7rem; color: #666; margin-left: 5px; pointer-events: none; }
-    .font-settings-popover { position: absolute; top: 40px; background: #1a1a1a; padding: 10px; border: 1px solid #444; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.8); display: flex; align-items: center; gap: 8px; z-index: 100; color: #888; }
-    .font-settings-popover input[type=range] { width: 100px; accent-color: #F8C545; cursor: pointer; }
+    
+    /* --- ZOOM CONTROLS --- */
+    .wod-zoom-controls { position: absolute; bottom: 15px; right: 15px; display: flex; gap: 10px; z-index: 100; }
+    .btn-zoom-float { width: 45px; height: 45px; border-radius: 50%; border: none; color: black; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: transform 0.2s; }
+    .btn-zoom-float:active { transform: scale(0.9); }
+    .btn-zoom-float.locked { background-color: #dc3545; color: white; } 
+    .btn-zoom-float.unlocked { background-color: #28a745; color: white; } 
+    .btn-zoom-float:first-child { background-color: #333; color: #F8C545; border: 1px solid #F8C545; }
+
+    /* POPUP DE FUENTE */
+    .font-settings-popover { position: absolute; top: 40px; right: 60px; background: #1a1a1a; padding: 10px; border: 1px solid #444; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.8); display: flex; align-items: center; gap: 8px; z-index: 100; color: #888; width: 180px;}
+    .font-settings-popover input[type=range] { width: 100%; accent-color: #F8C545; cursor: pointer; }
+
     .wod-block { margin-bottom: 20px; break-inside: avoid; -webkit-column-break-inside: avoid; }
     .block-title { color: #F8C545; background: transparent; padding: 2px 10px; margin: 0 0 2px 0; font-size: 1.1em; font-weight: bold; font-family: 'Oswald'; border-left: 4px solid #F8C545; border-bottom: 1px solid rgba(255, 255, 255, 0.1); text-transform: uppercase; letter-spacing: 1px; }
     .ejercicio-row-clean { display: grid; grid-template-columns: 60px 1fr; gap: 8px; align-items: baseline; padding: 1px 0; margin-bottom: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.03); min-height: auto; line-height: 1; }
@@ -551,6 +598,9 @@
     private bool mostrarSliderLetra = false;
     private double wodFontSize = 1.0;
 
+    // --- NUEVO: Estado del Candado WOD ---
+    private bool wodBloqueado = true; // Empieza bloqueado (fijo)
+
     private bool modoJuez = false;
     private bool mostrarModalEquipos = false;
     private bool mostrarModalEliminar = false;
@@ -597,7 +647,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // 1. CARGAR SONIDOS EN MEMORIA (Desde Resources/Raw)
         try
         {
             playerBeep = AudioManager.CreatePlayer(await FileSystem.OpenAppPackageFileAsync("beep.mp3"));
@@ -609,7 +658,6 @@
             Console.WriteLine($"Error cargando sonidos: {ex.Message}");
         }
 
-        // 2. CONFIGURAR SESIÓN DE AUDIO NATIVA PARA MEZCLA
         ConfigurarAudioNativo();
 
         _timer = new System.Timers.Timer(1000);
@@ -640,20 +688,10 @@
         try
         {
             var session = AVFoundation.AVAudioSession.SharedInstance();
-            // MixWithOthers (sin DuckOthers) para que Spotify suene al 100% y nuestro audio se mezcle
             session.SetCategory(AVFoundation.AVAudioSessionCategory.Playback, AVFoundation.AVAudioSessionCategoryOptions.MixWithOthers);
             session.SetActive(true);
         }
-        catch (Exception ex) { Console.WriteLine($"iOS Audio: {ex.Message}"); }
-#endif
-
-#if ANDROID
-        try
-        {
-            var audioManager = (Android.Media.AudioManager)Android.App.Application.Context.GetSystemService(Android.Content.Context.AudioService);
-            audioManager.RequestAudioFocus(null, Android.Media.Stream.Music, Android.Media.AudioFocus.GainTransientMayDuck);
-        }
-        catch (Exception ex) { Console.WriteLine($"Android Audio: {ex.Message}"); }
+        catch { }
 #endif
     }
 
@@ -735,7 +773,7 @@
                 if (info != null) { logoGuidReal = info.Logo; StateHasChanged(); }
             }
         }
-        catch (Exception ex) { Console.WriteLine("Error logo: " + ex.Message); }
+        catch { }
     }
 
     public class BoxInfoSimple { public string Nombre { get; set; } public Guid? Logo { get; set; } }
@@ -831,12 +869,11 @@
             else if (tipo == "go" && playerGo != null) { playerGo.Stop(); playerGo.Play(); }
             else if (tipo == "medio" && playerMedio != null) { playerMedio.Stop(); playerMedio.Play(); }
         }
-        catch (Exception ex) { Console.WriteLine("Error Play: " + ex.Message); }
+        catch { }
     }
     
     private void IniciarSecuencia()
     {
-        // Forzamos mezcla de nuevo al iniciar para asegurar que Spotify no se corte
         ConfigurarAudioNativo();
         enConteoPrevio = true; tiempoPrevio = 7; _timer.Start(); timerCorriendo = true;
     }
@@ -849,7 +886,21 @@
         tiempoRestanteActual = tiempoTrabajoConfig; tiempoTotalSegmentoActual = tiempoTrabajoConfig; tiempoTranscurrido = 0;
     }
     
-    private void GuardarConfiguracion() { tiempoTrabajoConfig = (inputMinutos * 60) + inputSegundos; tiempoDescansoConfig = (inputMinDescanso * 60) + inputSegDescanso; totalRondas = (tipoTimer == 1) ? 1 : inputRondas; ResetTimer(); modoConfiguracion = false; }
+    private void GuardarConfiguracion() 
+    { 
+        tiempoTrabajoConfig = (inputMinutos * 60) + inputSegundos; 
+        
+        // Si es EMOM (3), el descanso es 0
+        if(tipoTimer == 3) {
+            tiempoDescansoConfig = 0;
+        } else {
+            tiempoDescansoConfig = (inputMinDescanso * 60) + inputSegDescanso; 
+        }
+        
+        totalRondas = (tipoTimer == 1) ? 1 : inputRondas; 
+        ResetTimer(); 
+        modoConfiguracion = false; 
+    }
 
     private void Tick()
     {
@@ -868,23 +919,107 @@
         else if (tiempoRestanteActual > 0)
         {
             tiempoRestanteActual--; tiempoTranscurrido++;
-            if (!enDescanso && tiempoRestanteActual == (tiempoTotalSegmentoActual / 2)) Sonar("medio");
-            if (tiempoRestanteActual <= 5) Sonar("beep");
+            
+            // Sonido de medio tiempo solo si NO es EMOM (opcional, pero en EMOM suele confundir)
+            if (!enDescanso && tipoTimer != 3 && tiempoRestanteActual == (tiempoTotalSegmentoActual / 2)) Sonar("medio");
+            
+            if (tiempoRestanteActual <= 3) Sonar("beep"); // Beep 3,2,1
         }
         else GestionarCambioDeRonda();
         InvokeAsync(StateHasChanged);
     }
 
-    private void GestionarCambioDeRonda() { if (!enDescanso) { if (tipoTimer == 2 && tiempoDescansoConfig > 0 && rondaActual < totalRondas) { enDescanso = true; tiempoRestanteActual = tiempoDescansoConfig; tiempoTotalSegmentoActual = tiempoDescansoConfig; Sonar("go"); } else SiguienteRondaOFin(); } else { enDescanso = false; SiguienteRondaOFin(); } }
-    private void SiguienteRondaOFin() { if (rondaActual < totalRondas) { rondaActual++; tiempoRestanteActual = tiempoTrabajoConfig; tiempoTotalSegmentoActual = tiempoTrabajoConfig; enDescanso = false; Sonar("go"); } else TerminarTodo(); }
+    private void GestionarCambioDeRonda() 
+    { 
+        // LÓGICA EMOM: No hay descanso, reinicia trabajo inmediatamente
+        if (tipoTimer == 3) 
+        {
+            if (rondaActual < totalRondas) 
+            {
+                rondaActual++;
+                tiempoRestanteActual = tiempoTrabajoConfig;
+                tiempoTotalSegmentoActual = tiempoTrabajoConfig;
+                enDescanso = false;
+                Sonar("go");
+            } 
+            else 
+            {
+                TerminarTodo();
+            }
+            return;
+        }
+
+        // LÓGICA INTERVALOS NORMAL
+        if (!enDescanso) 
+        { 
+            if (tipoTimer == 2 && tiempoDescansoConfig > 0 && rondaActual < totalRondas) 
+            { 
+                enDescanso = true; 
+                tiempoRestanteActual = tiempoDescansoConfig; 
+                tiempoTotalSegmentoActual = tiempoDescansoConfig; 
+                Sonar("go"); // O un sonido diferente para descanso
+            } 
+            else SiguienteRondaOFin(); 
+        } 
+        else 
+        { 
+            enDescanso = false; 
+            SiguienteRondaOFin(); 
+        } 
+    }
+
+    private void SiguienteRondaOFin() 
+    { 
+        if (rondaActual < totalRondas) 
+        { 
+            rondaActual++; 
+            tiempoRestanteActual = tiempoTrabajoConfig; 
+            tiempoTotalSegmentoActual = tiempoTrabajoConfig; 
+            enDescanso = false; 
+            Sonar("go"); 
+        } 
+        else TerminarTodo(); 
+    }
+
     private void TerminarTodo() { _timer.Stop(); timerCorriendo = false; Sonar("go"); }
     private string FormatoTiempo(int t) => $"{t / 60:00}:{t % 60:00}";
-    private void CambiarTipoTimer(int t) { tipoTimer = t; if (t == 2) { inputMinutos = 0; inputSegundos = 20; inputRondas = 8; inputMinDescanso = 0; inputSegDescanso = 10; } else { inputMinutos = 10; inputSegundos = 0; inputRondas = 1; } }
     
+    private void CambiarTipoTimer(int t) 
+    { 
+        tipoTimer = t; 
+        if (t == 2) // Intervalos
+        { 
+            inputMinutos = 0; inputSegundos = 20; inputRondas = 8; inputMinDescanso = 0; inputSegDescanso = 10; 
+        } 
+        else if (t == 3) // EMOM
+        {
+            inputMinutos = 1; inputSegundos = 0; inputRondas = 10; inputMinDescanso = 0; inputSegDescanso = 0;
+        }
+        else // Cuenta Atrás
+        { 
+            inputMinutos = 10; inputSegundos = 0; inputRondas = 1; 
+        } 
+    }
+    
+    // --- MÉTODOS PARA ZOOM Y PAN DEL WOD ---
+    private async Task ToggleCandadoWod()
+    {
+        wodBloqueado = !wodBloqueado;
+        if(wodBloqueado)
+        {
+            // Al bloquear, reseteamos para que quede bien acomodado
+            await JS.InvokeVoidAsync("resetWodZoom");
+        }
+    }
+
+    private async Task ResetearZoomWod()
+    {
+        await JS.InvokeVoidAsync("resetWodZoom");
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_timer != null) { _timer.Stop(); _timer.Dispose(); }
-        // Liberamos reproductores
         playerBeep?.Dispose();
         playerGo?.Dispose();
         playerMedio?.Dispose();
@@ -899,3 +1034,111 @@
 #endif
     }
 }
+
+@* --- SCRIPT PARA EL ZOOM Y PAN (MANIPULACIÓN TÁCTIL) --- *@
+<script>
+    // Variables globales para el estado del zoom
+    let wodScale = 1;
+    let wodPanning = false;
+    let wodPointX = 0;
+    let wodPointY = 0;
+    let wodStartClientX = 0;
+    let wodStartClientY = 0;
+    let wodStartScale = 1;
+
+    // Distancia inicial para el pinch
+    let initialPinchDistance = null;
+
+    // Referencia al elemento
+    function getWodElement() {
+        return document.getElementById('wod-zoom-target');
+    }
+
+    function setTransform() {
+        const el = getWodElement();
+        if(el) {
+            el.style.transform = `translate(${wodPointX}px, ${wodPointY}px) scale(${wodScale})`;
+        }
+    }
+
+    // Función invocada desde C# para resetear
+    window.resetWodZoom = function() {
+        wodScale = 1;
+        wodPointX = 0;
+        wodPointY = 0;
+        setTransform();
+    }
+
+    // Eventos táctiles
+    document.addEventListener('touchstart', function(e) {
+        // Solo actuar si tocamos dentro del panel del wod y el candado está ABIERTO
+        // Buscamos si el target está dentro de .wod-panel y chequeamos si el botón de bloqueo tiene clase 'unlocked'
+        const wodPanel = e.target.closest('.wod-panel');
+        if (!wodPanel) return;
+
+        const lockBtn = wodPanel.querySelector('.btn-zoom-float.unlocked');
+        if (!lockBtn) return; // Si no encuentra el botón desbloqueado, no hacemos nada (está bloqueado)
+
+        // Evitar scroll del navegador si estamos manipulando el WOD
+        if(e.touches.length > 1 || wodScale > 1) {
+             // e.preventDefault(); // Opcional, cuidado con bloquear scroll legítimo
+        }
+
+        if (e.touches.length === 1) {
+            // Inicio de Pan (arrastre)
+            wodPanning = true;
+            wodStartClientX = e.touches[0].clientX;
+            wodStartClientY = e.touches[0].clientY;
+        } else if (e.touches.length === 2) {
+            // Inicio de Pinch (Zoom)
+            initialPinchDistance = getDistance(e.touches);
+            wodStartScale = wodScale;
+        }
+    }, { passive: false });
+
+    document.addEventListener('touchmove', function(e) {
+        const wodPanel = e.target.closest('.wod-panel');
+        if (!wodPanel) return;
+        const lockBtn = wodPanel.querySelector('.btn-zoom-float.unlocked');
+        if (!lockBtn) return;
+
+        if (wodPanning && e.touches.length === 1) {
+            e.preventDefault(); // Evitar scroll de la lista mientras arrastramos
+            const newX = e.touches[0].clientX;
+            const newY = e.touches[0].clientY;
+            
+            wodPointX += (newX - wodStartClientX);
+            wodPointY += (newY - wodStartClientY);
+            
+            wodStartClientX = newX;
+            wodStartClientY = newY;
+            
+            setTransform();
+        } else if (e.touches.length === 2 && initialPinchDistance) {
+            e.preventDefault();
+            const currentDistance = getDistance(e.touches);
+            const pinchScale = currentDistance / initialPinchDistance;
+            
+            // Limitamos el zoom mínimo a 0.5 y máximo a 3
+            const newScale = wodStartScale * pinchScale;
+            if(newScale > 0.5 && newScale < 3) {
+                wodScale = newScale;
+                setTransform();
+            }
+        }
+    }, { passive: false });
+
+    document.addEventListener('touchend', function(e) {
+        wodPanning = false;
+        if (e.touches.length < 2) {
+            initialPinchDistance = null;
+        }
+    });
+
+    function getDistance(touches) {
+        return Math.hypot(
+            touches[0].pageX - touches[1].pageX,
+            touches[0].pageY - touches[1].pageY
+        );
+    }
+</script>
