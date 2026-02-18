@@ -15,7 +15,7 @@
 		<ApplicationTitle>AFTRACK</ApplicationTitle>
 		<ApplicationId>com.alfafit.aftrack</ApplicationId>
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-		<ApplicationVersion>5</ApplicationVersion>
+		<ApplicationVersion>7</ApplicationVersion>
 
 		<WindowsPackageType>None</WindowsPackageType>
 
@@ -54,13 +54,10 @@
 	<ItemGroup>
 		<MauiIcon Include="Resources\AppIcon\appicon.svg" Color="#0D0D0D" />
 		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#0d0d0d" BaseSize="128,128" />
-
 		<MauiImage Include="Resources\Images\*" />
 		<MauiImage Update="Resources\Images\mi_logo_fitness.svg" BaseSize="100,100" />
-
 		<MauiFont Include="Resources\Fonts\*" />
 
-		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -72,7 +69,6 @@
 		<PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.0" />
 		<PackageReference Include="ZXing.Net.Maui" Version="0.6.0" />
 		<PackageReference Include="ZXing.Net.Maui.Controls" Version="0.6.0" />
-		<PackageReference Include="Plugin.MauiMTAdmob" Version="1.1.0" />
 	</ItemGroup>
 
 	<ItemGroup>

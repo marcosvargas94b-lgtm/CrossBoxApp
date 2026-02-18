@@ -355,7 +355,7 @@
                     </div>
                 </div>
 
-                @* --- THE PACK --- *@
+                @* --- THE PACK (RESTO DE ATLETAS) --- *@
                 @if(restoList.Count > 0)
                 {
                     <div class="the-rest-area slide-in-right-delay">
@@ -368,12 +368,12 @@
                                     <div class="rest-info">
                                          @if(item.EsEquipo && item.NombresMiembros.Any())
                                          {
-                                             <div class="rest-stack-names">
-                                                 @foreach(var name in item.NombresMiembros) 
-                                                 {
-                                                     <span class="rest-name">@name</span>
-                                                 }
-                                             </div>
+                                              <div class="rest-stack-names">
+                                                   @foreach(var name in item.NombresMiembros) 
+                                                   {
+                                                       <span class="rest-name">@name</span>
+                                                   }
+                                              </div>
                                          }
                                          else
                                          {
@@ -473,8 +473,25 @@
     .victory-bg-effect { position: absolute; width: 100%; height: 100%; opacity: 0.1; background-image: repeating-linear-gradient(45deg, #333 0, #333 1px, transparent 0, transparent 50%); z-index: -1; }
     .btn-close-overlay { position: absolute; top: 25px; right: 25px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); color: white; font-size: 1.5rem; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; z-index: 5001; display: flex; justify-content: center; align-items: center; transition: 0.3s; }
     .btn-close-overlay:hover { background: #F8C545; color: black; transform: rotate(90deg); border-color: #F8C545; }
-    .victory-container { width: 95%; max-width: 1200px; display: flex; flex-direction: column; align-items: center; z-index: 1; height: 100vh; justify-content: flex-start; padding-top: 20vh; }
-    .victory-layout-main { display: flex; flex-direction: row; gap: 40px; width: 100%; height: 60%; align-items: flex-end; justify-content: center; }
+    
+    .victory-container { 
+        width: 100%; max-width: 1200px; 
+        display: flex; flex-direction: column; align-items: center; 
+        z-index: 1; height: 100vh; 
+        /* Cambiado: Usamos flex-end para asegurar que llegue abajo en móviles */
+        justify-content: flex-end; 
+        padding-bottom: 50px; /* Safe area del fondo */
+        padding-top: 60px;
+    }
+
+    .victory-layout-main { 
+        display: flex; flex-direction: row; gap: 40px; 
+        width: 100%; 
+        height: 100%; /* Ocupar todo el espacio disponible */
+        align-items: flex-end; /* Alinear al fondo en escritorio */
+        justify-content: center; 
+    }
+
     .podium-area { display: flex; justify-content: center; align-items: flex-end; height: 100%; }
     .podium-stage { display: flex; align-items: flex-end; gap: 15px; }
     .podium-group { display: flex; flex-direction: column; align-items: center; position: relative; width: 100px; }
@@ -498,7 +515,17 @@
     .team-stack-podium { display: flex; flex-direction: column; align-items: center; }
     .crown-floating { position: absolute; top: -50px; font-size: 2.5rem; color: #FFD700; animation: float 3s infinite ease-in-out; filter: drop-shadow(0 0 10px gold); z-index: 50; }
     
-    .the-rest-area { min-width: 260px; max-width: 320px; height: 300px; background: rgba(30,30,30,0.7); border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; overflow: hidden; margin-bottom: 20px; backdrop-filter: blur(10px); }
+    .the-rest-area { 
+        min-width: 260px; max-width: 320px; 
+        height: 300px; 
+        background: rgba(30,30,30,0.7); 
+        border-radius: 15px; 
+        border: 1px solid rgba(255,255,255,0.1); 
+        display: flex; flex-direction: column; 
+        overflow: hidden; 
+        margin-bottom: 20px; /* Separación estándar en escritorio */
+        backdrop-filter: blur(10px); 
+    }
     .rest-header { background: rgba(248, 197, 69, 0.1); padding: 10px; text-align: center; color: #F8C545; font-family: 'Oswald'; font-weight: bold; letter-spacing: 1px; border-bottom: 1px solid rgba(255,255,255,0.1); }
     .rest-list { flex: 1; overflow-y: auto; padding: 5px; }
     .rest-row { display: flex; align-items: center; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); }
@@ -522,9 +549,28 @@
     @@keyframes float { 0% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-15px) rotate(2deg); } 100% { transform: translateY(0) rotate(0deg); } }
     
     @@media (max-width: 850px) {
-        .victory-layout-main { flex-direction: column; align-items: center; justify-content: flex-start; height: 80vh; overflow-y: auto; }
-        .podium-area { width: 100%; flex: none; height: auto; margin-bottom: 30px; margin-top: 20px; }
-        .the-rest-area { width: 90%; height: 200px; flex: none; }
+        .victory-layout-main { 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-start; /* Empezar desde arriba */
+            height: 100%; 
+            overflow-y: auto; 
+            padding-bottom: 80px; /* Espacio extra abajo */
+        }
+        
+        .podium-area { 
+            width: 100%; flex: none; height: auto; 
+            margin-top: 40px; /* Bajar un poco el podio */
+            margin-bottom: 20px; 
+        }
+        
+        .the-rest-area { 
+            width: 90%; 
+            height: 250px; 
+            flex: none; 
+            margin-top: auto; /* ESTO ES LA CLAVE: Empuja la lista al fondo del contenedor */
+            margin-bottom: 0;
+        }
     }
 </style>
 

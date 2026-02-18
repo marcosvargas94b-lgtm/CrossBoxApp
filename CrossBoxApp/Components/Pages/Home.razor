@@ -860,6 +860,63 @@
     .aviso-date { color: #888; font-size: 0.8rem; margin-bottom: 15px; }
     .aviso-body { padding: 0 25px 20px 25px; color: #ddd; }
     .btn-ok { width: 80%; margin: 0 auto 25px auto; background: linear-gradient(45deg, #F8C545, #ffb300); border: none; padding: 12px; font-weight: bold; border-radius: 30px; color: black; }
+    .module-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #222;
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #333;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .module-row:active {
+        background-color: #2a2a2a;
+    }
+
+    .mod-name {
+        color: white;
+        font-family: 'Roboto', sans-serif;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+
+    /* La pista (el fondo del botón) */
+    .switch-track {
+        width: 50px;
+        height: 26px;
+        background-color: #444; /* Gris cuando está apagado */
+        border-radius: 20px;
+        position: relative;
+        transition: background-color 0.3s ease;
+        border: 1px solid #555;
+    }
+
+    /* La pista cuando está ENCENDIDO */
+    .switch-track.on {
+        background-color: #F8C545; /* Amarillo marca */
+        border-color: #F8C545;
+    }
+
+    /* El círculo que se mueve */
+    .switch-thumb {
+        width: 22px;
+        height: 22px;
+        background-color: white;
+        border-radius: 50%;
+        position: absolute;
+        top: 1px;
+        left: 2px;
+        transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    /* Mover el círculo cuando está ENCENDIDO */
+    .switch-track.on .switch-thumb {
+        transform: translateX(24px); /* Se desliza a la derecha */
+    }
 </style>
 
 @code {
