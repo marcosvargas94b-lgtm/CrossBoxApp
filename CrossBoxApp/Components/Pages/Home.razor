@@ -479,8 +479,8 @@
 @* --- MODAL WOD PRINCIPAL --- *@
 @if (mostrarModalWod)
 {
-    <div class="modal-overlay">
-        <div class="modal-content custom-modal">
+    <div class="modal-overlay overlay-wod">
+        <div class="modal-content custom-modal modal-wod">
 
             <div class="modal-header">
                 <h5 style="margin:0; color:#F8C545; font-family:'Oswald'">PROGRAMACIÓN WOD</h5>
@@ -772,9 +772,38 @@
         z-index: 2000;
         animation: slideDown 0.2s ease-out;
     }
-    
-    .ejercicio-row { display: flex; align-items: center; gap: 8px; background: #1f1f1f; padding: 8px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #333; }
-    .input-group-reps { flex: 0 0 70px; }
+
+    .ejercicio-row {
+        display: flex;
+        align-items: center;
+        background: #1f1f1f;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        border: 1px solid #333;
+        padding: 8px 4px; /* Reducimos el espacio lateral interno de la fila */
+        gap: 6px; /* Juntamos un poquito más los inputs para que no se vean apretados */
+    }
+
+    .input-group-reps {
+        flex: 0 0 55px; /* Bajamos de 70px a 55px para regalarle ese espacio vital al nombre del ejercicio */
+    }
+
+    .overlay-wod {
+        padding: 10px; /* Reduce la franja negra que rodeaba el modal de 20px a solo 10px */
+    }
+
+    .modal-wod {
+        max-width: 600px; /* Permite que crezca un poco más si se abre en un teléfono Max/Plus o iPad */
+        width: 100%;
+    }
+
+        .modal-wod .modal-body {
+            padding: 15px 8px; /* Reducimos agresivamente el espacio muerto en las orillas izquierda y derecha */
+        }
+
+        .modal-wod .card {
+            padding: 10px 6px !important; /* Ajuste fino a la tarjeta gris del bloque para ganar más milímetros */
+        }
     .input-group-name { flex: 1; }
     .input-dark { background: #121212 !important; border: 1px solid #444; color: white !important; font-size: 0.9rem; height: 38px; }
     .input-dark:focus { border-color: #F8C545; box-shadow: 0 0 5px rgba(248, 197, 69, 0.3); }

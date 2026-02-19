@@ -254,9 +254,6 @@
 
                 @* --- BOTONES FLOTANTES DE CONTROL DE ZOOM (ABAJO DERECHA) --- *@
                 <div class="wod-zoom-controls">
-                    <button class="btn-zoom-float" @onclick="ResetearZoomWod" title="Restablecer vista">
-                        <i class="fas fa-compress-arrows-alt"></i>
-                    </button>
                     <button class="btn-zoom-float @(wodBloqueado ? "locked" : "unlocked")" @onclick="ToggleCandadoWod">
                         <i class="fas @(wodBloqueado ? "fa-lock" : "fa-lock-open")"></i>
                     </button>
@@ -371,12 +368,19 @@
         <div class="modal-content custom-modal">
             <div class="modal-header">
                 <h5 style="margin:0; color:#F8C545; font-weight:bold;">SELECCIONAR ATLETA</h5>
-                <button class="btn-icon-header" @onclick="() => mostrarModalAtletas = false"><i class="fas fa-times"></i></button>
+                <div style="display:flex; gap:15px; align-items:center;">
+                    <button class="btn-icon-header" @onclick="() => mostrarBuscador = !mostrarBuscador"><i class="fas fa-search"></i></button>
+                    <button class="btn-icon-header" @onclick="() => mostrarModalAtletas = false"><i class="fas fa-times"></i></button>
+                </div>
             </div>
             <div class="modal-body">
-                <div class="search-box mb-3">
-                    <input type="text" class="form-control input-dark search-input" placeholder="Buscar por nombre..." value="@filtroAtleta" @oninput="FiltrarAtletas" autofocus />
-                </div>
+                @if (mostrarBuscador)
+                {
+                    <div class="search-box mb-3 slide-in">
+                        <input type="text" class="form-control input-dark search-input" placeholder="Buscar por nombre..." value="@filtroAtleta" @oninput="FiltrarAtletas" autofocus />
+                    </div>
+                }
+
                 <div class="lista-atletas-scroll scroll-custom">
                     @if (listaTodosAtletas == null)
                     {
@@ -525,7 +529,14 @@
     .scroll-custom::-webkit-scrollbar { width: 6px; } .scroll-custom::-webkit-scrollbar-track { background: #111; } .scroll-custom::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     .dashboard-container.wod-wide .list-panel { flex: 0 0 0 !important; width: 0 !important; padding: 0 !important; border: none !important; margin: 0 !important; }
     .dashboard-container.wod-wide .wod-panel { flex: 2; }
-    .dashboard-container.wod-wide .exercises-wrapper { display: block; column-width: 180px; column-gap: 20px; column-rule: 1px solid rgba(255, 255, 255, 0.1); width: 100%; padding-top: 5px; }
+
+    .dashboard-container.wod-wide .exercises-wrapper {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 5px 20px;
+        width: 100%;
+        padding-top: 5px;
+    }
     .vertical-bar { height: 100%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; animation: fadeIn 0.5s; }
     .v-text { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); font-family: 'Oswald'; font-size: 1.2rem; letter-spacing: 3px; white-space: nowrap; margin-bottom: 10px; }
     .v-icon { font-size: 1.5rem; }
@@ -555,14 +566,43 @@
     .name { font-size: 0.75rem; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .empty-state { text-align: center; color: #444; margin-top: 50px; } .empty-state i { font-size: 3rem; margin-bottom: 10px; }
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-    .custom-modal { background: #111; width: 90%; max-width: 500px; border-radius: 10px; border: 1px solid #333; display: flex; flex-direction: column; overflow: hidden; height: 80vh; }
+
+    .custom-modal {
+        background: #111;
+        width: 90%;
+        max-width: 500px;
+        border-radius: 10px;
+        border: 1px solid #333;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        height: 90vh; /* Aumentado a 95vh para aprovechar toda la pantalla horizontal */
+    }
     .modal-header { height: auto; padding: 15px; border-bottom: 1px solid #333; }
-    .modal-body { padding: 15px; overflow-y: auto; flex: 1; }
+
+    .modal-body {
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        flex: 1; /* Le pusimos flex para que empuje la lista */
+    }
     .search-input { padding-left: 10px; background: #222; color: white; border: 1px solid #444; height: 40px; border-radius: 20px; width: 100%; text-indent: 10px; }
     .atleta-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #222; cursor: pointer; }
     .avatar-mini { width: 35px; height: 35px; background: #444; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px; background-size: cover; }
     .atleta-nombre { color: #F8C545; font-weight: bold; font-family: 'Oswald'; font-size: 1rem; line-height: 1; }
-    .lista-atletas-scroll { max-height: 50vh; overflow-y: auto; margin-top: 10px; }
+
+    .lista-atletas-scroll {
+        flex: 1;
+        overflow-y: auto;
+        margin-top: 10px;
+        max-height: none;
+        padding-bottom: 40px;
+    }
+
+    .search-box {
+        flex-shrink: 0;
+    }
     .atleta-info { display: flex; align-items: center; flex: 1; gap: 10px; }
     .switch-juez { position: relative; display: inline-block; width: 40px; height: 20px; margin-right: 10px; } .switch-juez input { opacity: 0; width: 0; height: 0; }
     .slider-juez { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; } .slider-juez:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; }
@@ -590,6 +630,7 @@
     private IAudioPlayer playerGo;
     private IAudioPlayer playerMedio;
 
+    private bool mostrarBuscador = false;
     private bool wodExpandido = false;
     private bool verTimer = true;
     private bool verWod = true;

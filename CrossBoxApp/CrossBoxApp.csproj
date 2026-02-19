@@ -49,7 +49,7 @@
 
 	<PropertyGroup Condition="'$(TargetFramework)'=='net9.0-ios'">
 		<CodesignKey>Apple Development: Created via API (9G8X59256X)</CodesignKey>
-		<CodesignProvision>VS: com.alfafit.aftrack Development</CodesignProvision>
+		<CodesignProvision>VS: aftrack.aftrack Development</CodesignProvision>
 	</PropertyGroup>
 
 	<ItemGroup>

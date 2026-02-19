@@ -65,8 +65,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var m in listaMovimientos)
-                                    {
+                                    <Virtualize Items="@listaMovimientos" Context="m">
                                         <tr>
                                             <td class="td-date">
                                                 <div class="date-box">
@@ -89,7 +88,7 @@
                                             </td>
                                             <td class="td-amount">+@m.Monto.ToString("N0")</td>
                                         </tr>
-                                    }
+                                    </Virtualize>
                                 </tbody>
                             </table>
                         }
@@ -136,7 +135,7 @@
     .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom: 10px; padding-left: 15px; padding-right: 15px; background-color: #1a1a1a; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
     .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
     .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
-    .scrollable-content { flex-grow: 1; overflow-y: auto; background-color: #0d0d0d; padding: 15px; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
+    .scrollable-content { flex-grow: 1; overflow-y: auto; background-color: #0d0d0d; padding: 15px; -webkit-overflow-scrolling: touch; padding-bottom: 40px; padding-bottom: calc(env(safe-area-inset-bottom) + 20px);}
 
     /* TABS */
     .finance-wrapper { max-width: 600px; margin: 0 auto; }
@@ -188,6 +187,12 @@
     .fade-in { animation: fadeIn 0.5s ease; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .spinner-container { display: flex; justify-content: center; padding: 50px; }
+
+    .transactions-list {
+        min-height: 200px;
+        width: 100%;
+        overflow-x: auto;
+    }
 </style>
 
 @code {
