@@ -222,10 +222,19 @@
 
     /* --- NUEVO DISEÑO DEL MODAL (BOTTOM SHEET) --- */
     /* 1. Overlay alinea el contenido al fondo */
-    .modal-overlay { 
-        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
-        background: rgba(0,0,0,0.85); z-index: 5000; 
-        display: flex; justify-content: center; align-items: flex-end; /* Pegado abajo */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0,0,0,0.85);
+        z-index: 5000;
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        /* ESTA ES LA MAGIA: Respeta la barra del celular y suma 15px */
+        padding-bottom: calc(env(safe-area-inset-bottom) + 15px);
     }
 
     /* 2. Modal ocupa el ancho completo y tiene altura fija para el scroll */
