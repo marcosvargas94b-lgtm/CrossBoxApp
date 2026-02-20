@@ -1,0 +1,267 @@
+﻿@page "/medallero"
+@using System.Net.Http.Json
+@using CrossBoxApp.Models.Services
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject SesionService Sesion
+
+<div class="main-layout">
+    @* NAVBAR *@
+    <div class="navbar-container">
+        <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
+            <i class="fas fa-arrow-left"></i> VOLVER
+        </div>
+        <div class="nav-title">
+            <i class="fas fa-medal" style="color:#FFD700; margin-right:5px;"></i> TROPHY ROOM
+        </div>
+        <div class="nav-right"></div>
+    </div>
+
+    <div class="scrollable-content">
+        
+        @* FRASE INSPIRADORA CON EFECTO DE DESTELLOS *@
+        <div class="quote-section fade-in">
+            <div class="sparkle-container">
+                <div class="sparkle s1"></div><div class="sparkle s2"></div><div class="sparkle s3"></div>
+            </div>
+            <i class="fas fa-quote-left quote-icon"></i>
+            <p>La grandeza no se regala, se forja repetición tras repetición.<br/><strong>¡Sube de nivel y conquista el medallero!</strong></p>
+        </div>
+
+        @if (cargando)
+        {
+            <div class="spinner-container"><div class="spinner-border text-warning"></div></div>
+        }
+        else
+        {
+            @* SWITCH TABS *@
+            <div class="tabs-header fade-in">
+                <div class="tab-item @(verAnual ? "active" : "")" @onclick="() => verAnual = true">
+                    <i class="fas fa-calendar-alt"></i> AÑO @anioActual
+                </div>
+                <div class="tab-item @(!verAnual ? "active" : "")" @onclick="() => verAnual = false">
+                    <i class="fas fa-calendar-day"></i> MES DE @mesActual
+                </div>
+            </div>
+
+            @* LISTA DE RANKING *@
+            <div class="ranking-list">
+                @if (RankingActual.Count == 0)
+                {
+                    <div class="empty-state slide-in">
+                        <i class="fas fa-ghost"></i>
+                        <p>Aún no hay medallas repartidas en este periodo.</p>
+                        <small>¡Sé el primero en ganar una!</small>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var atleta in RankingActual)
+                    {
+                        <div class="ranking-card slide-in @GetRankClass(atleta.Posicion)">
+                            
+                            @* NÚMERO DE POSICIÓN *@
+                            <div class="rank-badge">
+                                <span>#@atleta.Posicion</span>
+                            </div>
+
+                            @* FOTO *@
+                            <div class="avatar-box">
+                                @if (!string.IsNullOrEmpty(atleta.FotoUrl))
+                                {
+                                    <img src="@atleta.FotoUrl" class="avatar-img" @onerror="@(e => atleta.FotoUrl = null)" />
+                                }
+                                else
+                                {
+                                    <div class="avatar-letter">
+                                        @(atleta.NombreCompleto?.Substring(0, 1).ToUpper() ?? "A")
+                                    </div>
+                                }
+                            </div>
+
+                            @* INFO Y MEDALLAS *@
+                            <div class="info-box">
+                                <div class="atleta-name">@atleta.NombreCompleto</div>
+                                <div class="badges-row">
+                                    @if (atleta.Rx > 0) { <span class="badge-cat rx">RX @atleta.Rx</span> }
+                                    @if (atleta.Avanzado > 0) { <span class="badge-cat av">AV @atleta.Avanzado</span> }
+                                    @if (atleta.Intermedio > 0) { <span class="badge-cat in">IN @atleta.Intermedio</span> }
+                                    @if (atleta.Principiante > 0) { <span class="badge-cat pr">PR @atleta.Principiante</span> }
+                                </div>
+                            </div>
+
+                            @* PUNTOS TOTALES *@
+                            <div class="points-box">
+                                <span class="pts-number">@atleta.PuntosRanking</span>
+                                <span class="pts-label">PTS</span>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    /* LAYOUT GENERAL */
+    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom: 10px; padding-left: 15px; padding-right: 15px; background-color: #1a1a1a; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
+    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.2rem; color: white; letter-spacing: 1px; display: flex; align-items: center; }
+    
+    .scrollable-content { flex-grow: 1; overflow-y: auto; background-color: #0d0d0d; padding: 15px; -webkit-overflow-scrolling: touch; padding-bottom: 50px; }
+
+    /* FRASE Y DESTELLOS */
+    .quote-section { background: linear-gradient(135deg, #1a1a1a 0%, #000 100%); border: 1px solid #333; border-left: 4px solid #FFD700; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center; position: relative; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+    .quote-icon { color: #FFD700; font-size: 1.5rem; opacity: 0.5; margin-bottom: 10px; }
+    .quote-section p { color: #ddd; font-style: italic; font-size: 0.9rem; margin: 0; line-height: 1.4; }
+    .quote-section strong { color: #FFD700; font-family: 'Oswald'; font-style: normal; letter-spacing: 1px; font-size: 1rem; }
+    
+    .sparkle-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+    .sparkle { position: absolute; width: 4px; height: 4px; background: #FFF; border-radius: 50%; box-shadow: 0 0 10px 2px #FFD700; animation: twinkle 2s infinite ease-in-out alternate; }
+    .s1 { top: 20%; left: 10%; animation-delay: 0s; } .s2 { top: 70%; left: 85%; animation-delay: 0.5s; } .s3 { top: 40%; left: 50%; animation-delay: 1s; }
+
+    /* TABS */
+    .tabs-header { display: flex; background: #1a1a1a; border-radius: 10px; padding: 5px; margin-bottom: 20px; border: 1px solid #333; }
+    .tab-item { flex: 1; text-align: center; padding: 10px; font-family: 'Oswald'; color: #666; cursor: pointer; border-radius: 8px; transition: 0.3s; font-size: 0.9rem; letter-spacing: 1px; }
+    .tab-item.active { background: #F8C545; color: black; font-weight: bold; box-shadow: 0 2px 10px rgba(248,197,69,0.2); }
+
+    /* LISTA Y TARJETAS */
+    .ranking-list { display: flex; flex-direction: column; gap: 12px; }
+    .ranking-card { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 12px; transition: 0.3s; position: relative; overflow: hidden; }
+    
+    /* TOP 3 ESTILOS */
+    .rank-1 { border-color: #FFD700; background: linear-gradient(90deg, rgba(255,215,0,0.1) 0%, rgba(26,26,26,1) 100%); box-shadow: 0 0 15px rgba(255,215,0,0.2); }
+    .rank-2 { border-color: #E0E0E0; background: linear-gradient(90deg, rgba(224,224,224,0.1) 0%, rgba(26,26,26,1) 100%); }
+    .rank-3 { border-color: #CD7F32; background: linear-gradient(90deg, rgba(205,127,50,0.1) 0%, rgba(26,26,26,1) 100%); }
+    
+    .rank-1 .rank-badge span { color: #FFD700; text-shadow: 0 0 5px rgba(255,215,0,0.5); font-size: 1.5rem; }
+    .rank-2 .rank-badge span { color: #E0E0E0; font-size: 1.3rem; }
+    .rank-3 .rank-badge span { color: #CD7F32; font-size: 1.2rem; }
+
+    .rank-badge { width: 35px; display: flex; justify-content: center; font-family: 'Oswald'; font-weight: 900; font-size: 1.1rem; color: #555; }
+    
+    .avatar-box { flex-shrink: 0; }
+    .avatar-img, .avatar-letter { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #444; }
+    .avatar-letter { background: #333; color: white; display: flex; justify-content: center; align-items: center; font-family: 'Oswald'; font-weight: bold; font-size: 1.2rem; }
+    .rank-1 .avatar-img, .rank-1 .avatar-letter { border-color: #FFD700; }
+
+    /* INFO DEL ATLETA (Evitar que se rompa) */
+    .info-box { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+    .atleta-name { color: white; font-weight: bold; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px; }
+    
+    /* ETIQUETAS DE MEDALLAS */
+    .badges-row { display: flex; flex-wrap: wrap; gap: 5px; }
+    .badge-cat { font-family: 'Oswald'; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; border: 1px solid transparent; }
+    .badge-cat.rx { background: rgba(220, 53, 69, 0.15); color: #ff4d4d; border-color: #ff4d4d; }
+    .badge-cat.av { background: rgba(255, 215, 0, 0.15); color: #FFD700; border-color: #FFD700; }
+    .badge-cat.in { background: rgba(176, 196, 222, 0.15); color: #B0C4DE; border-color: #B0C4DE; }
+    .badge-cat.pr { background: rgba(205, 127, 50, 0.15); color: #CD7F32; border-color: #CD7F32; }
+
+    /* PUNTOS */
+    .points-box { display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; background: #000; padding: 5px 10px; border-radius: 8px; border: 1px solid #333; }
+    .pts-number { color: #F8C545; font-family: 'Oswald'; font-weight: 900; font-size: 1.1rem; line-height: 1; }
+    .pts-label { color: #888; font-size: 0.6rem; font-weight: bold; }
+
+    .empty-state { text-align: center; color: #555; margin-top: 50px; padding: 20px; }
+    .empty-state i { font-size: 3rem; margin-bottom: 10px; color: #444; }
+    .spinner-container { display: flex; justify-content: center; padding: 50px; }
+
+    /* ANIMACIONES */
+    .fade-in { animation: fadeIn 0.5s ease; }
+    .slide-in { animation: slideIn 0.4s ease-out backwards; }
+    /* Un pequeño truco para que las tarjetas entren en cascada */
+    .ranking-card:nth-child(1) { animation-delay: 0.1s; }
+    .ranking-card:nth-child(2) { animation-delay: 0.2s; }
+    .ranking-card:nth-child(3) { animation-delay: 0.3s; }
+    .ranking-card:nth-child(4) { animation-delay: 0.4s; }
+    .ranking-card:nth-child(5) { animation-delay: 0.5s; }
+
+    @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @@keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @@keyframes twinkle { 0% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1.5); } 100% { opacity: 0; transform: scale(0.5); } }
+</style>
+
+@code {
+    private bool cargando = true;
+    private bool verAnual = true; // Por defecto mostramos el año
+    
+    private string mesActual = "";
+    private int anioActual = 0;
+    
+    private List<RankingAtletaDto> rankingMensual = new();
+    private List<RankingAtletaDto> rankingAnual = new();
+
+    // Propiedad dinámica: dependiendo del switch, devuelve una lista u otra
+    private List<RankingAtletaDto> RankingActual => verAnual ? rankingAnual : rankingMensual;
+
+    // Clases DTO que coinciden exactamente con la API
+    public class RankingResponse
+    {
+        public string MesActual { get; set; }
+        public int AnioActual { get; set; }
+        public List<RankingAtletaDto> RankingMensual { get; set; }
+        public List<RankingAtletaDto> RankingAnual { get; set; }
+    }
+
+    public class RankingAtletaDto
+    {
+        public int Posicion { get; set; }
+        public Guid UsuarioId { get; set; }
+        public string NombreCompleto { get; set; }
+        public string FotoUrl { get; set; }
+        public int Rx { get; set; }
+        public int Avanzado { get; set; }
+        public int Intermedio { get; set; }
+        public int Principiante { get; set; }
+        public int TotalMedallas { get; set; }
+        public int PuntosRanking { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Sesion.Usuario == null)
+        {
+            Nav.NavigateTo("/");
+            return;
+        }
+
+        await CargarMedallero();
+    }
+
+    private async Task CargarMedallero()
+    {
+        cargando = true;
+        try
+        {
+            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/ranking/{Sesion.Usuario.BoxID}";
+            var respuesta = await Http.GetFromJsonAsync<RankingResponse>(url);
+
+            if (respuesta != null)
+            {
+                mesActual = respuesta.MesActual;
+                anioActual = respuesta.AnioActual;
+                rankingMensual = respuesta.RankingMensual ?? new();
+                rankingAnual = respuesta.RankingAnual ?? new();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error cargando medallero: " + ex.Message);
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    // Helper para asignar la clase CSS correcta a los top 3
+    private string GetRankClass(int posicion)
+    {
+        if (posicion == 1) return "rank-1";
+        if (posicion == 2) return "rank-2";
+        if (posicion == 3) return "rank-3";
+        return "";
+    }
+}

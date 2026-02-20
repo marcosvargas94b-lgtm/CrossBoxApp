@@ -58,9 +58,28 @@
 		<MauiImage Include="Resources\Images\*" />
 		<MauiImage Update="Resources\Images\mi_logo_fitness.svg" BaseSize="100,100" />
 		<MauiFont Include="Resources\Fonts\*" />
-
+		<MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
 	</ItemGroup>
 
+
+
+	<ItemGroup>
+		<MauiAsset Include="wwwroot\Sonidos\beep.mp3">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</MauiAsset>
+		<MauiAsset Include="wwwroot\Sonidos\go.mp3">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</MauiAsset>
+		<MauiAsset Include="wwwroot\Sonidos\medio.mp3">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</MauiAsset>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Update="wwwroot\Sonidos\**">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.0" />
 		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
@@ -71,7 +90,17 @@
 		<PackageReference Include="ZXing.Net.Maui" Version="0.6.0" />
 		<PackageReference Include="ZXing.Net.Maui.Controls" Version="0.6.0" />
 	</ItemGroup>
-
+	<ItemGroup>
+		<MauiAsset Update="Resources\Raw\beep.mp3">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</MauiAsset>
+		<MauiAsset Update="Resources\Raw\go.mp3">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</MauiAsset>
+		<MauiAsset Update="Resources\Raw\medio.mp3">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</MauiAsset>
+	</ItemGroup>
 	<ItemGroup>
 		<Compile Update="EscanerPage.xaml.cs">
 			<DependentUpon>EscanerPage.xaml</DependentUpon>
@@ -82,6 +111,21 @@
 		<MauiXaml Update="EscanerPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <MauiAsset Include="wwwroot\Sonidos\beep.mp3">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	    <LogicalName>%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+	  </MauiAsset>
+	  <MauiAsset Include="wwwroot\Sonidos\go.mp3">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	    <LogicalName>%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+	  </MauiAsset>
+	  <MauiAsset Include="wwwroot\Sonidos\medio.mp3">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	    <LogicalName>%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+	  </MauiAsset>
 	</ItemGroup>
 
 </Project>

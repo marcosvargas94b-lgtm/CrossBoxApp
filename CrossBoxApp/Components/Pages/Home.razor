@@ -325,6 +325,31 @@
                 </div>
             }
 
+            @if (EstaActivo("MEDALLERO"))
+            {
+                <div class="menu-card medallero-card" @onclick='() => Nav.NavigateTo("/medallero")'>
+                    <div class="sparkle-container">
+                        <div class="sparkle s1"></div>
+                        <div class="sparkle s2"></div>
+                        <div class="sparkle s3"></div>
+                    </div>
+                    <i class="fas fa-medal card-icon trophy-icon"></i>
+                    <h3 class="trophy-title">MEDALLERO</h3>
+                    <p style="color:white">Observa tu esfuerzo</p>
+                </div>
+
+             
+            }
+             @if (EstaActivo("PLAYERCARD"))
+            {
+                   @* TARJETA FICHA DE ATLETA *@
+                <div class="menu-card ficha-card" @onclick='() => Nav.NavigateTo("/ficha-atleta")'>
+                    <div class="holo-glare"></div> <i class="fas fa-id-badge card-icon player-icon"></i>
+                    <h3 class="player-title">MI FICHA</h3>
+                    <p style="color:white">Player Card Oficial</p>
+                </div>                
+            }
+
             <div class="menu-card yellow-highlight" @onclick='() => Nav.NavigateTo("/credencial")'>
                 <i class="fas fa-id-card card-icon" style="color: black;"></i>
                 <h3>MI CREDENCIAL</h3>
@@ -945,6 +970,85 @@
     /* Mover el círculo cuando está ENCENDIDO */
     .switch-track.on .switch-thumb {
         transform: translateX(24px); /* Se desliza a la derecha */
+    }
+
+    /* --- TARJETA MEDALLERO VIP --- */
+    .medallero-card {
+        background: linear-gradient(135deg, #111111 0%, #2a2a2a 100%) !important;
+        border: 2px solid #FFD700 !important; /* Borde Dorado */
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3) !important;
+    }
+    .trophy-icon { color: #FFD700 !important; text-shadow: 0 0 15px rgba(255, 215, 0, 0.8) !important; font-size: 2.2rem !important; }
+    .trophy-title { color: #FFD700 !important; letter-spacing: 1px; }
+    .trophy-subtitle { color: #dddddd !important; font-style: italic; }
+
+    /* Animación de destellos dorados */
+    .sparkle-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+    .sparkle {
+        position: absolute;
+        width: 3px; height: 3px;
+        background: #FFF;
+        border-radius: 50%;
+        box-shadow: 0 0 8px 2px #FFD700;
+        animation: twinkle 2s infinite ease-in-out alternate;
+    }
+    .s1 { top: 20%; left: 20%; animation-delay: 0s; }
+    .s2 { top: 60%; left: 80%; animation-delay: 0.5s; }
+    .s3 { top: 80%; left: 30%; animation-delay: 1s; }
+
+    @@keyframes twinkle {
+        0% { opacity: 0; transform: scale(0.5); }
+        50% { opacity: 1; transform: scale(1.5); }
+        100% { opacity: 0; transform: scale(0.5); }
+    }
+    /* --- TARJETA FICHA DE ATLETA (ÉPICA DORADA) --- */
+    .ficha-card {
+        /* Fondo estándar oscuro para que combine */
+        background: linear-gradient(135deg, #111111 0%, #2a2a2a 100%) !important;
+        /* Borde Dorado Brillante */
+        border: 2px solid #FFD700 !important; 
+        position: relative;
+        overflow: hidden;
+        /* Sombra dorada intensa */
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3) !important;
+    }
+    .player-icon { 
+        color: #FFD700 !important; 
+        /* NEÓN DORADO INTENSO */
+        text-shadow: 0 0 15px rgba(255, 215, 0, 0.9) !important; 
+        font-size: 2.2rem !important; 
+    }
+    .player-title { 
+        color: #FFD700 !important; 
+        letter-spacing: 1px; 
+        font-weight: bold; 
+    }
+    .player-subtitle { 
+        color: #dddddd !important; /* Subtítulo claro estándar */
+        font-style: italic; 
+    }
+
+    /* Brillo holográfico dorado que pasa por encima */
+    .holo-glare {
+        position: absolute; 
+        top: 0; 
+        left: -100%; 
+        width: 50%; 
+        height: 100%;
+        /* Reflejo dorado y blanco */
+        background: linear-gradient(to right, transparent, rgba(255, 215, 0, 0.5), rgba(255, 255, 255, 0.2), transparent);
+        transform: skewX(-25deg);
+        animation: glareRun 4s infinite linear;
+        pointer-events: none;
+        mix-blend-mode: overlay; /* Para que el brillo se vea más metálico sobre el fondo */
+    }
+
+    @@keyframes glareRun { 
+        0% { left: -100%; } 
+        20% { left: 200%; } /* Pasa rápido */
+        100% { left: 200%; } /* Espera */
     }
 </style>
 

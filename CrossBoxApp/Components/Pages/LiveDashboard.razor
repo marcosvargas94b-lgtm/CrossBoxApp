@@ -422,7 +422,7 @@
 @if (mostrarModalEquipos)
 {
     <div class="modal-overlay">
-        <div class="modal-content custom-modal" style="height:auto; max-height:80vh;">
+        <div class="modal-content custom-modal">
             <div class="modal-header">
                 <h5 style="margin:0; color:#F8C545;">CREAR EQUIPOS (PAREJAS)</h5>
                 <button class="btn-icon-header" @onclick="CerrarModalEquipos"><i class="fas fa-times"></i></button>
@@ -614,7 +614,15 @@
     .team-avatars { display: flex; justify-content: center; margin-bottom: 5px; }
     .avatar-mini-team { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #F8C545; background-color: #333; color: white; display: flex; justify-content: center; align-items: center; font-size: 0.8rem; margin: 0 -5px; background-size: cover; }
     .team-name { color: #F8C545 !important; font-weight: bold; }
-    .team-builder-grid { display: flex; flex-direction: column; gap: 8px; }
+
+    .team-builder-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        flex: 1; /* Obliga a la lista a tomar el espacio restante */
+        overflow-y: auto; /* Activa el scroll interno */
+        padding-bottom: 40px; /* Colchón para que no rebote en iOS al final */
+    }
     .atleta-select-row { padding: 10px; background: #222; border-radius: 5px; display: flex; justify-content: space-between; cursor: pointer; }
     .selected-yellow { background: #F8C545; color: black; font-weight: bold; }
     .fade-in { animation: fadeIn 0.3s ease-in; } .slide-in { animation: slideIn 0.3s ease-out; }
