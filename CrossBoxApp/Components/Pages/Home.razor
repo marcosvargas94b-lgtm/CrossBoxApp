@@ -325,6 +325,28 @@
                 </div>
             }
 
+                  @if (EstaActivo("CALCULADORA"))
+            {
+                <div class="menu-card" @onclick='() => Nav.NavigateTo("/calculadora-rm")'>
+                    <i class="fas fa-calculator card-icon" style="color: black;"></i>
+                <h3>CALCULAR %</h3>
+                <p>Discos exactos</p>
+            </div>
+            }
+                     @if (EstaActivo("TABATA"))
+            {
+                <div class="menu-card" @onclick='() => Nav.NavigateTo("/creador-tabata")'>
+                    <i class="fas fa-fire card-icon" style="color: #ff4d4d;"></i>
+                <h3>CREADOR TÁBATA</h3>
+                <p>Ruleta 20/10</p>
+            </div>}
+
+            <div class="menu-card yellow-highlight" @onclick='() => Nav.NavigateTo("/credencial")'>
+                <i class="fas fa-id-card card-icon" style="color: black;"></i>
+                <h3>MI CREDENCIAL</h3>
+                <p>Identificación Digital</p>
+            </div>
+
             @if (EstaActivo("MEDALLERO"))
             {
                 <div class="menu-card medallero-card" @onclick='() => Nav.NavigateTo("/medallero")'>
@@ -350,11 +372,7 @@
                 </div>                
             }
 
-            <div class="menu-card yellow-highlight" @onclick='() => Nav.NavigateTo("/credencial")'>
-                <i class="fas fa-id-card card-icon" style="color: black;"></i>
-                <h3>MI CREDENCIAL</h3>
-                <p>Identificación Digital</p>
-            </div>
+         
         </div>
 
         <div class="footer-brand">@NombreBox</div>

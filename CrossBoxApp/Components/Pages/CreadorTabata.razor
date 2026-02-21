@@ -1,0 +1,464 @@
+﻿@page "/creador-tabata"
+@using System.Net.Http.Json
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+<div class="main-layout">
+    <div class="navbar-container">
+        <div class="nav-left" @onclick="Volver">
+            <i class="fas fa-arrow-left"></i> VOLVER
+        </div>
+        <div class="nav-title"><i class="fas fa-stopwatch" style="color:#ff4d4d;"></i> TÁBATA 20/10</div>
+        <div class="nav-right"></div>
+    </div>
+
+    <div class="content-area scroll-custom">
+        @if (cargando)
+        {
+            <div class="spinner-border text-danger mt-5"></div>
+        }
+        else if (!modoEntrenamiento)
+        {
+            @* ----------- MODO CREADOR (TRAGAPERRAS Y LISTA) ----------- *@
+            <div class="creator-container slide-in-up">
+                
+                <div class="tabata-info">
+                    <strong>MÉTODO TÁBATA:</strong> 20s TRABAJO / 10s DESCANSO. 8 RONDAS = 4 MINUTOS.
+                </div>
+
+                @* TRAGAPERRAS *@
+                <div class="slot-machine-container @(girando ? "vibrating" : "")">
+                    <div class="slot-header">
+                        <h2>RULETA DE EJERCICIOS</h2>
+                        <select class="category-select" @bind="categoriaSeleccionada">
+                            <option value="Todos">Todas las Categorías</option>
+                            <option value="Tren Superior">Tren Superior</option>
+                            <option value="Tren Inferior">Tren Inferior</option>
+                            <option value="Core">Core (Abdomen)</option>
+                            <option value="Isometría">Isometría</option>
+                            <option value="Cardiovascular">Cardiovascular</option>
+                            <option value="HIIT">HIIT</option>
+                        </select>
+                    </div>
+
+                    <div class="slot-screen">
+                        <div class="text-window @(girando ? "blur-text" : "pop-text")">
+                            @(ejercicioActual?.Nombre ?? "ELIGE Y GIRA")
+                        </div>
+                    </div>
+
+                    <div class="slot-controls">
+                        @if (!girando)
+                        {
+                            <button class="btn-pull-lever" @onclick="TirarPalanca">
+                                <i class="fas fa-dice"></i> GIRAR
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn-pull-lever disabled">GIRANDO...</button>
+                        }
+                    </div>
+                </div>
+
+                @* AÑADIR A LA LISTA *@
+                @if (ejercicioActual != null && !girando && listaTabata.Count < 8)
+                {
+                    <div class="add-section mt-3 fade-in">
+                        <div class="add-controls">
+                            <button class="btn-circle" @onclick="() => multiRondas = Math.Max(1, multiRondas - 1)">-</button>
+                            <span class="rounds-text">@multiRondas Rondas</span>
+                            <button class="btn-circle" @onclick="() => multiRondas = Math.Min(8 - listaTabata.Count, multiRondas + 1)">+</button>
+                        </div>
+                        <button class="btn-add-pool mt-2" @onclick="AgregarAlPool">
+                            AÑADIR AL TABATA <i class="fas fa-plus-circle"></i>
+                        </button>
+                    </div>
+                }
+
+                @* LA LISTA DEL TABATA (POOL CON FLECHAS) *@
+                <div class="pool-container mt-4 mb-4">
+                    <div class="pool-header">
+                        <h3>TU RUTINA (@listaTabata.Count/8)</h3>
+                        @if (listaTabata.Count == 8) { <span class="badge-ready">LISTO</span> }
+                    </div>
+
+                    @if(listaTabata.Count == 0)
+                    {
+                        <div class="empty-pool">Gira la ruleta y añade hasta 8 ejercicios aquí.</div>
+                    }
+                    else
+                    {
+                        <div class="pool-list">
+                            @for(int i = 0; i < listaTabata.Count; i++)
+                            {
+                                var index = i;
+                                var item = listaTabata[i];
+                                <div class="pool-item slide-in-right">
+                                    <span class="item-number">@(index + 1)</span>
+                                    <div class="item-info">
+                                        <small>@item.Categoria</small>
+                                        <strong>@item.Nombre</strong>
+                                    </div>
+                                    <div class="item-actions">
+                                        <button class="btn-move" disabled="@(index == 0)" @onclick="() => MoverArriba(index)"><i class="fas fa-chevron-up"></i></button>
+                                        <button class="btn-move" disabled="@(index == listaTabata.Count - 1)" @onclick="() => MoverAbajo(index)"><i class="fas fa-chevron-down"></i></button>
+                                        <button class="delete-btn" @onclick="() => EliminarDelPool(index)"><i class="fas fa-times"></i></button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                @if(listaTabata.Count == 8)
+                {
+                    <button class="btn-start-workout glow-effect mb-5" @onclick="IniciarModoEntrenamiento">
+                        <i class="fas fa-fire"></i> ¡INICIAR TABATA!
+                    </button>
+                }
+            </div>
+        }
+        else
+        {
+            @* ----------- MODO ENTRENAMIENTO (EL TIMER 20/10) ----------- *@
+            <div class="timer-container fade-in">
+                <div class="timer-header">
+                    <h2>RONDA @(rondaActual + 1) / 8</h2>
+                    <span class="fase-badge @ObtenerClaseFase()">@faseActual.ToString().ToUpper()</span>
+                </div>
+
+                <div class="big-clock @(faseActual == FaseTabata.Descanso ? "text-success" : faseActual == FaseTabata.Trabajo ? "text-danger" : "text-white")">
+                    @FormatearTiempo(tiempoRestante)
+                </div>
+
+                <div class="current-exercise">
+                    <h3>AHORA:</h3>
+                    @if(faseActual == FaseTabata.Preparacion) {
+                        <h1>PREPÁRATE</h1>
+                    } else if (faseActual == FaseTabata.Terminado) {
+                        <h1>¡TABATA COMPLETADO! 🏆</h1>
+                    } else {
+                        <h1>@listaTabata[rondaActual].Nombre</h1>
+                    }
+                </div>
+                
+                @if (rondaActual < 7 && faseActual != FaseTabata.Terminado)
+                {
+                    <div class="next-exercise mt-3">
+                        <span>SIGUIENTE:</span> @listaTabata[rondaActual + 1].Nombre
+                    </div>
+                }
+
+                <div class="timer-controls mt-5">
+                    @if (faseActual == FaseTabata.Terminado)
+                    {
+                        <button class="btn-timer btn-done" @onclick="FinalizarYVolver">TERMINAR</button>
+                    }
+                    else
+                    {
+                        <button class="btn-timer @(corriendoTimer ? "btn-pause" : "btn-play")" @onclick="ToggleTimer">
+                            @if(corriendoTimer)
+                            {
+                                <span><i class="fas fa-pause"></i> PAUSAR</span>
+                            }
+                            else
+                            {
+                                <span><i class="fas fa-play"></i> @(faseActual == FaseTabata.Preparacion ? "COMENZAR" : "REANUDAR")</span>
+                            }
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .main-layout { position: fixed; top:0; left:0; width:100vw; height:100vh; background:#000; display:flex; flex-direction:column; z-index:1; }
+    .navbar-container { flex-shrink:0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom:10px; padding-left:20px; padding-right:20px; background:#111; border-bottom:1px solid #ff4d4d; display:flex; justify-content:space-between; align-items:center; z-index:100; font-family:'Oswald'; color:white; }
+    .scroll-custom { flex:1; overflow-y:auto; padding: 20px; -webkit-overflow-scrolling: touch; }
+
+    .tabata-info { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; text-align: center; padding: 10px; border-radius: 8px; font-family: 'Roboto'; font-size: 0.8rem; border: 1px dashed #ff4d4d; margin-bottom: 20px; }
+
+    /* MÁQUINA TRAGAPERRAS */
+    .slot-machine-container { width: 100%; background: #1a1a1a; border: 2px solid #ff4d4d; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+    .slot-header { background: #111; padding: 15px; text-align: center; border-bottom: 1px solid #333; }
+    .slot-header h2 { font-family: 'Oswald'; color: #fff; margin: 0 0 10px 0; font-size: 1.2rem; letter-spacing: 1px; }
+    .category-select { width: 100%; background: #222; color: #ff4d4d; border: 1px solid #444; padding: 10px; border-radius: 8px; font-family: 'Oswald'; font-size: 1rem; outline: none; }
+    .slot-screen { height: 110px; background: #eee; display: flex; justify-content: center; align-items: center; border-top: 5px solid #333; border-bottom: 5px solid #333; box-shadow: inset 0 5px 15px rgba(0,0,0,0.5); padding: 15px; text-align: center; }
+    .text-window { font-family: 'Oswald'; font-size: 1.5rem; font-weight: bold; color: #111; text-transform: uppercase; line-height: 1.1; }
+    .slot-controls { padding: 15px; display: flex; justify-content: center; }
+    .btn-pull-lever { width: 100%; background: linear-gradient(180deg, #ff4d4d, #b30000); color: #fff; font-family: 'Oswald'; font-weight: bold; font-size: 1.2rem; border: none; padding: 12px; border-radius: 50px; box-shadow: 0 5px 0 #660000; transition: 0.1s; }
+    .btn-pull-lever:active { transform: translateY(5px); box-shadow: 0 0 0 #660000; }
+    .btn-pull-lever.disabled { background: #555; color: #888; box-shadow: none; cursor: not-allowed; }
+
+    /* CONTROLES PARA AÑADIR */
+    .add-section { display: flex; flex-direction: column; align-items: center; background: #151515; padding: 15px; border-radius: 15px; border: 1px dashed #444; }
+    .add-controls { display: flex; align-items: center; gap: 20px; }
+    .btn-circle { width: 40px; height: 40px; border-radius: 50%; background: #222; border: 2px solid #ff4d4d; color: #ff4d4d; font-size: 1.5rem; font-weight: bold; }
+    .rounds-text { color: white; font-family: 'Oswald'; font-size: 1.2rem; }
+    .btn-add-pool { width: 100%; background: #28a745; color: white; border: none; padding: 12px; border-radius: 8px; font-family: 'Oswald'; font-size: 1.1rem; letter-spacing: 1px; }
+
+    /* LA LISTA DEL TABATA */
+    .pool-container { background: #111; border-radius: 15px; border: 1px solid #333; overflow: hidden; }
+    .pool-header { background: #0a0a0a; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+    .pool-header h3 { color: #ff4d4d; font-family: 'Oswald'; margin: 0; font-size: 1.1rem; }
+    .badge-ready { background: #28a745; color: white; padding: 3px 8px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; }
+    .empty-pool { padding: 30px; text-align: center; color: #666; font-style: italic; font-size: 0.9rem; }
+    .pool-list { display: flex; flex-direction: column; }
+    .pool-item { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #222; background: #151515; gap: 15px; transition: 0.3s; }
+    .item-number { background: #ff4d4d; color: white; font-family: 'Oswald'; font-weight: bold; width: 25px; height: 25px; display: flex; justify-content: center; align-items: center; border-radius: 50%; flex-shrink: 0; }
+    .item-info { flex: 1; display: flex; flex-direction: column; }
+    .item-info small { color: #888; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; }
+    .item-info strong { color: white; font-size: 0.95rem; line-height: 1.2; }
+    .item-actions { display: flex; gap: 5px; }
+    .btn-move { background: #2a2a2a; border: none; color: white; width: 30px; height: 30px; border-radius: 5px; cursor: pointer; }
+    .btn-move:disabled { opacity: 0.3; cursor: default; }
+    .delete-btn { background: rgba(255,77,77,0.1); border: 1px solid #ff4d4d; color: #ff4d4d; width: 30px; height: 30px; border-radius: 5px; margin-left: 5px; }
+
+    .btn-start-workout { width: 100%; background: #ff4d4d; color: white; font-family: 'Oswald'; font-size: 1.3rem; font-weight: bold; padding: 18px; border: none; border-radius: 50px; }
+    .glow-effect { box-shadow: 0 0 20px rgba(255, 77, 77, 0.5); animation: pulseRed 2s infinite; }
+
+    /* PANTALLA TIMER */
+    .timer-container { text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding-bottom: 50px; }
+    .timer-header { margin-bottom: 10px; }
+    .timer-header h2 { color: #888; font-family: 'Oswald'; font-size: 1.4rem; margin: 0 0 10px 0; }
+    .fase-badge { font-family: 'Oswald'; font-size: 1.5rem; font-weight: bold; letter-spacing: 2px; padding: 5px 20px; border-radius: 10px; }
+    .badge-prep { background: #007bff; color: white; }
+    .badge-work { background: #ff4d4d; color: white; }
+    .badge-rest { background: #28a745; color: white; }
+    
+    .big-clock { font-family: 'Oswald'; font-size: 7rem; font-weight: 900; line-height: 1; text-shadow: 0 5px 15px rgba(0,0,0,0.8); margin: 10px 0; }
+    
+    .current-exercise h3 { color: #aaa; font-size: 1rem; font-weight: bold; margin: 0; }
+    .current-exercise h1 { color: white; font-family: 'Oswald'; font-size: 2.5rem; text-transform: uppercase; line-height: 1.1; margin: 5px 0; }
+    
+    .next-exercise { background: #222; border: 1px dashed #444; padding: 12px 20px; border-radius: 50px; color: #ccc; font-size: 1rem; }
+    .next-exercise span { color: #F8C545; font-weight: bold; }
+
+    .btn-timer { width: 80vw; max-width: 300px; padding: 20px; font-family: 'Oswald'; font-size: 1.5rem; font-weight: bold; border-radius: 50px; border: none; cursor: pointer; transition: 0.2s; }
+    .btn-play { background: #F8C545; color: black; box-shadow: 0 5px 15px rgba(248,197,69,0.4); }
+    .btn-pause { background: #555; color: white; }
+    .btn-done { background: #28a745; color: white; }
+
+    .blur-text { filter: blur(3px); opacity: 0.7; transform: translateY(-5px); }
+    .pop-text { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #d32f2f; }
+    .vibrating { animation: shake 0.1s infinite; }
+    .fade-in { animation: fadeIn 0.4s ease; }
+    .slide-in-up { animation: slideInUp 0.4s ease; }
+    .slide-in-right { animation: slideInRight 0.3s ease; }
+   @@keyframes pulseRed { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+   @@keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+   @@keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 50% { transform: translate(-1px, -1px) rotate(-1deg); } 100% { transform: translate(1px, -1px) rotate(1deg); } }
+   @@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+   @@keyframes slideInUp { from { opacity:0; transform: translateY(30px); } to { opacity:1; transform: translateY(0); } }
+   @@keyframes slideInRight { from { opacity:0; transform: translateX(-20px); } to { opacity:1; transform: translateX(0); } }
+
+   /* FIX PARA PANTALLA HORIZONTAL (LANDSCAPE) */
+    @@media (orientation: landscape) and (max-height: 500px) {
+        .timer-container { justify-content: flex-start; padding-top: 10px; padding-bottom: 10px; }
+        .big-clock { font-size: 4rem; margin: 0; } /* Achicamos el reloj a la mitad */
+        .current-exercise h1 { font-size: 1.8rem; margin: 0; }
+        .current-exercise h3 { font-size: 0.8rem; }
+        .timer-header h2 { font-size: 1rem; margin-bottom: 5px; }
+        .fase-badge { font-size: 1rem; padding: 2px 15px; }
+        .next-exercise { padding: 5px 15px; margin-top: 5px; font-size: 0.85rem; }
+        .timer-controls { margin-top: 10px; }
+        .btn-timer { padding: 10px 20px; font-size: 1.2rem; width: 50vw; }
+    }
+</style>
+
+@code {
+    private bool cargando = true;
+    
+    // VARIABLES CREADOR
+    private List<EjercicioDto> baseEjercicios = new();
+    private List<EjercicioDto> listaTabata = new();
+    private EjercicioDto ejercicioActual = null;
+    
+    private string categoriaSeleccionada = "Todos";
+    private bool girando = false;
+    private int multiRondas = 1;
+    private Random rnd = new Random();
+
+    // VARIABLES TIMER
+    private bool modoEntrenamiento = false;
+    private bool corriendoTimer = false;
+    private int rondaActual = 0;
+    private int tiempoRestante = 10;
+    private FaseTabata faseActual = FaseTabata.Preparacion;
+    private System.Threading.Timer timer;
+
+    public enum FaseTabata { Preparacion, Trabajo, Descanso, Terminado }
+
+    public class EjercicioDto {
+        public int EjercicioID { get; set; }
+        public string Categoria { get; set; }
+        public string Nombre { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try {
+            baseEjercicios = await Http.GetFromJsonAsync<List<EjercicioDto>>("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/tabataapi/todos");
+        } catch { } finally { cargando = false; }
+    }
+
+    private async Task TirarPalanca()
+    {
+        var poolDisponibles = categoriaSeleccionada == "Todos" ? baseEjercicios : baseEjercicios.Where(e => e.Categoria == categoriaSeleccionada).ToList();
+        if (poolDisponibles.Count == 0) return;
+
+        girando = true;
+        multiRondas = 1;
+
+        for(int i = 0; i < 20; i++)
+        {
+            ejercicioActual = poolDisponibles[rnd.Next(poolDisponibles.Count)];
+            StateHasChanged();
+            await Task.Delay(30 + (i * 10)); 
+        }
+
+        ejercicioActual = poolDisponibles[rnd.Next(poolDisponibles.Count)];
+        girando = false;
+        StateHasChanged();
+    }
+
+    private void AgregarAlPool()
+    {
+        if(ejercicioActual == null) return;
+        
+        for(int i=0; i<multiRondas; i++)
+        {
+            if(listaTabata.Count < 8)
+            {
+                listaTabata.Add(new EjercicioDto { Categoria = ejercicioActual.Categoria, Nombre = ejercicioActual.Nombre });
+            }
+        }
+    }
+
+    private void EliminarDelPool(int index) => listaTabata.RemoveAt(index);
+    
+    private void MoverArriba(int index)
+    {
+        if (index > 0) { 
+            var item = listaTabata[index]; 
+            listaTabata.RemoveAt(index); 
+            listaTabata.Insert(index - 1, item); 
+        }
+    }
+    
+    private void MoverAbajo(int index)
+    {
+        if (index < listaTabata.Count - 1) { 
+            var item = listaTabata[index]; 
+            listaTabata.RemoveAt(index); 
+            listaTabata.Insert(index + 1, item); 
+        }
+    }
+
+    // --- LÓGICA DEL TIMER 20/10 CON INVOKEASYNC (ANTI-CRASH) ---
+    private void IniciarModoEntrenamiento()
+    {
+        modoEntrenamiento = true;
+        rondaActual = 0;
+        faseActual = FaseTabata.Preparacion;
+        tiempoRestante = 10;
+        corriendoTimer = false;
+    }
+
+    private void ToggleTimer()
+    {
+        corriendoTimer = !corriendoTimer;
+        if (corriendoTimer)
+        {
+            timer = new System.Threading.Timer(TickTimer, null, 0, 1000);
+        }
+        else
+        {
+            timer?.Dispose();
+        }
+    }
+
+    private void TickTimer(object state)
+    {
+        // Se debe usar InvokeAsync porque el Timer corre en segundo plano y choca con el Audio JS
+        InvokeAsync(async () => 
+        {
+            if (tiempoRestante > 1)
+            {
+                tiempoRestante--;
+                
+                // Sonido de 3, 2, 1
+                if (tiempoRestante <= 3) {
+                    try { await JS.InvokeVoidAsync("reproducirBeepCorto"); } catch {}
+                }
+                
+                StateHasChanged();
+            }
+            else
+            {
+                // CAMBIO DE FASE
+                try { await JS.InvokeVoidAsync("reproducirBeepLargo"); } catch {}
+                
+                if (faseActual == FaseTabata.Preparacion || faseActual == FaseTabata.Descanso)
+                {
+                    faseActual = FaseTabata.Trabajo;
+                    tiempoRestante = 20; // TRABAJO 20s
+                }
+                else if (faseActual == FaseTabata.Trabajo)
+                {
+                    if (rondaActual < 7) 
+                    {
+                        faseActual = FaseTabata.Descanso;
+                        tiempoRestante = 10; // DESCANSO 10s
+                        rondaActual++;
+                    }
+                    else
+                    {
+                        faseActual = FaseTabata.Terminado;
+                        tiempoRestante = 0;
+                        timer?.Dispose();
+                        corriendoTimer = false;
+                    }
+                }
+                StateHasChanged();
+            }
+        });
+    }
+
+    private string ObtenerClaseFase()
+    {
+        return faseActual switch { FaseTabata.Preparacion => "badge-prep", FaseTabata.Trabajo => "badge-work", FaseTabata.Descanso => "badge-rest", _ => "bg-dark text-white" };
+    }
+
+    private string FormatearTiempo(int segs) => $"{segs / 60:D2}:{segs % 60:D2}";
+
+    private void FinalizarYVolver() => Volver();
+
+    private void Volver()
+    {
+        timer?.Dispose();
+        if(modoEntrenamiento) { modoEntrenamiento = false; } else { Nav.NavigateTo("/home"); }
+    }
+}
+
+@* SCRIPT DE AUDIOS *@
+<script>
+    function reproducirBeepCorto() {
+        let actx = new (window.AudioContext || window.webkitAudioContext)();
+        let osc = actx.createOscillator();
+        osc.type = 'sine'; osc.frequency.value = 1000;
+        osc.connect(actx.destination);
+        osc.start(); osc.stop(actx.currentTime + 0.1);
+    }
+    function reproducirBeepLargo() {
+        let actx = new (window.AudioContext || window.webkitAudioContext)();
+        let osc = actx.createOscillator();
+        osc.type = 'square'; osc.frequency.value = 800;
+        osc.connect(actx.destination);
+        osc.start(); osc.stop(actx.currentTime + 0.5);
+    }
+</script>

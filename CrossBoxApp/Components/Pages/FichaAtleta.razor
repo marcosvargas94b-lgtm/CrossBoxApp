@@ -7,7 +7,7 @@
 @inject IJSRuntime JS
 
 <div class="main-layout">
-    @* NAVBAR CON ÍCONOS DE CÁMARA Y ETIQUETA *@
+    @* NAVBAR CON ÍCONOS *@
     <div class="navbar-container">
         <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
             <i class="fas fa-arrow-left"></i> VOLVER
@@ -16,6 +16,7 @@
         <div class="nav-right text-end">
             @if (ficha != null && !string.IsNullOrEmpty(ficha.FotoUrl))
             {
+                <i class="fas fa-palette nav-icon me-3" @onclick="AbrirModalColores"></i>
                 <i class="fas fa-tags nav-icon me-3" @onclick="AbrirModalSubtitulos"></i>
                 <i class="fas fa-camera nav-icon" @onclick="ActivarCambioFoto"></i>
             }
@@ -29,18 +30,15 @@
         }
         else if (string.IsNullOrEmpty(ficha?.FotoUrl) || solicitandoFoto)
         {
-            @* --- PANTALLA: SUBE TU FOTO --- *@
+            @* PANTALLA DE CARGA DE FOTO *@
             <div class="upload-photo-section slide-in">
                 <i class="fas fa-user-astronaut empty-avatar-icon"></i>
                 <h2>¡PREPARA TU CARTA!</h2>
-                <p>Para generar tu Ficha de Atleta oficial, necesitamos una foto épica tuya.</p>
-                
+                <p>Sube tu mejor foto para generar tu Ficha de Atleta.</p>
                 <div class="upload-box">
                     <i class="fas fa-upload mb-2" style="font-size:2rem; color:#F8C545;"></i>
-                    <p>Sube una foto de perfil</p>
-                    <button class="btn-subir" @onclick="IrAPerfil">IR A MI PERFIL</button>
+                    <button class="btn-subir mt-2" @onclick="IrAPerfil">IR A MI PERFIL</button>
                 </div>
-                
                 @if (solicitandoFoto && !string.IsNullOrEmpty(ficha?.FotoUrl))
                 {
                     <button class="btn-cancelar mt-3" @onclick="() => solicitandoFoto = false">CANCELAR</button>
@@ -49,13 +47,17 @@
         }
         else
         {
-            @* --- PANTALLA: CARTA HOLOGRÁFICA --- *@
-            <div class="card-scene fade-in">
-                <div id="tilt-card" class="esports-card">
+            @* CARTA ESTÁTICA FINAL
+               Se eliminaron los eventos onclick de giroscopio y las clases 3D.
+            *@
+            <div class="card-scene fade-in" 
+                 style="--c-main: @(ficha.ColorPrimario); --c-bg1: @(ficha.ColorFondo1); --c-bg2: @(ficha.ColorFondo2);">
+                 
+                <div class="esports-card">
+                    @* El brillo holográfico sigue pasando automáticamente *@
                     <div class="holo-overlay"></div>
-                    <div class="sparkles-bg"></div>
-
-                    @* CABECERA DE LA CARTA *@
+                    
+                    @* CABECERA *@
                     <div class="card-top">
                         <div class="stats-left">
                             <span class="rating">@((ficha.Rx * 4) + (ficha.Avanzado * 3) + 70)</span>
@@ -85,9 +87,7 @@
                             <span class="stat-value">@ficha.DiasEntrenadosAnio</span>
                             <span class="stat-title">ASISTENCIAS @DateTime.Now.Year</span>
                         </div>
-                        
                         <div class="middle-divider"></div>
-
                         <div class="stat-column medals-column">
                             @if(ficha.Rx == 0 && ficha.Avanzado == 0 && ficha.Intermedio == 0 && ficha.Principiante == 0)
                             {
@@ -114,16 +114,9 @@
                         @foreach (var pr in ficha.PRs)
                         {
                             <div class="pr-item">
-                                <div class="pr-val">
-                                    @pr.Marca.ToString("0.##") 
-                                    <span class="pr-unit">@pr.Unidad</span>
-                                </div>
+                                <div class="pr-val">@pr.Marca.ToString("0.##") <span class="pr-unit">@pr.Unidad</span></div>
                                 <span class="pr-lbl">@pr.Ejercicio</span>
                             </div>
-                        }
-                        @if (ficha.PRs.Count == 0)
-                        {
-                            <div class="pr-item w-100 text-center"><span class="pr-lbl" style="font-size:0.8rem; white-space:normal;">AÚN NO HAY MARCAS</span></div>
                         }
                     </div>
                 </div>
@@ -135,260 +128,281 @@
 @* --- MODAL DE SUBTÍTULOS --- *@
 @if (mostrarModalSubtitulos)
 {
-    <div class="modal-overlay fade-in">
-        <div class="modal-content custom-modal">
+    <div class="modal-overlay fade-in" @onclick="CerrarModalSubtitulos">
+        <div class="modal-content custom-modal" @onclick:stopPropagation="true">
             <div class="modal-header">
-                <h5 style="margin:0; color:#F8C545; font-family:'Oswald'; letter-spacing:1px;">ELIGE TU LEMA</h5>
+                <h5>ELIGE TU LEMA</h5>
                 <button class="btn-icon-header" @onclick="CerrarModalSubtitulos"><i class="fas fa-times"></i></button>
             </div>
-            
             <div class="modal-tabs">
                 <div class="tab-btn @(tabActiva == "Comedia" ? "active" : "")" @onclick='() => tabActiva = "Comedia"'>Divertidos</div>
                 <div class="tab-btn @(tabActiva == "Motivacional" ? "active" : "")" @onclick='() => tabActiva = "Motivacional"'>Motivacionales</div>
             </div>
-
             <div class="modal-body scroll-custom">
-                @if(listaSubtitulos == null || !listaSubtitulos.Any())
-                {
-                    <div class="text-center mt-4"><div class="spinner-border text-warning"></div></div>
-                }
-                else
-                {
-                    <div class="frases-grid">
-                        @foreach(var frase in listaSubtitulos.Where(f => f.Categoria == tabActiva))
+                <div class="frases-grid">
+                    @foreach(var frase in listaSubtitulos.Where(f => f.Categoria == tabActiva))
+                    {
+                        <div class="frase-item @(ficha?.Subtitulo == frase.Texto ? "selected" : "")" @onclick="() => SeleccionarFrase(frase.Texto)">
+                            <i class="fas fa-quote-left quote-mark"></i> <span>@frase.Texto</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@* --- MODAL DE COLORES --- *@
+@if (mostrarModalColores)
+{
+    <div class="modal-overlay fade-in" @onclick="CerrarModalColores">
+        <div class="modal-content custom-modal" style="height: auto; max-height: 80vh;" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h5>PINTA TU CARTA</h5>
+                <button class="btn-icon-header" @onclick="CerrarModalColores"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="color-picker-group">
+                    <label><i class="fas fa-bolt"></i> COLOR PRINCIPAL (Bordes y Brillo)</label>
+                    <input type="color" @bind="ficha.ColorPrimario" class="color-input" />
+                </div>
+                
+                <div class="color-picker-group mt-3">
+                    <label><i class="fas fa-fill-drip"></i> FONDO SUPERIOR (Degradado)</label>
+                    <input type="color" @bind="ficha.ColorFondo1" class="color-input" />
+                </div>
+
+                <div class="color-picker-group mt-3">
+                    <label><i class="fas fa-fill"></i> FONDO INFERIOR (Degradado)</label>
+                    <input type="color" @bind="ficha.ColorFondo2" class="color-input" />
+                </div>
+
+                <div class="botones-colores mt-4">
+                    <button class="btn-restaurar" @onclick="RestaurarColores">
+                        <i class="fas fa-undo"></i> ORIGINAL
+                    </button>
+                    <button class="btn-guardar-colores" @onclick="GuardarColores">
+                        @if (guardandoColores)
                         {
-                            <div class="frase-item @(ficha?.Subtitulo == frase.Texto ? "selected" : "")" @onclick="() => SeleccionarFrase(frase.Texto)">
-                                <i class="fas fa-quote-left quote-mark"></i>
-                                <span>@frase.Texto</span>
-                                @if(ficha?.Subtitulo == frase.Texto)
-                                {
-                                    <i class="fas fa-check-circle check-icon"></i>
-                                }
-                            </div>
+                            <i class="fas fa-spinner fa-spin"></i>
                         }
-                    </div>
-                }
+                        else
+                        {
+
+                            <span>GUARDAR</span>
+                        }
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 }
 
 <style>
-    /* --- ESTILOS DE LA CARTA Y PANTALLA (Sin cambios aquí) --- */
-    .main-layout { position: fixed; top:0; left:0; width:100vw; height:100vh; background:#000; display:flex; flex-direction:column; z-index:1; }
+    .main-layout { position: fixed; top:0; left:0; width:100vw; height:100vh; background:#050505; display:flex; flex-direction:column; z-index:1; }
     .navbar-container { flex-shrink:0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom:10px; padding-left:20px; padding-right:20px; background:#111; border-bottom:1px solid #F8C545; display:flex; justify-content:space-between; align-items:center; z-index:100; font-family:'Oswald'; color:white; }
     .nav-icon { color:#F8C545; font-size:1.4rem; cursor:pointer; transition:0.2s; }
     .nav-icon:active { transform:scale(0.9); }
-    .content-area { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; overflow:hidden; background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%); }
-    .upload-photo-section { text-align:center; color:white; width:100%; max-width:400px; }
-    .empty-avatar-icon { font-size:5rem; color:#444; margin-bottom:15px; }
-    .upload-photo-section h2 { font-family:'Oswald'; color:#F8C545; letter-spacing:1px; }
-    .upload-photo-section p { color:#aaa; font-size:0.9rem; margin-bottom:25px; }
-    .upload-box { border:2px dashed #444; border-radius:15px; padding:30px 20px; background:rgba(255,255,255,0.05); }
-    .btn-subir { background:#F8C545; color:black; border:none; padding:12px 20px; border-radius:8px; font-family:'Oswald'; font-weight:bold; width:100%; cursor:pointer; }
-    .btn-cancelar { background:transparent; color:#888; border:1px solid #444; padding:8px 20px; border-radius:8px; width:100%; }
-    .card-scene { perspective: 1000px; display:flex; justify-content:center; align-items:center; width:100%; height: 60vh; max-height: 500px; }
-    .esports-card { width: 300px; height: 460px; background: linear-gradient(145deg, #111 0%, #2a2a2a 100%); border-radius: 20px; border: 3px solid #FFD700; box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 0 15px rgba(255,215,0,0.3); position: relative; transform-style: preserve-3d; overflow: hidden; transition: transform 0.1s ease-out; }
-    .holo-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(105deg, transparent 20%, rgba(255,215,0,0.4) 25%, transparent 30%); background-size: 200% 200%; mix-blend-mode: color-dodge; pointer-events: none; z-index: 10; animation: holoSweep 4s infinite linear; }
-    .sparkles-bg { position:absolute; top:0; left:0; width:100%; height:100%; background-image: radial-gradient(white 1px, transparent 1px); background-size: 20px 20px; opacity:0.05; z-index:0; }
-    .card-top { display:flex; height:45%; padding:15px; position:relative; z-index:2; }
-    .stats-left { width: 35%; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; padding-top:10px; border-right:2px solid rgba(255,215,0,0.2); }
-    .rating { font-family:'Oswald'; font-size:3.5rem; font-weight:900; line-height:0.9; color:#fff; text-shadow: 2px 2px 0 #FFD700; }
-    .position { font-family:'Oswald'; font-size:1.2rem; color:#FFD700; font-weight:bold; margin-bottom:15px; }
-    .card-box-logo { width:45px; height:45px; border-radius:50%; border:2px solid #FFD700; background:#000; object-fit:contain; padding:2px; }
+    
+    .content-area { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%); }
+
+    /* --- CARTA ESTÁTICA --- */
+    /* Se eliminó perspective y transform-style preserve-3d */
+    .card-scene { display:flex; flex-direction:column; justify-content:center; align-items:center; width:100%; height: 100%; position:relative; }
+
+    .esports-card {
+        width: 88vw;
+        max-width: 420px;
+        height: 72vh;
+        max-height: 650px;
+        background: linear-gradient(145deg, var(--c-bg1) 0%, var(--c-bg2) 100%);
+        border: 3px solid var(--c-main);
+        /* Sombra estática sólida */
+        box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.5);
+        border-radius: 20px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* HOLOGRAMA DINÁMICO (Sigue pasando automáticamente) */
+    .holo-overlay {
+        position: absolute; top:0; left:0; width:100%; height:100%;
+        background: linear-gradient(105deg, transparent 20%, var(--c-main) 25%, transparent 30%);
+        background-size: 200% 200%;
+        mix-blend-mode: color-dodge; opacity: 0.5;
+        pointer-events: none; z-index: 10;
+        animation: holoSweep 4s infinite linear;
+    }
+
+    .card-top { display:flex; height:45%; padding:20px; position:relative; z-index:2; }
+    
+    .stats-left { width: 35%; display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; padding-top:10px; border-right:2px solid rgba(255,255,255,0.1); }
+    .rating { font-family:'Oswald'; font-size:4.5rem; font-weight:900; line-height:0.9; color:#fff; text-shadow: 3px 3px 0 var(--c-main); }
+    .position { font-family:'Oswald'; font-size:1.4rem; color:var(--c-main); font-weight:bold; margin-bottom:20px; }
+    .card-box-logo { width:55px; height:55px; border-radius:50%; border:2px solid var(--c-main); background:#000; object-fit:contain; padding:2px; }
+
     .photo-right { width: 65%; display:flex; justify-content:center; align-items:center; position:relative; z-index:2; }
-    .card-photo-wrapper { width: 130px; height: 165px; border: 2px solid #FFD700; border-radius: 10px; background: #000; overflow: hidden; box-shadow: 0 8px 15px rgba(0,0,0,0.7), inset 0 0 10px rgba(255,215,0,0.3); position: relative; }
+    .card-photo-wrapper { width: 100%; height: 100%; max-height:220px; max-width: 170px; border: 3px solid var(--c-main); border-radius: 12px; background: #000; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.8); }
     .player-photo { width: 100%; height: 100%; object-fit: cover; object-position: center; }
-    .card-name-plate { text-align:center; padding: 0 15px; position:relative; z-index:2; margin-top: 5px; }
-    .card-name-plate h1 { font-family:'Oswald'; font-size:1.8rem; font-weight:900; color:#FFD700; text-transform:uppercase; margin:0; line-height:1.1; text-shadow: 2px 2px 5px #000; letter-spacing:1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .card-quote { font-family:'Roboto'; font-style:italic; font-size:0.75rem; color:#ccc; display:block; margin-bottom:2px; text-shadow: 1px 1px 3px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .divider-line { height:2px; background: linear-gradient(90deg, transparent, #FFD700, transparent); margin: 5px auto; width: 80%; }
-    .middle-stats-container { display: flex; justify-content: center; align-items: center; padding: 5px 15px; position:relative; z-index:2; gap: 15px; }
-    .stat-column { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; }
-    .middle-divider { width: 2px; height: 30px; background: rgba(255,215,0,0.3); }
-    .stat-value { font-family: 'Oswald'; font-size: 1.4rem; font-weight: bold; color: white; line-height: 1; }
-    .stat-title { font-family: 'Roboto'; font-size: 0.65rem; color: #888; font-weight: bold; letter-spacing: 1px; margin-top: 2px; text-transform: uppercase; text-align:center; }
-    .medals-badges-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
-    .m-tag { font-family: 'Oswald'; font-size: 0.65rem; padding: 2px 5px; border-radius: 4px; font-weight: bold; border: 1px solid transparent; }
-    .m-tag.rx { background: rgba(220, 53, 69, 0.15); color: #ff4d4d; border-color: #ff4d4d; }
-    .m-tag.av { background: rgba(255, 215, 0, 0.15); color: #FFD700; border-color: #FFD700; }
-    .m-tag.in { background: rgba(176, 196, 222, 0.15); color: #B0C4DE; border-color: #B0C4DE; }
-    .m-tag.pr { background: rgba(205, 127, 50, 0.15); color: #CD7F32; border-color: #CD7F32; }
-    .prs-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:10px 5px; padding: 5px 15px; position:relative; z-index:2; }
+
+    .card-name-plate { text-align:center; padding: 0 15px; position:relative; z-index:2; margin-top: 15px; }
+    .card-name-plate h1 { font-family:'Oswald'; font-size:2.4rem; font-weight:900; color:var(--c-main); text-transform:uppercase; margin:0; line-height:1.1; text-shadow: 2px 2px 5px #000; letter-spacing:1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-quote { font-family:'Roboto'; font-style:italic; font-size:0.9rem; color:#ccc; display:block; margin-bottom:5px; text-shadow: 1px 1px 3px #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .divider-line { height:2px; background: linear-gradient(90deg, transparent, var(--c-main), transparent); margin: 10px auto; width: 85%; }
+
+    .middle-stats-container { display: flex; justify-content: center; align-items: center; padding: 10px 15px; position:relative; z-index:2; gap: 20px; }
+    .stat-column { display: flex; flex-direction: column; align-items: center; flex: 1; }
+    .middle-divider { width: 2px; height: 40px; background: rgba(255,255,255,0.2); }
+    .stat-value { font-family: 'Oswald'; font-size: 1.8rem; font-weight: bold; color: white; line-height: 1; }
+    .stat-title { font-family: 'Roboto'; font-size: 0.75rem; color: #aaa; font-weight: bold; letter-spacing: 1px; margin-top: 4px; text-transform: uppercase; text-align:center; }
+    
+    .medals-badges-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; }
+    .m-tag { font-family: 'Oswald'; font-size: 0.75rem; padding: 3px 6px; border-radius: 4px; font-weight: bold; border: 1px solid transparent; }
+    .m-tag.rx { background: rgba(220, 53, 69, 0.2); color: #ff4d4d; border-color: #ff4d4d; }
+    .m-tag.av { background: rgba(255, 215, 0, 0.2); color: #FFD700; border-color: #FFD700; }
+    .m-tag.in { background: rgba(176, 196, 222, 0.2); color: #B0C4DE; border-color: #B0C4DE; }
+    .m-tag.pr { background: rgba(205, 127, 50, 0.2); color: #CD7F32; border-color: #CD7F32; }
+
+    .prs-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:15px 5px; padding: 15px; position:relative; z-index:2; }
     .pr-item { display:flex; flex-direction:column; align-items:center; width: 100%; overflow: hidden; }
-    .pr-val { font-family:'Oswald'; font-size:1.2rem; font-weight:bold; color:#fff; line-height:1; display:flex; align-items:baseline; gap: 2px; }
-    .pr-unit { font-family:'Roboto'; font-size:0.65rem; color:#888; font-weight:normal; }
-    .pr-lbl { font-family:'Roboto'; font-size:0.65rem; color:#FFD700; font-weight:bold; text-transform:uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; text-align: center; }
+    .pr-val { font-family:'Oswald'; font-size:1.5rem; font-weight:bold; color:#fff; line-height:1; display:flex; align-items:baseline; gap: 3px; }
+    .pr-unit { font-family:'Roboto'; font-size:0.75rem; color:#888; font-weight:normal; }
+    .pr-lbl { font-family:'Roboto'; font-size:0.75rem; color:var(--c-main); font-weight:bold; text-transform:uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; text-align: center; }
 
-    /* --- NUEVO DISEÑO DEL MODAL (BOTTOM SHEET) --- */
-    /* 1. Overlay alinea el contenido al fondo */
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: rgba(0,0,0,0.85);
-        z-index: 5000;
-        display: flex;
-        justify-content: center;
-        align-items: flex-end;
-        /* ESTA ES LA MAGIA: Respeta la barra del celular y suma 15px */
-        padding-bottom: calc(env(safe-area-inset-bottom) + 15px);
-    }
-
-    /* 2. Modal ocupa el ancho completo y tiene altura fija para el scroll */
-    .custom-modal { 
-        background: #1a1a1a; 
-        width: 100%; /* Ancho completo */
-        height: 70vh; /* Altura fija (arregla el scroll congelado) */
-        border-top-left-radius: 25px; /* Solo esquinas de arriba redondeadas */
-        border-top-right-radius: 25px;
-        border: none; /* Quitamos borde para que se integre con el fondo */
-        display: flex; flex-direction: column; overflow: hidden; 
-        box-shadow: 0 -10px 40px rgba(0,0,0,0.9); /* Sombra hacia arriba */
-        animation: slideUp 0.3s ease-out; /* Animación de entrada desde abajo */
-    }
-
-    /* Animación de entrada del modal */
-    @@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-    /* Resto del modal (Header, Tabs, Lista) igual que antes */
+    /* MODALES BOTTOM SHEET (CON FIX DE PANTALLA) */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 5000; display: flex; justify-content: center; align-items: flex-end; padding-bottom: calc(env(safe-area-inset-bottom) + 0px); }
+    .custom-modal { background: #1a1a1a; width: 100%; height: 70vh; border-top-left-radius: 25px; border-top-right-radius: 25px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -10px 40px rgba(0,0,0,0.9); animation: slideUp 0.3s ease-out; }
     .modal-header { padding: 20px 25px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; background:#111; }
+    .modal-header h5 { margin:0; color:#F8C545; font-family:'Oswald'; letter-spacing:1px; font-size: 1.2rem; }
     .btn-icon-header { background: none; border: none; color: #888; font-size: 1.4rem; cursor: pointer; padding: 5px; }
     .modal-tabs { display:flex; border-bottom:1px solid #333; background:#111; }
-    .tab-btn { flex:1; text-align:center; padding:15px; color:#888; font-family:'Oswald'; font-size:1rem; cursor:pointer; border-bottom: 3px solid transparent; transition:0.3s; letter-spacing: 1px; }
+    .tab-btn { flex:1; text-align:center; padding:15px; color:#888; font-family:'Oswald'; font-size:1rem; cursor:pointer; border-bottom: 3px solid transparent; transition:0.3s;}
     .tab-btn.active { color:#F8C545; border-bottom: 3px solid #F8C545; font-weight:bold; background:rgba(255,255,255,0.02);}
-    
-    /* Cuerpo con scroll arreglado */
     .modal-body { padding: 20px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
     
-    .frases-grid { display:flex; flex-direction:column; gap:12px; padding-bottom: 30px; /* Espacio extra abajo para el scroll */ }
-    .frase-item { background:#222; border:1px solid #333; padding:18px; border-radius:12px; color:#ddd; font-style:italic; font-size:1rem; cursor:pointer; display:flex; align-items:center; gap:15px; transition:0.2s; position:relative; overflow:hidden;}
-    .frase-item:active { transform:scale(0.98); background:#333; }
+    .frases-grid { display:flex; flex-direction:column; gap:12px; padding-bottom:30px; }
+    .frase-item { background:#222; border:1px solid #333; padding:18px; border-radius:12px; color:#ddd; font-style:italic; font-size:1rem; cursor:pointer; display:flex; align-items:center; gap:15px; transition:0.2s;}
     .frase-item.selected { border-color:#F8C545; background:rgba(248, 197, 69, 0.15); color:white; font-weight:bold;}
     .quote-mark { color:#555; font-size:1.4rem; }
     .selected .quote-mark { color:#F8C545; }
-    .check-icon { position:absolute; right:20px; color:#F8C545; font-size:1.4rem; }
+
+    /* ESTILOS COLOR PICKER */
+    .color-picker-group { display: flex; flex-direction: column; gap: 8px; background: #222; padding: 15px; border-radius: 12px; border: 1px solid #333; }
+    .color-picker-group label { color: white; font-family: 'Oswald'; font-size: 0.9rem; letter-spacing: 1px; }
+    .color-input { width: 100%; height: 50px; border: none; border-radius: 8px; cursor: pointer; padding: 0; background: none; }
+    .color-input::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-input::-webkit-color-swatch { border: 2px solid #444; border-radius: 8px; }
+    
+    /* ESTILOS BOTONES COLORES */
+    .botones-colores { display: flex; gap: 10px; width: 100%; }
+    
+    .btn-restaurar { background: transparent; color: #888; border: 1px solid #444; padding: 15px; border-radius: 50px; font-family: 'Oswald'; font-weight: bold; font-size: 1rem; width: 40%; cursor: pointer; transition: 0.2s; }
+    .btn-restaurar:active { transform: scale(0.95); background: #222; color: white; }
+    
+    .btn-guardar-colores { flex: 1; background: #F8C545; color: black; border: none; padding: 15px; border-radius: 50px; font-family: 'Oswald'; font-weight: bold; font-size: 1.2rem; cursor: pointer; box-shadow: 0 5px 15px rgba(248,197,69,0.3); transition: 0.2s; }
+    .btn-guardar-colores:active { transform: scale(0.95); }
+    .btn-guardar-colores:active { transform: scale(0.95); }
 
     .fade-in { animation: fadeIn 0.4s ease; }
     .slide-in { animation: slideIn 0.4s ease; }
+    /* Se eliminó la animación pulse */
     @@keyframes holoSweep { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    @@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     @@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
     @@keyframes slideIn { from { transform:translateY(20px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+    
+    /* Se eliminaron los translateZ que daban profundidad 3D a los textos */
 </style>
 
 @code {
     private bool cargando = true;
     private bool solicitandoFoto = false;
     private FichaAtletaDto ficha;
+    // Se eliminó giroscopioActivado
     
-    // Variables Modal Subtítulos
+    // Modal Subtítulos
     private bool mostrarModalSubtitulos = false;
     private string tabActiva = "Comedia";
     private List<SubtituloDto> listaSubtitulos = new();
 
+    // Modal Colores
+    private bool mostrarModalColores = false;
+    private bool guardandoColores = false;
+
     public class FichaAtletaDto {
-        public string Nombre { get; set; }
-        public string Apellidos { get; set; }
-        public string FotoUrl { get; set; }
-        public string BoxNombre { get; set; }
-        public string LogoBoxUrl { get; set; }
-        public int DiasEntrenadosAnio { get; set; }
-        public int Rx { get; set; }
-        public int Avanzado { get; set; }
-        public int Intermedio { get; set; }
-        public int Principiante { get; set; }
+        public string Nombre { get; set; } public string Apellidos { get; set; }
+        public string FotoUrl { get; set; } public string BoxNombre { get; set; } public string LogoBoxUrl { get; set; }
+        public int DiasEntrenadosAnio { get; set; } public int Rx { get; set; } public int Avanzado { get; set; }
+        public int Intermedio { get; set; } public int Principiante { get; set; }
         public string Subtitulo { get; set; }
+        public string ColorPrimario { get; set; } public string ColorFondo1 { get; set; } public string ColorFondo2 { get; set; }
         public List<FichaPRDto> PRs { get; set; } = new();
     }
-    public class FichaPRDto {
-        public string Ejercicio { get; set; }
-        public decimal Marca { get; set; }
-        public string Unidad { get; set; }
-    }
-    public class SubtituloDto {
-        public int SubtituloID { get; set; }
-        public string Texto { get; set; }
-        public string Categoria { get; set; }
-    }
+    public class FichaPRDto { public string Ejercicio { get; set; } public decimal Marca { get; set; } public string Unidad { get; set; } }
+    public class SubtituloDto { public int SubtituloID { get; set; } public string Texto { get; set; } public string Categoria { get; set; } }
 
     protected override async Task OnInitializedAsync()
     {
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
-        
-        try
-        {
+        try {
             var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/{Sesion.Usuario.UsuarioID}";
             ficha = await Http.GetFromJsonAsync<FichaAtletaDto>(url);
-        }
-        catch { }
-        finally
-        {
-            cargando = false;
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && !string.IsNullOrEmpty(ficha?.FotoUrl))
-        {
-            await JS.InvokeVoidAsync("iniciarEfectoHolografico");
-        }
+        } catch { } finally { cargando = false; }
     }
 
     private void ActivarCambioFoto() => solicitandoFoto = true;
     private void IrAPerfil() => Nav.NavigateTo("/mi-perfil"); 
 
-    // --- LÓGICA SUBTÍTULOS ---
+    // Se eliminó el método ActivarGiroscopioIOS
+
+    // --- MODAL SUBTITULOS ---
     private async Task AbrirModalSubtitulos()
     {
         mostrarModalSubtitulos = true;
-        if(listaSubtitulos.Count == 0)
-        {
-            try {
-                var urlCat = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/catalogo-subtitulos";
-                listaSubtitulos = await Http.GetFromJsonAsync<List<SubtituloDto>>(urlCat);
-            } catch { }
+        if(listaSubtitulos.Count == 0) {
+            try { listaSubtitulos = await Http.GetFromJsonAsync<List<SubtituloDto>>("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/catalogo-subtitulos"); } catch { }
         }
     }
-
     private void CerrarModalSubtitulos() => mostrarModalSubtitulos = false;
 
     private async Task SeleccionarFrase(string textoFrase)
     {
-        ficha.Subtitulo = textoFrase; // Actualiza la UI visualmente al instante
-        mostrarModalSubtitulos = false; // Cierra el modal
-
-        // Guarda silenciosamente en BD
+        ficha.Subtitulo = textoFrase;
+        mostrarModalSubtitulos = false;
         try {
             var payload = new { UsuarioId = Sesion.Usuario.UsuarioID, Subtitulo = textoFrase };
             await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/guardar-subtitulo", payload);
         } catch { }
     }
-}
 
-<script>
-    window.iniciarEfectoHolografico = function() {
-        const card = document.getElementById('tilt-card');
-        if(!card) return;
+    // --- MODAL COLORES ---
+    private void AbrirModalColores() => mostrarModalColores = true;
+    private void CerrarModalColores() => mostrarModalColores = false;
 
-        if (window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', function(event) {
-                let beta = event.beta;
-                let gamma = event.gamma;
-
-                if (beta > 90) beta = 90;
-                if (beta < -90) beta = -90;
-
-                let rotateX = (beta - 45) / 3;
-                let rotateY = gamma / 2;
-
-                rotateX = Math.max(-20, Math.min(20, rotateX));
-                rotateY = Math.max(-20, Math.min(20, rotateY));
-
-                card.style.transform = `rotateX(${-rotateX}deg) rotateY(${rotateY}deg)`;
-            });
+    private void RestaurarColores()
+    {
+        if (ficha != null)
+        {
+            ficha.ColorPrimario = "#FFD700"; // El dorado AlfaFit
+            ficha.ColorFondo1 = "#111111";   // Gris muy oscuro
+            ficha.ColorFondo2 = "#2a2a2a";   // Gris un poco más claro
         }
     }
-</script>
+
+    private async Task GuardarColores()
+    {
+        guardandoColores = true;
+        try {
+            var payload = new { 
+                UsuarioId = Sesion.Usuario.UsuarioID, 
+                ColorPrimario = ficha.ColorPrimario, 
+                ColorFondo1 = ficha.ColorFondo1, 
+                ColorFondo2 = ficha.ColorFondo2 
+            };
+            await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/guardar-colores", payload);
+            mostrarModalColores = false;
+        } catch { } finally { guardandoColores = false; }
+    }
+}
+
+@* SE ELIMINÓ TODO EL BLOQUE <script> DEL GIROSCOPIO *@
