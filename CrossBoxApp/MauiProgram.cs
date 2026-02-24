@@ -31,7 +31,7 @@ namespace CrossBoxApp
             // Servicios
             builder.Services.AddSingleton<LiveSessionState>();
             builder.Services.AddSingleton<SesionService>();
-            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/") });
+            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/"), Timeout = TimeSpan.FromMinutes(3) });
             builder.Services.AddSingleton(AudioManager.Current);
             return builder.Build();
         }

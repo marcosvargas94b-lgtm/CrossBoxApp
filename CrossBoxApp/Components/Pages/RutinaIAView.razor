@@ -19,18 +19,37 @@
 
     <div class="scrollable-content">
 
-        @if (cargandoInicial)
+        @if (cargandoInicial || generando)
         {
-            <div class="loading-screen text-center mt-5">
-                <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;"></div>
-                <p class="mt-3" style="color:#aaa; font-family:'Oswald'; letter-spacing:1px;">CONECTANDO CON TU COACH...</p>
+            <div class="loading-screen text-center mt-5 fade-in" style="width: 100%; max-width: 400px; margin: 0 auto; padding: 20px;">
+                <i class="fas fa-brain fa-fade mb-3" style="font-size: 3rem; color: #F8C545;"></i>
+                <h4 style="color:#F8C545; font-family:'Oswald'; letter-spacing: 1px;">@textoCarga</h4>
+
+                <div class="progress mt-4 mb-2" style="height: 12px; background-color: #222; border-radius: 10px; overflow: hidden; border: 1px solid #444;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                         style="width: @(progresoCarga)%; background-color: #F8C545; transition: width 0.5s ease;"></div>
+                </div>
+
+                <p style="color:#888; font-size: 0.8rem; font-family:'Roboto';">
+                    <i class="fas fa-info-circle"></i> La IA está creando un plan complejo de 4 semanas. Esto puede tomar un par de minutos.
+                </p>
             </div>
         }
         else if (rutinaGenerada == null)
         {
             <div class="welcome-section fade-in">
-                <h1 style="color: #F8C545; font-family: 'Oswald'; text-align: center;">PLANIFICACIÓN INTELIGENTE</h1>
-                <p style="text-align:center; color:#ccc; font-size: 0.9rem;">Diseñaré tu próximo ciclo basado en tus objetivos.</p>
+                @if (modoContinuacion)
+                {
+                    <div style="background: rgba(40, 167, 69, 0.1); border: 1px solid #28a745; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                        <h1 style="color: #28a745; font-family: 'Oswald'; text-align: center; font-size: 1.5rem; margin-bottom: 5px;"><i class="fas fa-level-up-alt"></i> ¡SIGUIENTE NIVEL DESBLOQUEADO!</h1>
+                        <p style="text-align:center; color:#ddd; font-size: 0.85rem; margin: 0;">Tu historial ha sido analizado. Ajusta tus parámetros si lo necesitas (ej. más días de entreno) y el Coach diseñará tu nuevo ciclo basándose en tu progreso.</p>
+                    </div>
+                }
+                else
+                {
+                    <h1 style="color: #F8C545; font-family: 'Oswald'; text-align: center;">PLANIFICACIÓN INTELIGENTE</h1>
+                    <p style="text-align:center; color:#ccc; font-size: 0.9rem;">Diseñaré tu próximo ciclo basado en tus objetivos.</p>
+                }
             </div>
 
             <div class="form-card fade-in">
@@ -402,13 +421,43 @@
     private int inputCansancio = 7;
     private string inputDolor = "Sin Dolor";
     private string inputComentarios = "";
+    private bool modoContinuacion = false; // NUEVA VARIABLE   
+    private int progresoCarga = 0;
+    private string textoCarga = "INICIANDO...";
 
     protected override async Task OnInitializedAsync()
     {
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
         await CargarRutinaActiva();
     }
+    private async Task SimularProgresoIA()
+    {
+        progresoCarga = 5;
+        var frases = new[] {
+            "ANALIZANDO TU PERFIL FÍSICO...",
+            "DISEÑANDO MESOCICLO DE 4 SEMANAS...",
+            "CALCULANDO VOLUMEN E INTENSIDAD...",
+            "SELECCIONANDO EJERCICIOS ÓPTIMOS...",
+            "AJUSTANDO DETALLES FINALES...",
+            "YA CASI LO TENEMOS..."
+        };
 
+        int i = 0;
+        textoCarga = frases[0];
+
+        // Mientras la IA siga "generando", la barra avanza sola
+        while (generando || cargandoInicial)
+        {
+            await Task.Delay(2500); // Espera 2.5 segundos
+
+            if (progresoCarga < 95) progresoCarga += 10; // Avanza hasta atorarse en 95%
+
+            if (i < frases.Length - 1 && progresoCarga % 20 == 0) i++;
+            textoCarga = frases[i];
+
+            StateHasChanged(); // Actualiza la pantalla
+        }
+    }
     private async Task CargarRutinaActiva()
     {
         cargandoInicial = true;
@@ -435,13 +484,16 @@
     {
         if (string.IsNullOrWhiteSpace(perfil.Lesiones)) perfil.Lesiones = "Ninguna";
         generando = true; errorMensaje = null;
+        _ = SimularProgresoIA();
         try {
             var response = await Http.PostAsJsonAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/generar-rutina/{Sesion.Usuario.UsuarioID}", perfil);
             if (response.IsSuccessStatusCode) {
                 rutinaGenerada = await response.Content.ReadFromJsonAsync<RutinaGeneradaDto>();
                 semanaActiva = 1;
                 diasCompletados.Clear();
-            } else { errorMensaje = "Ocurrió un error. Intenta nuevamente."; }
+            } else { 
+                errorMensaje = await response.Content.ReadAsStringAsync(); 
+                errorMensaje = await response.Content.ReadAsStringAsync();errorMensaje = "Ocurrió un error. Intenta nuevamente."; }
         } catch (Exception ex) { errorMensaje = ex.Message; } finally { generando = false; }
     }
 
@@ -570,22 +622,28 @@
 
     private async Task MostrarOpcionesContinuidad()
     {
-        mostrandoResumen = false; 
-        
-        string accion = await App.Current.MainPage.DisplayActionSheet(
-            "¿Qué deseas hacer ahora?", "Cancelar", null, 
-            "Generar Siguiente Nivel (Mantiene Historial)", 
-            "Reiniciar Historial (Empezar de Cero)");
+        mostrandoResumen = false;
 
-        if (accion == "Generar Siguiente Nivel (Mantiene Historial)")
+        string accion = await App.Current.MainPage.DisplayActionSheet(
+            "¿Qué deseas hacer ahora?", "Cancelar", null,
+            "Ajustar y Generar Siguiente Nivel",
+            "Reiniciar Historial (Empezar de cero)");
+
+        if (accion == "Ajustar y Generar Siguiente Nivel")
         {
+            // Archiva el mes 1 en la base de datos
             await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/finalizar/{Sesion.Usuario.UsuarioID}", null);
+
+            // Regresa al formulario y activa el aviso verde
             rutinaGenerada = null;
+            modoContinuacion = true;
         }
-        else if (accion == "Reiniciar Historial (Empezar de Cero)")
+        else if (accion == "Reiniciar Historial (Empezar de cero)")
         {
+            // Borra todo y regresa al formulario normal
             await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/reiniciar/{Sesion.Usuario.UsuarioID}", null);
             rutinaGenerada = null;
+            modoContinuacion = false;
         }
     }
 

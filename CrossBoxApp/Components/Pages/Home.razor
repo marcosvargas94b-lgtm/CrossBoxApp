@@ -87,6 +87,9 @@
                         <div class="dropdown-item" @onclick="AbrirModalPassword">
                             <i class="fas fa-key"></i> Cambiar Contraseña
                         </div>
+                        <div class="dropdown-item text-danger" @onclick="ConfirmarEliminarCuenta" style="color: #ff4444 !important;">
+                            <i class="fas fa-user-times" style="color: #ff4444;"></i> Eliminar Cuenta
+                        </div>
 
                         @if (Sesion.Usuario != null && (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.Usuario.TipoUsuarioID == 3))
                         {
@@ -358,12 +361,7 @@
         </div>
 
         <div class="footer-brand">@NombreBox</div>
-
-        <div class="delete-account-container">
-            <button class="btn-delete-account" @onclick="ConfirmarEliminarCuenta">
-                Eliminar mi cuenta
-            </button>
-        </div>
+       
 
         <div style="height: 40px;"></div>
     </div>

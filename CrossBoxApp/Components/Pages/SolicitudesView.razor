@@ -128,6 +128,7 @@
 </style>
 
 @code {
+    private bool procesando = false;
     class PendienteDto { public Guid UsuarioID { get; set; } public string NombreCompleto { get; set; } public string CorreoElectronico { get; set; } public DateTime FechaCreacion { get; set; } }
 
     private List<PendienteDto> listaPendientes;
@@ -155,24 +156,35 @@
 
     private async Task Aprobar(PendienteDto u)
     {
-        try {
+        if (procesando) return; // Si ya está trabajando, ignora el clic
+        procesando = true;
+        try
+        {
             var r = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/aprobar/{u.UsuarioID}", null);
-            if (r.IsSuccessStatusCode) {
+            if (r.IsSuccessStatusCode)
+            {
                 listaPendientes.Remove(u);
                 await App.Current.MainPage.DisplayAlert("Listo", $"{u.NombreCompleto} aceptado.", "OK");
             }
-        } catch { }
+        }
+        catch { }
+        finally { procesando = false; }
     }
 
     private async Task Rechazar(PendienteDto u)
     {
+        if (procesando) return; // Ignora clics dobles
         bool confirm = await App.Current.MainPage.DisplayAlert("Rechazar", "¿Eliminar solicitud?", "Sí", "Cancelar");
         if (!confirm) return;
 
-        try {
+        procesando = true;
+        try
+        {
             var r = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/rechazar/{u.UsuarioID}", null);
             if (r.IsSuccessStatusCode) listaPendientes.Remove(u);
-        } catch { }
+        }
+        catch { }
+        finally { procesando = false; }
     }
 
     private void Volver() => Nav.NavigateTo("/home");
