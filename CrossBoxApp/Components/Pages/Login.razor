@@ -10,7 +10,7 @@
 <div class="login-container-fullscreen">
     <div class="background-overlay"></div>
     
-  @*   <div class="brand-header fade-in-down">
+  @* <div class="brand-header fade-in-down">
         <strong>@DateTime.Now.ToString("dd/MM/yyyy")</strong><br />
         <span style="color: #F8C545; letter-spacing: 2px;">BY ALFAFIT</span>
     </div> *@
@@ -74,7 +74,7 @@
     </div>
 </div>
 
-@* --- MODAL RECUPERAR CONTRASEÑA (CORREGIDO) --- *@
+@* --- MODAL RECUPERAR CONTRASEÑA --- *@
 @if (mostrarModalRecuperar)
 {
     <div class="modal-overlay fade-in">
@@ -177,7 +177,6 @@
                 }
                 else
                 {
-                    @* MENSAJE SEGURO PARA iOS *@
                     <div style="margin-top: 20px; text-align: center;">
                         <p style="color:#ccc; font-size: 0.8rem;">
                             <i class="fas fa-info-circle"></i> Al registrarte obtienes <strong>1 MES GRATIS</strong>.
@@ -208,12 +207,18 @@
             <div class="modal-body">
                 <input type="text" @bind="regNombre" class="input-dark mb-2" placeholder="Nombre" />
                 <input type="text" @bind="regApellidos" class="input-dark mb-2" placeholder="Apellidos" />
+                
+                @* --- CAMBIO AQUÍ: TEXTO VERDE NEÓN SIN ÍCONO DE WA --- *@
                 <input type="tel"
                        @bind="regTelefono"
-                       class="input-dark mb-2"
-                       placeholder="Teléfono (10 dígitos)"
+                       class="input-dark mb-1"
+                       placeholder="Teléfono (Opcional - 10 dígitos)"
                        maxlength="10"
                        oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
+                <div style="font-size: 0.75rem; color: #25D366; text-shadow: 0 0 5px rgba(37, 211, 102, 0.4); margin-bottom: 12px; text-align: left; padding-left: 5px; line-height: 1.2; font-weight: bold;">
+                    Recomendado para recibir tus notificaciones y avisos.
+                </div>
+
                 <input type="email" @bind="regEmail" class="input-dark mb-2" placeholder="Email" />                    
                 <select class="input-dark mb-2" @onchange="AlSeleccionarBox">
                     <option value="">-- Selecciona tu Box --</option>
@@ -246,28 +251,17 @@
 }
 
 <style>
-    /* ESTILOS BASE */
     /* ESTILOS BASE Y BLOQUEO DE SCROLL/REBOTE */
-    /* Este pseudo-selector asegura que en esta página nada se estire */
     ::deep body, ::deep html { 
         margin: 0; padding: 0; width: 100vw; height: 100vh; 
         overflow: hidden !important; overscroll-behavior: none !important; 
-        background-color: #000; /* Fondo negro por defecto */
+        background-color: #000; 
     }
 
     .login-container-fullscreen {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: #000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 10;
-        overflow: hidden !important;
-        overscroll-behavior: none; /* Mantenemos esto para matar el rebote */
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: #000; display: flex; justify-content: center; align-items: center;
+        z-index: 10; overflow: hidden !important; overscroll-behavior: none; 
     }
     
     .background-overlay { 
@@ -327,8 +321,8 @@
         padding: 20px;
         overflow-y: auto;
         flex: 1;
-        -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
-        overscroll-behavior: contain; /* Bloquea el rebote hacia el fondo */
+        -webkit-overflow-scrolling: touch; 
+        overscroll-behavior: contain; 
     }
     .modal-footer { padding: 20px; background: #111; border-top: 1px solid #333; display: flex; gap: 10px; flex-shrink: 0; }
     .modal-title-custom { color: #F8C545; font-family: 'Oswald'; margin: 0; font-size: 1.5rem; letter-spacing: 1px; }
@@ -362,7 +356,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Carga inicial
         try {
             var response = await Http.GetAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/authapi/boxes");
             if (response.IsSuccessStatusCode) listaBoxes = await response.Content.ReadFromJsonAsync<List<Boxes>>();
@@ -439,7 +432,7 @@
         }
     }
 
-    // ---------------- LOGIC: RECUPERAR PASSWORD (NUEVO) ----------------
+    // ---------------- LOGIC: RECUPERAR PASSWORD ----------------
     private bool mostrarModalRecuperar = false;
     private string telefonoRecuperar;
     private string mensajeRecuperacion;
@@ -456,14 +449,12 @@
 
     private async Task EnviarRecuperacion()
     {
-        // --- VALIDACIÓN BLINDADA ---
         if (string.IsNullOrEmpty(telefonoRecuperar) || telefonoRecuperar.Length != 10 || !long.TryParse(telefonoRecuperar, out _))
         {
             mensajeRecuperacion = "El número debe ser de 10 dígitos exactos.";
             esExitoRecuperacion = false;
             return;
         }
-        // ---------------------------
 
         enviandoRecuperacion = true;
         mensajeRecuperacion = "";
@@ -526,13 +517,14 @@
         registroError = "";
         if (regBoxId == Guid.Empty) { registroError = "Por favor selecciona un lugar de entrenamiento"; return; }
 
-        // --- VALIDACIÓN BLINDADA ---
-        if (string.IsNullOrEmpty(regTelefono) || regTelefono.Length != 10 || !long.TryParse(regTelefono, out _))
+        if (!string.IsNullOrEmpty(regTelefono))
         {
-            registroError = "El teléfono debe tener 10 dígitos exactos.";
-            return;
+            if (regTelefono.Length != 10 || !long.TryParse(regTelefono, out _))
+            {
+                registroError = "Si ingresas tu teléfono, debe tener 10 dígitos exactos.";
+                return;
+            }
         }
-        // ---------------------------
 
         if (regPass != regConfirmPass) { registroError = "Las contraseñas no coinciden."; return; }
         if (string.IsNullOrEmpty(regEmail) || string.IsNullOrEmpty(regPass)) { registroError = "Campos obligatorios."; return; }
@@ -545,7 +537,7 @@
             if (response.IsSuccessStatusCode)
             {
                 mostrarModalRegistro = false;
-                await App.Current.MainPage.DisplayAlert("¡Registro Exitoso!", "Tu cuenta ha sido creada. Disfruta tu mes de prueba.", "OK");
+                await App.Current.MainPage.DisplayAlert("¡Registro Exitoso!", "Tu cuenta ha sido creada. Espera la aprobación de tu Coach.", "OK");
             }
             else
             {
@@ -585,13 +577,11 @@
             await App.Current.MainPage.DisplayAlert("Error", "Llena los campos obligatorios.", "OK"); return;
         }
 
-        // --- VALIDACIÓN BLINDADA ---
         if (string.IsNullOrEmpty(registroBox.Telefono) || registroBox.Telefono.Length != 10 || !long.TryParse(registroBox.Telefono, out _))
         {
             await App.Current.MainPage.DisplayAlert("Teléfono Inválido", "El teléfono debe tener 10 dígitos numéricos.", "OK");
             return;
         }
-        // ---------------------------
 
         if (registroBox.Password != confirmarPass) { await App.Current.MainPage.DisplayAlert("Error", "Contraseñas no coinciden.", "OK"); return; }
 

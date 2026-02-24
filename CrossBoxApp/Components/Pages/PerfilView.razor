@@ -103,10 +103,15 @@
                     <label class="lbl-input">Acerca de mí</label>
                     <textarea @bind="miPerfil.Descripcion" class="input-dark text-area" placeholder="Opcional: Gymrat, Crossfitero..."></textarea>
 
-                    <label class="lbl-input">WhatsApp (Contacto para Matches)</label>
+                    <label class="lbl-input">WhatsApp (Avisos y Recuperación)</label>
                     <div class="whatsapp-input-group">
                         <div class="ws-icon-box"><i class="fas fa-comment-dots"></i></div>
-                        <input type="number" @bind="miPerfil.Whatsapp" class="ws-input-field" placeholder="Opcional (10 dígitos)" />
+                        <input type="tel" 
+                               @bind="miPerfil.Whatsapp" 
+                               class="ws-input-field" 
+                               placeholder="Opcional (10 dígitos)" 
+                               maxlength="10"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
                     </div>
 
                     @* --- FOTOS CERTIFICADO --- *@
@@ -620,7 +625,7 @@
         public string FotoPerfilUrl { get; set; }
         public string Apodo { get; set; }
         public bool UsarApodo { get; set; }
-        public bool MostrarPRS { get; set; } // <--- NUEVO CAMPO
+        public bool MostrarPRS { get; set; }
         public string FotoCertificado1Url { get; set; }
         public string FotoCertificado2Url { get; set; }
     }
@@ -655,6 +660,12 @@
             if (response.IsSuccessStatusCode)
             {
                 miPerfil = await response.Content.ReadFromJsonAsync<PerfilEdicionDto>();
+
+                // LIMPIEZA VISUAL: Si la BD manda 521961... lo mostramos limpio en la pantalla
+                if (!string.IsNullOrEmpty(miPerfil.Whatsapp) && miPerfil.Whatsapp.StartsWith("521") && miPerfil.Whatsapp.Length == 13)
+                {
+                    miPerfil.Whatsapp = miPerfil.Whatsapp.Substring(3);
+                }
 
                 previewAvatar = miPerfil.FotoPerfilUrl ?? "";
                 previewCert1 = miPerfil.FotoCertificado1Url ?? "";
@@ -725,6 +736,16 @@
             return;
         }
 
+        // --- VALIDACIÓN DE TELÉFONO OPCIONAL ---
+        if (!string.IsNullOrWhiteSpace(miPerfil.Whatsapp))
+        {
+            if (miPerfil.Whatsapp.Length != 10)
+            {
+                await App.Current.MainPage.DisplayAlert("Teléfono Inválido", "Si ingresas tu WhatsApp, asegúrate de que sean exactamente 10 dígitos.", "OK");
+                return;
+            }
+        }
+
         guardando = true;
         StateHasChanged();
 
@@ -736,13 +757,13 @@
             contenido.Add(new StringContent(miPerfil.Nombre ?? ""), "Nombre");
             contenido.Add(new StringContent(miPerfil.Apellidos ?? ""), "Apellidos");
             contenido.Add(new StringContent(miPerfil.Descripcion ?? ""), "Descripcion");
+            
+            // Enviamos el número (la API en backend se encargará de ponerle el +521)
             contenido.Add(new StringContent(miPerfil.Whatsapp ?? ""), "Whatsapp");
+            
             contenido.Add(new StringContent(miPerfil.Apodo ?? ""), "Apodo");
             contenido.Add(new StringContent(miPerfil.UsarApodo.ToString().ToLower()), "UsarApodo");
-            
-            // --- NUEVO CAMPO ENVIADO ---
             contenido.Add(new StringContent(miPerfil.MostrarPRS.ToString().ToLower()), "MostrarPRS");
-
             contenido.Add(new StringContent(borrarCert1.ToString().ToLower()), "EliminarFotoCert1");
             contenido.Add(new StringContent(borrarCert2.ToString().ToLower()), "EliminarFotoCert2");
 
