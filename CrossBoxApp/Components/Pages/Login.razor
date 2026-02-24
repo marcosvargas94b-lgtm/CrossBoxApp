@@ -247,9 +247,34 @@
 
 <style>
     /* ESTILOS BASE */
-    .login-container-fullscreen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: url('imagenes/TIMER.png') no-repeat center center; background-size: cover; display: flex; justify-content: center; align-items: center; z-index: 10; overflow: hidden; animation: bgMove 20s infinite alternate linear; }
-    @@keyframes bgMove { from { background-size: 100%; } to { background-size: 110%; } }
-    .background-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.9) 90%); z-index: 1; }
+    /* ESTILOS BASE Y BLOQUEO DE SCROLL/REBOTE */
+    /* Este pseudo-selector asegura que en esta página nada se estire */
+    ::deep body, ::deep html { 
+        margin: 0; padding: 0; width: 100vw; height: 100vh; 
+        overflow: hidden !important; overscroll-behavior: none !important; 
+        background-color: #000; /* Fondo negro por defecto */
+    }
+
+    .login-container-fullscreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10;
+        overflow: hidden !important;
+        overscroll-behavior: none; /* Mantenemos esto para matar el rebote */
+    }
+    
+    .background-overlay { 
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+        background: radial-gradient(circle at top right, rgba(248,197,69,0.1) 0%, rgba(0,0,0,1) 80%); 
+        z-index: 1; 
+    }
     .brand-header { position: absolute; top: 40px; left: 30px; color: #fff; z-index: 5; font-family: 'Oswald'; font-size: 1.2rem; }
 
     /* TARJETA GLASS */
@@ -297,7 +322,14 @@
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 5000; display: flex; justify-content: center; align-items: center; }
     .custom-modal { background: #1a1a1a; width: 95%; max-width: 500px; border: 1px solid #333; border-radius: 15px; display: flex; flex-direction: column; max-height: 85vh; box-shadow: 0 0 40px rgba(0,0,0,1); }
     .modal-header { padding: 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-    .modal-body { padding: 20px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+
+    .modal-body {
+        padding: 20px;
+        overflow-y: auto;
+        flex: 1;
+        -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+        overscroll-behavior: contain; /* Bloquea el rebote hacia el fondo */
+    }
     .modal-footer { padding: 20px; background: #111; border-top: 1px solid #333; display: flex; gap: 10px; flex-shrink: 0; }
     .modal-title-custom { color: #F8C545; font-family: 'Oswald'; margin: 0; font-size: 1.5rem; letter-spacing: 1px; }
     .btn-close-custom { background: none; border: none; color: #fff; font-size: 1.5rem; }

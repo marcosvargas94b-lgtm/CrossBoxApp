@@ -19,6 +19,8 @@ namespace CrossBoxApp
                 // 1. Configuramos la sesión ANTES de que arranque la UI
                 // Category: Playback (para sonar en silencio)
                 // Options: MixWithOthers (CLAVE: No pausar Spotify)
+                AVAudioSession.SharedInstance().SetCategory(AVAudioSessionCategory.Ambient);
+                AVAudioSession.SharedInstance().SetActive(true);
                 session.SetCategory(AVAudioSessionCategory.Playback, AVAudioSessionCategoryOptions.MixWithOthers);
 
                 // 2. Activamos la sesión
