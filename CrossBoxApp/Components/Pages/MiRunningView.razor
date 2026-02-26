@@ -42,12 +42,18 @@
                 bool hayPlan = log != null;
                 bool estaHecho = hayPlan && (log.Realizado == true);
 
+                // --- NUEVO: Validar si este cuadro es exactamente el día de hoy ---
+                bool esHoy = (fechaActual.Year == DateTime.Today.Year && 
+                              fechaActual.Month == DateTime.Today.Month && 
+                              diaActual == DateTime.Today.Day);
+
                 // Colores dinámicos
                 string colorBorde = hayPlan ? ObtenerColorTipo(log.Tipo) : "#333";
                 string bgDia = hayPlan ? "rgba(30,30,30,0.9)" : "#1a1a1a";
                 string opacidad = hayPlan ? "1" : "0.5";
 
-                <div class="calendar-day"
+                // --- NUEVO: Agregar la clase dia-actual-pulse si es hoy ---
+                <div class="calendar-day @(esHoy ? "dia-actual-pulse" : "")"
                      style="border-color: @colorBorde; background: @bgDia; opacity: @opacidad"
                      @onclick="() => AbrirModal(diaActual)">
 
@@ -110,10 +116,12 @@
                         <div class="status-pill @(logSeleccionado.Realizado == true ? "done" : "pending")" @onclick="ToggleRealizado">
                             @if (logSeleccionado.Realizado == true)
                             {
-                                <i class="fas fa-check-circle"></i> <span>ENTRENAMIENTO COMPLETADO</span>
+                                @* --- CAMBIO AQUÍ: TEXTO MODIFICADO --- *@
+                                <i class="fas fa-check-circle"></i> <span>REALIZADO</span>
                             }
                             else
                             {
+                                @* --- CAMBIO AQUÍ: TEXTO MODIFICADO --- *@
                                 <i class="far fa-circle"></i> <span>NO REALIZADO</span>
                             }
                         </div>
@@ -185,7 +193,7 @@
         -webkit-overflow-scrolling: touch; padding-bottom: 40px;
     }
 
-    /* --- CALENDARIO (Mantenido igual, funciona bien) --- */
+    /* --- CALENDARIO --- */
     .month-control {
         display: flex; justify-content: space-between; align-items: center;
         margin-bottom: 15px; background: #1a1a1a; padding: 10px;
@@ -208,6 +216,19 @@
     .day-number { font-size: 0.8rem; font-weight: bold; align-self: flex-end; color: #aaa; }
     .day-content { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; margin-top: -15px; }
     .day-status { font-size: 0.5rem; font-weight: bold; margin-top: 2px; text-transform: uppercase; text-align: center; line-height: 1; }
+
+    /* --- NUEVO: ANIMACIÓN PARA EL DÍA ACTUAL --- */
+    .dia-actual-pulse {
+        border-width: 2px !important; 
+        box-shadow: 0 0 15px rgba(248, 197, 69, 0.4);
+        animation: pulse-today 2s infinite;
+    }
+
+    @@keyframes pulse-today {
+        0% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(248, 197, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0); }
+    }
 
     /* --- MODAL ESTILO PREMIUM --- */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }

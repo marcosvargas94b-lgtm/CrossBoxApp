@@ -39,9 +39,15 @@
                 bool tieneData = log != null;
                 bool estaRealizado = tieneData && (log.Realizado == true);
 
+                // --- NUEVO: Validar si es el día de hoy para que parpadee ---
+                bool esHoy = (fechaActual.Year == DateTime.Today.Year && 
+                              fechaActual.Month == DateTime.Today.Month && 
+                              diaActual == DateTime.Today.Day);
+
                 string colorBorde = tieneData ? ObtenerColor(log.Tipo) : "#333";
 
-                <div class="calendar-day"
+                // --- NUEVO: Agregamos la clase dia-actual-pulse si es hoy ---
+                <div class="calendar-day @(esHoy ? "dia-actual-pulse" : "")"
                      style="border-color: @colorBorde; background: @(tieneData ? "rgba(30,30,30,0.8)" : "#1a1a1a")"
                      @onclick="() => AbrirModal(diaActual)">
 
@@ -159,9 +165,23 @@
         z-index: 100; font-family: 'Oswald'; min-height: 60px;
     }
 
-    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
-    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
-    .nav-right { width: 60px; }
+    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; white-space: nowrap; }
+    
+    /* --- CAMBIO AQUÍ: EL TITLE AHORA CORTA CON "..." SI ES MUY LARGO --- */
+    .nav-title { 
+        font-weight: bold; 
+        font-size: 1.1rem; 
+        color: white; 
+        letter-spacing: 1px;
+        flex-grow: 1; 
+        text-align: center; 
+        white-space: nowrap; 
+        overflow: hidden; 
+        text-overflow: ellipsis; 
+        padding: 0 10px;
+    }
+    
+    .nav-right { width: 60px; flex-shrink: 0; }
 
     .scrollable-content {
         flex-grow: 1; overflow-y: auto; padding: 15px;
@@ -212,6 +232,19 @@
         color: white; width: 20px; height: 20px; border-radius: 50%;
         font-size: 0.7rem; display: flex; align-items: center; justify-content: center;
         box-shadow: 0 2px 5px rgba(0,0,0,0.5); border: 2px solid #1a1a1a;
+    }
+
+    /* --- NUEVO: ANIMACIÓN PARA EL DÍA ACTUAL --- */
+    .dia-actual-pulse {
+        border-width: 2px !important; 
+        box-shadow: 0 0 15px rgba(248, 197, 69, 0.4);
+        animation: pulse-today 2s infinite;
+    }
+
+    @@keyframes pulse-today {
+        0% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(248, 197, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0); }
     }
 
     .legend-scroll {
