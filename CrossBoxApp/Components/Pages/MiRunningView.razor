@@ -77,12 +77,32 @@
                 </div>
             }
         </div>
+
+        @* --- NUEVA SECCIÓN: GENERADOR DE HISTORIAS DE IG --- *@
+        @* Solo se muestra si el entrenamiento de HOY está completado *@
+   @if (logDeHoy != null && logDeHoy.Realizado == true)
+        {
+            <div class="story-generator-card fade-in mt-4">
+                <div class="story-header">
+                     <div class="ig-icon-container">
+                            <i class="fas fa-image" style="color: #F8C545; font-size: 1.8rem;"></i>
+                     </div>
+                    <div class="story-title-box">
+                        <h4>¡ENTRENO SUPERADO!</h4>
+                        <p>Diseña tu historia y presume tu récord.</p>
+                    </div>
+                </div>
+                <button class="btn-create-story" @onclick="AbrirModalHistoria">
+                    <i class="fas fa-magic"></i> DISEÑAR HISTORIA
+                </button>
+            </div>
+        }
         
         <div style="height: 40px;"></div>
     </div>
 </div>
 
-@* --- MODAL REDISEÑADO --- *@
+@* --- MODAL FEEDBACK NORMAL (Tu código existente) --- *@
 @if (mostrarModal && logSeleccionado != null)
 {
     <div class="modal-overlay fade-in">
@@ -147,10 +167,45 @@
                                       class="feedback-textarea" 
                                       placeholder="Ej: Me sentí fuerte en las subidas..."></textarea>
 
-                            @* --- NUEVO: SECCIÓN DE EVIDENCIA (PARCIALES) --- *@
-                            <label class="section-label mt-4" style="color:#F8C545;">
+                          <label class="section-label mt-4" style="color:#F8C545;">
                                 <i class="fas fa-camera"></i> EVIDENCIA DE PARCIALES <span class="text-danger">*</span>
                             </label>
+
+                            @if (!string.IsNullOrEmpty(logSeleccionado.EvidenciaUrl))
+                            {
+                                @* SI YA HAY FOTOS, OCULTAMOS EL CARGADOR Y PONEMOS ESTE MENSAJE ESTILIZADO *@
+                                <div class="mt-2" style="border: 1px solid #28a745; padding: 15px; border-radius: 8px; background: rgba(40,167,69,0.1); display:flex; align-items:center; gap:10px;">
+                                    <i class="fas fa-check-circle" style="color:#28a745; font-size: 1.5rem;"></i>
+                                    <div style="display:flex; flex-direction:column;">
+                                        <span style="color:#28a745; font-family:'Oswald'; font-weight:bold; font-size:0.9rem;">EVIDENCIA ENVIADA</span>
+                                        <span style="color:#aaa; font-size:0.75rem;">El coach revisará tus capturas.</span>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                @* SI NO HAY FOTOS, MOSTRAMOS EL CARGADOR NORMAL *@
+                                <p style="font-size: 0.75rem; color: #aaa; margin-top:-5px; margin-bottom: 10px;">
+                                    Sube captura de tu reloj o app. Es obligatorio para verificar tu entrenamiento.
+                                </p>
+
+                                <div class="evidence-container">
+                                    @for (int i = 0; i < previewsEvidencia.Count; i++)
+                                    {
+                                        int index = i;
+                                        <div class="evidence-box fade-in">
+                                            <img src="@previewsEvidencia[index]" />
+                                            <button class="btn-remove-ev" @onclick="() => QuitarFoto(index)">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    }
+
+                                    <div class="evidence-add" @onclick="AgregarFotoEvidencia">
+                                        <i class="fas fa-plus"></i>
+                                    </div>
+                                </div>
+                            }
                             <p style="font-size: 0.75rem; color: #aaa; margin-top:-5px; margin-bottom: 10px;">
                                 Sube captura de tu reloj o app. Es obligatorio para verificar tu entrenamiento.
                             </p>
@@ -198,13 +253,113 @@
     </div>
 }
 
+@* --- MODAL GENERADOR DE HISTORIA --- *@
+@if (mostrarModalHistoria)
+{
+    <div class="modal-overlay fade-in">
+        <div class="modal-content custom-modal slide-up" style="background-color: #121212;">
+            
+            <div class="modal-header" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); border:none;">
+                <h5 style="margin:0; font-family:'Oswald'; color:white; letter-spacing:1px;">CREADOR DE HISTORIA</h5>
+                <button class="btn-close-custom" @onclick="CerrarModalHistoria"><i class="fas fa-times" style="color:white;"></i></button>
+            </div>
+
+            <div class="modal-body">
+                
+                @if (string.IsNullOrEmpty(historiaGeneradaBase64))
+                {
+                    // --- FORMULARIO DE CREACIÓN ---
+                    <label class="section-label" style="color:#F8C545; text-align:center;">
+                        FOTO DEL MAPA / RELOJ (Sin fondo opcional)
+                    </label>
+                    <div class="map-picker-box @(mapaHistoria != null ? "has-image" : "")" @onclick="SeleccionarMapaHistoria">
+                        @if (previewMapaHistoria != null)
+                        {
+                            <img src="@previewMapaHistoria" class="map-preview-img" />
+                            <div class="map-picker-overlay"><i class="fas fa-sync-alt"></i> Cambiar Foto</div>
+                        }
+                        else
+                        {
+                            <i class="fas fa-map-marked-alt map-icon"></i>
+                            <span>Toca para subir tu mapa de Strava o reloj</span>
+                        }
+                    </div>
+
+                <div class="story-switches mt-4">
+                        <div class="switch-row">
+                            <span><i class="fas fa-heading"></i> Incluir Título del Entreno</span>
+                            <label class="switch">
+                                <input type="checkbox" @bind="incluirTituloHistoria">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        <div class="switch-row">
+                            <span><i class="fas fa-align-left"></i> Incluir Descripción</span>
+                            <label class="switch">
+                                <input type="checkbox" @bind="incluirDescHistoria">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        
+                        @* --- LO NUEVO: TEXTBOX EDITABLE PARA LA DESCRIPCIÓN --- *@
+                        @if (incluirDescHistoria)
+                        {
+                            <div class="fade-in mt-3">
+                                <label style="color: #F8C545; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; display: block; font-family:'Oswald';">
+                                    <i class="fas fa-edit"></i> EDITAR TEXTO PARA LA IMAGEN:
+                                </label>
+                                <textarea @bind="descripcionHistoria" 
+                                          class="feedback-textarea" 
+                                          style="min-height: 80px; font-size: 0.85rem;" 
+                                          placeholder="Acomoda el texto, borra lo que no sirva o da saltos de línea..."></textarea>
+                                <small style="color:#666; font-size:0.65rem; display:block; margin-top:5px;">
+                                    *Lo que dejes aquí será exactamente lo que se pinte en tu Historia.
+                                </small>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    // --- RESULTADO GENERADO ---
+                    <div class="story-result-container fade-in">
+                        <img src="@historiaGeneradaBase64" class="story-final-img" />
+                        <p class="mt-3 text-center" style="color:#aaa; font-size:0.8rem;">
+                            ¡Lista! Mantén presionada la imagen para guardarla en tu galería o usa el botón de abajo.
+                        </p>
+                    </div>
+                }
+            </div>
+
+            <div class="modal-footer">
+                @if (string.IsNullOrEmpty(historiaGeneradaBase64))
+                {
+                    <button class="btn-cancel" @onclick="CerrarModalHistoria">CANCELAR</button>
+                    <button class="btn-save" @onclick="GenerarHistoriaApi" disabled="@(mapaHistoria == null || generandoHistoria)">
+                        @if(generandoHistoria) { <i class="fas fa-spinner fa-spin"></i> <span>DIBUJANDO...</span> }
+                        else { <i class="fas fa-magic"></i> <span>GENERAR</span> }
+                    </button>
+                }
+                else
+                {
+                    <button class="btn-cancel" @onclick="() => historiaGeneradaBase64 = null">ATRAS</button>
+                    <button class="btn-save" @onclick="CompartirHistoria">
+                        <i class="fas fa-share-alt"></i> COMPARTIR
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+
 <style>
-    /* --- ESTRUCTURA BASE --- */
+    /* --- ESTRUCTURA BASE Y NAVBAR --- */
     .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
-    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
-    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
-    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
-    .nav-right { width: 60px; }
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; display: grid; grid-template-columns: 80px 1fr 80px; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
+    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 0.9rem; white-space: nowrap; z-index: 10; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .nav-right { display: flex; justify-content: flex-end; z-index: 10; }
     .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
 
     /* --- CALENDARIO --- */
@@ -222,7 +377,18 @@
     .dia-actual-pulse { border-width: 2px !important; box-shadow: 0 0 15px rgba(248, 197, 69, 0.4); animation: pulse-today 2s infinite; }
     @@keyframes pulse-today { 0% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(248, 197, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0); } }
 
-    /* --- MODAL ESTILO PREMIUM --- */
+    /* --- TARJETA GENERADOR HISTORIA --- */
+    .mt-4 { margin-top: 25px !important; }
+    .story-generator-card { background: linear-gradient(135deg, #111 0%, #1a1a1a 100%); border: 1px solid #333; border-radius: 12px; padding: 20px; width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); position: relative; overflow: hidden; }
+    .story-generator-card::before { content:''; position: absolute; top:0; left:0; width:100%; height:4px; background: linear-gradient(90deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+    .story-header { display: flex; align-items: center; gap: 15px; }
+    .ig-icon-container { width: 50px; height: 50px; background: rgba(255,255,255,0.05); border-radius: 12px; display: flex; justify-content: center; align-items: center; }
+    .story-title-box h4 { margin: 0; color: white; font-family: 'Oswald'; font-size: 1.2rem; letter-spacing: 1px; }
+    .story-title-box p { margin: 0; color: #888; font-size: 0.85rem; font-family: 'Roboto'; }
+    .btn-create-story { background: transparent; color: white; border: 1px solid #555; padding: 12px; border-radius: 8px; font-family: 'Oswald'; font-weight: bold; letter-spacing: 1px; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .btn-create-story:active { background: rgba(255,255,255,0.1); transform: scale(0.98); }
+
+    /* --- MODALES GENERALES --- */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
     .custom-modal { background: #121212; width: 90%; max-width: 400px; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; border: 1px solid #333; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
     
@@ -234,18 +400,29 @@
 
     .modal-body { padding: 20px; color: white; overflow-y: auto; background-color: #121212; }
 
-    /* TARJETA DEL PLAN (COACH) */
+    /* --- MODAL DE HISTORIA (UI) --- */
+    .map-picker-box { width: 100%; height: 200px; border: 2px dashed #444; border-radius: 12px; background: #1a1a1a; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; position: relative; overflow: hidden; transition: 0.2s; }
+    .map-picker-box:active { background: #222; border-color: #F8C545; }
+    .map-icon { font-size: 3rem; color: #555; margin-bottom: 10px; }
+    .map-picker-box span { color: #888; font-family: 'Roboto'; font-size: 0.9rem; text-align: center; padding: 0 20px; }
+    .map-preview-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
+    .map-picker-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-family: 'Oswald'; font-size: 1.2rem; color: white; text-shadow: 0 2px 10px black; gap: 8px; font-weight: bold; }
+    
+    .story-switches { background: rgba(255,255,255,0.03); border: 1px solid #333; border-radius: 10px; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
+    .switch-row { display: flex; justify-content: space-between; align-items: center; color: #ccc; font-family: 'Roboto'; font-size: 0.9rem; }
+    .switch-row i { color: #F8C545; width: 20px; text-align: center; margin-right: 5px; }
+
+    .story-result-container { display: flex; flex-direction: column; align-items: center; }
+    .story-final-img { width: 70%; max-width: 250px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 2px solid #333; }
+
+    /* TARJETA DEL PLAN Y FEEDBACK */
     .coach-card { background: linear-gradient(145deg, #1e1e1e, #252525); border-left: 4px solid #F8C545; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .card-label { color: #F8C545; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; font-family: 'Oswald'; letter-spacing: 1px; }
     .plan-title { font-family: 'Oswald'; font-size: 1.3rem; color: white; margin-bottom: 8px; line-height: 1.2; }
     .plan-desc { font-size: 0.95rem; color: #ccc; white-space: pre-line; font-family: 'Roboto'; line-height: 1.5; }
-
     .action-divider { height: 1px; background: #333; margin-bottom: 20px; }
 
-    /* SECCIÓN FEEDBACK */
     .section-label { color: #888; font-size: 0.8rem; font-weight: bold; display: block; margin-bottom: 8px; font-family: 'Roboto'; letter-spacing: 0.5px; }
-
-    /* Status Pill (Botón Grande) */
     .status-pill { background: #222; border: 1px solid #444; border-radius: 50px; padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.3s; }
     .status-pill i { font-size: 1.2rem; }
     .status-pill span { font-weight: bold; font-family: 'Oswald'; font-size: 1rem; letter-spacing: 0.5px; }
@@ -253,17 +430,14 @@
     .status-pill.pending:active { transform: scale(0.98); background: #333; }
     .status-pill.done { background: rgba(40, 167, 69, 0.2); border-color: #28a745; color: #28a745; box-shadow: 0 0 15px rgba(40, 167, 69, 0.1); }
 
-    /* RPE Selector Estilizado */
     .rpe-container { display: flex; justify-content: space-between; gap: 4px; margin-bottom: 5px; }
     .rpe-btn { flex: 1; height: 35px; border-radius: 4px; background: #222; border: 1px solid #333; color: #666; font-weight: bold; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; }
     .rpe-btn.active { background: var(--rpe-color); color: black; border-color: var(--rpe-color); transform: scale(1.1); box-shadow: 0 0 10px var(--rpe-color); z-index: 10; }
     .rpe-legend { display: flex; justify-content: space-between; font-size: 0.7rem; color: #555; margin-bottom: 15px; }
-
-    /* Textarea */
     .feedback-textarea { width: 100%; background: #1a1a1a; border: 1px solid #333; color: white; border-radius: 8px; padding: 12px; font-family: 'Roboto'; font-size: 0.95rem; outline: none; resize: none; min-height: 80px; }
     .feedback-textarea:focus { border-color: #F8C545; background: #222; }
 
-    /* --- EVIDENCIA FOTOS (NUEVO) --- */
+    /* EVIDENCIA FOTOS */
     .evidence-container { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; }
     .evidence-box { position: relative; width: 80px; height: 80px; flex-shrink: 0; border-radius: 8px; border: 1px solid #444; overflow: hidden; }
     .evidence-box img { width: 100%; height: 100%; object-fit: cover; }
@@ -271,10 +445,18 @@
     .evidence-add { width: 80px; height: 80px; flex-shrink: 0; border-radius: 8px; border: 2px dashed #F8C545; background: rgba(248,197,69,0.05); display: flex; justify-content: center; align-items: center; color: #F8C545; font-size: 1.5rem; cursor: pointer; transition: 0.2s; }
     .evidence-add:active { transform: scale(0.95); background: rgba(248,197,69,0.2); }
 
+    /* SWITCH ESTILIZADO GENERAL */
+    .switch { position: relative; display: inline-block; width: 50px; height: 26px; flex-shrink: 0; margin: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #444; transition: .4s; border-radius: 34px; border: 1px solid #222; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: #888; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: #F8C545; border-color: #F8C545; box-shadow: 0 0 10px rgba(248,197,69,0.5); }
+    input:checked + .slider:before { transform: translateX(24px); background-color: #000; }
+
     /* Footer */
     .modal-footer { padding: 15px 20px; display: flex; gap: 15px; background: #1a1a1a; border-top: 1px solid #2a2a2a; }
-    .btn-save { background: #F8C545; color: black; border: none; padding: 12px; font-weight: bold; flex: 2; border-radius: 8px; font-family: 'Oswald'; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(248, 197, 69, 0.2); }
-    .btn-save:disabled { background: #555; color: #888; box-shadow: none; }
+    .btn-save { background: #F8C545; color: black; border: none; padding: 12px; font-weight: bold; flex: 2; border-radius: 8px; font-family: 'Oswald'; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(248, 197, 69, 0.2); display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .btn-save:disabled { background: #555; color: #888; box-shadow: none; cursor: not-allowed; }
     .btn-cancel { background: transparent; color: #888; border: 1px solid #444; padding: 12px; font-weight: bold; flex: 1; border-radius: 8px; font-family: 'Oswald'; }
 
     .text-danger { color: #ff4d4d; }
@@ -290,17 +472,28 @@
     private int diasEnMes;
     private int diasVaciosInicio;
 
-    // Modal
+    // Lógica del Día de Hoy
+    private RunningLogs logDeHoy;
+
+    // Modal Normal
     private bool mostrarModal = false;
     private bool guardando = false;
     private RunningLogs logSeleccionado;
     private DateTime fechaSeleccionada;
+    private string descripcionHistoria = "";
 
-    // NUEVAS LISTAS PARA LAS FOTOS
     private List<FileResult> archivosEvidencia = new();
     private List<string> previewsEvidencia = new();
 
-    // Actualizamos la clase para incluir el string de Evidencia
+    // Modal Historia
+    private bool mostrarModalHistoria = false;
+    private bool generandoHistoria = false;
+    private string historiaGeneradaBase64 = null;
+    private FileResult mapaHistoria = null;
+    private string previewMapaHistoria = null;
+    private bool incluirTituloHistoria = true;
+    private bool incluirDescHistoria = true;
+
     public class RunningLogs
     {
         public Guid RunningLogID { get; set; }
@@ -312,8 +505,10 @@
         public bool? Realizado { get; set; }
         public int? RPE { get; set; }
         public string ComentariosAtleta { get; set; }
-        public string EvidenciaUrl { get; set; } // <--- EL NUEVO CAMPO
+        public string EvidenciaUrl { get; set; } 
     }
+
+    public class ImagenRespuesta { public string imagenUrl { get; set; } }
 
     class TipoEntreno { public string Nombre { get; set; } public string Color { get; set; } }
 
@@ -344,6 +539,9 @@
         try
         {
             logsDelMes = await Http.GetFromJsonAsync<List<RunningLogs>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/plan/{Sesion.Usuario.UsuarioID}/{fechaActual.Month}/{fechaActual.Year}");
+            
+            // Calculamos el log de hoy para saber si mostrar la tarjeta de Historia
+            logDeHoy = logsDelMes.FirstOrDefault(l => l.Fecha.Date == DateTime.Today.Date);
         }
         catch { logsDelMes = new List<RunningLogs>(); }
     }
@@ -368,7 +566,6 @@
             if (logSeleccionado.Realizado == null) logSeleccionado.Realizado = false;
             fechaSeleccionada = new DateTime(fechaActual.Year, fechaActual.Month, dia);
             
-            // Limpiamos las fotos que haya seleccionado en otro día
             archivosEvidencia.Clear();
             previewsEvidencia.Clear();
             
@@ -384,7 +581,6 @@
 
     private void SeleccionarRPE(int valor) => logSeleccionado.RPE = valor;
 
-    // --- NUEVOS MÉTODOS DE FOTOS ---
     private async Task AgregarFotoEvidencia()
     {
         try
@@ -399,7 +595,6 @@
             {
                 archivosEvidencia.Add(resultado);
 
-                // Generar Preview
                 using var stream = await resultado.OpenReadAsync();
                 using var ms = new MemoryStream();
                 await stream.CopyToAsync(ms);
@@ -418,10 +613,8 @@
         previewsEvidencia.RemoveAt(index);
     }
 
-    // --- GUARDADO MULTIPARTE ---
     private async Task GuardarFeedback()
     {
-        // VALIDACIÓN OBLIGATORIA: Si le dio realizado, debe subir foto (a menos que ya tuviera fotos guardadas previamente en la BD)
         if (logSeleccionado.Realizado == true && archivosEvidencia.Count == 0 && string.IsNullOrEmpty(logSeleccionado.EvidenciaUrl))
         {
             await App.Current.MainPage.DisplayAlert("Evidencia Requerida", "Debes subir al menos una foto de tus parciales para guardar el reporte.", "ENTENDIDO");
@@ -473,13 +666,133 @@
 
     private string ObtenerColorRPE(int valor)
     {
-        if (valor <= 2) return "#32CD32"; // Verde
-        if (valor <= 4) return "#ADFF2F"; // Verde claro
-        if (valor <= 6) return "#FFD700"; // Amarillo
-        if (valor <= 8) return "#FF8C00"; // Naranja
-        return "#FF0000";                 // Rojo
+        if (valor <= 2) return "#32CD32"; 
+        if (valor <= 4) return "#ADFF2F"; 
+        if (valor <= 6) return "#FFD700"; 
+        if (valor <= 8) return "#FF8C00"; 
+        return "#FF0000";                 
     }
 
     private void CerrarModal() => mostrarModal = false;
     private void Volver() => Nav.NavigateTo("/home");
+
+    // =========================================================================
+    // MÉTODOS DEL CREADOR DE HISTORIAS
+    // =========================================================================
+
+    private void AbrirModalHistoria()
+    {
+        mapaHistoria = null;
+        previewMapaHistoria = null;
+        historiaGeneradaBase64 = null;
+        incluirTituloHistoria = true;
+        incluirDescHistoria = true;
+        
+        // Cargamos la descripción original en la cajita para que la puedan editar
+        descripcionHistoria = logDeHoy?.Descripcion ?? ""; 
+        
+        mostrarModalHistoria = true;
+    }
+
+    private void CerrarModalHistoria()
+    {
+        mostrarModalHistoria = false;
+    }
+
+    private async Task SeleccionarMapaHistoria()
+    {
+        try
+        {
+            FileResult resultado = null;
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                try { resultado = await MediaPicker.Default.PickPhotoAsync(); } catch { }
+            });
+
+            if (resultado != null)
+            {
+                mapaHistoria = resultado;
+                using var stream = await resultado.OpenReadAsync();
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                var base64 = Convert.ToBase64String(ms.ToArray());
+                previewMapaHistoria = $"data:image/jpeg;base64,{base64}";
+                StateHasChanged();
+            }
+        }
+        catch { await App.Current.MainPage.DisplayAlert("Aviso", "No se pudo cargar el mapa.", "OK"); }
+    }
+
+    private async Task GenerarHistoriaApi()
+    {
+        if (mapaHistoria == null || logDeHoy == null) return;
+
+        generandoHistoria = true;
+        StateHasChanged();
+
+        try
+        {
+            using var form = new MultipartFormDataContent();
+            form.Add(new StringContent(Sesion.Usuario.UsuarioID.ToString()), "UsuarioId");
+            form.Add(new StringContent(DateTime.Today.ToString("dd MMMM yyyy")), "Fecha");
+            form.Add(new StringContent((logDeHoy.RPE ?? 0).ToString()), "RPE");
+            
+            form.Add(new StringContent(incluirTituloHistoria.ToString().ToLower()), "IncluirTitulo");
+            form.Add(new StringContent(logDeHoy.Titulo ?? ""), "Titulo");
+            
+            form.Add(new StringContent(incluirDescHistoria.ToString().ToLower()), "IncluirDesc");
+            
+            // --- AQUÍ MANDAMOS LA DESCRIPCIÓN YA EDITADA POR EL USUARIO ---
+            form.Add(new StringContent(descripcionHistoria ?? ""), "Descripcion"); 
+
+            var s = await mapaHistoria.OpenReadAsync();
+            var content = new StreamContent(s);
+            content.Headers.ContentType = new MediaTypeHeaderValue(mapaHistoria.ContentType);
+            form.Add(content, "mapaImagen", mapaHistoria.FileName);
+
+            var resp = await Http.PostAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/generar-historia", form);
+            
+            if (resp.IsSuccessStatusCode)
+            {
+                var result = await resp.Content.ReadFromJsonAsync<ImagenRespuesta>();
+                historiaGeneradaBase64 = result.imagenUrl;
+            }
+            else
+            {
+                var error = await resp.Content.ReadAsStringAsync();
+                await App.Current.MainPage.DisplayAlert("Error", "No se pudo generar la historia: " + error, "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
+        finally
+        {
+            generandoHistoria = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CompartirHistoria()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(historiaGeneradaBase64)) return;
+
+            // Limpiamos el inicio del base64 para poder guardarlo
+            var base64Data = historiaGeneradaBase64.Substring(historiaGeneradaBase64.IndexOf(",") + 1);
+            var imageBytes = Convert.FromBase64String(base64Data);
+            
+            var cacheFile = Path.Combine(FileSystem.CacheDirectory, "historia_entreno.jpg");
+            File.WriteAllBytes(cacheFile, imageBytes);
+
+            await Share.Default.RequestAsync(new ShareFileRequest
+            {
+                Title = "Mi Entrenamiento",
+                File = new ShareFile(cacheFile)
+            });
+        }
+        catch { await App.Current.MainPage.DisplayAlert("Error", "No se pudo abrir el menú de compartir.", "OK"); }
+    }
 }
