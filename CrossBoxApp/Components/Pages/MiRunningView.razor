@@ -78,22 +78,21 @@
             }
         </div>
 
-        @* --- NUEVA SECCIÓN: GENERADOR DE HISTORIAS DE IG --- *@
-        @* Solo se muestra si el entrenamiento de HOY está completado *@
-   @if (logDeHoy != null && logDeHoy.Realizado == true)
+@* --- SECCIÓN: GENERADOR DE HISTORIAS CON IA --- *@
+        @if (logDeHoy != null && logDeHoy.Realizado == true)
         {
             <div class="story-generator-card fade-in mt-4">
                 <div class="story-header">
-                     <div class="ig-icon-container">
-                            <i class="fas fa-image" style="color: #F8C545; font-size: 1.8rem;"></i>
-                     </div>
+                    <div class="ig-icon-container">
+                        <i class="fas fa-bolt" style="color: #F8C545; font-size: 1.8rem;"></i>
+                    </div>
                     <div class="story-title-box">
                         <h4>¡ENTRENO SUPERADO!</h4>
-                        <p>Diseña tu historia y presume tu récord.</p>
+                        <p>Genera una historia épica con IA.</p>
                     </div>
                 </div>
                 <button class="btn-create-story" @onclick="AbrirModalHistoria">
-                    <i class="fas fa-magic"></i> DISEÑAR HISTORIA
+                    <i class="fas fa-magic"></i> CREAR HISTORIA IA
                 </button>
             </div>
         }
@@ -209,23 +208,7 @@
                             <p style="font-size: 0.75rem; color: #aaa; margin-top:-5px; margin-bottom: 10px;">
                                 Sube captura de tu reloj o app. Es obligatorio para verificar tu entrenamiento.
                             </p>
-
-                            <div class="evidence-container">
-                                @for (int i = 0; i < previewsEvidencia.Count; i++)
-                                {
-                                    int index = i;
-                                    <div class="evidence-box fade-in">
-                                        <img src="@previewsEvidencia[index]" />
-                                        <button class="btn-remove-ev" @onclick="() => QuitarFoto(index)">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                }
-
-                                <div class="evidence-add" @onclick="AgregarFotoEvidencia">
-                                    <i class="fas fa-plus"></i>
-                                </div>
-                            </div>
+                        
                             
                             @if(!string.IsNullOrEmpty(logSeleccionado.EvidenciaUrl) && previewsEvidencia.Count == 0)
                             {
@@ -253,39 +236,55 @@
     </div>
 }
 
-@* --- MODAL GENERADOR DE HISTORIA --- *@
+@* --- MODAL GENERADOR DE HISTORIA IA --- *@
 @if (mostrarModalHistoria)
 {
     <div class="modal-overlay fade-in">
         <div class="modal-content custom-modal slide-up" style="background-color: #121212;">
             
-            <div class="modal-header" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); border:none;">
-                <h5 style="margin:0; font-family:'Oswald'; color:white; letter-spacing:1px;">CREADOR DE HISTORIA</h5>
+            <div class="modal-header" style="background: linear-gradient(45deg, #f09433, #bc1888); border:none;">
+                <h5 style="margin:0; font-family:'Oswald'; color:white; letter-spacing:1px;">IA STORY CREATOR</h5>
                 <button class="btn-close-custom" @onclick="CerrarModalHistoria"><i class="fas fa-times" style="color:white;"></i></button>
             </div>
 
             <div class="modal-body">
-                
                 @if (string.IsNullOrEmpty(historiaGeneradaBase64))
                 {
-                    // --- FORMULARIO DE CREACIÓN ---
-                    <label class="section-label" style="color:#F8C545; text-align:center;">
-                        FOTO DEL MAPA / RELOJ (Sin fondo opcional)
-                    </label>
-                    <div class="map-picker-box @(mapaHistoria != null ? "has-image" : "")" @onclick="SeleccionarMapaHistoria">
-                        @if (previewMapaHistoria != null)
-                        {
-                            <img src="@previewMapaHistoria" class="map-preview-img" />
-                            <div class="map-picker-overlay"><i class="fas fa-sync-alt"></i> Cambiar Foto</div>
-                        }
-                        else
-                        {
-                            <i class="fas fa-map-marked-alt map-icon"></i>
-                            <span>Toca para subir tu mapa de Strava o reloj</span>
-                        }
+                    <div style="display:flex; gap: 10px; margin-bottom: 15px;">
+                        @* CAJA 1: MAPA STRAVA *@
+                        <div style="flex:1;">
+                            <label class="section-label" style="color:#F8C545; font-size:0.7rem; text-align:center;">1. MAPA STRAVA</label>
+                            <div class="map-picker-box @(mapaHistoria != null ? "has-image" : "")" style="height:120px;" @onclick="SeleccionarMapaHistoria">
+                                @if (previewMapaHistoria != null)
+                                {
+                                    <img src="@previewMapaHistoria" class="map-preview-img" />
+                                    <div class="map-picker-overlay" style="font-size:0.8rem;"><i class="fas fa-sync-alt"></i> Cambiar</div>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-map-marked-alt map-icon" style="font-size:1.5rem;"></i>
+                                }
+                            </div>
+                        </div>
+
+                        @* CAJA 2: SELFIE (NUEVO) *@
+                        <div style="flex:1;">
+                            <label class="section-label" style="color:#F8C545; font-size:0.7rem; text-align:center;">2. TU FOTO DE HOY</label>
+                            <div class="map-picker-box @(fotoAtleta != null ? "has-image" : "")" style="height:120px;" @onclick="SeleccionarFotoAtleta">
+                                @if (previewFotoAtleta != null)
+                                {
+                                    <img src="@previewFotoAtleta" class="map-preview-img" />
+                                    <div class="map-picker-overlay" style="font-size:0.8rem;"><i class="fas fa-sync-alt"></i> Cambiar</div>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-user-circle map-icon" style="font-size:1.5rem;"></i>
+                                }
+                            </div>
+                        </div>
                     </div>
 
-                <div class="story-switches mt-4">
+                   <div class="story-switches mt-2">
                         <div class="switch-row">
                             <span><i class="fas fa-heading"></i> Incluir Título del Entreno</span>
                             <label class="switch">
@@ -293,7 +292,19 @@
                                 <span class="slider round"></span>
                             </label>
                         </div>
-                        <div class="switch-row">
+                        
+                        @* --- CAJA EDITABLE PARA EL TÍTULO --- *@
+                        @if (incluirTituloHistoria)
+                        {
+                            <div class="fade-in mt-2 mb-3">
+                                <label style="color: #F8C545; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; display: block; font-family:'Oswald';">
+                                    <i class="fas fa-edit"></i> EDITAR TÍTULO:
+                                </label>
+                                <input type="text" @bind="tituloHistoria" class="feedback-textarea" style="min-height: 40px; padding: 10px; font-size: 0.85rem;" placeholder="Ej: 10 KM TEMPO" />
+                            </div>
+                        }
+
+                        <div class="switch-row mt-2">
                             <span><i class="fas fa-align-left"></i> Incluir Descripción</span>
                             <label class="switch">
                                 <input type="checkbox" @bind="incluirDescHistoria">
@@ -301,20 +312,14 @@
                             </label>
                         </div>
                         
-                        @* --- LO NUEVO: TEXTBOX EDITABLE PARA LA DESCRIPCIÓN --- *@
+                        @* --- CAJA EDITABLE PARA LA DESCRIPCIÓN --- *@
                         @if (incluirDescHistoria)
                         {
-                            <div class="fade-in mt-3">
+                            <div class="fade-in mt-2">
                                 <label style="color: #F8C545; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; display: block; font-family:'Oswald';">
-                                    <i class="fas fa-edit"></i> EDITAR TEXTO PARA LA IMAGEN:
+                                    <i class="fas fa-edit"></i> EDITAR DESCRIPCIÓN:
                                 </label>
-                                <textarea @bind="descripcionHistoria" 
-                                          class="feedback-textarea" 
-                                          style="min-height: 80px; font-size: 0.85rem;" 
-                                          placeholder="Acomoda el texto, borra lo que no sirva o da saltos de línea..."></textarea>
-                                <small style="color:#666; font-size:0.65rem; display:block; margin-top:5px;">
-                                    *Lo que dejes aquí será exactamente lo que se pinte en tu Historia.
-                                </small>
+                                <textarea @bind="descripcionHistoria" class="feedback-textarea" style="min-height: 70px; font-size: 0.8rem;" placeholder="Acomoda tu texto..."></textarea>
                             </div>
                         }
                     </div>
@@ -325,7 +330,7 @@
                     <div class="story-result-container fade-in">
                         <img src="@historiaGeneradaBase64" class="story-final-img" />
                         <p class="mt-3 text-center" style="color:#aaa; font-size:0.8rem;">
-                            ¡Lista! Mantén presionada la imagen para guardarla en tu galería o usa el botón de abajo.
+                            ¡Épico! Mantén presionada la imagen para guardarla o usa el botón de abajo.
                         </p>
                     </div>
                 }
@@ -335,8 +340,8 @@
                 @if (string.IsNullOrEmpty(historiaGeneradaBase64))
                 {
                     <button class="btn-cancel" @onclick="CerrarModalHistoria">CANCELAR</button>
-                    <button class="btn-save" @onclick="GenerarHistoriaApi" disabled="@(mapaHistoria == null || generandoHistoria)">
-                        @if(generandoHistoria) { <i class="fas fa-spinner fa-spin"></i> <span>DIBUJANDO...</span> }
+                    <button class="btn-save" @onclick="GenerarHistoriaApi" disabled="@(mapaHistoria == null || fotoAtleta == null || generandoHistoria)">
+                        @if(generandoHistoria) { <i class="fas fa-spinner fa-spin"></i> <span>LA IA PIENSA...</span> }
                         else { <i class="fas fa-magic"></i> <span>GENERAR</span> }
                     </button>
                 }
@@ -351,7 +356,6 @@
         </div>
     </div>
 }
-
 
 <style>
     /* --- ESTRUCTURA BASE Y NAVBAR --- */
@@ -475,24 +479,34 @@
     // Lógica del Día de Hoy
     private RunningLogs logDeHoy;
 
-    // Modal Normal
+    // Modal Normal (Feedback)
     private bool mostrarModal = false;
     private bool guardando = false;
     private RunningLogs logSeleccionado;
     private DateTime fechaSeleccionada;
-    private string descripcionHistoria = "";
 
     private List<FileResult> archivosEvidencia = new();
     private List<string> previewsEvidencia = new();
 
-    // Modal Historia
+    // ==========================================
+    // VARIABLES DEL CREADOR DE HISTORIAS (IA)
+    // ==========================================
     private bool mostrarModalHistoria = false;
     private bool generandoHistoria = false;
     private string historiaGeneradaBase64 = null;
+    
+    // Foto 1: Mapa Strava
     private FileResult mapaHistoria = null;
     private string previewMapaHistoria = null;
+    
+    // Foto 2: Selfie / Atleta (NUEVO)
+    private FileResult fotoAtleta = null;
+    private string previewFotoAtleta = null;
+
     private bool incluirTituloHistoria = true;
     private bool incluirDescHistoria = true;
+private string tituloHistoria = "";
+    private string descripcionHistoria = "";
 
     public class RunningLogs
     {
@@ -677,18 +691,21 @@
     private void Volver() => Nav.NavigateTo("/home");
 
     // =========================================================================
-    // MÉTODOS DEL CREADOR DE HISTORIAS
+    // MÉTODOS DEL CREADOR DE HISTORIAS EXTREMO (IA)
     // =========================================================================
 
     private void AbrirModalHistoria()
     {
         mapaHistoria = null;
         previewMapaHistoria = null;
+        fotoAtleta = null;
+        previewFotoAtleta = null;
         historiaGeneradaBase64 = null;
         incluirTituloHistoria = true;
         incluirDescHistoria = true;
         
-        // Cargamos la descripción original en la cajita para que la puedan editar
+        // --- CARGAMOS LOS DATOS ORIGINALES PARA QUE PUEDAN EDITARLOS ---
+        tituloHistoria = logDeHoy?.Titulo ?? "";
         descripcionHistoria = logDeHoy?.Descripcion ?? ""; 
         
         mostrarModalHistoria = true;
@@ -723,9 +740,34 @@
         catch { await App.Current.MainPage.DisplayAlert("Aviso", "No se pudo cargar el mapa.", "OK"); }
     }
 
-    private async Task GenerarHistoriaApi()
+    // --- NUEVO: MÉTODO PARA SELECCIONAR LA SELFIE ---
+    private async Task SeleccionarFotoAtleta()
     {
-        if (mapaHistoria == null || logDeHoy == null) return;
+        try
+        {
+            FileResult resultado = null;
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+            {
+                try { resultado = await MediaPicker.Default.PickPhotoAsync(); } catch { }
+            });
+
+            if (resultado != null)
+            {
+                fotoAtleta = resultado;
+                using var stream = await resultado.OpenReadAsync();
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                var base64 = Convert.ToBase64String(ms.ToArray());
+                previewFotoAtleta = $"data:image/jpeg;base64,{base64}";
+                StateHasChanged();
+            }
+        }
+        catch { await App.Current.MainPage.DisplayAlert("Aviso", "No se pudo cargar tu foto.", "OK"); }
+    }
+
+private async Task GenerarHistoriaApi()
+    {
+        if (mapaHistoria == null || fotoAtleta == null || logDeHoy == null) return;
 
         generandoHistoria = true;
         StateHasChanged();
@@ -734,23 +776,30 @@
         {
             using var form = new MultipartFormDataContent();
             form.Add(new StringContent(Sesion.Usuario.UsuarioID.ToString()), "UsuarioId");
-            form.Add(new StringContent(DateTime.Today.ToString("dd MMMM yyyy")), "Fecha");
+            form.Add(new StringContent(DateTime.Today.ToString("dd MMMM yyyy").ToUpper()), "Fecha");
             form.Add(new StringContent((logDeHoy.RPE ?? 0).ToString()), "RPE");
             
-            form.Add(new StringContent(incluirTituloHistoria.ToString().ToLower()), "IncluirTitulo");
-            form.Add(new StringContent(logDeHoy.Titulo ?? ""), "Titulo");
-            
-            form.Add(new StringContent(incluirDescHistoria.ToString().ToLower()), "IncluirDesc");
-            
-            // --- AQUÍ MANDAMOS LA DESCRIPCIÓN YA EDITADA POR EL USUARIO ---
-            form.Add(new StringContent(descripcionHistoria ?? ""), "Descripcion"); 
+           // --- AQUÍ MANDAMOS LO QUE EL USUARIO ESCRIBIÓ ---
+            // Si están vacíos, mandamos un espacio " " para que el Backend no llore
+            string tituloFinal = incluirTituloHistoria ? (string.IsNullOrWhiteSpace(tituloHistoria) ? " " : tituloHistoria) : " ";
+            string descFinal = incluirDescHistoria ? (string.IsNullOrWhiteSpace(descripcionHistoria) ? " " : descripcionHistoria) : " ";
+            string rpeString = string.IsNullOrWhiteSpace(logDeHoy.RPE.ToString()) ? "0" : logDeHoy.RPE.ToString();
 
-            var s = await mapaHistoria.OpenReadAsync();
-            var content = new StreamContent(s);
-            content.Headers.ContentType = new MediaTypeHeaderValue(mapaHistoria.ContentType);
-            form.Add(content, "mapaImagen", mapaHistoria.FileName);
+            form.Add(new StringContent(tituloFinal), "Titulo");
+            form.Add(new StringContent(descFinal), "Descripcion"); 
+            form.Add(new StringContent(rpeString), "RPE"); 
 
-            var resp = await Http.PostAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/generar-historia", form);
+            var sMap = await mapaHistoria.OpenReadAsync();
+            var contentMap = new StreamContent(sMap);
+            contentMap.Headers.ContentType = new MediaTypeHeaderValue(mapaHistoria.ContentType);
+            form.Add(contentMap, "mapaImagen", mapaHistoria.FileName);
+
+            var sFoto = await fotoAtleta.OpenReadAsync();
+            var contentFoto = new StreamContent(sFoto);
+            contentFoto.Headers.ContentType = new MediaTypeHeaderValue(fotoAtleta.ContentType);
+            form.Add(contentFoto, "fotoAtleta", fotoAtleta.FileName);
+
+            var resp = await Http.PostAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/generar-historia-extrema", form);
             
             if (resp.IsSuccessStatusCode)
             {
@@ -760,7 +809,7 @@
             else
             {
                 var error = await resp.Content.ReadAsStringAsync();
-                await App.Current.MainPage.DisplayAlert("Error", "No se pudo generar la historia: " + error, "OK");
+                await App.Current.MainPage.DisplayAlert("Error", "La IA no pudo procesar la imagen: " + error, "OK");
             }
         }
         catch (Exception ex)
@@ -780,16 +829,15 @@
         {
             if (string.IsNullOrEmpty(historiaGeneradaBase64)) return;
 
-            // Limpiamos el inicio del base64 para poder guardarlo
             var base64Data = historiaGeneradaBase64.Substring(historiaGeneradaBase64.IndexOf(",") + 1);
             var imageBytes = Convert.FromBase64String(base64Data);
             
-            var cacheFile = Path.Combine(FileSystem.CacheDirectory, "historia_entreno.jpg");
+            var cacheFile = Path.Combine(FileSystem.CacheDirectory, "historia_ia.jpg");
             File.WriteAllBytes(cacheFile, imageBytes);
 
             await Share.Default.RequestAsync(new ShareFileRequest
             {
-                Title = "Mi Entrenamiento",
+                Title = "Mi Entrenamiento IA",
                 File = new ShareFile(cacheFile)
             });
         }
