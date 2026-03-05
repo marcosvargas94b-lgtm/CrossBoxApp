@@ -208,175 +208,223 @@
             <h1>BIENVENIDO @(Sesion.Usuario?.Nombre?.ToUpper() ?? "ATLETA")</h1>
         </div>
 
-        <div class="cards-grid">
-            @if (EstaActivo("AGENDA"))
-            {
-                <div class="menu-card" @onclick="IrAAgenda">
-                    <i class="fas fa-dumbbell card-icon"></i>
-                    <h3>AGENDA TU CLASE</h3><p>Elige tu horario...</p>
-                </div>
-            }
-
-            @if (EstaActivo("WOD"))
-            {
-                <div class="menu-card" @onclick="IrAWodView">
-                    <i class="fas fa-chalkboard-teacher card-icon"></i>
-                    <h3>WOD</h3><p>@DateTime.Now.ToString("dd/MM/yyyy")</p>
-                </div>
-            }
-
-            @if (EstaActivo("PROGRESO"))
-            {
-                <div class="menu-card" @onclick="IrAProgreso">
-                    <i class="fas fa-clipboard-list card-icon"></i>
-                    <h3>PROGRESO</h3><p>Consulta tus datos</p>
-                </div>
-            }
-
-            @if (EstaActivo("FOTO"))
-            {
-                <div class="menu-card" @onclick="IrASeEntreno">
-                    <i class="fas fa-fire-alt card-icon" style="color:#d9534f;"></i>
-                    <h3>SE ENTRENÓ</h3><p>Sube tu foto</p>
-                </div>
-            }
-
-            @if (EstaActivo("SOCIAL"))
-            {
-                <div class="menu-card" @onclick="IrACompaneros">
-                    <i class="fas fa-users card-icon" style="color:#00BFFF;"></i>
-                    <h3>¡HEY! HOLA</h3><p>Compañeros y MATCHES</p>
-                </div>
-            }
-
-            @if (EstaActivo("RANKING"))
-            {
-                <div class="menu-card" @onclick="IrARanking">
-                    <i class="fas fa-trophy card-icon" style="color:#FFD700;"></i>
-                    <h3>LIKES</h3><p>Líderes</p>
-                </div>
-            }
-
-            @if (EstaActivo("LEADERBOARD_HOY"))
-            {
-                <div class="menu-card yellow-highlight" @onclick='() => Nav.NavigateTo("/leaderboard-hoy")'>
-                    <i class="fas fa-trophy card-icon"></i>
-                    <h3>RESULTADOS</h3>
-                    <p>Leaderboard de Hoy</p>
-                    <div class="live-badge">HOY</div>
-                </div>
-            }
-            @if (EstaActivo("RUNNING") && tieneRunning)
-            {
-                <div class="menu-card" @onclick='() => Nav.NavigateTo("/mi-running")'>
-                    <i class="fas fa-running card-icon"></i>
-                    <h3>MI PLAN RUNNING</h3>
-                    <p>Bitácora</p>
-                </div>
-            }
-
-            @if (tieneRutina)
-            {
-                <div class="menu-card" @onclick='() => Nav.NavigateTo("/rutina-cliente")'>
-                    <i class="fas fa-dumbbell card-icon"></i>
-                    <h3>RUTINA PRO</h3>
-                    <p>Tu plan personalizado</p>
-                </div>
-            }
-
-            @if (EstaActivo("IAFUERZA"))
-            {
-                <div class="menu-card yellow-highlight" @onclick='() => Nav.NavigateTo("/rutina-ia")'>
-                    <i class="fas fa-robot card-icon"></i>
-                    <h3>ENTRENADOR IA</h3>
-                    <p>Crea tu rutina perfecta</p>
-                    <div class="live-badge" style="background-color: black; color: #F8C545;">NUEVO</div>
-                </div>
-            }
-
-            @if (EstaActivo("PROPOSITOS"))
-            {
-                <div class="menu-card" @onclick='() => Nav.NavigateTo("/mis-propositos")'>
-                    <i class="fas fa-bullseye card-icon"></i>
-                    <h3>MIS RETOS</h3>
-                    <p>Propósitos @DateTime.Now.Year</p>
-                </div>
-            }
-
-            @if (EstaActivo("QRCLASE"))
-            {
-                <div class="menu-card yellow-highlight" @onclick="AbrirEscanerParaEntrar" style="position: relative;">
-                    @if (abriendoCamara)
-                    {
-                        <div class="spinner-border text-dark" role="status" style="width: 3rem; height: 3rem;"></div>
-                        <p style="margin-top: 10px; font-weight: bold;">Abriendo...</p>
-                    }
-                    else
-                    {
-                        <i class="fas fa-qrcode card-icon"></i>
-                        <h3>ENTRAR A CLASE</h3>
-                        <p>Escanear Pantalla</p>
-                    }
-                </div>
-            }
-            @if (EstaActivo("RACHA"))
-            {
-                <div class="menu-card" @onclick='() => Nav.NavigateTo("/ranking-asistencia")'>
-                    <i class="fas fa-calendar-check card-icon" style="color:#FFF;"></i>
-                    <h3>ASISTENCIA</h3>
-                    <p>Top Anual @DateTime.Now.Year</p>
-                </div>
-            }
-
-                  @if (EstaActivo("CALCULADORA"))
-            {
-                <div class="menu-card" @onclick='() => Nav.NavigateTo("/calculadora-rm")'>
-                    <i class="fas fa-calculator card-icon" style="color: black;"></i>
-                <h3>CALCULAR %</h3>
-                <p>Discos exactos</p>
+        @if (cargandoConfiguracion)
+        {
+            <div class="text-center mt-5 fade-in">
+                <div class="spinner-border text-warning" style="width: 3rem; height: 3rem; border-width: 0.2em;" role="status"></div>
+                <p class="mt-3 text-muted" style="font-family: 'Oswald'; letter-spacing: 2px;">PREPARANDO TU ENTORNO...</p>
             </div>
-            }
-                     @if (EstaActivo("TABATA"))
-            {
-                <div class="menu-card" @onclick='() => Nav.NavigateTo("/creador-tabata")'>
-                    <i class="fas fa-fire card-icon" style="color: #ff4d4d;"></i>
-                <h3>CREADOR TÁBATA</h3>
-                <p>Ruleta 20/10</p>
-            </div>}
+        }
+        else
+        {
 
-            <div class="menu-card yellow-highlight" @onclick='() => Nav.NavigateTo("/credencial")'>
-                <i class="fas fa-id-card card-icon" style="color: black;"></i>
-                <h3>MI CREDENCIAL</h3>
-                <p>Identificación Digital</p>
-            </div>
+       @*      @if (Sesion.Usuario?.TipoLugar == "Gimnasio")
+            { *@
+            <div class="recovery-section fade-in">
+                @if (resumenRecuperacion != null)
+                {
+                    <div class="card-recuperacion-master" @onclick='() => Nav.NavigateTo("/detalle-recuperacion")'>
+                        <div class="info-content">
+                            <span class="label-top">ESTADO DE RECUPERACIÓN</span>
+                            <h2 class="display-porcentaje">@resumenRecuperacion.DisponibilidadGlobal<small>%</small></h2>
+                            <p class="status-desc">@resumenRecuperacion.Mensaje.ToUpper()</p>
+                            <div class="btn-detalles">DETALLES <i class="fas fa-chevron-right"></i></div>
+                        </div>
 
-            @if (EstaActivo("MEDALLERO"))
-            {
-                <div class="menu-card medallero-card" @onclick='() => Nav.NavigateTo("/medallero")'>
-                    <div class="sparkle-container">
-                        <div class="sparkle s1"></div>
-                        <div class="sparkle s2"></div>
-                        <div class="sparkle s3"></div>
+                        <div class="visual-content">
+                            <MapaCalor Datos="resumenRecuperacion.Musculos" />
+                        </div>
+
+                        <div class="bg-blur-glow"></div>
                     </div>
-                    <i class="fas fa-medal card-icon trophy-icon"></i>
-                    <h3 class="trophy-title">MEDALLERO</h3>
-                    <p style="color:white">Observa tu esfuerzo</p>
+                }
+            </div>
+            @* } *@
+
+            <div class="cards-grid fade-in">
+                @if (EstaActivo("AGENDA"))
+                {
+                    <div class="menu-card" @onclick="IrAAgenda">
+                        <i class="fas fa-dumbbell card-icon"></i>
+                        <h3>AGENDA TU CLASE</h3><p>Elige tu horario...</p>
+                    </div>
+                }
+
+               @*  @if (Sesion.Usuario?.TipoLugar == "Gimnasio")
+                { *@
+                    <div class="menu-card gym-card" @onclick='() => Nav.NavigateTo("/rutina-semanal")'>
+                        <div class="sparkle-container">
+                            <div class="sparkle s1"></div>
+                            <div class="sparkle s2"></div>
+                        </div>
+                        <i class="fas fa-calendar card-icon gym-icon"></i>
+                        <h3 class="gym-title">RUTINA SEMANAL</h3>
+                        <p style="color:dark;">Planifica y ejecuta tus días</p>
+                    </div>
+                @* } *@
+
+                @if (EstaActivo("WOD"))
+                {
+                    <div class="menu-card" @onclick="IrAWodView">
+                        <i class="fas fa-chalkboard-teacher card-icon"></i>
+                        <h3>WOD</h3><p>@DateTime.Now.ToString("dd/MM/yyyy")</p>
+                    </div>
+                }
+
+                @if (EstaActivo("PROGRESO"))
+                {
+                    <div class="menu-card" @onclick="IrAProgreso">
+                        <i class="fas fa-clipboard-list card-icon"></i>
+                        <h3>PROGRESO</h3><p>Consulta tus datos</p>
+                    </div>
+                }
+
+                @if (EstaActivo("FOTO"))
+                {
+                    <div class="menu-card" @onclick="IrASeEntreno">
+                        <i class="fas fa-fire-alt card-icon" style="color:#d9534f;"></i>
+                        <h3>SE ENTRENÓ</h3><p>Sube tu foto</p>
+                    </div>
+                }
+
+                @if (EstaActivo("SOCIAL"))
+                {
+                    <div class="menu-card" @onclick="IrACompaneros">
+                        <i class="fas fa-users card-icon" style="color:#00BFFF;"></i>
+                        <h3>¡HEY! HOLA</h3><p>Compañeros y MATCHES</p>
+                    </div>
+                }
+
+                @if (EstaActivo("RANKING"))
+                {
+                    <div class="menu-card" @onclick="IrARanking">
+                        <i class="fas fa-trophy card-icon" style="color:#FFD700;"></i>
+                        <h3>LIKES</h3><p>Líderes</p>
+                    </div>
+                }
+
+                @if (EstaActivo("LEADERBOARD_HOY"))
+                {
+                    <div class="menu-card yellow-highlight" @onclick='() => Nav.NavigateTo("/leaderboard-hoy")'>
+                        <i class="fas fa-trophy card-icon"></i>
+                        <h3>RESULTADOS</h3>
+                        <p>Leaderboard de Hoy</p>
+                        <div class="live-badge">HOY</div>
+                    </div>
+                }
+
+                @if (EstaActivo("RUNNING") && tieneRunning)
+                {
+                    <div class="menu-card" @onclick='() => Nav.NavigateTo("/mi-running")'>
+                        <i class="fas fa-running card-icon"></i>
+                        <h3>MI PLAN RUNNING</h3>
+                        <p>Bitácora</p>
+                    </div>
+                }
+
+                @if (tieneRutina)
+                {
+                    <div class="menu-card" @onclick='() => Nav.NavigateTo("/rutina-cliente")'>
+                        <i class="fas fa-dumbbell card-icon"></i>
+                        <h3>RUTINA PRO</h3>
+                        <p>Tu plan personalizado</p>
+                    </div>
+                }
+
+                @if (EstaActivo("IAFUERZA"))
+                {
+                    <div class="menu-card yellow-highlight" @onclick='() => Nav.NavigateTo("/rutina-ia")'>
+                        <i class="fas fa-robot card-icon"></i>
+                        <h3>ENTRENADOR IA</h3>
+                        <p>Crea tu rutina perfecta</p>
+                        <div class="live-badge" style="background-color: black; color: #F8C545;">NUEVO</div>
+                    </div>
+                }
+
+                @if (EstaActivo("PROPOSITOS"))
+                {
+                    <div class="menu-card" @onclick='() => Nav.NavigateTo("/mis-propositos")'>
+                        <i class="fas fa-bullseye card-icon"></i>
+                        <h3>MIS RETOS</h3>
+                        <p>Propósitos @DateTime.Now.Year</p>
+                    </div>
+                }
+
+                @if (EstaActivo("QRCLASE"))
+                {
+                    <div class="menu-card yellow-highlight" @onclick="AbrirEscanerParaEntrar" style="position: relative;">
+                        @if (abriendoCamara)
+                        {
+                            <div class="spinner-border text-dark" role="status" style="width: 3rem; height: 3rem;"></div>
+                            <p style="margin-top: 10px; font-weight: bold;">Abriendo...</p>
+                        }
+                        else
+                        {
+                            <i class="fas fa-qrcode card-icon"></i>
+                            <h3>ENTRAR A CLASE</h3>
+                            <p>Escanear Pantalla</p>
+                        }
+                    </div>
+                }
+
+                @if (EstaActivo("RACHA"))
+                {
+                    <div class="menu-card" @onclick='() => Nav.NavigateTo("/ranking-asistencia")'>
+                        <i class="fas fa-calendar-check card-icon" style="color:#FFF;"></i>
+                        <h3>ASISTENCIA</h3>
+                        <p>Top Anual @DateTime.Now.Year</p>
+                    </div>
+                }
+
+                @if (EstaActivo("CALCULADORA"))
+                {
+                    <div class="menu-card" @onclick='() => Nav.NavigateTo("/calculadora-rm")'>
+                        <i class="fas fa-calculator card-icon" style="color: black;"></i>
+                        <h3>CALCULAR %</h3>
+                        <p>Discos exactos</p>
+                    </div>
+                }
+
+                @if (EstaActivo("TABATA"))
+                {
+                    <div class="menu-card" @onclick='() => Nav.NavigateTo("/creador-tabata")'>
+                        <i class="fas fa-fire card-icon" style="color: #ff4d4d;"></i>
+                        <h3>CREADOR TÁBATA</h3>
+                        <p>Ruleta 20/10</p>
+                    </div>
+                }
+
+                <div class="menu-card yellow-highlight" @onclick='() => Nav.NavigateTo("/credencial")'>
+                    <i class="fas fa-id-card card-icon" style="color: black;"></i>
+                    <h3>MI CREDENCIAL</h3>
+                    <p>Identificación Digital</p>
                 </div>
 
-             
-            }
-             @if (EstaActivo("PLAYERCARD"))
-            {
-                   @* TARJETA FICHA DE ATLETA *@
-                <div class="menu-card ficha-card" @onclick='() => Nav.NavigateTo("/ficha-atleta")'>
-                    <div class="holo-glare"></div> <i class="fas fa-id-badge card-icon player-icon"></i>
-                    <h3 class="player-title">MI FICHA</h3>
-                    <p style="color:white">Player Card Oficial</p>
-                </div>                
-            }
+                @if (EstaActivo("MEDALLERO"))
+                {
+                    <div class="menu-card medallero-card" @onclick="IrAMedallero">
+                        <div class="sparkle-container">
+                            <div class="sparkle s1"></div>
+                            <div class="sparkle s2"></div>
+                            <div class="sparkle s3"></div>
+                        </div>
+                        <i class="fas fa-medal card-icon trophy-icon"></i>
+                        <h3 class="trophy-title">MEDALLERO</h3>
+                        <p style="color:white">Observa tu esfuerzo</p>
+                    </div>
+                }
 
-         
-        </div>
+                @if (EstaActivo("PLAYERCARD"))
+                {
+                    <div class="menu-card ficha-card" @onclick="IrAMiFicha">
+                        <div class="holo-glare"></div>
+                        <i class="fas fa-id-badge card-icon player-icon"></i>
+                        <h3 class="player-title">MI FICHA</h3>
+                        <p style="color:white">Player Card Oficial</p>
+                    </div>
+                }
+            </div>
+        }
 
         <div class="footer-brand">@NombreBox</div>
        
@@ -524,7 +572,12 @@
         <div class="modal-content custom-modal modal-wod">
 
             <div class="modal-header">
-                <h5 style="margin:0; color:#F8C545; font-family:'Oswald'">PROGRAMACIÓN WOD</h5>
+                <h5 style="margin:0; color:#F8C545; font-family:'Oswald'">
+                    PROGRAMACIÓN WOD
+                    <span style="font-size:0.7rem; color:#aaa; margin-left:10px;">
+                        @(modoTextoLibre ? "(TEXTO LIBRE)" : "(POR BLOQUES)")
+                    </span>
+                </h5>
                 <button class="btn-close-custom" @onclick="() => mostrarModalWod = false"><i class="fas fa-times"></i></button>
             </div>
 
@@ -538,10 +591,10 @@
                 {
                     <div class="text-center py-5">
                         <div class="spinner-border text-warning" role="status"></div>
-                        <p class="mt-2 text-muted">Verificando...</p>
+                        <p class="mt-2 text-muted">Cargando...</p>
                     </div>
                 }
-                else if (wodExiste)
+                else if (wodExiste && !editandoWod)
                 {
                     <div class="alert-conflict fade-in">
                         <i class="fas fa-exclamation-triangle conflict-icon"></i>
@@ -573,52 +626,52 @@
                                     }
                                 </select>
 
-                                @foreach (var ejercicio in bloque.Ejercicios)
+                                @* NUEVO CAMPO: TIEMPO / FORMATO *@
+                                <input type="text" @bind="bloque.TiempoFormato" class="form-control input-dark mb-3" placeholder="Tiempo / Formato (Ej: AMRAP 15 MIN, 8x1min)" style="border-color: #555;" />
+
+                                @if (modoTextoLibre)
                                 {
-                                    <div class="ejercicio-row fade-in">
-
-                                        @* 1. REPS *@
-                                        <div class="input-group-reps">
-                                            <input type="text" @bind="ejercicio.Reps" class="form-control input-dark text-center" placeholder="Reps" />
-                                        </div>
-
-                                        @* 2. NOMBRE *@
-                                        <div class="input-group-name">
-                                            <input type="text" @bind="ejercicio.NombreBase" class="form-control input-dark" placeholder="Ejercicio" />
-                                        </div>
-
-                                        @* 3. BOTÓN PESOS (ABRE EL BOTTOM SHEET) *@
-                                        <div>
-                                            <button class="btn-icon weight-btn @(ejercicio.TienePesos ? "active" : "")"
-                                                    @onclick="() => AbrirEditorPeso(ejercicio)">
-                                                <i class="fas fa-dumbbell"></i>
-                                                @if (ejercicio.TienePesos)
-                                                {
-                                                    <span class="dot-indicator"></span>
-                                                }
+                                    @* MODO TEXTO LIBRE *@
+                                    <textarea @bind="bloque.TextoLibre" class="form-control input-dark" rows="5" placeholder="Escribe aquí los ejercicios libremente..."></textarea>
+                                }
+                                else
+                                {
+                                    @* MODO NORMAL (FILAS) *@
+                                    @foreach (var ejercicio in bloque.Ejercicios)
+                                    {
+                                        <div class="ejercicio-row fade-in">
+                                            <div class="input-group-reps">
+                                                <input type="text" @bind="ejercicio.Reps" class="form-control input-dark text-center" placeholder="Reps" />
+                                            </div>
+                                            <div class="input-group-name">
+                                                <input type="text" @bind="ejercicio.NombreBase" class="form-control input-dark" placeholder="Ejercicio" />
+                                            </div>
+                                            <div>
+                                                <button class="btn-icon weight-btn @(ejercicio.TienePesos ? "active" : "")" @onclick="() => AbrirEditorPeso(ejercicio)">
+                                                    <i class="fas fa-dumbbell"></i>
+                                                    @if (ejercicio.TienePesos)
+                                                    {
+                                                        <span class="dot-indicator"></span>
+                                                    }
+                                                </button>
+                                            </div>
+                                            <button class="btn-icon delete-btn" @onclick="() => EliminarEjercicio(bloque, ejercicio)">
+                                                <i class="fas fa-times"></i>
                                             </button>
                                         </div>
-
-                                        @* 4. ELIMINAR *@
-                                        <button class="btn-icon delete-btn" @onclick="() => EliminarEjercicio(bloque, ejercicio)">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-
-                                    </div>
+                                    }
+                                    <button class="btn-add-ejercicio" @onclick="() => AgregarEjercicio(bloque)">
+                                        <i class="fas fa-plus"></i> Ejercicio
+                                    </button>
                                 }
-
-                                <button class="btn-add-ejercicio" @onclick="() => AgregarEjercicio(bloque)">
-                                    <i class="fas fa-plus"></i> Ejercicio
-                                </button>
                             </div>
                         }
-
                         <button class="btn btn-outline-warning w-100 py-2" @onclick="AgregarBloque">+ Bloque</button>
                     </div>
                 }
             </div>
 
-            @if (!wodExiste && !cargandoOperacionWod)
+            @if ((!wodExiste || editandoWod) && !cargandoOperacionWod)
             {
                 <div class="modal-footer">
                     <button class="btn btn-warning w-100" style="background-color:#F8C545; font-weight:bold;" @onclick="GuardarProgramacion">GUARDAR WOD</button>
@@ -1066,10 +1119,99 @@
         20% { left: 200%; } /* Pasa rápido */
         100% { left: 200%; } /* Espera */
     }
+
+    .recovery-section {
+        width: 100%;
+        max-width: 500px;
+        padding: 0 10px;
+        margin-bottom: 25px; /* SEPARA LA TARJETA DE LOS BOTONES DE ABAJO */
+    }
+
+    .card-recuperacion-master {
+        background: rgba(255, 255, 255, 0.05); /* EFECTO TRASLÚCIDO */
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 28px;
+        display: flex;
+        padding: 20px 15px; /* Menos padding horizontal para dar más espacio al contenido */
+        height: 220px; /* Hacemos la tarjeta un poco más alta */
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        cursor: pointer;
+    }
+
+    /* TEXTOS (Lado Izquierdo) */
+    .info-content {
+        flex: 1; /* Ocupa menos espacio */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        z-index: 5;
+    }
+
+    .label-top {
+        font-family: 'Oswald';
+        color: #F8C545;
+        font-size: 0.75rem;
+        letter-spacing: 2px;
+        font-weight: bold;
+        line-height: 1.1;
+    }
+
+    .display-porcentaje {
+        font-family: 'Oswald';
+        font-size: 3.5rem; /* Letra un poco más pequeña para no robar atención */
+        color: white;
+        margin: 5px 0;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    .status-desc {
+        color: white;
+        font-weight: 800;
+        font-size: 0.8rem;
+        line-height: 1.2;
+        margin-bottom: 10px;
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+    }
+
+    .btn-detalles {
+        font-size: 0.65rem;
+        color: #F8C545;
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+
+    /* EL CUERPO (Lado Derecho - PROTAGONISTA) */
+    .visual-content {
+        flex: 1.8; /* Ocupa casi el doble de espacio que el texto */
+        height: 120%; /* Forzamos a que sea más alto que la tarjeta para que se vea enorme */
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        z-index: 5;
+        transform: translateY(-5%); /* Lo subimos un poco para centrarlo */
+    }
+
+    .bg-blur-glow {
+        position: absolute;
+        top: -20%;
+        right: -10%;
+        width: 180px;
+        height: 180px;
+        background: radial-gradient(circle, rgba(248, 197, 69, 0.2) 0%, transparent 70%);
+        z-index: 1;
+    }
 </style>
 
 @code {
 
+    private bool modoTextoLibre = false;
+    private bool editandoWod = false;
+    private bool cargandoConfiguracion = true;
     // --- CLASES AUXILIARES ---
     public class EjercicioEditorViewModel
     {
@@ -1083,7 +1225,9 @@
     public class BloqueEditorViewModel
     {
         public Guid SegmentoClaseID { get; set; }
-        public string NombreSegmento { get; set; } 
+        public string NombreSegmento { get; set; }
+        public string TiempoFormato { get; set; } // NUEVO
+        public string TextoLibre { get; set; }    // NUEVO
         public List<EjercicioEditorViewModel> Ejercicios { get; set; } = new List<EjercicioEditorViewModel>();
     }
 
@@ -1150,6 +1294,8 @@
     private string nuevoHorarioTexto = "";
     private List<HorarioDto> listaHorariosAdmin;
     public class HorarioDto { public Guid HorarioID { get; set; } public string Descripcion { get; set; } public Guid BoxID { get; set; } }
+    private EstadoRecuperacionDto resumenRecuperacion;
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -1178,7 +1324,32 @@
             catch { boxTieneMP = false; }
         }
         try { listaPlanes = await Http.GetFromJsonAsync<List<PlanDto>>("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/planes"); } catch { }
+
+        // if (Sesion.Usuario != null && Sesion.Usuario.TipoLugar == "Gimnasio")
+        // {
+        await CargarRecuperacion();
+        // }
+
+        cargandoConfiguracion = false;
     }
+
+    private async Task CargarRecuperacion()
+    {
+        try
+        {
+            // Cambia la URL por la de tu API real
+            var response = await Http.GetFromJsonAsync<EstadoRecuperacionDto>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/recuperacion/{Sesion.Usuario.UsuarioID}");
+            if (response != null)
+            {
+                resumenRecuperacion = response;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al cargar recuperación: " + ex.Message);
+        }
+    }
+
 
     // --- FUNCIONES MENÚS Y OVERLAY ---
     private void CerrarTodosLosMenus()
@@ -1211,6 +1382,20 @@
     private async void AbrirModalWod()
     {
         CerrarTodosLosMenus();
+
+        // 1. Preguntar el modo ANTES de abrir el modal
+        string accion = await App.Current.MainPage.DisplayActionSheet(
+            "¿Cómo deseas crear el WOD?",
+            "Cancelar",
+            null,
+            "Modo Normal (Por Bloques)",
+            "Modo Texto Libre");
+
+        if (accion == "Cancelar" || string.IsNullOrEmpty(accion)) return;
+
+        modoTextoLibre = (accion == "Modo Texto Libre");
+        editandoWod = false;
+
         nuevoWod = new ProgramacionWodViewModel { FechaProgramacion = DateTime.Today };
         mostrarModalWod = true;
         await VerificarWodExistente(DateTime.Today);
@@ -1225,9 +1410,41 @@
         }
     }
 
+    private void IrAMiFicha()
+    {
+        string tipoLugar = Sesion.Usuario?.TipoLugar ?? "";
+
+        if (tipoLugar == "Running")
+        {
+            Nav.NavigateTo("/ficha-running");
+        }
+        else if (tipoLugar == "Funcional" || tipoLugar == "Calistenia")
+        {
+            Nav.NavigateTo("/ficha-funcional");
+        }
+        else
+        {
+            Nav.NavigateTo("/ficha-atleta");
+        }
+    }
+
+    private void IrAMedallero()
+    {
+    
+        if (Sesion.Usuario?.TipoLugar == "Funcional" || Sesion.Usuario?.TipoLugar == "Calistenia" )
+        {        
+            Nav.NavigateTo("/medallero-funcional");
+        }
+        else
+        {
+            // Para Crossfit, Funcional, Gimnasio y Calistenia, usamos la original
+            Nav.NavigateTo("/medallero");
+        }
+    }
+
     private async Task VerificarWodExistente(DateTime fecha)
     {
-        cargandoOperacionWod = true; wodExiste = false; StateHasChanged();
+        cargandoOperacionWod = true; wodExiste = false; editandoWod = false; StateHasChanged();
         try
         {
             var fechaStr = fecha.ToString("yyyy-MM-dd");
@@ -1258,30 +1475,50 @@
         try
         {
             var fechaStr = nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd");
+            // Aquí debes asegurarte de que tu clase DTO del frontend coincida con la que manda la API
             var wodExistente = await Http.GetFromJsonAsync<ProgramacionWodViewModel>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/obtener/{Sesion.Usuario.BoxID}/{fechaStr}");
 
-            if (wodExistente != null)
+            if (wodExistente != null && wodExistente.Bloques.Any())
             {
                 nuevoWod = wodExistente;
-                wodExiste = false;
+                editandoWod = true; // Mostramos el form
+
+                // DETECTAR EL MODO DEL WOD EXISTENTE (Basta con ver el primer bloque)
+                // Nota: Asegúrate de tener EsTextoLibre en tu clase DTO de C# en el frontend
+                // Si no lo mapeaste, lo puedes deducir si el Ejercicio solo tiene Descripción y Reps está vacío
 
                 listaBloquesEditor = new List<BloqueEditorViewModel>();
+
+                // Determinamos el modo global basados en el primer bloque
+                var primerBloque = wodExistente.Bloques.First();
+                // (Opcional) Si agregaste EsTextoLibre al ViewModel, úsalo. Si no, lo deducimos:
+                modoTextoLibre = string.IsNullOrEmpty(primerBloque.Ejercicios.First().PesoRepeticiones) && primerBloque.Ejercicios.Count == 1;
+
                 foreach (var b in wodExistente.Bloques)
                 {
                     var bloqueEdit = new BloqueEditorViewModel
                     {
                         SegmentoClaseID = b.SegmentoClaseID,
                         NombreSegmento = b.NombreSegmento,
+                        // Suponiendo que agregaste TiempoFormato a tu DTO BloqueWodViewModel en el frontend:
+                        TiempoFormato = b.TiempoFormato,
                         Ejercicios = new List<EjercicioEditorViewModel>()
                     };
 
-                    foreach (var ej in b.Ejercicios)
+                    if (modoTextoLibre)
                     {
-                        bloqueEdit.Ejercicios.Add(new EjercicioEditorViewModel
+                        bloqueEdit.TextoLibre = b.Ejercicios.FirstOrDefault()?.Descripcion;
+                    }
+                    else
+                    {
+                        foreach (var ej in b.Ejercicios)
                         {
-                            Reps = ej.PesoRepeticiones,
-                            NombreBase = ej.Descripcion
-                        });
+                            bloqueEdit.Ejercicios.Add(new EjercicioEditorViewModel
+                            {
+                                Reps = ej.PesoRepeticiones,
+                                NombreBase = ej.Descripcion
+                            });
+                        }
                     }
                     listaBloquesEditor.Add(bloqueEdit);
                 }
@@ -1332,7 +1569,12 @@
     }
 
     // --- LOGICA EDITOR ---
-    private void AgregarBloque() => listaBloquesEditor.Add(new BloqueEditorViewModel { Ejercicios = new List<EjercicioEditorViewModel> { new EjercicioEditorViewModel() } });
+    private void AgregarBloque()
+    {
+        var nb = new BloqueEditorViewModel();
+        if (!modoTextoLibre) nb.Ejercicios.Add(new EjercicioEditorViewModel());
+        listaBloquesEditor.Add(nb);
+    }
     private void EliminarBloque(BloqueEditorViewModel b) => listaBloquesEditor.Remove(b);
     private void AgregarEjercicio(BloqueEditorViewModel b) => b.Ejercicios.Add(new EjercicioEditorViewModel());
     private void EliminarEjercicio(BloqueEditorViewModel b, EjercicioEditorViewModel e) => b.Ejercicios.Remove(e);
@@ -1351,122 +1593,101 @@
 
     private async Task GuardarProgramacion()
     {
-        // 1. Validar que existan bloques visuales
         if (listaBloquesEditor.Count == 0)
         {
             await App.Current.MainPage.DisplayAlert("Faltan datos", "Agrega al menos un bloque para el WOD.", "Entendido");
             return;
         }
 
-        // 2. Validar que todos los bloques tengan un segmento seleccionado
         if (listaBloquesEditor.Any(b => b.SegmentoClaseID == Guid.Empty))
         {
-            await App.Current.MainPage.DisplayAlert("Faltan datos", "Por favor, selecciona el TIPO DE SEGMENTO (Ej: Calentamiento, WOD, Fuerza) en todos los bloques.", "Entendido");
+            await App.Current.MainPage.DisplayAlert("Faltan datos", "Por favor, selecciona el TIPO DE SEGMENTO en todos los bloques.", "Entendido");
             return;
         }
 
-        // 3. Construir el objeto para la API y validar ejercicios uno por uno
-        nuevoWod.Bloques = new List<BloqueWodViewModel>();
+        // Construir JSON (Asegúrate de que tus clases ViewModel de C# tengan TiempoFormato y EsTextoLibre)
+        var wodPayload = new
+        {
+            BoxID = Sesion.Usuario.BoxID,
+            FechaProgramacion = nuevoWod.FechaProgramacion,
+            Bloques = new List<object>()
+        };
 
         foreach (var bEdit in listaBloquesEditor)
         {
-            // Obtenemos el nombre del segmento para que el error sea específico
             var infoSegmento = listaSegmentos.FirstOrDefault(s => s.Id == bEdit.SegmentoClaseID);
             string nombreSeg = infoSegmento != null ? infoSegmento.Nombre : "un bloque";
 
-            var bloqueApi = new BloqueWodViewModel
+            var bloqueApi = new
             {
                 SegmentoClaseID = bEdit.SegmentoClaseID,
                 NombreSegmento = nombreSeg,
-                Ejercicios = new List<EjercicioViewModel>()
+                TiempoFormato = bEdit.TiempoFormato ?? "",
+                EsTextoLibre = modoTextoLibre,
+                Ejercicios = new List<object>()
             };
 
-            foreach (var ejEdit in bEdit.Ejercicios)
+            if (modoTextoLibre)
             {
-                bool tieneReps = !string.IsNullOrWhiteSpace(ejEdit.Reps);
-                bool tieneNombre = !string.IsNullOrWhiteSpace(ejEdit.NombreBase);
+                if (string.IsNullOrWhiteSpace(bEdit.TextoLibre)) continue;
 
-                // CASO A: Fila totalmente vacía -> La ignoramos (no se guarda, no da error)
-                if (!tieneReps && !tieneNombre)
+                bloqueApi.Ejercicios.Add(new
                 {
-                    continue;
-                }
-
-                // CASO B: Tiene Reps pero no Nombre -> ERROR AMIGABLE
-                if (tieneReps && !tieneNombre)
-                {
-                    await App.Current.MainPage.DisplayAlert("Información Incompleta",
-                        $"En el bloque de '{nombreSeg}', escribiste las repeticiones ('{ejEdit.Reps}') pero falta el NOMBRE del ejercicio.",
-                        "Corregir");
-                    return; // Detenemos todo para que el usuario corrija
-                }
-
-                // CASO C: Tiene Nombre pero no Reps -> ERROR AMIGABLE
-                if (!tieneReps && tieneNombre)
-                {
-                    await App.Current.MainPage.DisplayAlert("Información Incompleta",
-                        $"En el bloque de '{nombreSeg}', escribiste el ejercicio '{ejEdit.NombreBase}' pero faltan las REPETICIONES (o tiempo).",
-                        "Corregir");
-                    return; // Detenemos todo
-                }
-
-                // CASO D: Todo correcto -> Agregamos al envío
-                string descFinal = ejEdit.NombreBase;
-                if (ejEdit.TienePesos)
-                {
-                    descFinal += $" ({ejEdit.PesoH}/{ejEdit.PesoM})";
-                }
-
-                bloqueApi.Ejercicios.Add(new EjercicioViewModel
-                {
-                    PesoRepeticiones = ejEdit.Reps,
-                    Descripcion = descFinal
+                    PesoRepeticiones = "",
+                    Descripcion = bEdit.TextoLibre
                 });
             }
+            else
+            {
+                foreach (var ejEdit in bEdit.Ejercicios)
+                {
+                    bool tieneReps = !string.IsNullOrWhiteSpace(ejEdit.Reps);
+                    bool tieneNombre = !string.IsNullOrWhiteSpace(ejEdit.NombreBase);
 
-            // 4. Validar que el bloque no se haya quedado vacío (ej. el usuario agregó un bloque pero dejó todas las filas en blanco)
+                    if (!tieneReps && !tieneNombre) continue;
+
+                    if (tieneReps && !tieneNombre) { await App.Current.MainPage.DisplayAlert("Error", $"En '{nombreSeg}', pusiste repeticiones pero falta el nombre del ejercicio.", "Corregir"); return; }
+                    if (!tieneReps && tieneNombre) { await App.Current.MainPage.DisplayAlert("Error", $"En '{nombreSeg}', falta poner las repeticiones.", "Corregir"); return; }
+
+                    string descFinal = ejEdit.NombreBase;
+                    if (ejEdit.TienePesos) descFinal += $" ({ejEdit.PesoH}/{ejEdit.PesoM})";
+
+                    bloqueApi.Ejercicios.Add(new { PesoRepeticiones = ejEdit.Reps, Descripcion = descFinal });
+                }
+            }
+
             if (bloqueApi.Ejercicios.Count == 0)
             {
-                await App.Current.MainPage.DisplayAlert("Bloque Vacío",
-                    $"El bloque '{nombreSeg}' no tiene ejercicios válidos. Agrégale ejercicios o elimina el bloque.",
-                    "Entendido");
+                await App.Current.MainPage.DisplayAlert("Bloque Vacío", $"El bloque '{nombreSeg}' está vacío.", "Entendido");
                 return;
             }
 
-            nuevoWod.Bloques.Add(bloqueApi);
+            wodPayload.Bloques.Add(bloqueApi);
         }
 
-        // 5. Si pasamos todas las validaciones, enviamos al servidor
         cargandoOperacionWod = true;
         StateHasChanged();
 
         try
         {
-            nuevoWod.BoxID = Sesion.Usuario.BoxID;
-            var r = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/guardar", nuevoWod);
+            // Usamos objeto anónimo para evadir DTOs incompletos
+            var r = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/guardar", wodPayload);
 
             if (r.IsSuccessStatusCode)
             {
                 mostrarModalWod = false;
-                await App.Current.MainPage.DisplayAlert("¡Éxito!", "El WOD se ha guardado correctamente.", "OK");
-
-                // Resetear formulario
-                nuevoWod = new ProgramacionWodViewModel { FechaProgramacion = DateTime.Today };
-                listaBloquesEditor = new List<BloqueEditorViewModel>();
-                AgregarBloque();
+                editandoWod = false;
+                await App.Current.MainPage.DisplayAlert("¡Éxito!", "WOD guardado correctamente.", "OK");
             }
             else
             {
-                // Error controlado del servidor (ej. validación de negocio)
                 var errorMsg = await r.Content.ReadAsStringAsync();
                 await App.Current.MainPage.DisplayAlert("Aviso", "No se pudo guardar: " + errorMsg, "OK");
             }
         }
         catch (Exception ex)
         {
-            // Error de conexión o caída grave
-            await App.Current.MainPage.DisplayAlert("Problema de Conexión", "Verifica tu internet e inténtalo de nuevo.", "OK");
-            Console.WriteLine(ex.Message); // Log interno solo para ti
+            await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK");
         }
         finally
         {
@@ -1559,4 +1780,5 @@
     private async Task CargarNotificaciones() { try { misNotificaciones = await Http.GetFromJsonAsync<List<NotificacionDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/notificaciones/{Sesion.Usuario.UsuarioID}"); hayNuevas = misNotificaciones.Any(n => !n.Leido); } catch { } }
     private string GetIcono(string t) => t == "MATCH_MUTUO" ? "fas fa-heart text-danger" : "fas fa-bell";
     public class RespuestaMercadoPago { public string url { get; set; } }
+   
 }

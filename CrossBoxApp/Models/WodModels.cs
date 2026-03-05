@@ -18,6 +18,8 @@ namespace CrossBoxApp.Models
         public Guid SegmentoClaseID { get; set; }
         public List<EjercicioViewModel> Ejercicios { get; set; } = new List<EjercicioViewModel>();
         public string NombreSegmento { get; set; }
+        public string? TiempoFormato { get; set; } // NUEVO
+        public bool EsTextoLibre { get; set; }    // NUEVO
     }
 
     public class EjercicioViewModel

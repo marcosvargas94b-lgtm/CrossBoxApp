@@ -10,5 +10,6 @@ namespace CrossBoxApp.Models
     {
         public Guid UsuarioID { get; set; }
         public DateTime NuevaFechaInicio { get; set; }
+        public decimal MontoPagado { get; set; }
     }
 }

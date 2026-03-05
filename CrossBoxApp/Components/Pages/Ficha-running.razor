@@ -114,7 +114,7 @@
                         @foreach (var pr in ficha.PRs)
                         {
                             <div class="pr-item">
-                                <div class="pr-val">@pr.Marca.ToString("0.##") <span class="pr-unit">@pr.Unidad</span></div>
+                                <div class="pr-val">@pr.Marca <span class="pr-unit">@pr.Unidad</span></div>
                                 <span class="pr-lbl">@pr.Ejercicio</span>
                             </div>
                         }
@@ -132,7 +132,6 @@
 </div>
 
 <style>
-    /* Mismos estilos base de tu ficha original */
     .main-layout { position: fixed; top:0; left:0; width:100vw; height:100vh; background:#050505; display:flex; flex-direction:column; z-index:1; }
     .navbar-container { flex-shrink:0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom:10px; padding-left:20px; padding-right:20px; background:#111; border-bottom:1px solid #F8C545; display:flex; justify-content:space-between; align-items:center; z-index:100; font-family:'Oswald'; color:white; }
     .nav-left { color:#F8C545; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:0.9rem; }
@@ -222,7 +221,8 @@
         public string ColorDetalles { get; set; } public double OpacidadMedallas { get; set; }
         public List<FichaPRDto> PRs { get; set; } = new();
     }
-    public class FichaPRDto { public string Ejercicio { get; set; } public decimal Marca { get; set; } public string Unidad { get; set; } }
+
+    public class FichaPRDto { public string Ejercicio { get; set; } public string Marca { get; set; } public string Unidad { get; set; } }
 
     protected override async Task OnInitializedAsync()
     {

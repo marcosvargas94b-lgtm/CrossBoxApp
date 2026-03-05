@@ -133,7 +133,7 @@
                         @foreach (var pr in ficha.PRs)
                         {
                             <div class="pr-item">
-                                <div class="pr-val">@pr.Marca.ToString("0.##") <span class="pr-unit">@pr.Unidad</span></div>
+                                <div class="pr-val">@pr.Marca <span class="pr-unit">@pr.Unidad</span></div>
                                 <span class="pr-lbl">@pr.Ejercicio</span>
                             </div>
                         }
@@ -566,7 +566,8 @@
         
         public List<FichaPRDto> PRs { get; set; } = new();
     }
-    public class FichaPRDto { public string Ejercicio { get; set; } public decimal Marca { get; set; } public string Unidad { get; set; } }
+
+    public class FichaPRDto { public string Ejercicio { get; set; } public string Marca { get; set; } public string Unidad { get; set; } }
     public class SubtituloDto { public int SubtituloID { get; set; } public string Texto { get; set; } public string Categoria { get; set; } }
 
     protected override async Task OnInitializedAsync()

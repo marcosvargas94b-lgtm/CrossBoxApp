@@ -378,7 +378,7 @@
                 var todosLosTests = await response.Content.ReadFromJsonAsync<List<EvaluacionVisualDto>>();
 
                 gruposProgreso = todosLosTests
-                    .Where(x => x.Valor.HasValue)
+                    .Where(x => !string.IsNullOrEmpty(x.Valor))
                     .GroupBy(x => x.Categoria)
                     .ToList();
             }

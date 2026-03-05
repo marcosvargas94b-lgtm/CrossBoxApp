@@ -28,20 +28,40 @@
         </div>
     </div>
 
-    <div class="controls-section">
-        <div class="header-status">
-            <div class="status-title">ATLETAS LISTOS</div>
-            <div class="badge-count pulse-badge">@atletasEnSala.Count</div>
+  <div class="controls-section">
+        
+        @* --- HEADER COMPACTO CON COMBOBOX INCORPORADO --- *@
+        <div class="header-status fade-in">
+            <div class="header-left">
+                <div class="status-title">ATLETAS</div>
+                <div class="badge-count pulse-badge">@atletasEnSala.Count</div>
+            </div>
+            
+            <div class="header-right">
+                <select @bind="HorarioSeleccionado" @bind:after="OnHorarioCambiado" class="form-control input-dark select-clase-compact">
+                    <option value="@Guid.Empty">-- Selecciona --</option>
+                    @foreach (var horario in listaHorarios)
+                    {
+                        <option value="@horario.HorarioID">@horario.Descripcion</option>
+                    }
+                </select>
+            </div>
         </div>
 
         <div class="live-list-container">
-            @if (atletasEnSala.Count == 0)
+            @if (cargandoAgenda)
+            {
+                <div class="empty-state">
+                    <div class="spinner-border text-warning" style="width: 2rem; height: 2rem;"></div>
+                </div>
+            }
+            else if (atletasEnSala.Count == 0)
             {
                 <div class="empty-state">
                     <div class="radar-pulse">
                         <i class="fas fa-satellite-dish"></i>
                     </div>
-                    <p>Esperando señal de atletas...</p>
+                    <p style="font-size: 0.85rem;">Esperando señal...</p>
                 </div>
             }
             else
@@ -63,7 +83,16 @@
 
                             <div class="athlete-info">
                                 <span class="athlete-name">@atleta.NombreCompleto</span>
-                                <span class="athlete-time"><i class="fas fa-clock"></i> Listo para entrenar</span>
+                                <span class="athlete-time">
+                                    @if(EsDeQR(atleta.UsuarioId))
+                                    {
+                                        <span style="color: #4CAF50;"><i class="fas fa-qrcode"></i> Escaneado</span>
+                                    }
+                                    else
+                                    {
+                                        <span><i class="fas fa-calendar-check"></i> Agendado</span>
+                                    }
+                                </span>
                             </div>
                             <i class="fas fa-check-circle check-icon"></i>
                         </div>
@@ -75,7 +104,7 @@
         <div class="action-buttons">
             <button class="btn-cancel" @onclick="CancelarClase">CANCELAR</button>
             <button class="btn-start" @onclick="IniciarClase">
-                INICIAR CLASE (@atletasEnSala.Count) <i class="fas fa-play"></i>
+                INICIAR <i class="fas fa-play" style="margin-left: 5px;"></i>
             </button>
         </div>
     </div>
@@ -105,7 +134,7 @@
     /* --- LAYOUT HORIZONTAL --- */
     .lobby-landscape {
         display: flex; width: 100vw; height: 100vh; background-color: #0d0d0d;
-        padding: 20px; box-sizing: border-box; gap: 20px;
+        padding: 15px; box-sizing: border-box; gap: 15px;
     }
 
     /* --- QR FIXED --- */
@@ -118,47 +147,62 @@
         text-align: center; width: 100%; 
         display: flex; flex-direction: column; align-items: center; 
     }
-    .qr-title { font-family: 'Oswald'; font-size: 2.2rem; color: white; margin-bottom: 15px; letter-spacing: 2px; }
+    .qr-title { font-family: 'Oswald'; font-size: 2rem; color: white; margin-bottom: 10px; letter-spacing: 2px; }
     
     .qr-frame { 
-        background: white; padding: 15px; border-radius: 15px; 
+        background: white; padding: 12px; border-radius: 15px; 
         display: flex; justify-content: center; align-items: center;
         box-shadow: 0 0 40px rgba(248, 197, 69, 0.2);
-        max-width: 80%; aspect-ratio: 1/1; 
+        max-width: 75%; aspect-ratio: 1/1; 
     }
     
     .qr-img { width: 100%; height: 100%; max-width: 300px; object-fit: contain; }
-    .qr-footer { color: #888; margin-top: 15px; font-size: 1rem; font-family: 'Roboto'; }
 
-    /* --- CONTROLES Y LISTA --- */
+    /* --- CONTROLES Y LISTA (Compactado) --- */
     .controls-section {
-        flex: 1; display: flex; flex-direction: column; background: #111;
-        border-radius: 20px; padding: 20px; border: 1px solid #333;
+        flex: 1.2; 
+        display: flex; flex-direction: column; background: #111;
+        border-radius: 15px; 
+        padding: 15px; 
+        border: 1px solid #333;
         max-height: 100%; 
     }
 
-    .header-status { border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-    .status-title { font-family: 'Oswald'; color: #F8C545; font-size: 1.8rem; }
-    .badge-count { background: white; color: black; font-weight: bold; padding: 5px 20px; border-radius: 50px; font-size: 1.2rem; }
+    /* HEADER Y COMBOBOX EN LA MISMA LÍNEA */
+    .header-status { 
+        display: flex; justify-content: space-between; align-items: center; 
+        border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px; flex-shrink: 0; gap: 10px;
+    }
+    .header-left { display: flex; align-items: center; gap: 8px; }
+    .header-right { flex: 1; max-width: 180px; }
+
+    .status-title { font-family: 'Oswald'; color: white; font-size: 1.3rem; margin-bottom: 0; }
+    .badge-count { background: #F8C545; color: black; font-weight: bold; padding: 3px 12px; border-radius: 50px; font-size: 1rem; }
     .pulse-badge { animation: pulseBadge 2s infinite; }
 
-    /* SCROLL AREA FIX */
+    .select-clase-compact { 
+        background-color: #222 !important; color: #F8C545 !important; 
+        border: 1px solid #444; font-family: 'Oswald'; 
+        font-size: 0.95rem; height: 38px; padding: 0 5px; width: 100%; text-align: center; border-radius: 8px;
+    }
+
+    /* SCROLL AREA */
     .live-list-container { flex: 1; overflow: hidden; position: relative; display: flex; flex-direction: column; }
     .athletes-scroll { overflow-y: auto; padding-right: 5px; height: 100%; scroll-behavior: smooth; }
 
+    /* TARJETAS DE ATLETAS (Fotos en 50px, pero bordes ajustados) */
     .athlete-card {
-        background: #222; border-left: 5px solid #F8C545; padding: 10px 15px; margin-bottom: 10px;
-        border-radius: 8px; display: flex; align-items: center; gap: 15px; transition: transform 0.2s;
+        background: #222; border-left: 4px solid #F8C545; 
+        padding: 8px 12px; margin-bottom: 8px;
+        border-radius: 8px; display: flex; align-items: center; gap: 12px; 
         animation: slideIn 0.3s ease-out; 
     }
 
-    /* ESTILO PARA FOTO DE PERFIL */
     .athlete-avatar { 
         width: 50px; height: 50px; border-radius: 50%; object-fit: cover; 
         border: 2px solid #555; flex-shrink: 0; 
     }
 
-    /* NUEVO ESTILO PARA INICIAL (Cuando no hay foto) */
     .athlete-initial {
         width: 50px; height: 50px; background: #333; color: #F8C545; 
         border-radius: 50%; display: flex; align-items: center; justify-content: center;
@@ -166,34 +210,50 @@
         flex-shrink: 0; font-family: 'Oswald';
     }
 
-    .athlete-info { flex: 1; display: flex; flex-direction: column; }
-    .athlete-name { font-family: 'Oswald'; font-size: 1.2rem; color: white; text-transform: uppercase; }
+    .athlete-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+    .athlete-name { font-family: 'Oswald'; font-size: 1.1rem; color: white; text-transform: uppercase; line-height: 1.2; margin-bottom: 2px; }
     .athlete-time { font-size: 0.8rem; color: #888; }
-    .check-icon { font-size: 1.5rem; color: #28a745; }
+    .check-icon { font-size: 1.3rem; color: #28a745; }
 
     .empty-state { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #444; }
-    .radar-pulse { font-size: 4rem; margin-bottom: 15px; animation: pulseRadar 2s infinite; color: #F8C545; }
+    .radar-pulse { font-size: 3rem; margin-bottom: 10px; animation: pulseRadar 2s infinite; color: #F8C545; }
 
-    .action-buttons { display: flex; gap: 15px; margin-top: 20px; height: 70px; flex-shrink: 0; }
-    .btn-cancel { flex: 1; background: #333; color: white; border: none; border-radius: 12px; font-weight: bold; font-family: 'Oswald'; cursor: pointer; }
-    .btn-start { flex: 2; background: #F8C545; color: black; border: none; border-radius: 12px; font-weight: bold; font-family: 'Oswald'; font-size: 1.2rem; cursor: pointer; box-shadow: 0 0 15px rgba(248, 197, 69, 0.3); }
+    /* BOTONES INFERIORES COMPACTOS */
+    .action-buttons { display: flex; gap: 10px; margin-top: 10px; height: 50px; flex-shrink: 0; }
+    .btn-cancel { flex: 1; background: #333; color: white; border: none; border-radius: 8px; font-weight: bold; font-family: 'Oswald'; font-size: 1rem; cursor: pointer; }
+    .btn-start { flex: 2; background: #F8C545; color: black; border: none; border-radius: 8px; font-weight: bold; font-family: 'Oswald'; font-size: 1.1rem; cursor: pointer; box-shadow: 0 0 10px rgba(248, 197, 69, 0.3); }
     .btn-start:active { transform: scale(0.98); }
 
     @@keyframes slideIn { from { transform: translateX(50px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     @@keyframes pulseRadar { 0% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0.3; transform: scale(1); } }
-    @@keyframes pulseBadge { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); } }
+    @@keyframes pulseBadge { 0% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(248, 197, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0); } }
     @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .fade-in { animation: fadeIn 1s ease-in; }
 </style>
-
 @code {
+    // Para simplificar la lista de horarios localmente (Asegúrate de que esta clase exista o usa una propia)
+    public class HorarioSimple { public Guid HorarioID { get; set; } public string Descripcion { get; set; } }
+
     private HubConnection hubConnection;
-    private List<CheckInDto> atletasEnSala = new List<CheckInDto>();
+    
+    // LISTAS DE MANEJO DE ESTADO
+    private List<CheckInDto> atletasEnSala = new List<CheckInDto>(); // La lista maestra que se muestra
+    private List<CheckInDto> atletasPorQR = new List<CheckInDto>();  // Los "inmunes" escaneados en vivo
+    private List<CheckInDto> atletasPorAgenda = new List<CheckInDto>(); // Los que vienen de la BD según el combo
+
+    // COMBOBOX
+    private List<HorarioSimple> listaHorarios = new List<HorarioSimple>();
+    private Guid HorarioSeleccionado { get; set; } = Guid.Empty;
+    private bool cargandoAgenda = false;
 
     protected override async Task OnInitializedAsync()
     {
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
 
+        // 1. Cargar Combobox de horarios (usando tu endpoint existente)
+        await CargarHorariosDelBox();
+
+        // 2. Conectar SignalR para los QR
         hubConnection = new HubConnectionBuilder()
             .WithUrl("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/livehub")
             .WithAutomaticReconnect()
@@ -203,14 +263,12 @@
         {
             InvokeAsync(async () =>
             {
+                // Si NO está en la lista maestra, lo agregamos a la maestra y a la de QR (inmunes)
                 if (!atletasEnSala.Any(x => x.UsuarioId == atleta.UsuarioId))
                 {
-                    // Agregamos al FINAL de la lista
-                    atletasEnSala.Add(atleta);
+                    atletasPorQR.Add(atleta);
+                    FusionarListas(); // Vuelve a juntar QR + Agenda para mostrar
                     
-                    StateHasChanged(); 
-
-                    // Auto-scroll
                     try {
                         await JS.InvokeVoidAsync("scrollToBottom", "scrollContainer");
                     } catch { /* Ignorar */ }
@@ -222,14 +280,108 @@
         await hubConnection.SendAsync("JoinBoxGroup", Sesion.Usuario.BoxID.ToString());
     }
 
+    private async Task CargarHorariosDelBox()
+    {
+        try
+        {
+            // OJO: Usar tu endpoint correcto. Aquí supongo que devuelve una lista con id y descripcion
+            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/agendaapi/lista-horarios/{Sesion.Usuario.BoxID}");
+            if (response.IsSuccessStatusCode)
+            {
+                listaHorarios = await response.Content.ReadFromJsonAsync<List<HorarioSimple>>();
+            }
+        }
+        catch { }
+    }
+
+    // Este evento se dispara cada vez que el Coach mueve el combobox
+    private async Task OnHorarioCambiado()
+    {
+        if (HorarioSeleccionado == Guid.Empty)
+        {
+            // Si elige "Selecciona clase", vaciamos los de agenda y mostramos solo los de QR
+            atletasPorAgenda.Clear();
+            FusionarListas();
+            return;
+        }
+
+        try
+        {
+            cargandoAgenda = true;
+            StateHasChanged();
+
+            // Llamamos al nuevo endpoint que creaste en el PASO 1
+            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/agendaapi/lobby-agendados/{Sesion.Usuario.BoxID}/{HorarioSeleccionado}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var agendados = await response.Content.ReadFromJsonAsync<List<CheckInDto>>();
+                if (agendados != null)
+                {
+                    atletasPorAgenda = agendados; // Reemplazamos totalmente la lista de la agenda
+                }
+            }
+            else
+            {
+                atletasPorAgenda.Clear();
+            }
+        }
+        catch 
+        {
+            atletasPorAgenda.Clear();
+            await App.Current.MainPage.DisplayAlert("Error", "No se pudo cargar la agenda de esta hora", "OK");
+        }
+        finally
+        {
+            cargandoAgenda = false;
+            FusionarListas(); // Junta QR + Agenda y actualiza pantalla
+        }
+    }
+
+    // El truco principal: Une los que llegaron por QR con los de la BD, evitando duplicados
+    private void FusionarListas()
+    {
+        var listaFusionada = new List<CheckInDto>();
+
+        // Primero metemos a los del QR
+        listaFusionada.AddRange(atletasPorQR);
+
+        // Luego metemos a los de la agenda, SOLO SI no estaban ya metidos por QR
+        foreach (var agendado in atletasPorAgenda)
+        {
+            if (!listaFusionada.Any(x => x.UsuarioId == agendado.UsuarioId))
+            {
+                listaFusionada.Add(agendado);
+            }
+        }
+
+        atletasEnSala = listaFusionada;
+        StateHasChanged();
+    }
+
+    // Helper visual
+    private bool EsDeQR(Guid usuarioId)
+    {
+        return atletasPorQR.Any(x => x.UsuarioId == usuarioId);
+    }
+
     private void CancelarClase()
     {
         atletasEnSala.Clear();
+        atletasPorQR.Clear();
+        atletasPorAgenda.Clear();
         Nav.NavigateTo("/home");
     }
 
     private void IniciarClase()
     {
+        // if(atletasEnSala.Count == 0)
+        // {
+        //     App.Current.MainPage.DisplayAlert("Atención", "No hay atletas en la sala.", "OK");
+        //     return;
+        // }
+
+        // LiveState se lleva a TODOS los que estén en la pantalla (QR + Agenda)
         LiveState.AtletasEnClase = atletasEnSala;
         LiveState.BoxId = Sesion.Usuario.BoxID;
         Nav.NavigateTo("/live-dashboard");

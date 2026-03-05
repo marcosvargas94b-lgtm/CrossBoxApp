@@ -16,7 +16,7 @@ namespace CrossBoxApp.Models
 
         // Datos del Usuario (Resultado)
         public Guid? TestUsuarioId { get; set; } // Null si no ha registrado nada
-        public float? Valor { get; set; }        // El resultado
+        public string? Valor { get; set; }        // El resultado
         public DateTime? Fecha { get; set; }
     }
 
@@ -25,7 +25,7 @@ namespace CrossBoxApp.Models
         public Guid? TestUsuarioId { get; set; } // Null = Nuevo, Valor = Editar
         public Guid TestBoxId { get; set; }
         public Guid UsuarioId { get; set; }
-        public float Valor { get; set; }
+        public string Valor { get; set; }
         public bool? EsNuevaMarca { get; set; }
     }
 }

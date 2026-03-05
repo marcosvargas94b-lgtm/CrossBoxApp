@@ -274,15 +274,18 @@
             <div class="panel-header">
                 <span>CLASE</span>
                 <div style="display:flex; gap:10px; align-items:center;">
-                    <label class="switch-juez" title="Modo Juez (Capturar Tiempos)">
-                        <input type="checkbox" @bind="modoJuez">
-                        <span class="slider-juez round"></span>
-                    </label>
-                    @if (modoJuez)
+                    @if (Sesion.Usuario?.TipoLugar == "Crossfit")
                     {
-                        <button class="btn-icon-header text-warning" @onclick="AbrirModalEquipos" title="Armar Equipos">
-                            <i class="fas fa-users-cog"></i>
-                        </button>
+                        <label class="switch-juez" title="Modo Juez (Capturar Tiempos)">
+                            <input type="checkbox" @bind="modoJuez">
+                            <span class="slider-juez round"></span>
+                        </label>
+                        @if (modoJuez)
+                        {
+                            <button class="btn-icon-header text-warning" @onclick="AbrirModalEquipos" title="Armar Equipos">
+                                <i class="fas fa-users-cog"></i>
+                            </button>
+                        }
                     }
                     <button class="btn-icon-header" @onclick="AbrirModalAtletas"><i class="fas fa-user-plus"></i></button>
                     <button class="btn-icon-header" @onclick="() => verLista = false"><i class="fas fa-compress-arrows-alt"></i></button>
@@ -804,9 +807,18 @@
 
     private void IrAResumen()
     {
-        LiveState.FueModoJuez = modoJuez;
-        LiveState.ResultadosJuez = participantesVisuales;
-        Nav.NavigateTo("/resumen-clase");
+        if (Sesion.Usuario?.TipoLugar != "Crossfit")
+        {
+            // Para Funcional, Calistenia, Gym, Running (No usan juez, van al resumen simple)
+            Nav.NavigateTo("/resumen-clase-simple");
+        }
+        else
+        {
+            // El original para CrossFit
+            LiveState.FueModoJuez = modoJuez;
+            LiveState.ResultadosJuez = participantesVisuales;
+            Nav.NavigateTo("/resumen-clase");
+        }
     }
 
     private void IrAlHome() { Nav.NavigateTo("/home"); }

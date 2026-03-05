@@ -140,7 +140,17 @@
                 <input type="text" @bind="registroBox.NombreBox" class="form-control input-dark mb-2" placeholder="Nombre del Box" />
                 <input type="text" @bind="registroBox.Ciudad" class="form-control input-dark mb-2" placeholder="Ciudad" />
                 <input type="text" @bind="registroBox.Direccion" class="form-control input-dark mb-4" placeholder="Dirección" />
-                
+        
+
+                <select @bind="registroBox.TipoLugar" class="form-control input-dark mb-4">
+                    <option value="Crossfit">CROSSFIT</option>
+                    <option value="Funcional">Entrenamiento Funcional</option>
+                    <option value="Gimnasio">Gimnasio</option>
+                    <option value="Calistenia">Calistenia</option>
+                    <option value="Running">Running Club</option>
+                </select>
+
+
                 <div class="form-section-label">DATOS DEL ADMIN</div>
                 <div class="row">
                     <div class="col-6"><input type="text" @bind="registroBox.NombreAdmin" class="form-control input-dark mb-2" placeholder="Nombre" /></div>
@@ -561,6 +571,7 @@
         public string NombreBox { get; set; } public string Ciudad { get; set; } public string Direccion { get; set; }
         public string NombreAdmin { get; set; } public string ApellidosAdmin { get; set; } public string Telefono { get; set; }
         public string Email { get; set; } public string Password { get; set; } public int PlanSeleccionadoID { get; set; }
+        public string TipoLugar { get; set; } = "Crossfit";
     }
 
     private void AbrirModalRegistroBox()

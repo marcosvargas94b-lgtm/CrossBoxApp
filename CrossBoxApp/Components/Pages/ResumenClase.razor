@@ -8,34 +8,38 @@
 @inject SesionService Sesion
 
 <div class="resumen-container">
+    
+    @* --- NUEVO: BOTÓN DE REGRESO AL DASHBOARD --- *@
+    <button class="btn-back-dashboard fade-in" @onclick="RegresarAlDashboard" title="Volver a la clase">
+        <i class="fas fa-arrow-left"></i> VOLVER AL DASHBOARD
+    </button>
+
     <div class="resumen-card">
         
         <div class="header-resumen">
-            <h2>CLASE FINALIZADA</h2>
-            
-            @* --- SWITCH DE CATEGORÍA --- *@
-            <div class="category-switch-area">
-                <span class="lbl-cat">¿USAR CATEGORÍAS?</span>
-                <label class="switch-cat">
-                    <input type="checkbox" @bind="usarCategorias">
-                    <span class="slider-cat round"></span>
-                </label>
+            <div class="header-top-row">
+                <h2>CLASE FINALIZADA</h2>
+                <div class="category-switch-area">
+                    <span class="lbl-cat">¿USAR CATEGORÍAS?</span>
+                    <label class="switch-cat">
+                        <input type="checkbox" @bind="usarCategorias">
+                        <span class="slider-cat round"></span>
+                    </label>
+                </div>
             </div>
 
             @if (LiveState.FueModoJuez)
             {
                 <div class="mode-badge">
-                    <i class="fas fa-stopwatch"></i> TIEMPOS CAPTURADOS
+                    <i class="fas fa-stopwatch"></i> TIEMPOS CAPTURADOS POR JUEZ
                 </div>
             }
             else
             {
-                <div class="score-toggle" @onclick="() => modoScore = !modoScore">
-                    <span class="@(!modoScore ? "active" : "")">ASISTENCIA</span>
-                    <div class="toggle-track @(modoScore ? "on" : "")">
-                        <div class="toggle-thumb"></div>
-                    </div>
-                    <span class="@(modoScore ? "active" : "")">RESULTADOS</span>
+                <div class="capture-mode-selector fade-in">
+                    <button class="@(modoCaptura == "NADA" ? "active" : "")" @onclick='() => modoCaptura = "NADA"'>ASISTENCIA</button>
+                    <button class="@(modoCaptura == "REPS" ? "active" : "")" @onclick='() => modoCaptura = "REPS"'>REPETICIONES</button>
+                    <button class="@(modoCaptura == "RONDAS" ? "active" : "")" @onclick='() => modoCaptura = "RONDAS"'>RONDAS</button>
                 </div>
             }
         </div>
@@ -63,23 +67,18 @@
                         <tbody>
                         @foreach (var res in LiveState.ResultadosJuez)
                         {
-                            // Usamos el ID del primer atleta como clave única
                             var key = res.Atletas[0].UsuarioId; 
-                            string catActual = "";
-                            if (categoriasJuezSeleccionadas.ContainsKey(key)) catActual = categoriasJuezSeleccionadas[key];
+                            string catActual = categoriasJuezSeleccionadas.ContainsKey(key) ? categoriasJuezSeleccionadas[key] : "";
 
                             <tr>
                                 <td style="text-align:left;">
-                                    @* DATOS DEL ATLETA/EQUIPO *@
                                     @if (res.Atletas.Count > 1)
                                     {
                                         <div class="team-group">
                                             <div class="team-members">
                                                 @foreach(var a in res.Atletas)
                                                 {
-                                                    <div class="mini-row">
-                                                        <span>@a.NombreCompleto</span>
-                                                    </div>
+                                                    <div class="mini-row"><span>@a.NombreCompleto</span></div>
                                                 }
                                             </div>
                                         </div>
@@ -94,18 +93,11 @@
                                         </div>
                                     }
 
-                                    @* --- ETIQUETA CATEGORÍA CLICKEABLE --- *@
                                     @if (usarCategorias)
                                     {
                                         <div class="cat-badge-container" @onclick="() => AbrirModalCategoria(key, true)">
-                                            @if (string.IsNullOrEmpty(catActual))
-                                            {
-                                                <span class="cat-badge-empty">Categoría (+)</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="cat-badge-filled">@catActual</span>
-                                            }
+                                            @if (string.IsNullOrEmpty(catActual)) { <span class="cat-badge-empty">Categoría (+)</span> }
+                                            else { <span class="cat-badge-filled">@catActual</span> }
                                         </div>
                                     }
                                 </td>
@@ -121,7 +113,7 @@
                 }
             }
             @* ==================================================================== *@
-            @* MODO MANUAL (ASISTENCIA / REPS) *@
+            @* MODO MANUAL (NADA / REPS / RONDAS) *@
             @* ==================================================================== *@
             else
             {
@@ -142,36 +134,34 @@
                                     }
                                     else
                                     {
-                                        <div class="avatar-list-letter">
-                                            @(atleta.NombreCompleto?.Substring(0, 1).ToUpper() ?? "A")
-                                        </div>
+                                        <div class="avatar-list-letter">@(atleta.NombreCompleto?.Substring(0, 1).ToUpper() ?? "A")</div>
                                     }
                                     
                                     <div style="display:flex; flex-direction:column; align-items:flex-start;">
                                         <span class="text-truncate">@atleta.NombreCompleto</span>
                                         
-                                        @* --- ETIQUETA CATEGORÍA CLICKEABLE (MANUAL) --- *@
                                         @if (usarCategorias)
                                         {
                                             <div class="cat-badge-manual" @onclick="() => AbrirModalCategoria(atleta.UsuarioId, false)">
-                                                @if (string.IsNullOrEmpty(atleta.Categoria))
-                                                {
-                                                    <span class="cat-text-empty">Categoría (+)</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="cat-text-filled">@atleta.Categoria</span>
-                                                }
+                                                @if (string.IsNullOrEmpty(atleta.Categoria)) { <span class="cat-text-empty">Categoría (+)</span> }
+                                                else { <span class="cat-text-filled">@atleta.Categoria</span> }
                                             </div>
                                         }
                                     </div>
                                 </div>
 
-                                @if (modoScore)
+                                @if (modoCaptura == "REPS")
                                 {
                                     <div class="score-input-wrapper">
                                         <input type="number" @bind="atleta.Reps" class="input-reps" placeholder="0" min="0" />
                                         <small>REPS</small>
+                                    </div>
+                                }
+                                else if (modoCaptura == "RONDAS")
+                                {
+                                    <div class="score-input-wrapper">
+                                        <input type="number" @bind="atleta.Rondas" class="input-reps" placeholder="0" min="0" />
+                                        <small>RONDAS</small>
                                     </div>
                                 }
                                 else
@@ -193,14 +183,14 @@
                 }
                 else
                 {
-                    <span>CONFIRMAR Y GUARDAR</span>
+                    <span>CONFIRMAR Y GUARDAR ASISTENCIA</span>
                 }
             </button>
         </div>
     </div>
 </div>
 
-@* --- MODAL SELECCIONAR CATEGORÍA --- *@
+@* --- MODALES Y PODIO SE MANTIENEN IGUAL --- *@
 @if (mostrarModalCategoria)
 {
     <div class="modal-overlay fade-in">
@@ -221,33 +211,21 @@
     </div>
 }
 
-@* --- MODAL DE PODIO FINAL --- *@
 @if (mostrarPodio)
 {
     <div class="podium-overlay fade-in">
-        <button class="btn-close-overlay" @onclick="FinalizarNavegacion">
-            <i class="fas fa-times"></i>
-        </button>
-
+        <button class="btn-close-overlay" @onclick="FinalizarNavegacion"><i class="fas fa-times"></i></button>
         <div class="victory-bg-effect"></div>
         <div class="victory-container">
             <div class="victory-layout-main">
-                
-                @* --- PODIO --- *@
                 <div class="podium-area">
                     <div class="podium-stage">
                         
                         @* 2DO LUGAR *@
                         <div class="podium-group slide-up-delay-2">
                             <div class="podium-avatar-box silver-glow">
-                                @if (!string.IsNullOrEmpty(top3.ElementAtOrDefault(1)?.FotoUrl))
-                                {
-                                    <img src="@top3[1].FotoUrl" class="avatar-circle" @onerror="@(e => top3[1].FotoUrl = null)" />
-                                }
-                                else
-                                {
-                                    <div class="medal-placeholder silver-medal"><i class="fas fa-medal"></i></div>
-                                }
+                                @if (!string.IsNullOrEmpty(top3.ElementAtOrDefault(1)?.FotoUrl)) { <img src="@top3[1].FotoUrl" class="avatar-circle" @onerror="@(e => top3[1].FotoUrl = null)" /> }
+                                else { <div class="medal-placeholder silver-medal"><i class="fas fa-medal"></i></div> }
                             </div>
                             <div class="podium-pillar silver" style="height: 160px;">
                                 <div class="bar-content">
@@ -255,19 +233,8 @@
                                     @if (top3.Count >= 2)
                                     {
                                         <div class="winner-info">
-                                            @if(top3[1].EsEquipo && top3[1].NombresMiembros.Any())
-                                            {
-                                                <div class="team-stack-podium">
-                                                    @foreach(var name in top3[1].NombresMiembros.Take(2))
-                                                    {
-                                                        <span class="winner-name">@name</span>
-                                                    }
-                                                </div>
-                                            }
-                                            else
-                                            {
-                                                <span class="winner-name">@top3[1].NombrePrincipal</span>
-                                            }
+                                            @if(top3[1].EsEquipo && top3[1].NombresMiembros.Any()) { <div class="team-stack-podium">@foreach(var name in top3[1].NombresMiembros.Take(2)){ <span class="winner-name">@name</span> }</div> }
+                                            else { <span class="winner-name">@top3[1].NombrePrincipal</span> }
                                             <span class="winner-score">@top3[1].ScoreTexto</span>
                                         </div>
                                     }
@@ -277,16 +244,10 @@
 
                         @* 1ER LUGAR *@
                         <div class="podium-group slide-up-delay-1">
-                            <div class="crown-floating zoom-in-delay"></div>
+                            <div class="crown-floating zoom-in-delay"><i class="fas fa-crown"></i></div>
                             <div class="podium-avatar-box big gold-glow">
-                                @if (!string.IsNullOrEmpty(top3.ElementAtOrDefault(0)?.FotoUrl))
-                                {
-                                    <img src="@top3[0].FotoUrl" class="avatar-circle" @onerror="@(e => top3[0].FotoUrl = null)" />
-                                }
-                                else
-                                {
-                                    <div class="medal-placeholder gold-medal"><i class="fas fa-trophy"></i></div>
-                                }
+                                @if (!string.IsNullOrEmpty(top3.ElementAtOrDefault(0)?.FotoUrl)) { <img src="@top3[0].FotoUrl" class="avatar-circle" @onerror="@(e => top3[0].FotoUrl = null)" /> }
+                                else { <div class="medal-placeholder gold-medal"><i class="fas fa-trophy"></i></div> }
                             </div>
                             <div class="podium-pillar gold" style="height: 220px;">
                                 <div class="bar-content">
@@ -294,19 +255,8 @@
                                     @if (top3.Count >= 1)
                                     {
                                         <div class="winner-info main-winner">
-                                            @if(top3[0].EsEquipo && top3[0].NombresMiembros.Any())
-                                            {
-                                                <div class="team-stack-podium">
-                                                    @foreach(var name in top3[0].NombresMiembros.Take(2))
-                                                    {
-                                                        <span class="winner-name">@name</span>
-                                                    }
-                                                </div>
-                                            }
-                                            else
-                                            {
-                                                <span class="winner-name">@top3[0].NombrePrincipal</span>
-                                            }
+                                            @if(top3[0].EsEquipo && top3[0].NombresMiembros.Any()) { <div class="team-stack-podium">@foreach(var name in top3[0].NombresMiembros.Take(2)){ <span class="winner-name">@name</span> }</div> }
+                                            else { <span class="winner-name">@top3[0].NombrePrincipal</span> }
                                             <span class="winner-score main-score">@top3[0].ScoreTexto</span>
                                         </div>
                                     }
@@ -317,14 +267,8 @@
                         @* 3ER LUGAR *@
                         <div class="podium-group slide-up-delay-3">
                             <div class="podium-avatar-box bronze-glow">
-                                @if (!string.IsNullOrEmpty(top3.ElementAtOrDefault(2)?.FotoUrl))
-                                {
-                                    <img src="@top3[2].FotoUrl" class="avatar-circle" @onerror="@(e => top3[2].FotoUrl = null)" />
-                                }
-                                else
-                                {
-                                    <div class="medal-placeholder bronze-medal"><i class="fas fa-medal"></i></div>
-                                }
+                                @if (!string.IsNullOrEmpty(top3.ElementAtOrDefault(2)?.FotoUrl)) { <img src="@top3[2].FotoUrl" class="avatar-circle" @onerror="@(e => top3[2].FotoUrl = null)" /> }
+                                else { <div class="medal-placeholder bronze-medal"><i class="fas fa-medal"></i></div> }
                             </div>
                             <div class="podium-pillar bronze" style="height: 130px;">
                                 <div class="bar-content">
@@ -332,19 +276,8 @@
                                     @if (top3.Count >= 3)
                                     {
                                         <div class="winner-info">
-                                            @if(top3[2].EsEquipo && top3[2].NombresMiembros.Any())
-                                            {
-                                                <div class="team-stack-podium">
-                                                    @foreach(var name in top3[2].NombresMiembros.Take(2))
-                                                    {
-                                                        <span class="winner-name">@name</span>
-                                                    }
-                                                </div>
-                                            }
-                                            else
-                                            {
-                                                <span class="winner-name">@top3[2].NombrePrincipal</span>
-                                            }
+                                            @if(top3[2].EsEquipo && top3[2].NombresMiembros.Any()) { <div class="team-stack-podium">@foreach(var name in top3[2].NombresMiembros.Take(2)){ <span class="winner-name">@name</span> }</div> }
+                                            else { <span class="winner-name">@top3[2].NombrePrincipal</span> }
                                             <span class="winner-score">@top3[2].ScoreTexto</span>
                                         </div>
                                     }
@@ -355,7 +288,6 @@
                     </div>
                 </div>
 
-                @* --- THE PACK (RESTO DE ATLETAS) --- *@
                 @if(restoList.Count > 0)
                 {
                     <div class="the-rest-area slide-in-right-delay">
@@ -366,19 +298,8 @@
                                 <div class="rest-row">
                                     <span class="rest-rank">#@item.Posicion</span>
                                     <div class="rest-info">
-                                         @if(item.EsEquipo && item.NombresMiembros.Any())
-                                         {
-                                              <div class="rest-stack-names">
-                                                   @foreach(var name in item.NombresMiembros) 
-                                                   {
-                                                       <span class="rest-name">@name</span>
-                                                   }
-                                              </div>
-                                         }
-                                         else
-                                         {
-                                              <span class="rest-name">@item.NombrePrincipal</span>
-                                         }
+                                         @if(item.EsEquipo && item.NombresMiembros.Any()) { <div class="rest-stack-names">@foreach(var name in item.NombresMiembros) { <span class="rest-name">@name</span> }</div> }
+                                         else { <span class="rest-name">@item.NombrePrincipal</span> }
                                     </div>
                                     <span class="rest-score">@item.ScoreTexto</span>
                                 </div>
@@ -394,46 +315,78 @@
 <style>
     /* --- ESTILOS GENERALES --- */
     .resumen-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0d0d0d; color: white; display: flex; justify-content: center; align-items: center; z-index: 1; padding: 10px; }
-    .resumen-card { background: #1a1a1a; width: 90%; max-width: 500px; border-radius: 20px; padding: 20px; text-align: center; border: 2px solid #F8C545; box-shadow: 0 0 50px rgba(248, 197, 69, 0.2); display: flex; flex-direction: column; max-height: 90vh; height: auto; }
+    
+    /* --- NUEVO ESTILO: BOTÓN VOLVER --- */
+    .btn-back-dashboard {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: #F8C545;
+        padding: 10px 20px;
+        border-radius: 50px;
+        font-family: 'Oswald';
+        font-weight: bold;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        z-index: 10;
+        backdrop-filter: blur(5px);
+    }
+    .btn-back-dashboard:hover {
+        background: #F8C545;
+        color: black;
+        border-color: #F8C545;
+    }
+    /* En pantallas muy estrechas lo acomodamos un poco */
+    @@media (max-width: 600px) {
+        .btn-back-dashboard {
+            top: 10px;
+            left: 10px;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+        }
+    }
+    /* --------------------------------- */
+
+    .resumen-card { background: #1a1a1a; width: 90%; max-width: 500px; border-radius: 20px; padding: 20px; text-align: center; border: 2px solid #F8C545; box-shadow: 0 0 50px rgba(248, 197, 69, 0.2); display: flex; flex-direction: column; max-height: 85vh; height: auto; position: relative; z-index: 5; }
+    
     .header-resumen { flex-shrink: 0; }
-    .header-resumen h2 { font-family: 'Oswald'; margin-bottom: 10px; color: white; font-size: 1.5rem; }
+    .header-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .header-top-row h2 { font-family: 'Oswald'; color: white; font-size: 1.5rem; margin: 0; }
+    
     .attendance-list { flex-grow: 1; overflow-y: auto; min-height: 0; margin-bottom: 15px; padding-right: 5px; border-top: 1px solid #333; border-bottom: 1px solid #333; }
     .footer-actions { flex-shrink: 0; }
     .scroll-custom::-webkit-scrollbar { width: 5px; } .scroll-custom::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
 
-    /* ESTILOS SWITCH CATEGORIA */
-    .category-switch-area { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 10px; }
-    .lbl-cat { font-size: 0.9rem; color: #F8C545; font-family: 'Oswald'; }
-    .switch-cat { position: relative; display: inline-block; width: 40px; height: 22px; }
+    .category-switch-area { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 10px; }
+    .lbl-cat { font-size: 0.8rem; color: #F8C545; font-family: 'Oswald'; }
+    .switch-cat { position: relative; display: inline-block; width: 34px; height: 18px; margin: 0; }
     .switch-cat input { opacity: 0; width: 0; height: 0; }
     .slider-cat { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; }
-    .slider-cat:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+    .slider-cat:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
     input:checked + .slider-cat { background-color: #F8C545; }
-    input:checked + .slider-cat:before { transform: translateX(18px); background-color: black; }
+    input:checked + .slider-cat:before { transform: translateX(16px); background-color: black; }
 
-    /* ESTILOS BOTONES CATEGORIA (MODAL) */
+    .capture-mode-selector { display: flex; background: #222; border-radius: 8px; overflow: hidden; border: 1px solid #444; margin-bottom: 15px; }
+    .capture-mode-selector button { flex: 1; background: transparent; border: none; color: #888; padding: 10px 5px; font-family: 'Oswald'; font-size: 0.9rem; cursor: pointer; transition: 0.3s; }
+    .capture-mode-selector button.active { background: #F8C545; color: black; font-weight: bold; }
+
     .cat-buttons-grid { display: flex; flex-direction: column; gap: 10px; }
     .btn-cat-opt { background: #222; border: 1px solid #F8C545; color: white; padding: 12px; border-radius: 8px; font-family: 'Oswald'; font-size: 1.1rem; transition: 0.2s; text-transform: uppercase; }
     .btn-cat-opt:active { background: #F8C545; color: black; transform: scale(0.98); }
 
-    /* ESTILOS BADGE CATEGORIA (EN LISTA) */
     .cat-badge-container { margin-top: 5px; cursor: pointer; display: inline-block; }
     .cat-badge-manual { cursor: pointer; margin-top: 2px; }
-    
     .cat-badge-empty, .cat-text-empty { color: #888; font-size: 0.8rem; font-style: italic; border: 1px dashed #666; padding: 2px 8px; border-radius: 4px; font-family: 'Roboto'; }
     .cat-badge-filled, .cat-text-filled { background: #F8C545; color: black; font-weight: bold; font-family: 'Oswald'; font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; letter-spacing: 1px; }
 
-    /* MODO MANUAL */
-    .score-toggle { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; cursor: pointer; }
-    .score-toggle span { font-size: 0.8rem; font-weight: bold; color: #666; transition: color 0.3s; }
-    .score-toggle span.active { color: #F8C545; }
-    .toggle-track { width: 50px; height: 26px; background: #333; border-radius: 13px; position: relative; transition: 0.3s; }
-    .toggle-track.on { background: #F8C545; }
-    .toggle-thumb { width: 20px; height: 20px; background: white; border-radius: 50%; position: absolute; top: 3px; left: 3px; transition: 0.3s; }
-    .toggle-track.on .toggle-thumb { transform: translateX(24px); }
     .user-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 5px; }
     .user-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
-    
     .avatar-list-img, .avatar-list-letter, .avatar-tiny, .avatar-tiny-letter, .avatar-small, .avatar-small-letter { border-radius: 50% !important; object-fit: cover; display: flex; justify-content: center; align-items: center; font-weight: bold; font-family: 'Oswald'; flex-shrink: 0; aspect-ratio: 1/1; }
     .avatar-list-img { width: 35px; height: 35px; border: 2px solid #F8C545; }
     .avatar-list-letter { width: 35px; height: 35px; background: #333; color: #F8C545; border: 2px solid #F8C545; font-size: 1.1rem; }
@@ -441,16 +394,13 @@
     .score-input-wrapper { display: flex; align-items: center; gap: 5px; animation: fadeIn 0.3s; }
     .input-reps { width: 60px; background: #222; border: 1px solid #F8C545; color: white; text-align: center; padding: 4px; border-radius: 5px; font-weight: bold; font-size: 1rem; }
 
-    /* MODO JUEZ */
-    .mode-badge { background: #F8C545; color: black; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-family: 'Oswald'; font-size: 0.9rem; margin-bottom: 10px; display: inline-block; letter-spacing: 1px; }
+    .mode-badge { background: #F8C545; color: black; padding: 8px; border-radius: 8px; font-weight: bold; font-family: 'Oswald'; font-size: 0.9rem; margin-bottom: 15px; text-align: center; letter-spacing: 1px; width: 100%; }
     .table-results { width: 100%; border-collapse: collapse; margin-top: 5px; }
     .table-results th { text-align: left; color: #888; font-size: 0.8rem; padding-bottom: 5px; border-bottom: 1px solid #444; font-family: 'Oswald'; letter-spacing: 1px; }
     .table-results td { padding: 8px 5px; border-bottom: 1px solid #222; color: white; font-size: 0.9rem; vertical-align: middle; }
     .team-group { display: flex; flex-direction: column; align-items: flex-start; }
     .team-members { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
     .mini-row { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #ddd; }
-    .avatar-tiny { width: 24px; height: 24px; border: 1px solid #666; }
-    .avatar-tiny-letter { width: 24px; height: 24px; border: 1px solid #666; background: #333; color: white; font-size: 0.75rem; }
     .individual-row { display: flex; align-items: center; gap: 10px; }
     .avatar-small { width: 32px; height: 32px; border: 1px solid #F8C545; }
     .avatar-small-letter { width: 32px; height: 32px; border: 1px solid #F8C545; background: #333; color: white; font-size: 0.9rem; }
@@ -474,30 +424,13 @@
     .btn-close-overlay { position: absolute; top: 25px; right: 25px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); color: white; font-size: 1.5rem; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; z-index: 5001; display: flex; justify-content: center; align-items: center; transition: 0.3s; }
     .btn-close-overlay:hover { background: #F8C545; color: black; transform: rotate(90deg); border-color: #F8C545; }
     
-    .victory-container { 
-        width: 100%; max-width: 1200px; 
-        display: flex; flex-direction: column; align-items: center; 
-        z-index: 1; height: 100vh; 
-        /* Cambiado: Usamos flex-end para asegurar que llegue abajo en móviles */
-        justify-content: flex-end; 
-        padding-bottom: 50px; /* Safe area del fondo */
-        padding-top: 60px;
-    }
-
-    .victory-layout-main { 
-        display: flex; flex-direction: row; gap: 40px; 
-        width: 100%; 
-        height: 100%; /* Ocupar todo el espacio disponible */
-        align-items: flex-end; /* Alinear al fondo en escritorio */
-        justify-content: center; 
-    }
-
+    .victory-container { width: 100%; max-width: 1200px; display: flex; flex-direction: column; align-items: center; z-index: 1; height: 100vh; justify-content: flex-end; padding-bottom: 50px; padding-top: 60px; }
+    .victory-layout-main { display: flex; flex-direction: row; gap: 40px; width: 100%; height: 100%; align-items: flex-end; justify-content: center; }
     .podium-area { display: flex; justify-content: center; align-items: flex-end; height: 100%; }
     .podium-stage { display: flex; align-items: flex-end; gap: 15px; }
     .podium-group { display: flex; flex-direction: column; align-items: center; position: relative; width: 100px; }
     .podium-avatar-box { width: 70px; height: 70px; margin-bottom: -15px; z-index: 20; border-radius: 50%; border: 4px solid white; background: #111; display: flex; justify-content: center; align-items: center; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.5); flex-shrink: 0; }
     .podium-avatar-box.big { width: 95px; height: 95px; margin-bottom: -20px; border-width: 5px; }
-    .avatar-circle { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 1/1; }
     .medal-placeholder { font-size: 2rem; display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
     .gold-medal { background: #FFD700; color: #5c4500; } .silver-medal { background: #E0E0E0; color: #555; } .bronze-medal { background: #CD7F32; color: #3e1f00; }
     .gold-glow { border-color: #FFD700; box-shadow: 0 0 30px rgba(255, 215, 0, 0.6); } .silver-glow { border-color: #E0E0E0; box-shadow: 0 0 25px rgba(224, 224, 224, 0.5); } .bronze-glow { border-color: #CD7F32; box-shadow: 0 0 25px rgba(205, 127, 50, 0.5); }
@@ -515,17 +448,7 @@
     .team-stack-podium { display: flex; flex-direction: column; align-items: center; }
     .crown-floating { position: absolute; top: -50px; font-size: 2.5rem; color: #FFD700; animation: float 3s infinite ease-in-out; filter: drop-shadow(0 0 10px gold); z-index: 50; }
     
-    .the-rest-area { 
-        min-width: 260px; max-width: 320px; 
-        height: 300px; 
-        background: rgba(30,30,30,0.7); 
-        border-radius: 15px; 
-        border: 1px solid rgba(255,255,255,0.1); 
-        display: flex; flex-direction: column; 
-        overflow: hidden; 
-        margin-bottom: 20px; /* Separación estándar en escritorio */
-        backdrop-filter: blur(10px); 
-    }
+    .the-rest-area { min-width: 260px; max-width: 320px; height: 300px; background: rgba(30,30,30,0.7); border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; overflow: hidden; margin-bottom: 20px; backdrop-filter: blur(10px); }
     .rest-header { background: rgba(248, 197, 69, 0.1); padding: 10px; text-align: center; color: #F8C545; font-family: 'Oswald'; font-weight: bold; letter-spacing: 1px; border-bottom: 1px solid rgba(255,255,255,0.1); }
     .rest-list { flex: 1; overflow-y: auto; padding: 5px; }
     .rest-row { display: flex; align-items: center; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); }
@@ -549,35 +472,18 @@
     @@keyframes float { 0% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-15px) rotate(2deg); } 100% { transform: translateY(0) rotate(0deg); } }
     
     @@media (max-width: 850px) {
-        .victory-layout-main { 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: flex-start; /* Empezar desde arriba */
-            height: 100%; 
-            overflow-y: auto; 
-            padding-bottom: 80px; /* Espacio extra abajo */
-        }
-        
-        .podium-area { 
-            width: 100%; flex: none; height: auto; 
-            margin-top: 40px; /* Bajar un poco el podio */
-            margin-bottom: 20px; 
-        }
-        
-        .the-rest-area { 
-            width: 90%; 
-            height: 250px; 
-            flex: none; 
-            margin-top: auto; /* ESTO ES LA CLAVE: Empuja la lista al fondo del contenedor */
-            margin-bottom: 0;
-        }
+        .victory-layout-main { flex-direction: column; align-items: center; justify-content: flex-start; height: 100%; overflow-y: auto; padding-bottom: 80px; }
+        .podium-area { width: 100%; flex: none; height: auto; margin-top: 40px; margin-bottom: 20px; }
+        .the-rest-area { width: 90%; height: 250px; flex: none; margin-top: auto; margin-bottom: 0; }
     }
 </style>
 
 @code {
     class AtletaResumen { 
-        public Guid UsuarioId; public Guid BoxId; public string NombreCompleto; public string FotoUrl; public int Reps; 
-        public string Categoria; // Nuevo campo local
+        public Guid UsuarioId; public Guid BoxId; public string NombreCompleto; public string FotoUrl; 
+        public int Reps; 
+        public int Rondas;
+        public string Categoria; 
     }
     
     class PodiumItem { public string NombrePrincipal; public List<string> NombresMiembros = new(); public bool EsEquipo; public string FotoUrl; public string ScoreTexto; public int Posicion; public double ValorOrdenamiento; }
@@ -596,32 +502,41 @@
         public bool EsEquipo { get; set; }
         public string TiempoFinal { get; set; }
         public int Reps { get; set; }
+        public int Rondas { get; set; } 
         public string NombreEquipo { get; set; }
-        public string Categoria { get; set; } // <--- DATO A ENVIAR
+        public string Categoria { get; set; } 
     }
 
     private List<AtletaResumen> listaLocal = new();
-    private bool modoScore = false;
+    private string modoCaptura = "NADA"; 
     private bool guardando = false;
     private bool mostrarPodio = false;
     private List<PodiumItem> top3 = new();
     private List<PodiumItem> restoList = new();
 
-    // --- NUEVAS VARIABLES PARA MODAL CATEGORÍA ---
     private bool usarCategorias = false; 
     private Dictionary<Guid, string> categoriasJuezSeleccionadas = new();
     private bool mostrarModalCategoria = false;
-    private Guid idAtletaEditandoCategoria = Guid.Empty; // Para saber a quién le asignamos
-    private bool esModoJuezEditando = false; // Para saber si editamos en lista juez o lista manual
+    private Guid idAtletaEditandoCategoria = Guid.Empty; 
+    private bool esModoJuezEditando = false;
 
     protected override void OnInitialized()
     {
         if (!LiveState.FueModoJuez) {
-            listaLocal = LiveState.AtletasEnClase.Select(a => new AtletaResumen { UsuarioId = a.UsuarioId, BoxId = a.BoxId, NombreCompleto = a.NombreCompleto, FotoUrl = a.FotoUrl, Reps = 0, Categoria = "" }).ToList();
+            listaLocal = LiveState.AtletasEnClase.Select(a => new AtletaResumen { 
+                UsuarioId = a.UsuarioId, BoxId = a.BoxId, NombreCompleto = a.NombreCompleto, FotoUrl = a.FotoUrl, Reps = 0, Rondas = 0, Categoria = "" 
+            }).ToList();
         }
     }
 
-    // --- LOGICA MODAL CATEGORÍA ---
+    // --- NUEVO: FUNCIÓN PARA REGRESAR AL DASHBOARD ---
+    private void RegresarAlDashboard()
+    {
+        // Al navegar de regreso al dashboard, no tocamos el LiveState.
+        // Como LiveState es Singleton/Scoped, los atletas seguirán ahí.
+        Nav.NavigateTo("/live-dashboard");
+    }
+
     private void AbrirModalCategoria(Guid id, bool esJuez)
     {
         idAtletaEditandoCategoria = id;
@@ -646,102 +561,92 @@
         mostrarModalCategoria = false;
     }
 
-private async Task ProcesarYGuardar()
-{
-    guardando = true;
-    StateHasChanged();
-
-    // Preparamos el payload base
-    var payload = new GuardarResultadosDto { BoxId = Sesion.Usuario.BoxID, WodId = Guid.Empty };
-
-    // CASO 1: MODO JUEZ (Tiempos capturados en vivo)
-    if (LiveState.FueModoJuez)
+    private async Task ProcesarYGuardar()
     {
-        foreach (var item in LiveState.ResultadosJuez)
-        {
-            string cat = "";
-            if(categoriasJuezSeleccionadas.ContainsKey(item.Atletas[0].UsuarioId)) 
-                cat = categoriasJuezSeleccionadas[item.Atletas[0].UsuarioId];
-            
-            if (usarCategorias && string.IsNullOrEmpty(cat)) cat = "Sin asignar";
-            if (!usarCategorias) cat = "";
+        guardando = true;
+        StateHasChanged();
 
-            payload.Resultados.Add(new ResultadoAtletaDto
+        var payload = new GuardarResultadosDto { BoxId = Sesion.Usuario.BoxID, WodId = Guid.Empty };
+
+        if (LiveState.FueModoJuez)
+        {
+            foreach (var item in LiveState.ResultadosJuez)
             {
-                UsuarioUnoId = item.Atletas[0].UsuarioId,
-                UsuarioDosId = (item.Atletas.Count > 1) ? item.Atletas[1].UsuarioId : null,
-                EsEquipo = (item.Atletas.Count > 1),
-                TiempoFinal = item.Finalizado ? item.TiempoFinal : "DNF",
-                Reps = 0,
-                NombreEquipo = item.NombreEquipo ?? "Equipo",
-                Categoria = cat
-            });
-        }
-    }
-    // CASO 2: MODO LISTA (Manual)
-    else
-    {
-        // Recorremos TODOS los atletas de la lista local
-        foreach (var item in listaLocal)
-        {
-            string cat = item.Categoria;
-            if (usarCategorias && string.IsNullOrEmpty(cat)) cat = "Sin asignar";
-            if (!usarCategorias) cat = "";
+                string cat = "";
+                if(categoriasJuezSeleccionadas.ContainsKey(item.Atletas[0].UsuarioId)) 
+                    cat = categoriasJuezSeleccionadas[item.Atletas[0].UsuarioId];
+                
+                if (usarCategorias && string.IsNullOrEmpty(cat)) cat = "Sin asignar";
+                if (!usarCategorias) cat = "";
 
-            // Lógica para definir si es "Solo Asistencia" o "Score"
-            // Si modoScore es false, mandamos Reps = 0 y Tiempo = null.
-            // El backend detectará esto y solo guardará asistencia.
-            
-            payload.Resultados.Add(new ResultadoAtletaDto
+                payload.Resultados.Add(new ResultadoAtletaDto
+                {
+                    UsuarioUnoId = item.Atletas[0].UsuarioId,
+                    UsuarioDosId = (item.Atletas.Count > 1) ? item.Atletas[1].UsuarioId : null,
+                    EsEquipo = (item.Atletas.Count > 1),
+                    TiempoFinal = item.Finalizado ? item.TiempoFinal : "DNF",
+                    Reps = 0,
+                    Rondas = 0, 
+                    NombreEquipo = item.NombreEquipo ?? "Equipo",
+                    Categoria = cat
+                });
+            }
+        }
+        else
+        {
+            foreach (var item in listaLocal)
             {
-                UsuarioUnoId = item.UsuarioId,
-                EsEquipo = false,
-                Reps = modoScore ? item.Reps : 0, // Si no es modo score, va 0
-                TiempoFinal = null, // Siempre null en modo manual por reps
-                NombreEquipo = "Individual",
-                Categoria = cat
-            });
-        }
-    }
+                string cat = item.Categoria;
+                if (usarCategorias && string.IsNullOrEmpty(cat)) cat = "Sin asignar";
+                if (!usarCategorias) cat = "";
 
-    // --- LLAMADA AL API ---
-    try
-    {
-        var url = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/scoresapi/guardar-clase";
-        var response = await Http.PostAsJsonAsync(url, payload);
-        
-        if (!response.IsSuccessStatusCode)
+                payload.Resultados.Add(new ResultadoAtletaDto
+                {
+                    UsuarioUnoId = item.UsuarioId,
+                    EsEquipo = false,
+                    Reps = modoCaptura == "REPS" ? item.Reps : 0,
+                    Rondas = modoCaptura == "RONDAS" ? item.Rondas : 0,
+                    TiempoFinal = null, 
+                    NombreEquipo = "Individual",
+                    Categoria = cat
+                });
+            }
+        }
+
+        try
         {
-            Console.WriteLine("Error al guardar en servidor.");
+            var url = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/scoresapi/guardar-clase";
+            var response = await Http.PostAsJsonAsync(url, payload);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Error al guardar en servidor.");
+            }
         }
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error de conexión: {ex.Message}");
-    }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error de conexión: {ex.Message}");
+        }
 
-    // --- DECISIÓN DE NAVEGACIÓN ---
-    // Si no hubo competencia (solo asistencia), nos vamos directo a home.
-    // Si hubo competencia (Juez o Score Manual > 0), mostramos podio.
-    
-    bool huboCompetencia = LiveState.FueModoJuez || (modoScore && listaLocal.Any(x => x.Reps > 0));
+        bool huboCompetencia = LiveState.FueModoJuez || (modoCaptura != "NADA" && listaLocal.Any(x => x.Reps > 0 || x.Rondas > 0));
 
-    if (!huboCompetencia)
-    {
-        FinalizarNavegacion();
-    }
-    else
-    {
-        CalcularPodio();
-    }
+        if (!huboCompetencia)
+        {
+            FinalizarNavegacion();
+        }
+        else
+        {
+            CalcularPodio();
+        }
 
-    guardando = false;
-    StateHasChanged();
-}
+        guardando = false;
+        StateHasChanged();
+    }
 
     private void CalcularPodio()
     {
        top3.Clear(); restoList.Clear(); List<PodiumItem> candidatos = new();
+       
        if (LiveState.FueModoJuez) {
              var terminados = LiveState.ResultadosJuez.Where(x => x.Finalizado).ToList();
              foreach(var r in terminados) {
@@ -754,10 +659,14 @@ private async Task ProcesarYGuardar()
              }
              candidatos = candidatos.OrderBy(x => x.ValorOrdenamiento).ToList();
        } else {
-             var origen = listaLocal.Where(x => x.Reps > 0).ToList();
+             bool esRondas = modoCaptura == "RONDAS";
+             var origen = listaLocal.Where(x => (esRondas ? x.Rondas : x.Reps) > 0).ToList();
              if(!origen.Any() && listaLocal.Any()) origen = listaLocal.Take(5).ToList(); 
+             
              foreach(var a in origen) {
-                 candidatos.Add(new PodiumItem { EsEquipo = false, NombrePrincipal = a.NombreCompleto.Split(' ')[0], FotoUrl = a.FotoUrl, ScoreTexto = $"{a.Reps} REPS", ValorOrdenamiento = a.Reps });
+                 int valor = esRondas ? a.Rondas : a.Reps;
+                 string texto = esRondas ? $"{valor} RONDAS" : $"{valor} REPS";
+                 candidatos.Add(new PodiumItem { EsEquipo = false, NombrePrincipal = a.NombreCompleto.Split(' ')[0], FotoUrl = a.FotoUrl, ScoreTexto = texto, ValorOrdenamiento = valor });
              }
              candidatos = candidatos.OrderByDescending(x => x.ValorOrdenamiento).ToList();
        }

@@ -1,0 +1,636 @@
+﻿@page "/ejecutar-rutina/{RutinaDiaId:guid}"
+@using System.Net.Http.Json
+@using CrossBoxApp.Models.Services
+@using Plugin.LocalNotification
+@using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.Maui.Devices 
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject SesionService Sesion
+@inject IJSRuntime JS
+
+<div class="main-layout">
+    @* NAVBAR WORKOUT MODE *@
+    <div class="navbar-container">
+        <div class="nav-left" @onclick='() => Nav.NavigateTo("/rutina-semanal")'>
+            <i class="fas fa-arrow-left"></i> SALIR
+        </div>
+        <div class="nav-title text-warning"><i class="fas fa-fire"></i> WORKOUT MODE</div>
+        <div class="nav-right"></div>
+    </div>
+
+    @* BANNER DE EMERGENCIA (Aparece cuando llega un SignalR) *@
+    @if (alertaRecibida)
+    {
+        <div class="spotter-alert-banner slide-in">
+            <div class="d-flex align-items-center">
+                <div class="alert-icon pulse-animation"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="alert-text">@mensajeAlertaExterna</div>
+            </div>
+            <div class="alert-actions mt-3">
+                <button class="btn-ignorar" @onclick="CerrarAlertaRecibida">NO PUEDO</button>
+                <button class="btn-voy" @onclick="CerrarAlertaRecibida"><i class="fas fa-running me-1"></i> ¡VOY EN CAMINO!</button>
+            </div>
+        </div>
+    }
+
+    <div class="scrollable-content">
+        @if (cargando)
+        {
+            <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
+        }
+        else if (rutina != null)
+        {
+            <div class="workout-header slide-in">
+                <h2 class="fecha-title">@rutina.Fecha.ToString("dddd dd MMM").ToUpper()</h2>
+                <p class="text-muted">Marca cada bloque al finalizar sus series.</p>
+            </div>
+
+            <div class="bloques-list mt-3">
+                @foreach (var bloque in rutina.Bloques)
+                {
+                    <div class="bloque-card slide-in @(bloque.Completado ? "bloque-completado" : "")">
+                        
+                        @* HEADER DEL BLOQUE CON EL BOTÓN CHECK A LA DERECHA *@
+                        <div class="bloque-header">
+                            <div class="b-info">
+                                <span class="b-tipo">
+                                    @(bloque.TipoBloque == 1 ? "INDIVIDUAL" : bloque.TipoBloque == 2 ? "BI-SERIE" : "TRI-SERIE")
+                                </span>
+                                <span class="b-series"><i class="fas fa-sync-alt"></i> @bloque.Series SERIES</span>
+                            </div>
+                            
+                            <div class="b-action">
+                                <button class="btn-check-pill @(bloque.Completado ? "active" : "")" @onclick="() => ToggleCompletado(bloque)">
+                                    <i class="fas @(bloque.Completado ? "fa-check-circle" : "fa-circle")"></i>
+                                    <span class="check-text">@(bloque.Completado ? "LISTO" : "MARCAR")</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="ejercicios-list">
+                            @foreach (var ej in bloque.Ejercicios)
+                            {
+                                <div class="ej-row">
+                                    <div class="ej-detalle">
+                                        <span class="ej-nombre">@ej.NombreEjercicio.ToUpper()</span>
+                                        <span class="ej-musculo">@ej.GrupoMuscular</span>
+                                    </div>
+                                    <div class="ej-reps">
+                                        <span>@ej.Repeticiones</span> REPS
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="finish-section slide-in mt-4 d-flex gap-2">
+                <button class="btn-pausar w-50" @onclick="TerminarDespues">
+                    <i class="fas fa-pause"></i> DESPUÉS
+                </button>
+                <button class="btn-terminar w-50" @onclick="TerminarRutina" disabled="@guardando">
+                    @if (guardando)
+                    {
+                        <i class="fas fa-spinner fa-spin"></i>
+                    }
+                    else
+                    {
+                        <span><i class="fas fa-flag-checkered"></i> TERMINAR</span>
+                    }
+                </button>
+            </div>
+        }
+    </div>
+
+    @* BOTÓN SPOTTER (Arreglado el z-index y la posición) *@
+    <button class="btn-spotter pulse-animation" @onclick="AbrirModalSpotter">
+        <i class="fas fa-hands-helping"></i>
+        <span>SPOTTER</span>
+    </button>
+
+
+    @* TIMER FLOTANTE MANUAL (Anti-Desbordes) *@
+    <div class="floating-timer-container slide-up">
+        <div class="timer-controls">
+
+            <div class="timer-input-group">
+                <button class="btn-timer-adj" @onclick="() => AjustarTiempo(-10)"><i class="fas fa-minus"></i></button>
+
+                <div class="timer-display-wrapper">
+                    <span class="timer-legend-mini">PROGRAMA TU DESCANSO</span>
+                    <div class="timer-display">
+                        @if (timerCorriendo)
+                        {
+                            <span class="time-text text-warning">@tiempoRestanteFormateado</span>
+                        }
+                        else
+                        {
+                            <input type="number" class="input-segs" @bind="segundosDescansoDefecto" />
+                            <span class="segs-label">SEGS</span>
+                        }
+                    </div>
+                </div>
+
+                <button class="btn-timer-adj" @onclick="() => AjustarTiempo(10)"><i class="fas fa-plus"></i></button>
+            </div>
+
+            <div class="timer-action">
+                @if (timerCorriendo)
+                {
+                    <button class="btn-play-stop stop" @onclick="DetenerTimer"><i class="fas fa-stop"></i></button>
+                }
+                else
+                {
+                    <button class="btn-play-stop play" @onclick="IniciarTimer"><i class="fas fa-play"></i></button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ========================================== *@
+@* MODAL: SOLICITAR SPOTTER                   *@
+@* ========================================== *@
+@if (mostrarModalSpotter)
+{
+    <div class="modal-overlay fade-in" @onclick="CerrarModalSpotter">
+        <div class="modal-content custom-modal modal-spotter slide-up" @onclick:stopPropagation="true">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="text-danger mb-0"><i class="fas fa-exclamation-triangle me-2"></i> PEDIR SPOTTER</h5>
+                <button class="btn-icon-header" @onclick="CerrarModalSpotter"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="modal-body pt-3">
+                <p class="text-muted text-center text-sm mb-4">Mandaremos una alerta a todos los atletas activos en el gym ahora mismo.</p>
+
+                <div class="form-group mb-4">
+                    <label>¿DÓNDE ESTÁS?</label>
+                    <div class="chips-container mt-2">
+                        <div class="chip @(zonaSpotter == "Press Banca" ? "active" : "")" @onclick='() => zonaSpotter = "Press Banca"'>Press Banca</div>
+                        <div class="chip @(zonaSpotter == "Rack Sentadilla" ? "active" : "")" @onclick='() => zonaSpotter = "Rack Sentadilla"'>Rack Sentadilla</div>
+                        <div class="chip @(zonaSpotter == "Zona Mancuernas" ? "active" : "")" @onclick='() => zonaSpotter = "Zona Mancuernas"'>Mancuernas</div>
+                        <div class="chip @(zonaSpotter == "Máquinas" ? "active" : "")" @onclick='() => zonaSpotter = "Máquinas"'>Máquinas</div>
+                        <div class="chip @(zonaSpotter == "Otro" ? "active" : "")" @onclick='() => zonaSpotter = "Otro"'>Otro</div>
+                    </div>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label>¿CÓMO TE RECONOCEN? (Opcional)</label>
+                    <input type="text" class="custom-input mt-1" placeholder="Ej: Playera roja, gorra negra..." @bind="distintivoSpotter" maxlength="30" />
+                </div>
+
+                <div class="form-group mb-4">
+                    <label>TIEMPO MÁXIMO DE ESPERA</label>
+                    <div class="timer-selector mt-2">
+                        <button class="btn-time-chip @(minutosEspera == 1 ? "active" : "")" @onclick="() => minutosEspera = 1">1 MIN</button>
+                        <button class="btn-time-chip @(minutosEspera == 2 ? "active" : "")" @onclick="() => minutosEspera = 2">2 MIN</button>
+                        <button class="btn-time-chip @(minutosEspera == 3 ? "active" : "")" @onclick="() => minutosEspera = 3">3 MIN</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer border-0 pt-0">
+                <button class="btn-lanzar-alerta w-100" @onclick="LanzarAlertaSpotter" disabled="@(string.IsNullOrEmpty(zonaSpotter) || enviandoAlerta)">
+                    @if (enviandoAlerta)
+                    {
+                        <i class="fas fa-spinner fa-spin"></i>
+                    }
+                    else
+                    {
+                        <span><i class="fas fa-broadcast-tower me-2"></i> LANZAR ALERTA</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    /* LAYOUT PRINCIPAL */
+    .main-layout { position: fixed; top:0; left:0; width:100vw; height:100vh; background:#050505; display:flex; flex-direction:column; z-index:1; }
+    .navbar-container { flex-shrink:0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom:10px; padding-left:15px; padding-right:15px; background:#111; border-bottom:1px solid #F8C545; display:flex; justify-content:space-between; align-items:center; z-index:100; font-family:'Oswald'; color:white; min-height:60px; }
+    .nav-left { color:#aaa; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:0.9rem; }
+    .nav-title { font-weight:bold; font-size:1.2rem; letter-spacing:1px; display:flex; align-items:center; gap:5px; }
+    
+    .scrollable-content { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 220px; background: radial-gradient(circle at top, #1a1a1a 0%, #000 100%); -webkit-overflow-scrolling: touch; }
+
+    .workout-header { text-align: center; margin-bottom: 10px; }
+    .fecha-title { font-family: 'Oswald'; color: white; margin: 0; font-size: 1.8rem; }
+
+    /* BLOQUES Y EJERCICIOS */
+    .bloques-list { display: flex; flex-direction: column; gap: 15px; }
+    .bloque-card { background: #111; border: 1px solid #333; border-radius: 15px; overflow: hidden; transition: 0.3s; border-left: 4px solid #F8C545; }
+    .bloque-completado { border-left-color: #28a745; opacity: 0.6; }
+    
+    .bloque-header { display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 12px 15px; border-bottom: 1px solid #222; }
+    .b-info { display: flex; flex-direction: column; flex: 1; }
+    .b-tipo { color: #F8C545; font-family: 'Oswald'; font-weight: bold; letter-spacing: 1px; font-size: 0.9rem; line-height: 1; }
+    .b-series { color: #aaa; font-size: 0.75rem; font-weight: bold; margin-top: 4px; }
+    .bloque-completado .b-tipo { color: #28a745; }
+
+    .b-action { flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end; padding-left: 10px; }
+    .btn-check-pill { display: flex; align-items: center; gap: 6px; background: transparent; border: 1px solid #555; color: #888; padding: 6px 14px; border-radius: 50px; font-family: 'Oswald'; font-size: 0.85rem; cursor: pointer; transition: 0.3s; white-space: nowrap; }
+    .btn-check-pill.active { background: #28a745; border-color: #28a745; color: white; box-shadow: 0 0 15px rgba(40,167,69,0.3); }
+    .check-text { font-weight: bold; letter-spacing: 1px; margin-top: 1px; }
+
+    .ejercicios-list { padding: 10px 15px; display: flex; flex-direction: column; gap: 10px; }
+    .ej-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #222; padding-bottom: 8px; }
+    .ej-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .ej-detalle { display: flex; flex-direction: column; }
+    .ej-nombre { color: white; font-family: 'Oswald'; font-size: 1.1rem; }
+    .ej-musculo { color: #888; font-size: 0.7rem; text-transform: uppercase; font-weight: bold; }
+    .ej-reps { background: rgba(248, 197, 69, 0.1); border: 1px solid #F8C545; color: #F8C545; padding: 5px 10px; border-radius: 8px; font-family: 'Oswald'; font-size: 1.1rem; font-weight: bold; display: flex; flex-direction: column; align-items: center; line-height: 1; }
+    .ej-reps span { font-size: 1.2rem; }
+
+    /* BOTONES FINALES */
+    .btn-terminar { background: #28a745; color: white; border: none; padding: 18px; border-radius: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; box-shadow: 0 5px 15px rgba(40,167,69,0.3); transition: 0.2s; }
+    .btn-terminar:active { transform: scale(0.98); }
+    .btn-pausar { background: #333; color: #F8C545; border: 1px solid #F8C545; padding: 18px; border-radius: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; transition: 0.2s; }
+    .btn-pausar:active { transform: scale(0.98); background: rgba(248, 197, 69, 0.2); }
+
+    /* SPOTTER BUTTON (Más arriba y Z-Index 2000) */
+    .btn-spotter { position: fixed; bottom: 120px; right: 20px; background: #FF3B30; color: white; border: none; padding: 12px 20px; border-radius: 50px; font-family: 'Oswald'; font-weight: bold; letter-spacing: 1px; z-index: 2000; box-shadow: 0 5px 15px rgba(255, 59, 48, 0.4); display: flex; align-items: center; gap: 8px; font-size: 1rem; cursor: pointer; pointer-events: auto; }
+    .pulse-animation { animation: pulseRed 2s infinite; }
+    @@keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(255, 59, 48, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); } }
+
+    /* ======================================================= */
+    /* TIMER FLOTANTE - ARREGLO VISUAL ANTI-DESBORDES          */
+    /* ======================================================= */
+    .floating-timer-container { 
+        position: fixed; 
+        bottom: 0; left: 0; right: 0; /* Usa right:0 en vez de width:100vw para no desbordar */
+        background: #1a1a1a; 
+        border-top: 2px solid #333; 
+        padding: 15px 20px; /* (Arriba, Derecha, Abajo, Izquierda) */
+        z-index: 1000; 
+        box-shadow: 0 -10px 30px rgba(0,0,0,0.9); 
+        box-sizing: border-box; /* Obliga al padding a quedarse adentro */
+        width: 100%;
+    }
+    
+    .timer-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .timer-input-group { 
+        flex: 1; display: flex; align-items: center; justify-content: space-between; 
+        background: #000; 
+        padding: 5px 8px; /* Margen interno para los botones +/- */
+        border-radius: 25px; border: 1px solid #444; 
+        min-width: 0;
+    }
+    
+    /* BOTONES MÁS Y MENOS */
+    .btn-timer-adj { 
+        width: 40px; height: 40px; 
+        border-radius: 50%; background: #333; color: white; border: none; 
+        font-size: .9rem; display: flex; justify-content: center; align-items: center; flex-shrink: 0;
+    }
+    
+    /* NUEVO CONTENEDOR CENTRAL: Pone la leyenda arriba de los números */
+    .timer-display-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .timer-legend-mini { color: #888; font-size: 0.65rem; font-weight: bold; letter-spacing: 1px; margin-bottom: -2px; }
+    .timer-display { display: flex; align-items: baseline; justify-content: center; gap: 5px; }
+    
+    /* CAJA DEL NÚMERO */
+    .input-segs { 
+        width: 40px; /* Si necesitas que el número sea más ancho, súbele aquí */
+        background: transparent; border: none; color: white; 
+        font-family: 'Oswald'; font-size: 2rem; /* Tamaño del número */
+        font-weight: bold; text-align: center; outline: none; padding: 0; 
+    }
+    .segs-label { color: #aaa; font-size: 0.85rem; font-weight: bold; }
+    .time-text { font-family: 'Oswald'; font-size: 2rem; font-weight: bold; letter-spacing: 2px; line-height: 1; }
+
+    /* BOTÓN PLAY/STOP */
+    .timer-action { flex-shrink: 0; }
+    .btn-play-stop { 
+        width: 50px; height: 50px; 
+        border-radius: 50%; border: none; display: flex; justify-content: center; align-items: center; 
+        font-size: 1.6rem; color: #000; transition: 0.2s; 
+    }
+    .btn-play-stop.play { background: #F8C545; box-shadow: 0 0 15px rgba(248, 197, 69, 0.4); }
+    .btn-play-stop.stop { background: #ff4d4d; color: white; box-shadow: 0 0 15px rgba(255, 77, 77, 0.4); }
+    .btn-play-stop:active { transform: scale(0.9); }
+
+    /* ======================================================= */
+    /* MODAL SPOTTER */
+    /* ======================================================= */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 5000; display: flex; justify-content: center; align-items: flex-end; }
+    .custom-modal { background: #111; width: 100%; border-top-left-radius: 25px; border-top-right-radius: 25px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -10px 40px rgba(0,0,0,0.9); }
+    .modal-spotter { height: auto !important; max-height: 90vh; border-top: 4px solid #FF3B30; padding-bottom: 20px;}
+    .modal-header { padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; }
+    .btn-icon-header { background: none; border: none; color: #888; font-size: 1.4rem; cursor: pointer; }
+    .modal-body { padding: 0 20px; }
+    .form-group label { color: #aaa; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; display: block; }
+    .custom-input { width: 100%; background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 8px; font-size: 1rem; outline: none; }
+    
+    .chips-container { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { background: #222; border: 1px solid #444; color: #aaa; padding: 8px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .chip.active { background: rgba(255, 59, 48, 0.2); border-color: #FF3B30; color: #FF3B30; }
+    
+    .timer-selector { display: flex; gap: 10px; }
+    .btn-time-chip { flex: 1; background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 10px; font-family: 'Oswald'; font-size: 1.1rem; transition: 0.2s; }
+    .btn-time-chip.active { background: #F8C545; color: black; border-color: #F8C545; box-shadow: 0 0 10px rgba(248,197,69,0.3); }
+
+    .btn-lanzar-alerta { background: #FF3B30; color: white; border: none; padding: 18px; border-radius: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.2rem; letter-spacing: 1px; box-shadow: 0 5px 15px rgba(255, 59, 48, 0.4); margin-top: 10px; }
+    .btn-lanzar-alerta:disabled { opacity: 0.5; background: #555; box-shadow: none; }
+
+    /* BANNER ALERTA RECIBIDA */
+    .spotter-alert-banner { background: #FF3B30; color: white; margin: 15px; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(255, 59, 48, 0.5); border: 2px solid #ff736b; z-index: 500; position: relative; }
+    .alert-icon { font-size: 1.8rem; margin-right: 15px; background: white; color: #FF3B30; width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; flex-shrink: 0;}
+    .alert-text { font-family: 'Oswald'; font-size: 1.1rem; line-height: 1.2; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+    .alert-actions { display: flex; gap: 10px; }
+    .btn-ignorar { flex: 1; background: rgba(0,0,0,0.3); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; }
+    .btn-voy { flex: 2; background: white; color: #FF3B30; border: none; padding: 10px; border-radius: 8px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .btn-voy:active { transform: scale(0.95); }
+
+    .slide-in { animation: slideIn 0.4s ease-out backwards; }
+    .slide-up { animation: slideUp 0.4s ease-out backwards; }
+    @@keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+    @@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+</style>
+
+@code {
+    [Parameter] public Guid RutinaDiaId { get; set; }
+
+    private bool cargando = true;
+    private bool guardando = false;
+    private RutinaDiaDto rutina;
+
+    // --- VARIABLES DEL TIMER ---
+    private int segundosDescansoDefecto = 90;
+    private bool timerCorriendo = false;
+    private DateTime horaFinTimer;
+    private string tiempoRestanteFormateado = "00:00";
+    private int timerNotificacionId = 1000;
+
+    // Clases DTO
+    public class RutinaDiaDto { public Guid UsuarioId { get; set; } public DateTime Fecha { get; set; } public List<BloqueGymDto> Bloques { get; set; } = new(); }
+    public class BloqueGymDto { public Guid? BloqueID { get; set; } public int TipoBloque { get; set; } public string Series { get; set; } public bool Completado { get; set; } public List<EjercicioGymDto> Ejercicios { get; set; } = new(); }
+    public class EjercicioGymDto { public string NombreEjercicio { get; set; } public string Repeticiones { get; set; } public string GrupoMuscular { get; set; } }
+
+    // Variables Modal Spotter
+    private bool mostrarModalSpotter = false;
+    private bool enviandoAlerta = false;
+    private string zonaSpotter = "";
+    private string distintivoSpotter = "";
+    private int minutosEspera = 2;
+
+    private HubConnection hubConnection;
+    private bool alertaRecibida = false;
+    private string mensajeAlertaExterna = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+        await CargarRutina();
+
+        // 1. Pedir permisos de notificación al sistema (Solo en móviles)
+        try
+        {
+            if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
+            {
+                // Primero verificamos si ya nos dio permiso antes
+                if (await LocalNotificationCenter.Current.AreNotificationsEnabled() == false)
+                {
+                    // Si no tiene permiso, se lo pedimos (Nota: NO lleva la palabra Async al final)
+                    await LocalNotificationCenter.Current.RequestNotificationPermission();
+                }
+            }
+        }
+        catch { }
+      
+        // 2. Avisar a la BD que entramos al gym (Estado 2)
+        try
+        {
+            string url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/iniciar-dia/{RutinaDiaId}";
+            await Http.PostAsync(url, null);
+        }
+        catch { }
+
+        // 3. CONECTAR SIGNALR PARA RECIBIR ALERTAS EN TIEMPO REAL
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/livehub")
+            .WithAutomaticReconnect()
+            .Build();
+
+        hubConnection.On<string, string, string, int>("RecibirAlertaSpotter", async (nombre, zona, distintivo, min) =>
+        {
+            mensajeAlertaExterna = $"¡{nombre} necesita ayuda en {zona.ToUpper()}! Distintivo: {distintivo}. ¿Puedes ir?";
+            alertaRecibida = true;
+            await InvokeAsync(StateHasChanged);
+
+            // A. Hacer sonar el Beep (App abierta)
+            try { await JS.InvokeVoidAsync("playTimerBeep"); } catch { }
+
+            // B. Notificación nativa y Vibración (Solo móviles)
+            try
+            {
+                if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
+                {
+                    Vibration.Default.Vibrate(TimeSpan.FromSeconds(2));
+
+                    var request = new NotificationRequest
+                    {
+                        NotificationId = 9999,
+                        Title = "🚨 ¡SPOTTER REQUERIDO!",
+                        Description = $"{nombre} necesita ayuda en {zona}. Esperará {min} min."
+                    };
+                    await LocalNotificationCenter.Current.Show(request);
+                }
+            }
+            catch { }
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+
+    private void AbrirModalSpotter()
+    {
+        zonaSpotter = "";
+        distintivoSpotter = "";
+        minutosEspera = 2;
+        mostrarModalSpotter = true;
+    }
+
+    private void CerrarModalSpotter() => mostrarModalSpotter = false;
+    private void CerrarAlertaRecibida() => alertaRecibida = false;
+
+    private async Task LanzarAlertaSpotter()
+    {
+        enviandoAlerta = true;
+        try
+        {
+            if (hubConnection is not null && hubConnection.State == HubConnectionState.Connected)
+            {
+                string miNombre = Sesion.Usuario.Nombre ?? "Un atleta";
+                await hubConnection.SendAsync("PedirSpotter", miNombre, zonaSpotter, distintivoSpotter, minutosEspera);
+
+                mostrarModalSpotter = false;
+                await JS.InvokeVoidAsync("alert", "¡Alerta enviada a la velocidad de la luz! Alguien irá a apoyarte.");
+            }
+        }
+        catch { }
+        finally { enviandoAlerta = false; }
+    }
+
+    private async Task TerminarDespues()
+    {
+        DetenerTimer();
+        try
+        {
+            string url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/pausar-dia/{RutinaDiaId}";
+            await Http.PostAsync(url, null);
+        }
+        catch { }
+        Nav.NavigateTo("/rutina-semanal");
+    }
+
+    private async Task CargarRutina()
+    {
+        cargando = true;
+        try
+        {
+            string url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/dia/{RutinaDiaId}";
+            rutina = await Http.GetFromJsonAsync<RutinaDiaDto>(url);
+        }
+        catch { }
+        finally { cargando = false; }
+    }
+
+    private void AjustarTiempo(int segs)
+    {
+        if (timerCorriendo) return;
+        segundosDescansoDefecto += segs;
+        if (segundosDescansoDefecto < 10) segundosDescansoDefecto = 10;
+        if (segundosDescansoDefecto > 600) segundosDescansoDefecto = 600;
+    }
+
+    private async Task ToggleCompletado(BloqueGymDto bloque)
+    {
+        bloque.Completado = !bloque.Completado;
+        StateHasChanged();
+
+        try
+        {
+            if (bloque.BloqueID.HasValue)
+            {
+                string url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/toggle-bloque/{bloque.BloqueID.Value}?completado={bloque.Completado}";
+                await Http.PostAsync(url, null);
+            }
+        }
+        catch { }
+    }
+
+    private async Task TerminarRutina()
+    {
+        guardando = true;
+        try
+        {
+            string url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/terminar-dia/{RutinaDiaId}";
+            var res = await Http.PostAsync(url, null);
+            if (res.IsSuccessStatusCode)
+            {
+                Nav.NavigateTo("/rutina-semanal");
+            }
+        }
+        catch { }
+        finally { guardando = false; }
+    }
+
+    // ===============================================
+    // LÓGICA DEL TIMER MANUAL E INMUNE A BLOQUEOS
+    // ===============================================
+    private async Task IniciarTimer()
+    {
+        if (segundosDescansoDefecto <= 0) return;
+
+        // ¡IMPORTANTE! Desbloqueamos el motor de audio al hacer clic en Play
+        try { await JS.InvokeVoidAsync("unlockAudio"); } catch { }
+
+        timerCorriendo = true;
+        horaFinTimer = DateTime.Now.AddSeconds(segundosDescansoDefecto);
+
+        // 1. Programamos notificación para cuando esté bloqueado (Solo en móviles)
+        try
+        {
+            if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
+            {
+                var request = new NotificationRequest
+                {
+                    NotificationId = timerNotificacionId,
+                    Title = "¡Tiempo de Descanso Terminado! ⏱️",
+                    Description = "Es hora de volver a darle duro. ¡A la siguiente serie!",
+                    ReturningData = "timer_terminado",
+                    Schedule = new NotificationRequestSchedule { NotifyTime = horaFinTimer }
+                };
+                await LocalNotificationCenter.Current.Show(request);
+            }
+        }
+        catch { }
+
+        // 2. Bucle Visual
+        while (timerCorriendo)
+        {
+            var restante = horaFinTimer - DateTime.Now;
+            if (restante.TotalSeconds <= 0) break;
+
+            tiempoRestanteFormateado = $"{(int)restante.TotalMinutes:D2}:{restante.Seconds:D2}";
+            StateHasChanged();
+            await Task.Delay(500);
+        }
+
+        // 3. Finalizar y Sonar si está en la App
+        if (timerCorriendo)
+        {
+            tiempoRestanteFormateado = "00:00";
+            timerCorriendo = false;
+            StateHasChanged();
+
+            // Emitimos los 3 pitidos de JS
+            try { await JS.InvokeVoidAsync("playTimerBeep"); } catch { }
+
+            // Vibración (Solo móviles)
+            try
+            {
+                if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
+                {
+                    Vibration.Default.Vibrate(TimeSpan.FromSeconds(1));
+                }
+            }
+            catch { }
+        }
+    }
+
+    private void DetenerTimer()
+    {
+        timerCorriendo = false;
+        tiempoRestanteFormateado = "00:00";
+
+        // Cancelar alarma (Solo móviles)
+        try
+        {
+            if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
+            {
+                LocalNotificationCenter.Current.Cancel(timerNotificacionId);
+            }
+        }
+        catch { }
+    }
+}

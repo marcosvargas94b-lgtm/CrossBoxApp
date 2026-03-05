@@ -5,25 +5,43 @@
 @inject NavigationManager Nav
 
 <div class="main-layout">
-    @* NAVBAR *@
+    @* NAVBAR SEGURO PARA NOTCH *@
     <div class="navbar-container">
         <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
             <i class="fas fa-arrow-left"></i> VOLVER
         </div>
-        <div class="nav-title">CONTROL FINANCIERO</div>
+        <div class="nav-title">FINANZAS</div>
         <div class="nav-right"></div>
     </div>
 
     <div class="scrollable-content">
         <div class="finance-wrapper">
-            
-            @* TABS *@
-            <div class="tabs-header">
+
+            @* NUEVO SELECTOR GLOBAL DE MES (A PRUEBA DE FALLOS) *@
+            <div class="global-filter-card fade-in">
+                <div class="filter-header">
+                    <i class="fas fa-calendar-alt"></i> PERIODO DE CONSULTA
+                </div>
+                <div class="select-wrapper-custom">
+                    <select class="input-dark-month" @onchange="AlCambiarMesSelect">
+                        @foreach (var opcion in OpcionesMeses)
+                        {
+                            <option value="@opcion.Valor" selected="@(opcion.Valor == MesFiltroSeleccionado)">
+                                @opcion.Texto
+                            </option>
+                        }
+                    </select>
+                    <i class="fas fa-chevron-down arrow-icon"></i>
+                </div>
+            </div>
+
+            @* TABS MODERNAS *@
+            <div class="tabs-header fade-in">
                 <div class="tab-item @(tabActiva == 1 ? "active" : "")" @onclick="() => CambiarTab(1)">
-                    MOVIMIENTOS
+                    <i class="fas fa-chart-pie"></i> DASHBOARD
                 </div>
                 <div class="tab-item @(tabActiva == 2 ? "active" : "")" @onclick="() => CambiarTab(2)">
-                    HISTÓRICO
+                    <i class="fas fa-list"></i> HISTORIAL
                 </div>
             </div>
 
@@ -31,92 +49,133 @@
             {
                 <div class="spinner-container"><div class="spinner-border text-warning"></div></div>
             }
+            else if (!string.IsNullOrEmpty(mensajeError))
+            {
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-triangle text-danger"></i>
+                    <p>@mensajeError</p>
+                    <button class="btn btn-outline-warning mt-2" @onclick="RecargarTodo">Reintentar</button>
+                </div>
+            }
             else
             {
                 @if (tabActiva == 1)
                 {
-                    @* --- VISTA DE LISTA MENSUAL --- *@
-                    <div class="filters-area">
-                        <label class="lbl-filter">Seleccionar Mes:</label>
-                        <input type="month" @bind="fechaFiltro" class="input-dark-month" @bind:after="CargarMovimientos" />
-                    </div>
+                    <div class="dashboard-tab fade-in">
+                        @* --- TARJETAS DE KPIs --- *@
+                        <div class="kpi-grid">
+                            <div class="kpi-card main-kpi">
+                                <span class="kpi-title">INGRESOS DEL MES</span>
+                                <span class="kpi-value">@resumenKpis.totalMesActual.ToString("C", CultureInfo.CurrentCulture)</span>
 
-                    <div class="total-card">
-                        <span class="total-lbl">TOTAL RECAUDADO</span>
-                        <span class="total-amount">@totalMes.ToString("C", CultureInfo.CurrentCulture)</span>
-                    </div>
-
-                    <div class="transactions-list">
-                        @if (listaMovimientos.Count == 0)
-                        {
-                            <div class="empty-state">
-                                <i class="fas fa-file-invoice-dollar"></i>
-                                <p>No hay movimientos registrados en este mes.</p>
+                                <div class="kpi-growth @(resumenKpis.porcentajeCrecimiento >= 0 ? "positive" : "negative")">
+                                    <i class="fas @(resumenKpis.porcentajeCrecimiento >= 0 ? "fa-arrow-up" : "fa-arrow-down")"></i>
+                                    @Math.Abs(resumenKpis.porcentajeCrecimiento)% vs mes anterior
+                                </div>
                             </div>
-                        }
-                        else
-                        {
-                            <table class="table-finanzas">
-                                <thead>
-                                    <tr>
-                                        <th>DÍA</th>
-                                        <th>NOMBRE</th>
-                                        <th style="text-align:right">MONTO</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <Virtualize Items="@listaMovimientos" Context="m">
-                                        <tr>
-                                            <td class="td-date">
-                                                <div class="date-box">
-                                                    <span>@m.FechaPago.Day</span>
-                                                    <small>@m.FechaPago.ToString("MMM")</small>
-                                                </div>
-                                            </td>
-                                            <td class="td-info">
-                                                <div class="user-name">@m.NombreUsuario</div>
-                                                <div class="pay-method">
-                                                    @if (m.MetodoPago == "MERCADOPAGO")
-                                                    {
-                                                        <span class="badge-mp"><i class="fas fa-hand-holding-usd"></i> MercadoPago</span>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="badge-cash"><i class="fas fa-money-bill-wave"></i> Efectivo</span>
-                                                    }
-                                                </div>
-                                            </td>
-                                            <td class="td-amount">+@m.Monto.ToString("N0")</td>
-                                        </tr>
-                                    </Virtualize>
-                                </tbody>
-                            </table>
-                        }
+
+                            <div class="kpi-card secondary-kpi">
+                                <div class="kpi-icon-box"><i class="fas fa-sack-dollar"></i></div>
+                                <div class="kpi-info">
+                                    <span class="kpi-title">TOTAL ANUAL (@fechaFiltro.Year)</span>
+                                    <span class="kpi-value-small">@resumenKpis.totalAnual.ToString("C", CultureInfo.CurrentCulture)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* --- GRÁFICA ANUAL (12 MESES) --- *@
+                        <div class="chart-section">
+                            <h4 class="chart-title">RENDIMIENTO ANUAL @fechaFiltro.Year</h4>
+
+                            <div class="bar-chart-container scroll-x-custom">
+                                @if (datosGrafica.Count == 0)
+                                {
+                                    <p class="text-muted text-center" style="width: 100%;">Sin datos registrados.</p>
+                                }
+                                else
+                                {
+                                    <div class="bars-flex">
+                                        @foreach (var g in datosGrafica)
+                                        {
+                                            double porcentaje = maxValGrafica > 0 ? (double)g.total / (double)maxValGrafica * 100 : 0;
+                                            if (porcentaje < 2 && g.total > 0) porcentaje = 2; 
+                                            bool esMesSeleccionado = g.mesNumero == fechaFiltro.Month;
+
+                                            <div class="bar-group @(esMesSeleccionado ? "highlight-bar" : "")">
+                                                <div class="bar-val">@(g.total > 0 ? "$" + (g.total / 1000).ToString("0.#") + "k" : "")</div>
+                                                <div class="bar-visual" style="height: @porcentaje%;"></div>
+                                                <div class="bar-lbl">@g.etiqueta</div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
                     </div>
                 }
                 else
                 {
-                    @* --- VISTA DE GRÁFICA --- *@
-                    <div class="chart-section fade-in">
-                        <h4 class="chart-title">INGRESOS ÚLTIMOS 6 MESES</h4>
-                        
-                        <div class="bar-chart-container">
-                            @if (datosGrafica.Count == 0)
+                    @* --- VISTA DE LISTA DETALLADA CON SEPARACIÓN DE MP Y EFECTIVO --- *@
+                    <div class="transactions-tab fade-in">
+
+                        <div class="resume-methods">
+                            <div class="method-card cash">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <div class="m-info">
+                                    <span>En Caja (Efectivo)</span>
+                                    <strong>@listaMovimientos.Where(x => x.metodoPago != "MERCADOPAGO").Sum(x => x.monto).ToString("C")</strong>
+                                </div>
+                            </div>
+                            <div class="method-card mp">
+                                <i class="fas fa-credit-card"></i>
+                                <div class="m-info">
+                                    <span>Mercado Pago</span>
+                                    <strong>@listaMovimientos.Where(x => x.metodoPago == "MERCADOPAGO").Sum(x => x.monto).ToString("C")</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="list-header-info">
+                            <span>Se encontraron <b>@listaMovimientos.Count</b> pagos en @fechaFiltro.ToString("MMMM yyyy").ToUpper()</span>
+                        </div>
+
+                        <div class="transactions-list scroll-custom">
+                            @if (listaMovimientos.Count == 0)
                             {
-                                <p class="text-muted text-center">No hay datos históricos suficientes.</p>
+                                <div class="empty-state">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                    <p>No hay pagos en este periodo.</p>
+                                </div>
                             }
                             else
                             {
-                                <div class="bars-flex">
-                                    @foreach (var g in datosGrafica)
+                                <div class="list-wrapper">
+                                    @foreach (var m in listaMovimientos)
                                     {
-                                        // Calcular altura (con un mínimo visual de 5px)
-                                        double porcentaje = maxValGrafica > 0 ? (double)g.Total / (double)maxValGrafica * 100 : 0;
-                                        if (porcentaje < 2 && g.Total > 0) porcentaje = 2;
+                                        <div class="tx-card">
+                                            <div class="tx-date">
+                                                <span class="tx-day">@m.fechaPago.Day</span>
+                                                <span class="tx-month">@m.fechaPago.ToString("MMM").ToUpper()</span>
+                                            </div>
 
-                                        <div class="bar-group">
-                                            <div class="bar-val">@g.Total.ToString("N0")</div> <div class="bar-visual" style="height: @porcentaje%;"></div>
-                                            <div class="bar-lbl">@g.Etiqueta</div>
+                                            <div class="tx-info">
+                                                <span class="tx-name">@m.nombreUsuario</span>
+                                                <div class="tx-badges">
+                                                    @if (m.metodoPago == "MERCADOPAGO")
+                                                    {
+                                                        <span class="badge-method mp"><i class="fas fa-credit-card"></i> Tarjeta/MP</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge-method cash"><i class="fas fa-money-bill-wave"></i> Efectivo</span>
+                                                    }
+                                                    @* <span class="tx-time">@m.fechaPago.ToString("HH:mm")</span> *@
+                                                </div>
+                                            </div>
+
+                                            <div class="tx-amount">
+                                                +@m.monto.ToString("C", CultureInfo.CurrentCulture)
+                                            </div>
                                         </div>
                                     }
                                 </div>
@@ -132,137 +191,238 @@
 <style>
     /* LAYOUT GENERAL */
     .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
-    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom: 10px; padding-left: 15px; padding-right: 15px; background-color: #1a1a1a; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
-    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
-    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
-    .scrollable-content { flex-grow: 1; overflow-y: auto; background-color: #0d0d0d; padding: 15px; -webkit-overflow-scrolling: touch; padding-bottom: 40px; padding-bottom: calc(env(safe-area-inset-bottom) + 20px);}
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: #1a1a1a; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+    .nav-title { font-weight: bold; font-size: 1.2rem; color: white; letter-spacing: 1px; }
+    .nav-right { width: 60px; }
+    
+    /* SCROLL CONTAINER MÁGICO (No se pega) */
+    .scrollable-content { flex-grow: 1; overflow-y: auto; background-color: #0d0d0d; padding: 15px; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; }
+    .finance-wrapper { max-width: 700px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; flex-grow: 1; }
 
+    /* FILTRO GLOBAL */
+    .global-filter-card { background: #1a1a1a; border: 1px solid #333; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); flex-shrink: 0; }
+    .filter-header { color: #888; font-family: 'Oswald'; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+    
+    /* NUEVOS ESTILOS PARA EL SELECT */
+    .select-wrapper-custom { position: relative; width: 160px; }
+    .input-dark-month { background: #000; border: 1px solid #444; color: #F8C545; padding: 8px 30px 8px 12px; border-radius: 8px; font-family: 'Oswald'; outline: none; font-size: 1.1rem; width: 100%; cursor: pointer; appearance: none; -webkit-appearance: none; }
+    .input-dark-month option { background-color: #1a1a1a; color: white; font-family: 'Roboto'; }
+    .arrow-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #888; pointer-events: none; font-size: 0.8rem; }
+    
     /* TABS */
-    .finance-wrapper { max-width: 600px; margin: 0 auto; }
-    .tabs-header { display: flex; background: #1a1a1a; border-radius: 10px; padding: 5px; margin-bottom: 20px; border: 1px solid #333; }
-    .tab-item { flex: 1; text-align: center; padding: 10px; font-family: 'Oswald'; color: #666; cursor: pointer; border-radius: 8px; transition: 0.3s; }
-    .tab-item.active { background: #F8C545; color: black; font-weight: bold; box-shadow: 0 2px 10px rgba(248,197,69,0.2); }
+    .tabs-header { display: flex; background: #111; border-radius: 10px; padding: 5px; margin-bottom: 20px; border: 1px solid #333; flex-shrink: 0; }
+    .tab-item { flex: 1; text-align: center; padding: 12px; font-family: 'Oswald'; color: #666; cursor: pointer; border-radius: 8px; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; }
+    .tab-item.active { background: #F8C545; color: black; font-weight: bold; box-shadow: 0 2px 10px rgba(248,197,69,0.3); }
 
-    /* FILTROS Y TOTAL */
-    .filters-area { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; }
-    .lbl-filter { color: #aaa; font-size: 0.9rem; font-family: 'Roboto'; margin-right: 10px; }
-    .input-dark-month { background: #000; border: 1px solid #444; color: white; padding: 5px 10px; border-radius: 5px; font-family: 'Oswald'; outline: none; }
-    
-    .total-card { background: linear-gradient(45deg, #1a1a1a, #222); border-left: 5px solid #F8C545; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; flex-direction: column; align-items: flex-end; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-    .total-lbl { color: #888; font-size: 0.8rem; letter-spacing: 1px; font-family: 'Oswald'; }
-    .total-amount { color: #F8C545; font-size: 2rem; font-weight: bold; font-family: 'Oswald'; line-height: 1; }
+    /* --- TAB DASHBOARD (KPIs) --- */
+    .dashboard-tab { display: flex; flex-direction: column; gap: 15px; flex-shrink: 0; }
+    .kpi-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+    .kpi-card { background: #1a1a1a; border-radius: 15px; padding: 20px; border: 1px solid #333; position: relative; overflow: hidden; }
+    .kpi-title { color: #888; font-family: 'Oswald'; font-size: 0.85rem; letter-spacing: 1px; display: block; margin-bottom: 5px; }
+    .main-kpi { border-left: 5px solid #F8C545; background: linear-gradient(135deg, #1a1a1a 0%, #222 100%); }
+    .main-kpi .kpi-value { font-size: 2.5rem; color: #F8C545; font-weight: bold; font-family: 'Oswald'; line-height: 1; display: block; margin-bottom: 10px; }
+    .kpi-growth { display: inline-flex; align-items: center; gap: 5px; font-size: 0.85rem; font-weight: bold; padding: 4px 10px; border-radius: 50px; font-family: 'Roboto'; }
+    .kpi-growth.positive { background: rgba(40, 167, 69, 0.15); color: #28a745; }
+    .kpi-growth.negative { background: rgba(220, 53, 69, 0.15); color: #dc3545; }
+    .secondary-kpi { display: flex; align-items: center; gap: 15px; border-left: 5px solid #009EE3; }
+    .kpi-icon-box { width: 50px; height: 50px; border-radius: 12px; background: rgba(0, 158, 227, 0.1); color: #009EE3; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+    .kpi-info { flex: 1; }
+    .kpi-value-small { font-size: 1.5rem; color: white; font-weight: bold; font-family: 'Oswald'; }
 
-    /* LISTA */
-    .transactions-list { min-height: 200px; }
-    .empty-state { text-align: center; color: #444; margin-top: 50px; }
-    .empty-state i { font-size: 3rem; margin-bottom: 10px; }
-    
-    .table-finanzas { width: 100%; border-collapse: collapse; }
-    .table-finanzas th { text-align: left; color: #666; font-size: 0.75rem; padding-bottom: 10px; border-bottom: 1px solid #333; font-family: 'Oswald'; letter-spacing: 1px; }
-    .table-finanzas td { padding: 15px 0; border-bottom: 1px solid #222; vertical-align: middle; }
-    
-    .td-date { width: 50px; }
-    .date-box { background: #222; width: 45px; height: 45px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Oswald'; border: 1px solid #444; }
-    .date-box span { font-size: 1.1rem; font-weight: bold; color: white; line-height: 1; }
-    .date-box small { font-size: 0.65rem; color: #F8C545; text-transform: uppercase; line-height: 1; }
-
-    .td-info { padding-left: 10px; }
-    .user-name { color: #eee; font-weight: bold; font-size: 0.95rem; margin-bottom: 3px; }
-    .pay-method { display: flex; gap: 5px; }
-    .badge-mp { background: rgba(0, 158, 227, 0.15); color: #009EE3; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; border: 1px solid rgba(0, 158, 227, 0.3); }
-    .badge-cash { background: rgba(46, 204, 113, 0.15); color: #2ecc71; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: bold; border: 1px solid rgba(46, 204, 113, 0.3); }
-
-    .td-amount { text-align: right; color: #2ecc71; font-family: 'Oswald'; font-size: 1.1rem; font-weight: bold; }
-
-    /* GRÁFICA */
-    .chart-section { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-top: 10px; }
-    .chart-title { color: white; font-family: 'Oswald'; text-align: center; margin-bottom: 20px; font-size: 1.1rem; border-bottom: 1px solid #333; padding-bottom: 10px; }
-    .bar-chart-container { height: 300px; display: flex; align-items: flex-end; justify-content: center; width: 100%; }
-    .bars-flex { display: flex; justify-content: space-around; align-items: flex-end; width: 100%; height: 100%; }
-    .bar-group { display: flex; flex-direction: column; align-items: center; width: 14%; height: 100%; justify-content: flex-end; }
-    .bar-val { font-size: 0.7rem; color: #fff; margin-bottom: 5px; font-family: 'Oswald'; }
-    .bar-visual { width: 100%; background: linear-gradient(to top, #F8C545, #ffca28); border-radius: 5px 5px 0 0; transition: height 0.6s ease-out; opacity: 0.9; }
+    /* GRÁFICA ANUAL */
+    .chart-section { background: #1a1a1a; padding: 20px 15px; border-radius: 15px; border: 1px solid #333; margin-top: 5px; }
+    .chart-title { color: white; font-family: 'Oswald'; margin-bottom: 20px; font-size: 1rem; border-bottom: 1px solid #333; padding-bottom: 10px; letter-spacing: 1px; }
+    .bar-chart-container { height: 220px; width: 100%; display: flex; align-items: flex-end; }
+    .scroll-x-custom { overflow-x: auto; overflow-y: hidden; padding-bottom: 10px; }
+    .scroll-x-custom::-webkit-scrollbar { height: 6px; } .scroll-x-custom::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+    .bars-flex { display: flex; align-items: flex-end; width: 100%; height: 100%; gap: 8px; min-width: 400px; }
+    .bar-group { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; transition: 0.3s; opacity: 0.5; }
+    .bar-group.highlight-bar { opacity: 1; transform: scale(1.05); }
+    .bar-group.highlight-bar .bar-visual { background: linear-gradient(to top, #F8C545, #FFEA00); box-shadow: 0 0 15px rgba(248,197,69,0.4); }
+    .bar-group.highlight-bar .bar-lbl { color: #F8C545; font-weight: bold; }
+    .bar-val { font-size: 0.65rem; color: #fff; margin-bottom: 4px; font-family: 'Oswald'; }
+    .bar-visual { width: 100%; max-width: 25px; background: #444; border-radius: 4px 4px 0 0; transition: height 0.6s ease-out; }
     .bar-lbl { margin-top: 8px; font-size: 0.65rem; color: #888; font-family: 'Oswald'; text-align: center; }
 
-    .fade-in { animation: fadeIn 0.5s ease; }
-    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .spinner-container { display: flex; justify-content: center; padding: 50px; }
+    /* --- TAB MOVIMIENTOS --- */
+    .transactions-tab { display: flex; flex-direction: column; flex-grow: 1; min-height: 0; }
+    
+    /* RESUMEN EFECTIVO / MP */
+    .resume-methods { display: flex; gap: 10px; margin-bottom: 15px; }
+    .method-card { flex: 1; display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 12px; background: #1a1a1a; border: 1px solid #333; }
+    .method-card.cash i { color: #2ecc71; font-size: 1.6rem; }
+    .method-card.mp i { color: #009EE3; font-size: 1.6rem; }
+    .m-info { display: flex; flex-direction: column; }
+    .m-info span { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: bold; }
+    .m-info strong { color: white; font-size: 1.2rem; font-family: 'Oswald'; line-height: 1.1; margin-top: 2px;}
 
-    .transactions-list {
-        min-height: 200px;
-        width: 100%;
-        overflow-x: auto;
-    }
+    .list-header-info { color: #888; font-size: 0.85rem; font-family: 'Roboto'; margin-bottom: 10px; text-align: center; flex-shrink: 0; }
+    .list-header-info b { color: white; }
+    
+    .transactions-list { flex-grow: 1; overflow-y: auto; padding-right: 5px; }
+    .scroll-custom::-webkit-scrollbar { width: 5px; } .scroll-custom::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+    .list-wrapper { display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
+    
+    .tx-card { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 12px; transition: transform 0.2s; }
+    .tx-card:hover { transform: translateX(5px); border-color: #555; }
+    
+    .tx-date { background: #222; border: 1px solid #444; border-radius: 8px; min-width: 50px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Oswald'; flex-shrink: 0; }
+    .tx-day { font-size: 1.1rem; color: white; font-weight: bold; line-height: 1; }
+    .tx-month { font-size: 0.65rem; color: #F8C545; line-height: 1; margin-top: 2px; }
+    
+    .tx-info { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .tx-name { color: white; font-weight: 500; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+    .tx-badges { display: flex; align-items: center; gap: 8px; }
+    
+    .badge-method { font-size: 0.65rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; font-family: 'Oswald'; letter-spacing: 0.5px; }
+    .badge-method.mp { background: rgba(0, 158, 227, 0.15); color: #009EE3; border: 1px solid rgba(0, 158, 227, 0.3); }
+    .badge-method.cash { background: rgba(46, 204, 113, 0.15); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.3); }
+    .tx-time { color: #666; font-size: 0.7rem; }
+
+    .tx-amount { font-family: 'Oswald'; font-size: 1.1rem; font-weight: bold; color: #2ecc71; text-align: right; flex-shrink: 0; }
+
+    .empty-state { text-align: center; color: #444; margin-top: 40px; }
+    .empty-state i { font-size: 3rem; margin-bottom: 10px; }
+    
+    .fade-in { animation: fadeIn 0.4s ease-out; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .spinner-container { display: flex; justify-content: center; padding: 50px; flex-grow: 1; }
 </style>
 
 @code {
     private int tabActiva = 1;
     private bool cargando = false;
+    private string mensajeError = "";
+
     private DateTime fechaFiltro = DateTime.Today;
+    private string MesFiltroSeleccionado => fechaFiltro.ToString("yyyy-MM");
 
-    // DTOs Locales para mapear respuesta
-    class MovimientoDto { public Guid PagoID { get; set; } public string NombreUsuario { get; set; } public DateTime FechaPago { get; set; } public decimal Monto { get; set; } public string MetodoPago { get; set; } }
-    class GraficaDto { public string Etiqueta { get; set; } public decimal Total { get; set; } }
-    class ResponseMovimientos { public List<MovimientoDto> Lista { get; set; } public decimal Total { get; set; } }
+    // Clase para llenar el Select
+    public class OpcionMes { public string Valor { get; set; } public string Texto { get; set; } }
+    private List<OpcionMes> OpcionesMeses = new();
 
+    // DTOs
+    public class ResumenKpisDto
+    {
+        public decimal totalMesActual { get; set; }
+        public decimal totalMesAnterior { get; set; }
+        public decimal totalAnual { get; set; }
+        public double porcentajeCrecimiento { get; set; }
+    }
+
+    public class MovimientoDto
+    {
+        public Guid pagoID { get; set; }
+        public string nombreUsuario { get; set; }
+        public DateTime fechaPago { get; set; }
+        public decimal monto { get; set; }
+        public string metodoPago { get; set; }
+    }
+
+    public class GraficaMesDto
+    {
+        public int mesNumero { get; set; }
+        public string etiqueta { get; set; }
+        public decimal total { get; set; }
+    }
+
+    public class ResponseMovimientos
+    {
+        public List<MovimientoDto> lista { get; set; }
+        public decimal total { get; set; }
+    }
+
+    private ResumenKpisDto resumenKpis = new ResumenKpisDto();
     private List<MovimientoDto> listaMovimientos = new();
-    private List<GraficaDto> datosGrafica = new();
-    private decimal totalMes = 0;
+    private List<GraficaMesDto> datosGrafica = new();
     private decimal maxValGrafica = 0;
 
     protected override async Task OnInitializedAsync()
     {
-        // Validación de Admin
-        if (Sesion.Usuario == null || Sesion.Usuario.TipoUsuarioID != 1) 
-        { 
-            Nav.NavigateTo("/home"); 
-            return; 
+        if (Sesion.Usuario == null || Sesion.Usuario.TipoUsuarioID != 1)
+        {
+            Nav.NavigateTo("/home");
+            return;
         }
-        await CargarMovimientos();
+
+        GenerarOpcionesMeses();
+        await RecargarTodo();
+    }
+
+    private void GenerarOpcionesMeses()
+    {
+        OpcionesMeses.Clear();
+        // Generamos los últimos 12 meses hacia atrás desde hoy
+        var fechaPivote = DateTime.Today;
+        for (int i = 0; i < 12; i++)
+        {
+            var fechaLoop = fechaPivote.AddMonths(-i);
+            string nombreMes = char.ToUpper(fechaLoop.ToString("MMMM")[0]) + fechaLoop.ToString("MMMM").Substring(1);
+            
+            OpcionesMeses.Add(new OpcionMes
+            {
+                Valor = fechaLoop.ToString("yyyy-MM"),
+                Texto = $"{nombreMes} {fechaLoop.Year}"
+            });
+        }
     }
 
     private async Task CambiarTab(int tab)
     {
         tabActiva = tab;
-        if (tab == 1) await CargarMovimientos();
-        else await CargarGrafica();
     }
 
-    private async Task CargarMovimientos()
+    private async Task AlCambiarMesSelect(ChangeEventArgs e)
     {
-        cargando = true;
-        try
+        string valorSeleccionado = e.Value?.ToString() ?? "";
+
+        if (DateTime.TryParseExact(valorSeleccionado, "yyyy-MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime fechaSeleccionada))
         {
-            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/finanzas/movimientos/{Sesion.Usuario.BoxID}/{fechaFiltro.Year}/{fechaFiltro.Month}";
-            var respuesta = await Http.GetFromJsonAsync<ResponseMovimientos>(url);
-            listaMovimientos = respuesta.Lista ?? new();
-            totalMes = respuesta.Total;
+            fechaFiltro = fechaSeleccionada;
+            await RecargarTodo();
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Error cargando movimientos: " + ex.Message);
-        }
-        cargando = false;
     }
 
-    private async Task CargarGrafica()
+    private async Task RecargarTodo()
     {
         cargando = true;
+        mensajeError = "";
+        StateHasChanged();
+
         try
         {
-            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/finanzas/grafica-ingresos/{Sesion.Usuario.BoxID}";
-            datosGrafica = await Http.GetFromJsonAsync<List<GraficaDto>>(url);
+            var boxId = Sesion.Usuario.BoxID;
 
-            if (datosGrafica != null && datosGrafica.Any())
+            var urlBase = "https://localhost:7274/api/finanzasapi";
+
+            // 1. Cargar KPIs
+            var resKpis = await Http.GetFromJsonAsync<ResumenKpisDto>($"{urlBase}/resumen-kpis/{boxId}/{fechaFiltro.Year}/{fechaFiltro.Month}");
+            if (resKpis != null) resumenKpis = resKpis;
+
+            // 2. Cargar Gráfica
+            var resGraf = await Http.GetFromJsonAsync<List<GraficaMesDto>>($"{urlBase}/grafica-anual/{boxId}/{fechaFiltro.Year}");
+            if (resGraf != null)
             {
-                maxValGrafica = datosGrafica.Max(x => x.Total);
-                if (maxValGrafica == 0) maxValGrafica = 1; // Evitar división por cero
+                datosGrafica = resGraf;
+                maxValGrafica = datosGrafica.Any() ? datosGrafica.Max(x => x.total) : 0;
+                if (maxValGrafica == 0) maxValGrafica = 1;
             }
+
+            // 3. Cargar Movimientos
+            var resMovs = await Http.GetFromJsonAsync<ResponseMovimientos>($"{urlBase}/movimientos/{boxId}/{fechaFiltro.Year}/{fechaFiltro.Month}");
+            if (resMovs != null) listaMovimientos = resMovs.lista ?? new();
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Error cargando gráfica: " + ex.Message);
+            Console.WriteLine("Error recargando finanzas: " + ex.Message);
+            mensajeError = "No se pudo conectar con el servidor. Revisa que tu API local esté corriendo.";
         }
+
         cargando = false;
+        StateHasChanged();
     }
 }
+
+
+

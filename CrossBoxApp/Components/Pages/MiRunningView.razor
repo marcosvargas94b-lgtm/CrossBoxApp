@@ -253,7 +253,7 @@
                     <div style="display:flex; gap: 10px; margin-bottom: 15px;">
                         @* CAJA 1: MAPA STRAVA *@
                         <div style="flex:1;">
-                            <label class="section-label" style="color:#F8C545; font-size:0.7rem; text-align:center;">1. MAPA STRAVA</label>
+                            <label class="section-label" style="color:#F8C545; font-size:0.7rem; text-align:center;">1. TU RELOJ O MAPA STRAVA</label>
                             <div class="map-picker-box @(mapaHistoria != null ? "has-image" : "")" style="height:120px;" @onclick="SeleccionarMapaHistoria">
                                 @if (previewMapaHistoria != null)
                                 {
@@ -341,7 +341,7 @@
                 {
                     <button class="btn-cancel" @onclick="CerrarModalHistoria">CANCELAR</button>
                     <button class="btn-save" @onclick="GenerarHistoriaApi" disabled="@(mapaHistoria == null || fotoAtleta == null || generandoHistoria)">
-                        @if(generandoHistoria) { <i class="fas fa-spinner fa-spin"></i> <span>LA IA PIENSA...</span> }
+                        @if(generandoHistoria) { <i class="fas fa-spinner fa-spin"></i> <span>GENERANDO...</span> }
                         else { <i class="fas fa-magic"></i> <span>GENERAR</span> }
                     </button>
                 }

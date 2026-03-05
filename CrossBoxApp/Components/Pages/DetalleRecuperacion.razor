@@ -1,0 +1,263 @@
+﻿@page "/detalle-recuperacion"
+@using System.Net.Http.Json
+@using CrossBoxApp.Models
+@using CrossBoxApp.Models.Services
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject SesionService Sesion
+
+<div class="main-layout">
+    @* NAVBAR *@
+    <div class="navbar-container">
+        <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
+            <i class="fas fa-arrow-left"></i> VOLVER
+        </div>
+        <div class="nav-title">READINESS ESTRATÉGICO</div>
+        <div class="nav-right"></div>
+    </div>
+
+    @* CONTENIDO SCROLLEABLE *@
+    <div class="scrollable-content">
+        @if (datos == null) {
+            <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
+        } else {
+            
+            @* TARJETA PRINCIPAL DEL MAPA *@
+            <div class="focus-card fade-in">
+                <div class="readiness-score">
+                    <span class="big-num">@datos.DisponibilidadGlobal%</span>
+                    <span class="score-label">ENERGÍA MUSCULAR</span>
+                    <p class="status-msg">@datos.Mensaje.ToUpper()</p>
+                </div>
+                <div class="map-container">
+                    <MapaCalor Datos="datos.Musculos" />
+                </div>
+            </div>
+
+            @* LEYENDA DE COLORES *@
+            <div class="gradient-legend-container mt-3 fade-in">
+                <div class="gradient-bar"></div>
+                <div class="gradient-labels">
+                    <span>AGOTADO</span>
+                    <span>FATIGA ÓPTIMA</span>
+                    <span>RECUPERADO</span>
+                </div>
+            </div>
+
+            <div class="divider-line mt-4 mb-4"></div>
+
+            @* NUEVO MÓDULO: TIEMPO DE RECUPERACIÓN POR MÚSCULO *@
+            <div class="stats-section fade-in mb-4">
+                <h5 class="section-title"><i class="fas fa-stopwatch me-2"></i>TIEMPO DE RECUPERACIÓN</h5>
+                <p class="section-sub">Horas estimadas para que el músculo alcance su 100%.</p>
+                
+                @{
+                    var musculosFatigados = datos.Musculos.Where(m => m.Porcentaje < 100).OrderBy(m => m.Porcentaje).ToList();
+                    
+                    if(musculosFatigados.Any()) 
+                    {
+                        <div class="recovery-list">
+                            @foreach(var m in musculosFatigados) 
+                            {
+                                <div class="recovery-item">
+                                    <div class="recovery-header">
+                                        <span class="muscle-name">@m.Nombre.ToUpper()</span>
+                                        <span class="time-left"><i class="far fa-clock me-1"></i> @m.HorasParaRecuperacion HRS</span>
+                                    </div>
+                                    <div class="progress-bg">
+                                        <div class="progress-fill" style="width: @(m.Porcentaje)%; background: @GetColorForBar(m.Porcentaje);"></div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    } 
+                    else 
+                    {
+                        <div class="text-center mt-3 empty-state">
+                            <i class="fas fa-battery-full mb-2" style="font-size: 1.5rem; color: #00C3A5;"></i><br />
+                            Todos tus músculos están al 100%. <br/>¡Estás listo para destruir cualquier rutina!
+                        </div>
+                    }
+                }
+            </div>
+
+            @* GRÁFICA DE BARRAS (VOLUMEN) *@
+            <div class="stats-section fade-in">
+                <h5 class="section-title"><i class="fas fa-chart-column me-2"></i>CARGA MUSCULAR SEMANAL</h5>
+                <p class="section-sub">Volumen de series por grupo muscular en los últimos 7 días.</p>
+                
+                @if(datos.VolumenSemanal != null && datos.VolumenSemanal.Any())
+                {
+                    int maxSeries = datos.VolumenSemanal.Max(v => v.SeriesTotales);
+                    if (maxSeries == 0) maxSeries = 1; 
+                    
+                    <div class="chart-wrapper">
+                        <div class="chart-container">
+                            @foreach (var item in datos.VolumenSemanal) 
+                            {
+                                int heightPerc = (int)((double)item.SeriesTotales / maxSeries * 100);
+                                if (heightPerc < 5) heightPerc = 5; 
+                                
+                                <div class="chart-column">
+                                    <span class="chart-value">@item.SeriesTotales</span>
+                                    <div class="bar-outer">
+                                        <div class="bar-fill" style="height: @(heightPerc)%; background: @GetColorByVol(item.SeriesTotales)"></div>
+                                    </div>
+                                    <span class="chart-label">@Abreviar(item.GrupoMuscular)</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center mt-3 empty-state">
+                        Aún no tienes volumen registrado esta semana.
+                    </div>
+                }
+            </div>
+
+            @* NUEVO MÓDULO: SUGERENCIA DE ENTRENAMIENTO *@
+            <div class="stats-section fade-in mt-4 mb-4">
+                <h5 class="section-title"><i class="fas fa-bolt me-2" style="color: #00C3A5;"></i>MÚSCULOS FRESCOS</h5>
+                <p class="section-sub">Grupos musculares en óptimas condiciones para entrenar hoy.</p>
+
+                @{
+                    // Filtramos los músculos que están al 95% o más de recuperación
+                    var musculosFrescos = datos.Musculos.Where(m => m.Porcentaje >= 95).ToList();
+
+                    if (musculosFrescos.Any())
+                    {
+                        <div class="fresh-muscles-container">
+                            @foreach (var m in musculosFrescos)
+                            {
+                                <span class="fresh-chip">@m.Nombre.ToUpper()</span>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center mt-3 empty-state">
+                            <i class="fas fa-bed mb-2" style="font-size: 1.5rem; color: #FF9500;"></i><br />
+                            Tu cuerpo necesita descanso total.<br />Haz estiramientos o cardio ligero.
+                        </div>
+                    }
+                }
+            </div>
+        }
+        
+        <div style="height: 60px;"></div>
+    </div>
+</div>
+
+<style>
+    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
+    
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
+    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
+    .nav-right { width: 60px; }
+    
+    .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; background: radial-gradient(circle at top, #1a1a1a 0%, #000 100%); }
+
+    .focus-card { background: #111; border: 1px solid #333; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+    
+    .readiness-score { display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 20px; }
+    .big-num { font-family: 'Oswald'; font-size: 4.5rem; font-weight: 900; line-height: 1; color: white; }
+    .score-label { font-size: 0.8rem; letter-spacing: 2px; color: #F8C545; font-weight: bold; margin-top: 5px; }
+    .status-msg { font-size: 0.85rem; color: #FFFFFF; font-weight: 800; margin-top: 10px; font-style: italic; }
+    
+    .map-container { width: 100%; display: flex; justify-content: center; }
+
+    .gradient-legend-container { width: 100%; max-width: 500px; padding: 15px 20px; background: #111; border-radius: 15px; border: 1px solid #222; display: flex; flex-direction: column; gap: 8px; }
+    .gradient-bar { width: 100%; height: 10px; border-radius: 5px; background: linear-gradient(to right, #FF3B30 0%, #FF9500 40%, #FFCC00 80%, #3D4046 100%); }
+    .gradient-labels { display: flex; justify-content: space-between; color: #888; font-size: 0.65rem; font-weight: bold; letter-spacing: 1px; }
+
+    .divider-line { width: 100%; max-width: 500px; height: 1px; background: #333; }
+
+    .stats-section { width: 100%; max-width: 500px; background: #111; padding: 20px; border-radius: 20px; border: 1px solid #333; }
+    .section-title { font-family: 'Oswald'; color: white; letter-spacing: 1px; margin-bottom: 2px; font-size: 1.1rem; }
+    .section-sub { color: #888; font-size: 0.8rem; margin-bottom: 25px; }
+    
+    .empty-state { color: #666; font-style: italic; font-size: 0.85rem; }
+
+    /* NUEVOS ESTILOS: LISTA DE RECUPERACIÓN POR HORAS */
+    .recovery-list { display: flex; flex-direction: column; gap: 15px; width: 100%; }
+    .recovery-item { display: flex; flex-direction: column; gap: 6px; }
+    .recovery-header { display: flex; justify-content: space-between; align-items: center; }
+    .muscle-name { color: white; font-family: 'Oswald'; font-size: 0.95rem; letter-spacing: 1px; }
+    .time-left { color: #F8C545; font-size: 0.75rem; font-weight: bold; background: rgba(248, 197, 69, 0.1); padding: 3px 8px; border-radius: 10px; }
+    
+    .progress-bg { width: 100%; height: 8px; background: #222; border-radius: 4px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 4px; transition: width 1s ease-in-out; }
+
+    .chart-wrapper { width: 100%; overflow-x: auto; padding-bottom: 10px; -webkit-overflow-scrolling: touch; }
+    .chart-container { display: flex; align-items: flex-end; height: 220px; gap: 15px; min-width: min-content; padding: 0 10px; }
+    .chart-column { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; width: 40px; flex-shrink: 0; }
+    .chart-value { color: white; font-family: 'Oswald'; font-size: 1rem; font-weight: bold; margin-bottom: 5px; }
+    .bar-outer { width: 100%; height: 150px; background: #222; border-radius: 6px; display: flex; align-items: flex-end; overflow: hidden; }
+    .bar-fill { width: 100%; border-radius: 6px; transition: height 1s ease-out; }
+    .chart-label { color: #aaa; font-size: 0.65rem; margin-top: 10px; text-transform: uppercase; font-weight: bold; text-align: center; line-height: 1; }
+
+    .fade-in { animation: fadeIn 0.5s ease; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .fresh-muscles-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .fresh-chip {
+        background: rgba(0, 195, 165, 0.15); /* Fondo verde translúcido */
+        color: #00C3A5; /* Texto verde neón */
+        border: 1px solid rgba(0, 195, 165, 0.4);
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-family: 'Oswald', sans-serif;
+        letter-spacing: 1px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+</style>
+
+@code {
+    private EstadoRecuperacionDto datos;
+
+    protected override async Task OnInitializedAsync() {
+        if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+        try {
+            datos = await Http.GetFromJsonAsync<EstadoRecuperacionDto>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/recuperacion/{Sesion.Usuario.UsuarioID}");
+        } catch { }
+    }
+
+    private string Abreviar(string nombre) {
+        if (string.IsNullOrEmpty(nombre)) return "";
+        if (nombre == "Espalda Alta") return "ESP.A";
+        if (nombre == "Antebrazos") return "ANTE.";
+        if (nombre == "Lumbares") return "LUMB.";
+        if (nombre == "Full Body / Cardio") return "CARDIO";
+        if (nombre == "Isquiotibiales") return "ISQUIO";
+        return nombre.Substring(0, Math.Min(6, nombre.Length)).ToUpper() + ".";
+    }
+
+    // Reutilizamos la lógica del gradiente para que las barras coincidan con el color del muñeco
+    private string GetColorForBar(int p)
+    {
+        if (p <= 40) return InterpolateColor(255, 59, 48, 255, 149, 0, p / 40.0);
+        if (p <= 80) return InterpolateColor(255, 149, 0, 255, 204, 0, (p - 40) / 40.0);
+        return InterpolateColor(255, 204, 0, 0, 195, 165, (p - 80) / 20.0);
+    }
+
+    private string InterpolateColor(int r1, int g1, int b1, int r2, int g2, int b2, double fraction)
+    {
+        int r = (int)(r1 + (r2 - r1) * fraction);
+        int g = (int)(g1 + (g2 - g1) * fraction);
+        int b = (int)(b1 + (b2 - b1) * fraction);
+        return $"rgb({r}, {g}, {b})";
+    }
+
+    private string GetColorByVol(int series) => series >= 16 ? "#FF3B30" : series >= 8 ? "#FF9500" : "#00C3A5";
+}

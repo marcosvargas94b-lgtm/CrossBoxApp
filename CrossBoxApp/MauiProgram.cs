@@ -1,9 +1,9 @@
 ﻿using CrossBoxApp.Models;
 using CrossBoxApp.Models.Services;
 using Microsoft.Extensions.Logging;
+using Plugin.LocalNotification;
 using Plugin.Maui.Audio;
 using ZXing.Net.Maui.Controls;
-// NOTA: Aquí NO debe haber usings de iOS ni LifecycleEvents
 
 namespace CrossBoxApp
 {
@@ -20,6 +20,13 @@ namespace CrossBoxApp
                     fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
                 });
 
+            // =========================================================
+            // MAGIA: Solo iniciamos notificaciones en móviles
+            // =========================================================
+#if ANDROID || IOS
+            builder.UseLocalNotification();
+#endif
+
             // --- AQUÍ NO PONEMOS NADA DE IOS PARA EVITAR EL ERROR PKCS ---
 
             builder.Services.AddMauiBlazorWebView();
@@ -33,6 +40,7 @@ namespace CrossBoxApp
             builder.Services.AddSingleton<SesionService>();
             builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/"), Timeout = TimeSpan.FromMinutes(3) });
             builder.Services.AddSingleton(AudioManager.Current);
+
             return builder.Build();
         }
     }

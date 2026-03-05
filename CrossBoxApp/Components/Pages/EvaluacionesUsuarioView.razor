@@ -48,7 +48,7 @@
                             <div class="test-name">@item.NombreTest</div>
 
                             <div class="result-area">
-                                @if (item.Valor.HasValue)
+                                @if (!string.IsNullOrEmpty(item.Valor))
                                 {
                                     <div class="result-display">
                                         <div class="value-row">
@@ -108,7 +108,7 @@
                 <label class="lbl-input text-center">Ingresa el resultado en:</label>
                 
                 <div class="input-with-unit">
-                    <input type="number" @bind="valorInput" class="form-control input-dark big-input" placeholder="0" />
+                    <input type="text" @bind="valorInput" class="form-control input-dark big-input" placeholder="Ej: 100 o 12:30" />
                     <span class="unit-label">@testSeleccionado.Medida</span>
                 </div>
             </div>
@@ -288,7 +288,7 @@
     private bool cargando = true;
     private bool mostrarModal = false;
     private EvaluacionVisualDto testSeleccionado;
-    private float valorInput;
+    private string valorInput;
 
     protected override async Task OnInitializedAsync()
     {
@@ -321,7 +321,7 @@
         testSeleccionado = item;
         esModoNuevaMarca = esNuevaMarca;
         // Si es nueva marca, ponemos 0 para que sea fácil escribir. Si es editar, ponemos el valor actual.
-        valorInput = esNuevaMarca ? 0 : (item.Valor ?? 0);
+        valorInput = esNuevaMarca ? "" : (item.Valor ?? "");
         mostrarModal = true;
     }
 

@@ -85,6 +85,56 @@
                 });
             }
         };
+
+
+
+
+
+        let audioCtx = null;
+
+        // Se llama al dar Play
+        window.unlockAudio = function () {
+            try {
+                if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+                if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+
+                // Tono fantasma para desbloquear
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                gain.gain.value = 0; // Volumen 0
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.1);
+                console.log("Audio desbloqueado");
+            } catch (e) { console.error("Error al desbloquear audio", e); }
+        };
+
+        // Se llama al terminar
+        window.playTimerBeep = function () {
+            try {
+                if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+                // Forzamos el resume de nuevo por si se suspendió mientras esperaba
+                if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+
+                console.log("Reproduciendo Beep");
+
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.type = 'sine';
+                        osc.frequency.value = 880;
+                        gain.gain.setValueAtTime(1, audioCtx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                        osc.start(audioCtx.currentTime);
+                        osc.stop(audioCtx.currentTime + 0.3);
+                    }, i * 400);
+                }
+            } catch (e) { console.error("Error reproduciendo beep", e); }
+        };
     </script>
 </body>
 

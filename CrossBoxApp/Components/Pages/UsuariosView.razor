@@ -249,9 +249,22 @@
                     <span style="color:#F8C545; font-weight:bold;">@(usuarioSeleccionado.FechaVencimiento == DateTime.MinValue ? "Nunca ha pagado" : usuarioSeleccionado.FechaVencimiento.ToString("dd/MM/yyyy"))</span>
                 </div>
                 
-                <label class="mb-2 lbl-input">Nueva Fecha de Inicio:</label>
-                <input type="date" @bind="fechaPagoSeleccionada" class="form-control input-dark" style="font-size: 1.1rem; padding: 10px;" />
-                <small class="text-muted d-block mt-2">Se sumará 1 mes a partir de esta fecha.</small>
+                @* NUEVO: FECHA DE INICIO *@
+                <div style="text-align: left; margin-bottom: 15px;">
+                    <label class="form-label">Nueva Fecha de Inicio:</label>
+                    <input type="date" @bind="fechaPagoSeleccionada" class="form-control input-dark" style="padding: 10px;" />
+                    <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">Se sumará 1 mes a partir de esta fecha.</small>
+                </div>
+
+                @* NUEVO: MONTO COBRADO MANUALMENTE *@
+                <div style="text-align: left;">
+                    <label class="form-label">Cantidad Pagada (MXN):</label>
+                    <div style="display: flex; align-items: center; background: #222; border: 1px solid #555; border-radius: 5px; padding: 5px 10px;">
+                        <span style="color: #F8C545; font-weight: bold; font-size: 1.2rem; margin-right: 10px;">$</span>
+                        <input type="number" @bind="montoPagoSeleccionado" class="form-control input-dark" style="border: none; background: transparent !important; font-size: 1.2rem; padding: 0; outline: none;" placeholder="Ej: 500" />
+                    </div>
+                </div>
+
             </div>
             <div class="modal-footer">
                 <button class="btn-cancel" @onclick="() => mostrarModalPago = false">Cancelar</button>
@@ -422,6 +435,7 @@
     nuevoAtleta.Telefono.Trim().Length == 10;
 
     private bool guardandoAtleta = false;
+    private decimal montoPagoSeleccionado = 0;
 
     private List<AtletaConEstadoDto> UsuariosFiltrados
     {
@@ -536,6 +550,7 @@
         usuarioSeleccionado = u;
         if (u.DiasRestantes > 0 && u.FechaVencimiento > DateTime.MinValue) fechaPagoSeleccionada = u.FechaVencimiento;
         else fechaPagoSeleccionada = DateTime.Today;
+        montoPagoSeleccionado = 0;
         mostrarModalPago = true;
     }
 
@@ -545,11 +560,22 @@
         Nav.NavigateTo($"/gestion-propositos/{u.UsuarioID}/{u.NombreCompleto}");
     }
 
-    private async Task ConfirmarRenovacion()
+   private async Task ConfirmarRenovacion()
     {
+        if (montoPagoSeleccionado < 0)
+        {
+            await App.Current.MainPage.DisplayAlert("Atención", "Ingresa una cantidad pagada válida.", "OK");
+            return;
+        }
+
         try {
-            var req = new RenovarPagoRequest { UsuarioID = usuarioSeleccionado.UsuarioID, NuevaFechaInicio = fechaPagoSeleccionada };
+            var req = new RenovarPagoRequest { 
+                UsuarioID = usuarioSeleccionado.UsuarioID, 
+                NuevaFechaInicio = fechaPagoSeleccionada,
+                MontoPagado = montoPagoSeleccionado // AHORA ENVIAMOS EL MONTO
+            };
             var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/renovar", req);
+            
             if (response.IsSuccessStatusCode) { 
                 await App.Current.MainPage.DisplayAlert("Éxito", "Pago registrado.", "OK"); 
                 mostrarModalPago = false; 
