@@ -394,7 +394,7 @@
         {
             var boxId = Sesion.Usuario.BoxID;
 
-            var urlBase = "https://localhost:7274/api/finanzasapi";
+            var urlBase = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/finanzasapi";
 
             // 1. Cargar KPIs
             var resKpis = await Http.GetFromJsonAsync<ResumenKpisDto>($"{urlBase}/resumen-kpis/{boxId}/{fechaFiltro.Year}/{fechaFiltro.Month}");

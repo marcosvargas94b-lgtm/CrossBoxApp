@@ -3,6 +3,8 @@
 @using CrossBoxApp.Models
 @using CrossBoxApp.Models.Social
 @using Microsoft.Maui.Devices
+@using System.Net.Http.Headers
+@using Microsoft.AspNetCore.Components.Forms
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject CrossBoxApp.Models.Services.SesionService Sesion
@@ -57,15 +59,12 @@
                                 </div>
                             }
 
-                            @* Opcional: Un mensajito al final si hay más de 10 *@
                             @if (misNotificaciones.Count > 10)
                             {
                                 <div class="noti-item" style="justify-content: center; font-size: 0.7rem; color: #888;">
                                     Mostrando las últimas 10
                                 </div>
                             }
-
-                            @* ESPACIO EXTRA PARA QUE NO SE CORTE *@
                             <div style="height: 15px;"></div>
                         }
                     </div>
@@ -217,9 +216,6 @@
         }
         else
         {
-
-       @*      @if (Sesion.Usuario?.TipoLugar == "Gimnasio")
-            { *@
             <div class="recovery-section fade-in">
                 @if (resumenRecuperacion != null)
                 {
@@ -239,7 +235,48 @@
                     </div>
                 }
             </div>
-            @* } *@
+
+            @* ========================================== *@
+            @* PUERTA DE ENTRADA A LA COMUNIDAD           *@
+            @* ========================================== *@
+            @if (cargandoBanner)
+            {
+                <div class="text-center mt-4 mb-4">
+                    <div class="spinner-border text-warning spinner-sm"></div>
+                    <div class="text-muted" style="font-size: 0.8rem; font-family: 'Oswald';">CARGANDO STATS...</div>
+                </div>
+            }
+            else if (miBanner != null)
+            {
+                <div class="community-entry-card @(miBanner.EstiloVisual.ToLower()) fade-in mt-4 mb-4"
+                     style="--b-color: @miBanner.ColorBorde; background-image: @(!string.IsNullOrEmpty(miBanner.FondoUrl) ? $"url('{miBanner.FondoUrl}')" : "none");"
+                     @onclick='() => Nav.NavigateTo("/comunidad")'>
+
+                    <div class="card-overlay"></div>
+
+                    <button class="btn-edit-corner" @onclick:stopPropagation="true" @onclick="AbrirModalBanner">
+                        <i class="fas fa-pen"></i> PERSONALIZAR
+                    </button>
+
+                    <div class="entry-content">
+                        @if (!string.IsNullOrEmpty(miBanner.FotoAvatar))
+                        {
+                            <img src="@miBanner.FotoAvatar" class="entry-avatar" />
+                        }
+                        else
+                        {
+                            <div class="entry-avatar" style="display:flex; justify-content:center; align-items:center; color:#F8C545; font-size:2rem;">
+                                <i class="fas fa-user-astronaut"></i>
+                            </div>
+                        }
+                        <div class="entry-text">
+                            <h4>COMMUNITY STATS</h4>
+                            <span><i class="fas fa-hand-pointer pulse-tap"></i> TOCA PARA VER A TODOS</span>
+                        </div>
+                    </div>
+                </div>
+            }
+
 
             <div class="cards-grid fade-in">
                 @if (EstaActivo("AGENDA"))
@@ -250,18 +287,15 @@
                     </div>
                 }
 
-               @*  @if (Sesion.Usuario?.TipoLugar == "Gimnasio")
-                { *@
-                    <div class="menu-card gym-card" @onclick='() => Nav.NavigateTo("/rutina-semanal")'>
-                        <div class="sparkle-container">
-                            <div class="sparkle s1"></div>
-                            <div class="sparkle s2"></div>
-                        </div>
-                        <i class="fas fa-calendar card-icon gym-icon"></i>
-                        <h3 class="gym-title">RUTINA SEMANAL</h3>
-                        <p style="color:dark;">Planifica y ejecuta tus días</p>
+                <div class="menu-card gym-card" @onclick='() => Nav.NavigateTo("/rutina-semanal")'>
+                    <div class="sparkle-container">
+                        <div class="sparkle s1"></div>
+                        <div class="sparkle s2"></div>
                     </div>
-                @* } *@
+                    <i class="fas fa-calendar card-icon gym-icon"></i>
+                    <h3 class="gym-title">RUTINA SEMANAL</h3>
+                    <p style="color:dark;">Planifica y ejecuta tus días</p>
+                </div>
 
                 @if (EstaActivo("WOD"))
                 {
@@ -427,11 +461,109 @@
         }
 
         <div class="footer-brand">@NombreBox</div>
-       
-
         <div style="height: 40px;"></div>
     </div>
 </div>
+
+@* ========================================== *@
+@* MODAL DE EDICIÓN DE BANNER                 *@
+@* ========================================== *@
+@if (mostrarModalBanner)
+{
+    <div class="modal-overlay fade-in" @onclick="CerrarModalBanner">
+        <div class="modal-content custom-modal slide-up" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h5>EDITAR CALLING CARD</h5>
+                <button class="btn-icon-header" @onclick="CerrarModalBanner"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body scroll-custom">
+
+                <div class="edit-group">
+                    <label><i class="fas fa-image"></i> WALLPAPER DEL BANNER</label>
+                    <InputFile OnChange='(e) => SubirImagenBannerForm(e, "fondo")' accept="image/*" id="banner-bg" style="display:none;" />
+                    <label for="banner-bg" class="btn-upload-action">
+                        @if (subiendoFondo)
+                        {
+                            <i class="fas fa-spinner fa-spin"></i> <span>SUBIENDO...</span>
+                        }
+                        else
+                        {
+                            <i class="fas fa-upload"></i> <span>CARGAR FONDO</span>
+                        }
+                    </label>
+                    @if (!string.IsNullOrEmpty(miBanner?.FondoUrl))
+                    {
+                        <button class="btn-quitar-bg mt-2" @onclick="QuitarFondoCustomBanner"><i class="fas fa-trash"></i> QUITAR FONDO</button>
+                    }
+                </div>
+
+                <div class="edit-group mt-3">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label style="margin:0;"><i class="fas fa-user-circle"></i> USAR MI FOTO DE PERFIL</label>
+                        <label class="switch">
+                            <input type="checkbox" @bind="miBannerEdit.UsarFotoPerfil">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+
+                    @if (!miBannerEdit.UsarFotoPerfil)
+                    {
+                        <div class="mt-2 p-2" style="background: rgba(0,0,0,0.3); border-radius: 8px;">
+                            <InputFile OnChange='(e) => SubirImagenBannerForm(e, "foto")' accept="image/*" id="banner-pic" style="display:none;" />
+                            <label for="banner-pic" class="btn-upload-action secondary">
+                                @if (subiendoFoto)
+                                {
+                                    <i class="fas fa-spinner fa-spin"></i> <span>SUBIENDO...</span>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-camera"></i> <span>SUBIR FOTO ESPECIAL</span>
+                                }
+                            </label>
+                        </div>
+                    }
+                </div>
+
+                <div class="edit-group mt-3">
+                    <label><i class="fas fa-palette"></i> COLOR DEL BORDE / NEÓN</label>
+                    <input type="color" @bind="miBannerEdit.ColorBorde" class="color-input" />
+                </div>
+
+                <div class="edit-group mt-3">
+                    <label><i class="fas fa-magic"></i> ESTILO VISUAL</label>
+                    <div class="styles-grid">
+                        <div class="style-item @(miBannerEdit.EstiloVisual == "Glass" ? "selected" : "")" @onclick='() => miBannerEdit.EstiloVisual = "Glass"'>
+                            <div class="style-preview glass-preview"></div> <span>GLASS</span>
+                        </div>
+                        <div class="style-item @(miBannerEdit.EstiloVisual == "Neon" ? "selected" : "")" @onclick='() => miBannerEdit.EstiloVisual = "Neon"'>
+                            <div class="style-preview neon-preview"></div> <span>NEÓN</span>
+                        </div>
+                        <div class="style-item @(miBannerEdit.EstiloVisual == "Cyberpunk" ? "selected" : "")" @onclick='() => miBannerEdit.EstiloVisual = "Cyberpunk"'>
+                            <div class="style-preview cyber-preview"></div> <span>CYBERPUNK</span>
+                        </div>
+                        <div class="style-item @(miBannerEdit.EstiloVisual == "Gold" ? "selected" : "")" @onclick='() => miBannerEdit.EstiloVisual = "Gold"'>
+                            <div class="style-preview gold-preview"></div> <span>ORO</span>
+                        </div>
+                        <div class="style-item @(miBannerEdit.EstiloVisual == "Flat" ? "selected" : "")" @onclick='() => miBannerEdit.EstiloVisual = "Flat"'>
+                            <div class="style-preview flat-preview"></div> <span>FLAT DARK</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-save-banner mt-4" @onclick="GuardarConfiguracionBanner" disabled="@guardandoBanner">
+                    @if (guardandoBanner)
+                    {
+                        <i class="fas fa-spinner fa-spin"></i>
+                    }
+                    else
+                    {
+                        <span>GUARDAR CAMBIOS</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}
 
 @* --- MODAL CAMBIAR PASSWORD --- *@
 @if (mostrarModalPassword)
@@ -618,21 +750,22 @@
                                     <button class="btn-icon delete-btn" @onclick="() => EliminarBloque(bloque)"><i class="fas fa-trash"></i></button>
                                 </div>
 
-                                <select @bind="bloque.SegmentoClaseID" class="form-control input-dark mb-2">
-                                    <option value="@Guid.Empty" selected disabled>-- Selecciona Segmento --</option>
-                                    @foreach (var seg in listaSegmentos)
-                                    {
-                                        <option value="@seg.Id">@seg.Nombre</option>
-                                    }
-                                </select>
-
-                                @* NUEVO CAMPO: TIEMPO / FORMATO *@
-                                <input type="text" @bind="bloque.TiempoFormato" class="form-control input-dark mb-3" placeholder="Tiempo / Formato (Ej: AMRAP 15 MIN, 8x1min)" style="border-color: #555;" />
+                                @if (!modoTextoLibre)
+                                {
+                                    <select @bind="bloque.SegmentoClaseID" class="form-control input-dark mb-2">
+                                        <option value="@Guid.Empty" selected disabled>-- Selecciona Segmento --</option>
+                                        @foreach (var seg in listaSegmentos)
+                                        {
+                                            <option value="@seg.Id">@seg.Nombre</option>
+                                        }
+                                    </select>
+                                }
 
                                 @if (modoTextoLibre)
                                 {
+                                    <input type="text" @bind="bloque.TiempoFormato" class="form-control input-dark mb-3" placeholder="Tiempo / Formato (Ej: AMRAP 15 MIN, 8x1min)" style="border-color: #555;" />                               
                                     @* MODO TEXTO LIBRE *@
-                                    <textarea @bind="bloque.TextoLibre" class="form-control input-dark" rows="5" placeholder="Escribe aquí los ejercicios libremente..."></textarea>
+                                    <textarea @bind="bloque.TextoLibre" class="form-control input-dark" style="height: auto !important; min-height: 150px; resize: vertical; border-color: #F8C545;" placeholder="Escribe aquí los ejercicios libremente... (Los saltos de línea se respetarán)"></textarea>
                                 }
                                 else
                                 {
@@ -819,107 +952,137 @@
 }
 
 <style>
-    /* --- Z-INDEX CORREGIDO (IMPORTANTÍSIMO) --- */
+    /* Estilos base */
+    .main-layout { position: fixed; top:0; left:0; width:100vw; height:100vh; background:#050505; display:flex; flex-direction:column; z-index:1; }
+    .navbar-container { position: relative; flex-shrink:0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom:10px; padding-left:20px; padding-right:20px; background-color: #0d0d0d; border-bottom:1px solid #F8C545; display:flex; justify-content:space-between; align-items:center; z-index:100; font-family:'Oswald'; color:white; min-height: 60px; }
+    .nav-left { color:#F8C545; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:0.9rem; }
+    .nav-title { font-weight:bold; font-size:1.1rem; color:white; letter-spacing:1px; }
+    .nav-right { width:60px; display:flex; justify-content:flex-end; }
+    .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; padding-bottom: 40px; z-index: 10; position: relative; }
+
+    /* Marca de agua y Z-index */
     .menu-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 90; background: transparent; }
-    .navbar-container { position: relative; flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; height: auto; min-height: 60px; }
-    
-    /* --- ESTILOS MARCA DE AGUA (NUEVO) --- */
-    .watermark {
-        position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        width: 70%; max-width: 500px; aspect-ratio: 1/1;
-        background-repeat: no-repeat; background-position: center; background-size: contain;
-        opacity: 0.35; /* Muy sutil */
-        z-index: 0; pointer-events: none;
-    }
-    
-    /* --- LOGO EN NAVBAR (NUEVO) --- */
+    .watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; max-width: 500px; aspect-ratio: 1/1; background-repeat: no-repeat; background-position: center; background-size: contain; opacity: 0.35; z-index: 0; pointer-events: none; }
     .nav-logo { height: 40px; width: 40px; border-radius: 50%; object-fit: cover; margin-right: 10px; border: 1px solid #F8C545; }
     .brand { display: flex; align-items: center; font-size: 1.3rem; font-weight: bold; }
 
-    /* Aseguramos que el contenido vaya encima de la marca de agua */
-    .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; padding-bottom: 40px; z-index: 10; position: relative; }
-
-    /* RESTO DE ESTILOS (Sin cambios que rompan) */
-    .sheet-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 4000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease; }
-    .sheet-backdrop.visible { opacity: 1; visibility: visible; }
-    .bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; background: #1a1a1a; border-top-left-radius: 25px; border-top-right-radius: 25px; border-top: 3px solid #F8C545; padding: 25px 20px 40px 20px; z-index: 4001; box-shadow: 0 -5px 25px rgba(0,0,0,0.8); }
-    .slide-in-bottom { animation: slideInBottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-    @@keyframes slideInBottom { from { bottom: -100%; } to { bottom: 0; } }
-    .sheet-handle { width: 50px; height: 5px; background: #444; border-radius: 10px; margin: 0 auto 20px auto; }
-
-    .main-dropdown {
-        position: absolute;
-        top: 45px;
-        right: 0;
-        width: 260px;
-        background: #1a1a1a;
-        border: 1px solid #F8C545;
-        border-radius: 8px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.9);
-        /* --- CAMBIOS AQUÍ --- */
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        max-height: 70vh; /* Reducido para seguridad */
-        padding-bottom: 30px; /* Aumentado para que "Cerrar sesión" respire */
-        /* -------------------- */
-
-        z-index: 2000;
-        animation: slideDown 0.2s ease-out;
+    /* --- ENTRADA A COMUNIDAD (HOME) --- */
+    .community-entry-card { 
+        width: 100%; 
+        max-width: 600px; 
+        min-height: 110px; /* EVITA QUE SE APLASTE */
+        flex-shrink: 0; /* EVITA QUE SE APLASTE */
+        margin: 0 auto; 
+        border-radius: 15px; 
+        position: relative; 
+        overflow: hidden; 
+        background-size: cover; 
+        background-position: center; 
+        cursor: pointer; 
+        display: flex; 
+        align-items: center; 
+        transition: transform 0.2s; 
+        border: 2px solid var(--b-color, #F8C545); 
+        box-shadow: 0 10px 20px rgba(0,0,0,0.5); 
     }
-
-    .ejercicio-row {
+    .community-entry-card:active { transform: scale(0.97); }
+    .card-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+    
+    /* --- BOTÓN LATERAL VERTICAL --- */
+    .btn-edit-corner { 
+        position: absolute; 
+        top: 0; 
+        right: 0; 
+        height: 100%; /* Ocupa todo el alto de la tarjeta */
+        background: rgba(0,0,0,0.75); 
+        color: #F8C545; 
+        border: none;
+        border-left: 2px solid var(--b-color, #F8C545); /* Toma el color del estilo seleccionado */
+        font-family: 'Oswald'; 
+        font-size: 0.85rem; 
+        padding: 0 10px; 
+        border-radius: 0 13px 13px 0; /* Se adapta a la curva derecha del banner */
+        z-index: 50; 
+        font-weight: bold; 
+        backdrop-filter: blur(4px); 
         display: flex;
+        justify-content: center;
         align-items: center;
-        background: #1f1f1f;
-        border-radius: 8px;
-        margin-bottom: 8px;
-        border: 1px solid #333;
-        padding: 8px 4px; /* Reducimos el espacio lateral interno de la fila */
-        gap: 6px; /* Juntamos un poquito más los inputs para que no se vean apretados */
+        gap: 8px;
+        writing-mode: vertical-rl; /* Gira el texto verticalmente (de arriba a abajo) */
+        cursor: pointer;
+        transition: background 0.2s;
     }
-
-    .input-group-reps {
-        flex: 0 0 55px; /* Bajamos de 70px a 55px para regalarle ese espacio vital al nombre del ejercicio */
+    .btn-edit-corner:active { 
+        background: rgba(248, 197, 69, 0.2); 
     }
-
-    .overlay-wod {
-        padding: 10px; /* Reduce la franja negra que rodeaba el modal de 20px a solo 10px */
+    .btn-edit-corner i { 
+        transform: rotate(90deg); /* Gira el lapicito para que acompañe la dirección del texto */
     }
-
-    .modal-wod {
-        max-width: 600px; /* Permite que crezca un poco más si se abre en un teléfono Max/Plus o iPad */
-        width: 100%;
+    
+    /* Le damos un poco más de padding derecho (45px) para que el texto de la tarjeta no choque con el botón */
+    .entry-content { 
+        position: relative; 
+        z-index: 10; 
+        display: flex; 
+        align-items: center; 
+        gap: 15px; 
+        padding: 0 45px 0 20px; 
+        width: 100%; 
     }
+    .entry-avatar { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid var(--b-color, #F8C545); box-shadow: 0 4px 10px rgba(0,0,0,0.6); background: #222; flex-shrink: 0; }
+    .entry-text { display: flex; flex-direction: column; }
+    .entry-text h4 { font-family: 'Oswald'; font-size: 1.4rem; font-weight: 900; color: white !important; text-transform: uppercase; margin: 0; text-shadow: 1px 1px 3px black; line-height: 1.1; }
+    .entry-text span { font-family: 'Roboto'; font-size: 0.8rem; color: #F8C545; font-weight: bold; margin-top: 4px; text-shadow: 1px 1px 2px black; display: flex; align-items: center; gap: 5px; }
 
-        .modal-wod .modal-body {
-            padding: 15px 8px; /* Reducimos agresivamente el espacio muerto en las orillas izquierda y derecha */
-        }
+    /* ESTILOS VISUALES BANNER */
+    .community-entry-card.glass .card-overlay { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+    .community-entry-card.neon { border: 2px solid var(--b-color, #00ffcc); box-shadow: 0 0 12px var(--b-color, #00ffcc), inset 0 0 10px var(--b-color, #00ffcc); }
+    .community-entry-card.neon .card-overlay { background: rgba(0, 0, 0, 0.6); }
+    .community-entry-card.neon h4 { color: var(--b-color, #00ffcc) !important; text-shadow: 0 0 8px var(--b-color, #00ffcc); }
+    .community-entry-card.cyberpunk { border: none; border-left: 6px solid var(--b-color, #ff0055); border-radius: 0; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); }
+    .community-entry-card.cyberpunk .card-overlay { background: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 100%); }
+    .community-entry-card.cyberpunk .entry-avatar { border-radius: 0; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
+    .community-entry-card.gold { border: 2px solid #FFD700; box-shadow: 0 5px 15px rgba(255, 215, 0, 0.2); }
+    .community-entry-card.gold .card-overlay { background: linear-gradient(145deg, rgba(0,0,0,0.9) 0%, rgba(50,40,0,0.7) 100%); }
+    .community-entry-card.gold h4 { background: linear-gradient(to right, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: none; }
+    .community-entry-card.flat { border: 3px solid var(--b-color, #ff5500); border-radius: 4px; box-shadow: none; }
+    .community-entry-card.flat .card-overlay { background: rgba(15, 15, 15, 0.85); }
+    .community-entry-card.flat .entry-avatar { border: 3px solid var(--b-color, #ff5500); border-radius: 4px; }
 
-        .modal-wod .card {
-            padding: 10px 6px !important; /* Ajuste fino a la tarjeta gris del bloque para ganar más milímetros */
-        }
-    .input-group-name { flex: 1; }
-    .input-dark { background: #121212 !important; border: 1px solid #444; color: white !important; font-size: 0.9rem; height: 38px; }
-    .input-dark:focus { border-color: #F8C545; box-shadow: 0 0 5px rgba(248, 197, 69, 0.3); }
-    .btn-icon { width: 38px; height: 38px; border: none; border-radius: 6px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s; position: relative; }
-    .weight-btn { background: #333; color: #888; }
-    .weight-btn:hover { background: #444; color: #F8C545; }
-    .weight-btn.active { color: #F8C545; border: 1px solid #F8C545; background: rgba(248, 197, 69, 0.1); }
-    .dot-indicator { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: #F8C545; border-radius: 50%; }
-    .delete-btn { background: transparent; color: #666; }
-    .delete-btn:hover { background: rgba(220, 53, 69, 0.2); color: #dc3545; }
-    .btn-add-ejercicio { width: 100%; background: transparent; border: 1px dashed #555; color: #888; padding: 8px; border-radius: 8px; margin-top: 5px; transition: 0.2s; }
-    .btn-add-ejercicio:hover { border-color: #F8C545; color: #F8C545; background: rgba(248, 197, 69, 0.05); }
-    .planes-selection-grid { display: flex; flex-direction: column; gap: 15px; width: 100%; }
-    @@media (min-width: 400px) { .planes-selection-grid { flex-direction: row; } }
-    .plan-option-card { background: #2a2a2a; border: 1px solid #444; border-radius: 12px; padding: 20px; flex: 1; cursor: pointer; transition: all 0.2s ease; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-    .plan-option-card:hover { background: #333; border-color: #F8C545; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(248, 197, 69, 0.2); }
-    .plan-option-card.recommended { border: 2px solid #F8C545; background: rgba(248, 197, 69, 0.05); }
-    .badge-save { position: absolute; top: -10px; background: #F8C545; color: black; font-size: 0.65rem; font-weight: bold; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; font-family: 'Oswald'; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
-    .plan-title { font-family: 'Oswald'; font-size: 1.1rem; color: #ddd; margin-bottom: 5px; letter-spacing: 1px; }
-    .plan-price { font-family: 'Oswald'; font-size: 1.8rem; color: white; font-weight: bold; margin-bottom: 5px; }
-    .plan-note { font-size: 0.75rem; color: #888; font-family: 'Roboto'; }
-    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
+    /* MODAL ESTILOS BANNER */
+    .edit-group { background: #1a1a1a; border: 1px solid #333; padding: 15px; border-radius: 10px; }
+    .edit-group label { color: #F8C545; font-family: 'Oswald'; font-size: 0.85rem; display: block; margin-bottom: 8px; }
+    .btn-upload-action { width: 100%; background: #333; color: white; text-align: center; padding: 10px; border-radius: 8px; font-family: 'Oswald'; cursor: pointer; transition: 0.2s; display: block; }
+    .btn-upload-action:active { transform: scale(0.98); background: #444; }
+    .btn-upload-action.secondary { background: #222; border: 1px dashed #F8C545; color: #F8C545; }
+    .color-input { width: 100%; height: 40px; border: none; border-radius: 8px; cursor: pointer; padding: 0; background: none; }
+    .color-input::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-input::-webkit-color-swatch { border: 1px solid #444; border-radius: 8px; }
+    .styles-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .style-item { display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; transition: 0.2s; opacity: 0.5; }
+    .style-item.selected { opacity: 1; transform: scale(1.05); }
+    .style-item span { color: white; font-family: 'Oswald'; font-size: 0.7rem; }
+    .style-preview { width: 100%; height: 40px; border-radius: 6px; background: #222; border: 1px solid #555; }
+    .glass-preview { background: rgba(255,255,255,0.1); border-color: #aaa; }
+    .neon-preview { box-shadow: 0 0 5px #00ffcc, inset 0 0 5px #00ffcc; border-color: #00ffcc; }
+    .cyber-preview { border-left: 4px solid #ff0055; border-radius: 0; clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px); }
+    .gold-preview { border: 2px solid #FFD700; background: linear-gradient(145deg, #111, #332b00); }
+    .flat-preview { border: 3px solid #ff5500; border-radius: 0; }
+    .btn-save-banner { width: 100%; background: #F8C545; color: black; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; padding: 12px; border: none; border-radius: 8px; box-shadow: 0 4px 15px rgba(248,197,69,0.3); }
+    .btn-quitar-bg { width: 100%; background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; padding: 10px; border-radius: 8px; font-family: 'Oswald'; font-size: 0.9rem; text-align: center; }
+
+    /* Modales genéricos */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); padding: 20px; }
+    .custom-modal { background: #1a1a1a; width: 100%; max-width: 400px; border-radius: 12px; border: 1px solid #F8C545; display: flex; flex-direction: column; color: white; max-height: 85vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .modal-header { padding: 15px; background: #222; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .modal-body { padding: 20px; overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; padding-bottom: 100px; }
+    .modal-footer { padding: 15px; background: #222; border-top: 1px solid #333; display: flex; gap: 10px; flex-shrink: 0; }
+    .btn-close-custom { background: none; border: none; color: white; font-size: 1.2rem; }
+    .btn-confirm { background: #F8C545; color: black; border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
+    .btn-cancel { background: #333; color: white; border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
+
+    /* Resto (Notificaciones, Menús, Cards) */
     .right-actions { display: flex; align-items: center; gap: 15px; }
     .welcome-section h1 { font-family: 'Oswald'; color: #F8C545; font-size: 1.8rem; margin-bottom: 20px; text-align: center; margin-top: 10px; }
     .cards-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; width: 100%; max-width: 1000px; }
@@ -932,7 +1095,7 @@
     .yellow-highlight h3, .yellow-highlight p, .yellow-highlight i { color: black !important; }
     .live-badge { position: absolute; top: 8px; right: 8px; background: red; color: white; font-size: 0.55rem; padding: 2px 5px; border-radius: 4px; font-weight: bold; }
     .footer-brand { margin-top: auto; padding: 20px; color: #F8C545; font-family: 'Oswald'; }
-    .payment-alert { margin-bottom: 15px; padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 10px; width: 100%; max-width: 600px; }
+    .payment-alert { margin: 0 auto 15px auto; padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 10px; width: 100%; max-width: 600px; }
     .payment-alert.warning { background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%); color: black; }
     .payment-alert.expired { background: linear-gradient(90deg, #dc3545 0%, #c82333 100%); color: white; }
     .alert-icon { font-size: 1.2rem; }
@@ -946,6 +1109,7 @@
     .dropdown-item { padding: 12px 20px; color: #ffffff !important; cursor: pointer; font-family: 'Roboto', sans-serif; font-size: 0.9rem; display: flex; align-items: center; gap: 12px; transition: background 0.2s; }
     .dropdown-item:hover { background-color: #333; color: #F8C545 !important; }
     .dropdown-divider { height: 1px; background: #333; margin: 5px 0; }
+    .main-dropdown { position: absolute; top: 45px; right: 0; width: 260px; background: #1a1a1a; border: 1px solid #F8C545; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); overflow-y: auto; -webkit-overflow-scrolling: touch; max-height: 70vh; padding-bottom: 30px; z-index: 2000; animation: slideDown 0.2s ease-out; }
     .noti-wrapper { position: relative; cursor: pointer; }
     .noti-icon { font-size: 1.3rem; color: white; }
     .noti-dot { position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; background: red; border-radius: 50%; border: 2px solid #0d0d0d; }
@@ -953,27 +1117,78 @@
     .noti-dropdown { position: absolute; top: 35px; right: -50px; width: 280px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); overflow: hidden; z-index: 1000; max-height: 300px; overflow-y: auto; }
     .noti-item { padding: 12px; border-bottom: 1px solid #333; font-size: 0.8rem; display: flex; align-items: center; gap: 10px; color: #ccc; }
     .noti-item.unread { background: #2a2a2a; color: white; border-left: 3px solid #F8C545; }
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); padding: 20px; }
-    .custom-modal { background: #1a1a1a; width: 100%; max-width: 400px; border-radius: 12px; border: 1px solid #F8C545; display: flex; flex-direction: column; color: white; max-height: 85vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    .modal-header { padding: 15px; background: #222; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-    .modal-body { padding: 20px; overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; padding-bottom: 100px; }
-    .modal-footer { padding: 15px; background: #222; border-top: 1px solid #333; display: flex; gap: 10px; flex-shrink: 0; }
-    .btn-close-custom { background: none; border: none; color: white; font-size: 1.2rem; }
-    .btn-confirm { background: #F8C545; color: black; border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
-    .btn-cancel { background: #333; color: white; border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
-    .delete-account-container { width: 100%; max-width: 1000px; display: flex; justify-content: center; margin-top: 30px; margin-bottom: 10px; padding: 0 20px; }
-    .btn-delete-account { background: transparent; border: 1px solid #ff4444; color: #ff4444; font-family: 'Oswald', sans-serif; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; padding: 8px 20px; border-radius: 50px; cursor: pointer; transition: all 0.3s ease; letter-spacing: 1px; opacity: 0.8; }
-    @@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-    @@keyframes ring { 0% { transform: rotate(0); } 5% { transform: rotate(30deg); } 10% { transform: rotate(-28deg); } 15% { transform: rotate(34deg); } 20% { transform: rotate(-32deg); } 25% { transform: rotate(30deg); } 30% { transform: rotate(-28deg); } 35% { transform: rotate(26deg); } 40% { transform: rotate(-24deg); } 45% { transform: rotate(22deg); } 50% { transform: rotate(-20deg); } 100% { transform: rotate(0); } }
-    @@keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
-    @@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-    @@keyframes pulseBorder { 0% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(248, 197, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0); } }
+
+    /* WOD y Editor de Pesos */
+    .sheet-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 4000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease; }
+    .sheet-backdrop.visible { opacity: 1; visibility: visible; }
+    .bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; background: #1a1a1a; border-top-left-radius: 25px; border-top-right-radius: 25px; border-top: 3px solid #F8C545; padding: 25px 20px 40px 20px; z-index: 4001; box-shadow: 0 -5px 25px rgba(0,0,0,0.8); }
+    .slide-in-bottom { animation: slideInBottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    .sheet-handle { width: 50px; height: 5px; background: #444; border-radius: 10px; margin: 0 auto 20px auto; }
+    .ejercicio-row { display: flex; align-items: center; background: #1f1f1f; border-radius: 8px; margin-bottom: 8px; border: 1px solid #333; padding: 8px 4px; gap: 6px; }
+    .input-group-reps { flex: 0 0 55px; }
+    .overlay-wod { padding: 10px; }
+    .modal-wod { max-width: 600px; width: 100%; }
+    .modal-wod .modal-body { padding: 15px 8px; }
+    .modal-wod .card { padding: 10px 6px !important; }
+    .input-group-name { flex: 1; }
+    .input-dark { background: #121212 !important; border: 1px solid #444; color: white !important; font-size: 0.9rem; height: 38px; }
+    .input-dark:focus { border-color: #F8C545; box-shadow: 0 0 5px rgba(248, 197, 69, 0.3); }
+    .btn-icon { width: 38px; height: 38px; border: none; border-radius: 6px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s; position: relative; }
+    .weight-btn { background: #333; color: #888; }
+    .weight-btn:hover { background: #444; color: #F8C545; }
+    .weight-btn.active { color: #F8C545; border: 1px solid #F8C545; background: rgba(248, 197, 69, 0.1); }
+    .dot-indicator { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: #F8C545; border-radius: 50%; }
+    .delete-btn { background: transparent; color: #666; }
+    .delete-btn:hover { background: rgba(220, 53, 69, 0.2); color: #dc3545; }
+    .btn-add-ejercicio { width: 100%; background: transparent; border: 1px dashed #555; color: #888; padding: 8px; border-radius: 8px; margin-top: 5px; transition: 0.2s; }
+    .btn-add-ejercicio:hover { border-color: #F8C545; color: #F8C545; background: rgba(248, 197, 69, 0.05); }
+
+    /* Switch Component */
+    .module-row { display: flex; justify-content: space-between; align-items: center; background-color: #222; padding: 12px 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #333; cursor: pointer; transition: background-color 0.2s; }
+    .module-row:active { background-color: #2a2a2a; }
+    .mod-name { color: white; font-family: 'Roboto', sans-serif; font-weight: bold; font-size: 0.9rem; }
+    .switch-track { width: 50px; height: 26px; background-color: #444; border-radius: 20px; position: relative; transition: background-color 0.3s ease; border: 1px solid #555; }
+    .switch-track.on { background-color: #F8C545; border-color: #F8C545; }
+    .switch-thumb { width: 22px; height: 22px; background-color: white; border-radius: 50%; position: absolute; top: 1px; left: 2px; transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1); box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+    .switch-track.on .switch-thumb { transform: translateX(24px); }
+
+    /* Tarjetas Especiales */
+    .medallero-card { background: linear-gradient(135deg, #111111 0%, #2a2a2a 100%) !important; border: 2px solid #FFD700 !important; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3) !important; }
+    .trophy-icon { color: #FFD700 !important; text-shadow: 0 0 15px rgba(255, 215, 0, 0.8) !important; font-size: 2.2rem !important; }
+    .trophy-title { color: #FFD700 !important; letter-spacing: 1px; }
+    .sparkle-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+    .sparkle { position: absolute; width: 3px; height: 3px; background: #FFF; border-radius: 50%; box-shadow: 0 0 8px 2px #FFD700; animation: twinkle 2s infinite ease-in-out alternate; }
+    .s1 { top: 20%; left: 20%; animation-delay: 0s; } .s2 { top: 60%; left: 80%; animation-delay: 0.5s; } .s3 { top: 80%; left: 30%; animation-delay: 1s; }
+    .ficha-card { background: linear-gradient(135deg, #111111 0%, #2a2a2a 100%) !important; border: 2px solid #FFD700 !important; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3) !important; }
+    .player-icon { color: #FFD700 !important; text-shadow: 0 0 15px rgba(255, 215, 0, 0.9) !important; font-size: 2.2rem !important; }
+    .player-title { color: #FFD700 !important; letter-spacing: 1px; font-weight: bold; }
+    .holo-glare { position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255, 215, 0, 0.5), rgba(255, 255, 255, 0.2), transparent); transform: skewX(-25deg); animation: glareRun 4s infinite linear; pointer-events: none; mix-blend-mode: overlay; }
+
+
+    /* Tarjeta de Recuperación (Ajustada para que mida lo mismo que el Banner) */
+    .recovery-section { width: 100%; max-width: 600px; margin: 0 auto 20px auto; padding: 0; }
+    .card-recuperacion-master { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 28px; display: flex; padding: 20px 15px; height: 220px; position: relative; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.4); cursor: pointer; }
+    .info-content { flex: 1; display: flex; flex-direction: column; justify-content: center; z-index: 5; }
+    .label-top { font-family: 'Oswald'; color: #F8C545; font-size: 0.75rem; letter-spacing: 2px; font-weight: bold; line-height: 1.1; }
+    .display-porcentaje { font-family: 'Oswald'; font-size: 3.5rem; color: white; margin: 5px 0; font-weight: 900; line-height: 1; }
+    .status-desc { color: white; font-weight: 800; font-size: 0.8rem; line-height: 1.2; margin-bottom: 10px; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
+    .btn-detalles { font-size: 0.65rem; color: #F8C545; font-weight: bold; letter-spacing: 1px; }
+    .visual-content { flex: 1.8; height: 120%; display: flex; justify-content: flex-end; align-items: center; z-index: 5; transform: translateY(-5%); }
+    .bg-blur-glow { position: absolute; top: -20%; right: -10%; width: 180px; height: 180px; background: radial-gradient(circle, rgba(248, 197, 69, 0.2) 0%, transparent 70%); z-index: 1; }
+
+    /* Misceláneos */
+    .planes-selection-grid { display: flex; flex-direction: column; gap: 15px; width: 100%; }
+    .plan-option-card { background: #2a2a2a; border: 1px solid #444; border-radius: 12px; padding: 20px; flex: 1; cursor: pointer; transition: all 0.2s ease; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .plan-option-card:hover { background: #333; border-color: #F8C545; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(248, 197, 69, 0.2); }
+    .plan-option-card.recommended { border: 2px solid #F8C545; background: rgba(248, 197, 69, 0.05); }
+    .badge-save { position: absolute; top: -10px; background: #F8C545; color: black; font-size: 0.65rem; font-weight: bold; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; font-family: 'Oswald'; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+    .plan-title { font-family: 'Oswald'; font-size: 1.1rem; color: #ddd; margin-bottom: 5px; letter-spacing: 1px; }
+    .plan-price { font-family: 'Oswald'; font-size: 1.8rem; color: white; font-weight: bold; margin-bottom: 5px; }
+    .plan-note { font-size: 0.75rem; color: #888; font-family: 'Roboto'; }
     .alert-conflict { background: #111; border: 2px solid #dc3545; border-radius: 10px; padding: 30px 20px; text-align: center; animation: fadeIn 0.3s ease-in; }
     .conflict-icon { font-size: 3rem; color: #dc3545; margin-bottom: 15px; animation: pulse 2s infinite; }
     .alert-conflict h4 { color: white; font-family: 'Oswald'; letter-spacing: 1px; margin-bottom: 10px; }
     .alert-conflict p { color: #ccc; margin-bottom: 5px; }
-    .fade-in { animation: fadeIn 0.3s ease-in; }
-    .modal-dialog-centered { display: flex; align-items: center; min-height: calc(100% - 1rem); }
     .horario-row { display: flex; justify-content: space-between; align-items: center; background-color: #222; padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #333; }
     .horario-text { color: white; font-weight: bold; font-family: 'Oswald'; }
     .btn-delete-mini { background: none; border: none; color: #dc3545; cursor: pointer; padding: 5px; }
@@ -983,228 +1198,19 @@
     .aviso-date { color: #888; font-size: 0.8rem; margin-bottom: 15px; }
     .aviso-body { padding: 0 25px 20px 25px; color: #ddd; }
     .btn-ok { width: 80%; margin: 0 auto 25px auto; background: linear-gradient(45deg, #F8C545, #ffb300); border: none; padding: 12px; font-weight: bold; border-radius: 30px; color: black; }
-    .module-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background-color: #222;
-        padding: 12px 15px;
-        border-radius: 8px;
-        margin-bottom: 10px;
-        border: 1px solid #333;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-    .module-row:active {
-        background-color: #2a2a2a;
-    }
 
-    .mod-name {
-        color: white;
-        font-family: 'Roboto', sans-serif;
-        font-weight: bold;
-        font-size: 0.9rem;
-    }
-
-    /* La pista (el fondo del botón) */
-    .switch-track {
-        width: 50px;
-        height: 26px;
-        background-color: #444; /* Gris cuando está apagado */
-        border-radius: 20px;
-        position: relative;
-        transition: background-color 0.3s ease;
-        border: 1px solid #555;
-    }
-
-    /* La pista cuando está ENCENDIDO */
-    .switch-track.on {
-        background-color: #F8C545; /* Amarillo marca */
-        border-color: #F8C545;
-    }
-
-    /* El círculo que se mueve */
-    .switch-thumb {
-        width: 22px;
-        height: 22px;
-        background-color: white;
-        border-radius: 50%;
-        position: absolute;
-        top: 1px;
-        left: 2px;
-        transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-
-    /* Mover el círculo cuando está ENCENDIDO */
-    .switch-track.on .switch-thumb {
-        transform: translateX(24px); /* Se desliza a la derecha */
-    }
-
-    /* --- TARJETA MEDALLERO VIP --- */
-    .medallero-card {
-        background: linear-gradient(135deg, #111111 0%, #2a2a2a 100%) !important;
-        border: 2px solid #FFD700 !important; /* Borde Dorado */
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3) !important;
-    }
-    .trophy-icon { color: #FFD700 !important; text-shadow: 0 0 15px rgba(255, 215, 0, 0.8) !important; font-size: 2.2rem !important; }
-    .trophy-title { color: #FFD700 !important; letter-spacing: 1px; }
-    .trophy-subtitle { color: #dddddd !important; font-style: italic; }
-
-    /* Animación de destellos dorados */
-    .sparkle-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-    .sparkle {
-        position: absolute;
-        width: 3px; height: 3px;
-        background: #FFF;
-        border-radius: 50%;
-        box-shadow: 0 0 8px 2px #FFD700;
-        animation: twinkle 2s infinite ease-in-out alternate;
-    }
-    .s1 { top: 20%; left: 20%; animation-delay: 0s; }
-    .s2 { top: 60%; left: 80%; animation-delay: 0.5s; }
-    .s3 { top: 80%; left: 30%; animation-delay: 1s; }
-
-    @@keyframes twinkle {
-        0% { opacity: 0; transform: scale(0.5); }
-        50% { opacity: 1; transform: scale(1.5); }
-        100% { opacity: 0; transform: scale(0.5); }
-    }
-    /* --- TARJETA FICHA DE ATLETA (ÉPICA DORADA) --- */
-    .ficha-card {
-        /* Fondo estándar oscuro para que combine */
-        background: linear-gradient(135deg, #111111 0%, #2a2a2a 100%) !important;
-        /* Borde Dorado Brillante */
-        border: 2px solid #FFD700 !important; 
-        position: relative;
-        overflow: hidden;
-        /* Sombra dorada intensa */
-        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3) !important;
-    }
-    .player-icon { 
-        color: #FFD700 !important; 
-        /* NEÓN DORADO INTENSO */
-        text-shadow: 0 0 15px rgba(255, 215, 0, 0.9) !important; 
-        font-size: 2.2rem !important; 
-    }
-    .player-title { 
-        color: #FFD700 !important; 
-        letter-spacing: 1px; 
-        font-weight: bold; 
-    }
-    .player-subtitle { 
-        color: #dddddd !important; /* Subtítulo claro estándar */
-        font-style: italic; 
-    }
-
-    /* Brillo holográfico dorado que pasa por encima */
-    .holo-glare {
-        position: absolute; 
-        top: 0; 
-        left: -100%; 
-        width: 50%; 
-        height: 100%;
-        /* Reflejo dorado y blanco */
-        background: linear-gradient(to right, transparent, rgba(255, 215, 0, 0.5), rgba(255, 255, 255, 0.2), transparent);
-        transform: skewX(-25deg);
-        animation: glareRun 4s infinite linear;
-        pointer-events: none;
-        mix-blend-mode: overlay; /* Para que el brillo se vea más metálico sobre el fondo */
-    }
-
-    @@keyframes glareRun { 
-        0% { left: -100%; } 
-        20% { left: 200%; } /* Pasa rápido */
-        100% { left: 200%; } /* Espera */
-    }
-
-    .recovery-section {
-        width: 100%;
-        max-width: 500px;
-        padding: 0 10px;
-        margin-bottom: 25px; /* SEPARA LA TARJETA DE LOS BOTONES DE ABAJO */
-    }
-
-    .card-recuperacion-master {
-        background: rgba(255, 255, 255, 0.05); /* EFECTO TRASLÚCIDO */
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 28px;
-        display: flex;
-        padding: 20px 15px; /* Menos padding horizontal para dar más espacio al contenido */
-        height: 220px; /* Hacemos la tarjeta un poco más alta */
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-        cursor: pointer;
-    }
-
-    /* TEXTOS (Lado Izquierdo) */
-    .info-content {
-        flex: 1; /* Ocupa menos espacio */
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        z-index: 5;
-    }
-
-    .label-top {
-        font-family: 'Oswald';
-        color: #F8C545;
-        font-size: 0.75rem;
-        letter-spacing: 2px;
-        font-weight: bold;
-        line-height: 1.1;
-    }
-
-    .display-porcentaje {
-        font-family: 'Oswald';
-        font-size: 3.5rem; /* Letra un poco más pequeña para no robar atención */
-        color: white;
-        margin: 5px 0;
-        font-weight: 900;
-        line-height: 1;
-    }
-
-    .status-desc {
-        color: white;
-        font-weight: 800;
-        font-size: 0.8rem;
-        line-height: 1.2;
-        margin-bottom: 10px;
-        text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-    }
-
-    .btn-detalles {
-        font-size: 0.65rem;
-        color: #F8C545;
-        font-weight: bold;
-        letter-spacing: 1px;
-    }
-
-    /* EL CUERPO (Lado Derecho - PROTAGONISTA) */
-    .visual-content {
-        flex: 1.8; /* Ocupa casi el doble de espacio que el texto */
-        height: 120%; /* Forzamos a que sea más alto que la tarjeta para que se vea enorme */
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        z-index: 5;
-        transform: translateY(-5%); /* Lo subimos un poco para centrarlo */
-    }
-
-    .bg-blur-glow {
-        position: absolute;
-        top: -20%;
-        right: -10%;
-        width: 180px;
-        height: 180px;
-        background: radial-gradient(circle, rgba(248, 197, 69, 0.2) 0%, transparent 70%);
-        z-index: 1;
-    }
+    /* Animaciones */
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    @@keyframes slideInBottom { from { bottom: -100%; } to { bottom: 0; } }
+    @@keyframes ring { 0% { transform: rotate(0); } 5% { transform: rotate(30deg); } 10% { transform: rotate(-28deg); } 15% { transform: rotate(34deg); } 20% { transform: rotate(-32deg); } 25% { transform: rotate(30deg); } 30% { transform: rotate(-28deg); } 35% { transform: rotate(26deg); } 40% { transform: rotate(-24deg); } 45% { transform: rotate(22deg); } 50% { transform: rotate(-20deg); } 100% { transform: rotate(0); } }
+    @@keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+    @@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+    @@keyframes pulseBorder { 0% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(248, 197, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(248, 197, 69, 0); } }
+    @@keyframes holoSweep { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    @@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    @@keyframes twinkle { 0% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1.5); } 100% { opacity: 0; transform: scale(0.5); } }
+    @@keyframes glareRun { 0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; } }
 </style>
 
 @code {
@@ -1305,6 +1311,7 @@
         await CargarNotificaciones();
         await CargarSegmentos();
         await CargarConfiguracionModulos();
+        await CargarMiBanner();
         if (!avisoVistoEnSesion) await CargarUltimoAviso();
         try { tieneRutina = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/tiene-rutina/{Sesion.Usuario.UsuarioID}"); } catch { tieneRutina = false; }
         try { tieneRunning = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/tiene-plan/{Sesion.Usuario.UsuarioID}"); } catch { tieneRunning = false; }
@@ -1599,7 +1606,7 @@
             return;
         }
 
-        if (listaBloquesEditor.Any(b => b.SegmentoClaseID == Guid.Empty))
+        if (!modoTextoLibre && listaBloquesEditor.Any(b => b.SegmentoClaseID == Guid.Empty))
         {
             await App.Current.MainPage.DisplayAlert("Faltan datos", "Por favor, selecciona el TIPO DE SEGMENTO en todos los bloques.", "Entendido");
             return;
@@ -1740,6 +1747,154 @@
     private void IrARanking() => Nav.NavigateTo("/ranking");
     private void NavegarA(string destino) { CerrarTodosLosMenus(); switch (destino) { case "test": Nav.NavigateTo("/test-config"); break; case "usuarios": Nav.NavigateTo("/usuarios-view"); break; case "avisos": AbrirCrearAviso(); break; } }
 
+    // ==========================================
+    // LÓGICA COMMUNITY STATS (HOME ENTRY)
+    // ==========================================
+    private BannerDto miBanner;
+    private bool mostrarModalBanner = false;
+    private GuardarBannerDto miBannerEdit = new GuardarBannerDto();
+    private bool guardandoBanner = false;
+    private bool subiendoFondo = false;
+    private bool subiendoFoto = false;
+    private bool cargandoBanner = true;
+
+    public class BannerDto
+    {
+        public Guid UsuarioID { get; set; }
+        public string NombreMostrar { get; set; }
+        public string FotoAvatar { get; set; }
+        public string FondoUrl { get; set; }
+        public string ColorBorde { get; set; }
+        public string EstiloVisual { get; set; }
+        public bool EsMiBanner { get; set; }
+    }
+
+    public class GuardarBannerDto
+    {
+        public Guid UsuarioID { get; set; }
+        public Guid BoxID { get; set; }
+        public bool UsarFotoPerfil { get; set; } = true;
+        public string ColorBorde { get; set; } = "#F8C545";
+        public string EstiloVisual { get; set; } = "Glass";
+    }
+
+    private async Task CargarMiBanner()
+    {
+        cargandoBanner = true;
+        StateHasChanged();
+        try
+        {
+            var urlBase = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/communityapi";
+            miBanner = await Http.GetFromJsonAsync<BannerDto>($"{urlBase}/mi-banner/{Sesion.Usuario.BoxID}/{Sesion.Usuario.UsuarioID}");
+
+            if (miBanner != null)
+            {
+                miBannerEdit.ColorBorde = miBanner.ColorBorde;
+                miBannerEdit.EstiloVisual = miBanner.EstiloVisual;
+                
+                // --- NUEVO: DETERMINAR SI USA FOTO CUSTOM O DE PERFIL ---
+                // Si la URL que nos devuelve el servidor viene de la carpeta "/banners/", es porque subió una propia
+                if (!string.IsNullOrEmpty(miBanner.FotoAvatar) && miBanner.FotoAvatar.Contains("/banners/"))
+                {
+                    miBannerEdit.UsarFotoPerfil = false;
+                }
+                else
+                {
+                    miBannerEdit.UsarFotoPerfil = true;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error al cargar mi banner: " + ex.Message);
+        }
+        finally
+        {
+            cargandoBanner = false;
+            StateHasChanged();
+        }
+    }
+
+    private void AbrirModalBanner()
+    {
+        miBannerEdit.UsuarioID = Sesion.Usuario.UsuarioID;
+        miBannerEdit.BoxID = (Guid)Sesion.Usuario.BoxID;
+        mostrarModalBanner = true;
+    }
+
+    private void CerrarModalBanner() => mostrarModalBanner = false;
+    
+    // --- NUEVO: FUNCIÓN PARA QUITAR FONDO ---
+ private async Task QuitarFondoCustomBanner()
+    {
+        try
+        {
+            var urlBase = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/communityapi";
+            
+            var response = await Http.DeleteAsync($"{urlBase}/quitar-imagen/fondo/{Sesion.Usuario.UsuarioID}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                if (miBanner != null) miBanner.FondoUrl = "";
+                await CargarMiBanner();
+                await App.Current.MainPage.DisplayAlert("Listo", "Fondo eliminado.", "OK");
+            }
+            else
+            {
+                await App.Current.MainPage.DisplayAlert("Error de Nube", "No se encontró el endpoint. ¿Ya publicaste la API en Azure?", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
+    }
+
+    private async Task SubirImagenBannerForm(InputFileChangeEventArgs e, string tipo)
+    {
+        var archivo = e.File; if (archivo == null) return;
+
+        if (tipo == "fondo") subiendoFondo = true; else subiendoFoto = true;
+        StateHasChanged();
+
+        try
+        {
+            using var form = new MultipartFormDataContent();
+            using var fileStream = archivo.OpenReadStream(maxAllowedSize: 5120000);
+            using var streamContent = new StreamContent(fileStream);
+            streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(archivo.ContentType);
+            form.Add(streamContent, "archivo", archivo.Name);
+
+            var response = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/communityapi/subir-imagen/{tipo}/{Sesion.Usuario.UsuarioID}", form);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Si subió foto especial, apagamos el switch de "usar foto de perfil"
+                if (tipo == "foto") miBannerEdit.UsarFotoPerfil = false;
+                await CargarMiBanner();
+            }
+        }
+        catch { await App.Current.MainPage.DisplayAlert("Error", "No se pudo subir la imagen", "OK"); }
+        finally
+        {
+            if (tipo == "fondo") subiendoFondo = false; else subiendoFoto = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task GuardarConfiguracionBanner()
+    {
+        guardandoBanner = true;
+        try
+        {
+            await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/communityapi/guardar-mi-banner", miBannerEdit);
+            mostrarModalBanner = false;
+            await CargarMiBanner();
+        }
+        catch { }
+        finally { guardandoBanner = false; }
+    }
+
     private async Task IrAPagar()
     {
         if (Sesion.Usuario == null) return;
@@ -1780,5 +1935,4 @@
     private async Task CargarNotificaciones() { try { misNotificaciones = await Http.GetFromJsonAsync<List<NotificacionDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/notificaciones/{Sesion.Usuario.UsuarioID}"); hayNuevas = misNotificaciones.Any(n => !n.Leido); } catch { } }
     private string GetIcono(string t) => t == "MATCH_MUTUO" ? "fas fa-heart text-danger" : "fas fa-bell";
     public class RespuestaMercadoPago { public string url { get; set; } }
-   
 }

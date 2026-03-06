@@ -1,0 +1,185 @@
+﻿@page "/comunidad"
+@using System.Net.Http.Json
+@using CrossBoxApp.Models.Services
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject SesionService Sesion
+
+<div class="main-layout">
+    @* NAVBAR SEGURO PARA NOTCH *@
+    <div class="navbar-container">
+        <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
+            <i class="fas fa-arrow-left"></i> VOLVER
+        </div>
+        <div class="nav-title">COMMUNITY STATS</div>
+        <div class="nav-right"></div>
+    </div>
+
+    <div class="scrollable-content">
+        <div class="community-wrapper">
+            <p class="text-center text-muted small mb-4 mt-2">Descubre los rangos y récords de tus compañeros de entrenamiento.</p>
+
+            @if (cargando)
+            {
+                <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
+            }
+            else if (listaBanners == null || listaBanners.Count == 0)
+            {
+                <div class="text-center mt-5 text-muted">
+                    <i class="fas fa-users mb-3" style="font-size: 3rem; opacity: 0.3;"></i>
+                    <p>Aún no hay atletas en la comunidad.</p>
+                </div>
+            }
+            else
+            {
+                <div class="banners-list">
+                    @foreach (var b in listaBanners)
+                    {
+                        <div class="calling-card @b.EstiloVisual.ToLower() fade-in"
+                             style="--b-color: @b.ColorBorde; background-image: @(!string.IsNullOrEmpty(b.FondoUrl) ? $"url('{b.FondoUrl}')" : "none");"
+                             @onclick="() => VerPlayerCard(b.UsuarioID)">
+                             
+                            <div class="card-overlay"></div>
+                            
+                            @if (b.EsMiBanner)
+                            {
+                                <div class="my-badge">TÚ</div>
+                            }
+
+                            <div class="card-content">
+                                @* --- LÓGICA DE FOTO O INICIAL --- *@
+                                @if (!string.IsNullOrEmpty(b.FotoAvatar))
+                                {
+                                    <img src="@b.FotoAvatar" class="card-avatar" />
+                                }
+                                else
+                                {
+                                    <div class="card-avatar placeholder-avatar" style="color: @b.ColorBorde; border-color: @b.ColorBorde;">
+                                        @(b.NombreMostrar?.Substring(0, 1).ToUpper() ?? "A")
+                                    </div>
+                                }
+                                
+                                <div class="card-info">
+                                    <span class="card-name">@b.NombreMostrar</span>
+                                    <span class="card-tap"><i class="fas fa-hand-pointer pulse-tap"></i> VER CARD</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            <div style="height: 60px;"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* LAYOUT Y NOTCH */
+    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: #1a1a1a; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+    .nav-title { font-weight: bold; font-size: 1.2rem; color: white; letter-spacing: 1px; }
+    .nav-right { width: 60px; }
+    
+    .scrollable-content { flex-grow: 1; overflow-y: auto; background-color: #0d0d0d; padding: 15px; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; align-items: center;}
+    .community-wrapper { width: 100%; max-width: 600px; display: flex; flex-direction: column; }
+
+    /* LISTA DE BANNERS */
+    .banners-list { display: flex; flex-direction: column; gap: 15px; width: 100%; }
+
+    /* ESTRUCTURA BASE DE LA CALLING CARD */
+    .calling-card { 
+        width: 100%; height: 100px; border-radius: 12px; position: relative; overflow: hidden; 
+        background-size: cover; background-position: center; cursor: pointer;
+        display: flex; align-items: center; transition: transform 0.2s;
+        border: 2px solid var(--b-color); 
+    }
+    .calling-card:active { transform: scale(0.97); }
+
+    .card-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+    
+    .card-content { position: relative; z-index: 2; display: flex; align-items: center; gap: 15px; padding: 0 15px; width: 100%; }
+    
+    /* AVATAR Y PLACEHOLDER */
+    .card-avatar { width: 65px; height: 65px; border-radius: 50%; object-fit: cover; border: 2px solid var(--b-color); box-shadow: 0 4px 10px rgba(0,0,0,0.6); background: #222; flex-shrink: 0;}
+    .placeholder-avatar { display: flex; justify-content: center; align-items: center; font-family: 'Oswald'; font-size: 2rem; font-weight: bold; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
+    
+    .card-info { display: flex; flex-direction: column; overflow: hidden; }
+    .card-name { font-family: 'Oswald'; font-size: 1.2rem; font-weight: bold; color: white; text-transform: uppercase; text-shadow: 1px 1px 3px black, 0 0 5px rgba(0,0,0,0.8); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-tap { font-family: 'Roboto'; font-size: 0.75rem; color: #F8C545; font-weight: bold; margin-top: 4px; text-shadow: 1px 1px 2px black; display: flex; align-items: center; gap: 5px;}
+    
+    .my-badge { position: absolute; top: 5px; right: 10px; background: #F8C545; color: black; font-family: 'Oswald'; font-size: 0.65rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; z-index: 3; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+
+    .pulse-tap { animation: pulseAnim 1.5s infinite; }
+    @@keyframes pulseAnim { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
+    .fade-in { animation: fadeIn 0.4s ease-out; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ========================================== */
+    /* LOS 5 ESTILOS VISUALES                     */
+    /* ========================================== */
+    .calling-card.glass .card-overlay { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+    
+    .calling-card.neon { border: 2px solid var(--b-color); box-shadow: 0 0 12px var(--b-color), inset 0 0 10px var(--b-color); }
+    .calling-card.neon .card-overlay { background: rgba(0, 0, 0, 0.6); }
+    .calling-card.neon .card-name { color: var(--b-color); text-shadow: 0 0 8px var(--b-color); }
+
+    .calling-card.cyberpunk { border: none; border-left: 6px solid var(--b-color); border-radius: 0; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); }
+    .calling-card.cyberpunk .card-overlay { background: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 100%); }
+    .calling-card.cyberpunk .card-avatar { border-radius: 0; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
+
+    .calling-card.gold { border: 2px solid #FFD700; box-shadow: 0 5px 15px rgba(255, 215, 0, 0.2); }
+    .calling-card.gold .card-overlay { background: linear-gradient(145deg, rgba(0,0,0,0.9) 0%, rgba(50,40,0,0.7) 100%); }
+    .calling-card.gold .card-name { background: linear-gradient(to right, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: none; }
+    
+    .calling-card.flat { border: 3px solid var(--b-color); border-radius: 4px; box-shadow: none; }
+    .calling-card.flat .card-overlay { background: rgba(15, 15, 15, 0.85); }
+    .calling-card.flat .card-avatar { border: 3px solid var(--b-color); border-radius: 4px; }
+</style>
+
+@code {
+    private bool cargando = true;
+    private List<BannerDto> listaBanners;
+
+    public class BannerDto
+    {
+        public Guid UsuarioID { get; set; }
+        public string NombreMostrar { get; set; }
+        public string FotoAvatar { get; set; }
+        public string FondoUrl { get; set; }
+        public string ColorBorde { get; set; }
+        public string EstiloVisual { get; set; }
+        public bool EsMiBanner { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+        try
+        {
+            listaBanners = await Http.GetFromJsonAsync<List<BannerDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/communityapi/lista/{Sesion.Usuario.BoxID}/{Sesion.Usuario.UsuarioID}");
+        }
+        catch { }
+        finally { cargando = false; }
+    }
+
+    private void VerPlayerCard(Guid targetId)
+    {
+        // Dependiendo del tipo de lugar del Box, lo mandamos a la Ficha correcta pero pasándole el ID de su amigo.
+        string tipoLugar = Sesion.Usuario?.TipoLugar ?? "";
+
+        if (tipoLugar == "Running")
+        {
+            Nav.NavigateTo($"/ficha-running/{targetId}");
+        }
+        else if (tipoLugar == "Funcional" || tipoLugar == "Calistenia")
+        {
+            Nav.NavigateTo($"/ficha-funcional/{targetId}");
+        }
+        else
+        {
+            // Para Crossfit, Gimnasio, o por defecto
+            Nav.NavigateTo($"/ficha-atleta/{targetId}");
+        }
+    }
+}

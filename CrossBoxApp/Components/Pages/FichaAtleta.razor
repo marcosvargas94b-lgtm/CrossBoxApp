@@ -1,4 +1,5 @@
 ﻿@page "/ficha-atleta"
+@page "/ficha-atleta/{TargetUserId:guid}"
 @using System.Net.Http.Json
 @using System.Net.Http.Headers
 @using CrossBoxApp.Models.Services
@@ -13,13 +14,14 @@
         <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
             <i class="fas fa-arrow-left"></i> VOLVER
         </div>
-        <div class="nav-title">MI FICHA</div>
+        <div class="nav-title">CARD</div>
         <div class="nav-right text-end">
-            @if (ficha != null && !string.IsNullOrEmpty(ficha.FotoUrl))
+            @if (ficha != null && !string.IsNullOrEmpty(ficha.FotoUrl) && EsMiFicha)
             {
                 <i class="fas fa-palette nav-icon me-3" @onclick="AbrirModalColores"></i>
                 <i class="fas fa-tags nav-icon me-3" @onclick="AbrirModalSubtitulos"></i>
                 <i class="fas fa-camera nav-icon" @onclick="ActivarCambioFoto"></i>
+                <i class="fas fa-trophy nav-icon me-3" @onclick="AbrirModalPRs" title="Elegir PRs"></i>
             }
         </div>
     </div>
@@ -129,12 +131,18 @@
                     <div class="divider-line mb-2 mt-1"></div>
 
                     @* PRS *@
-                    <div class="prs-grid">
-                        @foreach (var pr in ficha.PRs)
+                   <div class="prs-grid">
+                        @foreach (var pr in ficha.PRs.Where(p => p.Seleccionado).Take(6))
                         {
                             <div class="pr-item">
                                 <div class="pr-val">@pr.Marca <span class="pr-unit">@pr.Unidad</span></div>
                                 <span class="pr-lbl">@pr.Ejercicio</span>
+                            </div>
+                        }
+                        @if (!ficha.PRs.Any(p => p.Seleccionado))
+                        {
+                            <div style="grid-column: span 3; text-align: center; color: #888; font-size: 0.8rem;">
+                                Toca el icono del trofeo arriba para destacar tus récords.
                             </div>
                         }
                     </div>
@@ -328,6 +336,53 @@
                         @if (guardandoColores) { <i class="fas fa-spinner fa-spin"></i> } else { <span>GUARDAR</span> }
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+}
+
+@* --- MODAL DE SELECCIÓN DE PRS --- *@
+@if (mostrarModalPRs)
+{
+    <div class="modal-overlay fade-in" @onclick="CerrarModalPRs">
+        <div class="modal-content custom-modal" style="height: auto; max-height: 80vh;" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h5><i class="fas fa-trophy" style="color: #F8C545; margin-right: 8px;"></i> TUS RÉCORDS</h5>
+                <button class="btn-icon-header" @onclick="CerrarModalPRs"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="modal-body scroll-custom">
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <span style="color: #aaa; font-size: 0.85rem;">Elige hasta 6 para mostrar en tu tarjeta.</span><br />
+                    <strong style="color: #F8C545; font-size: 1.1rem; font-family: 'Oswald';">
+                        SELECCIONADOS: @ficha.PRs.Count(p => p.Seleccionado) / 6
+                    </strong>
+                </div>
+
+                <div class="pr-list-container">
+                    @foreach (var pr in ficha.PRs)
+                    {
+                        <div class="module-row" @onclick="() => TogglePR(pr)">
+                            <div style="display: flex; flex-direction: column;">
+                                <span class="mod-name" style="color: @(pr.Seleccionado ? "#F8C545" : "white");">@pr.Ejercicio</span>
+                                <span style="font-size: 0.75rem; color: #888;">Marca: @pr.Marca @pr.Unidad</span>
+                            </div>
+                            <div class="switch-track @(pr.Seleccionado ? "on" : "off")">
+                                <div class="switch-thumb"></div>
+                            </div>
+                        </div>
+                    }
+                    @if (ficha.PRs.Count == 0)
+                    {
+                        <p class="text-center text-muted">Aún no tienes marcas registradas con tu coach.</p>
+                    }
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn w-100" style="background:#F8C545; color:black; font-weight:bold; border-radius:50px; padding: 12px;" @onclick="GuardarPRs" disabled="@guardandoPRs">
+                    @if(guardandoPRs) { <i class="fas fa-spinner fa-spin"></i> } else { <span>GUARDAR SELECCIÓN</span> }
+                </button>
             </div>
         </div>
     </div>
@@ -531,6 +586,8 @@
 </style>
 
 @code {
+    [Parameter] public Guid? TargetUserId { get; set; }
+    private bool EsMiFicha => !TargetUserId.HasValue || TargetUserId.Value == Sesion.Usuario.UsuarioID;
     private bool cargando = true;
     private bool solicitandoFoto = false;
     private FichaAtletaDto ficha;
@@ -567,15 +624,20 @@
         public List<FichaPRDto> PRs { get; set; } = new();
     }
 
-    public class FichaPRDto { public string Ejercicio { get; set; } public string Marca { get; set; } public string Unidad { get; set; } }
+    public class FichaPRDto { public string Ejercicio { get; set; } public string Marca { get; set; } public string Unidad { get; set; } public bool Seleccionado { get; set; } }
     public class SubtituloDto { public int SubtituloID { get; set; } public string Texto { get; set; } public string Categoria { get; set; } }
 
     protected override async Task OnInitializedAsync()
     {
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
-        try {
-            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/{Sesion.Usuario.UsuarioID}";
+        try
+        {
+            Guid idConsulta = TargetUserId ?? Sesion.Usuario.UsuarioID;
+
+            // RUTA NORMAL PARA CROSSFIT
+            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/{idConsulta}";
             ficha = await Http.GetFromJsonAsync<FichaAtletaDto>(url);
+
             if (string.IsNullOrEmpty(ficha.ColorDetalles)) ficha.ColorDetalles = "#aaaaaa";
             if (string.IsNullOrEmpty(ficha.ColorTexto)) ficha.ColorTexto = "#FFFFFF";
             if (string.IsNullOrEmpty(ficha.ColorNumeros)) ficha.ColorNumeros = "#FFFFFF";
@@ -596,6 +658,60 @@
         if (ovr >= 225) return "badge-avanzado";
         if (ovr >= 150) return "badge-intermedio";
         return "badge-novato";
+    }
+
+    private bool mostrarModalPRs = false;
+    private bool guardandoPRs = false;
+
+    private void AbrirModalPRs() => mostrarModalPRs = true;
+    private void CerrarModalPRs()
+    {
+        // Al cerrar sin guardar, recargamos la página para deshacer los clicks (opcional pero seguro)
+        mostrarModalPRs = false;
+    }
+
+    private void TogglePR(FichaPRDto pr)
+    {
+        if (pr.Seleccionado)
+        {
+            pr.Seleccionado = false;
+        }
+        else
+        {
+            if (ficha.PRs.Count(p => p.Seleccionado) < 6)
+            {
+                pr.Seleccionado = true;
+            }
+            else
+            {
+                App.Current.MainPage.DisplayAlert("Límite", "Solo puedes mostrar 6 récords en tu tarjeta.", "OK");
+            }
+        }
+    }
+
+    private async Task GuardarPRs()
+    {
+        guardandoPRs = true;
+        try
+        {
+            var seleccionados = ficha.PRs.Where(p => p.Seleccionado).Select(p => p.Ejercicio).ToList();
+            var payload = new { UsuarioId = Sesion.Usuario.UsuarioID, Ejercicios = seleccionados };
+            
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/guardar-prs", payload);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                mostrarModalPRs = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
+        finally
+        {
+            guardandoPRs = false;
+        }
     }
     
     private void AbrirModalInfo() => mostrarModalInfo = true;

@@ -1,6 +1,8 @@
 ﻿@page "/ficha-running"
+@page "/ficha-running/{TargetUserId:guid}"
 @using System.Net.Http.Json
 @using CrossBoxApp.Models.Services
+@using System.Net.Http.Headers
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject SesionService Sesion
@@ -11,8 +13,16 @@
         <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
             <i class="fas fa-arrow-left"></i> VOLVER
         </div>
-        <div class="nav-title">PLAYERCARD RUNNING</div>
-        <div class="nav-right"></div>
+        <div class="nav-title">CARD</div>
+        <div class="nav-right text-end">
+            @if (ficha != null && !string.IsNullOrEmpty(ficha.FotoUrl) && EsMiFicha)
+            {
+                <i class="fas fa-palette nav-icon me-3" @onclick="AbrirModalColores"></i>
+                <i class="fas fa-tags nav-icon me-3" @onclick="AbrirModalSubtitulos"></i>
+                <i class="fas fa-camera nav-icon" @onclick="ActivarCambioFoto"></i>
+                <i class="fas fa-trophy nav-icon me-3" @onclick="AbrirModalPRs" title="Elegir PRs"></i>
+            }
+        </div>
     </div>
 
     <div class="content-area">
@@ -33,13 +43,6 @@
         }
         else
         {
-            @* BOTÓN DE INFO FUERA DE LA TARJETA *@
-            <div class="info-running-container mt-3 mb-3 fade-in">
-                <button class="btn-info-running" @onclick="MostrarInfoRunning">
-                    <i class="fas fa-info-circle"></i> ¿CÓMO MEJORAR MI FICHA?
-                </button>
-            </div>
-
             @* CARTA ESTÁTICA RUNNING *@
             <div class="card-scene fade-in"
                  style="--c-main: @(ficha.ColorPrimario); --c-accent: @(ficha.ColorTexto); --c-nums: @(ficha.ColorNumeros); --c-detalles: @(ficha.ColorDetalles); --c-bg1: @(ficha.ColorFondo1); --c-bg2: @(ficha.ColorFondo2); --bg-custom: url('@(ficha.FondoCustomUrl)'); --m-opacity: @(ficha.OpacidadMedallas.ToString(System.Globalization.CultureInfo.InvariantCulture));">
@@ -66,7 +69,7 @@
                             }
                             
                             <span class="rating">@ovr</span>
-                            <span class="position">OVR</span>
+                            <span class="position">OVR <i class="fas fa-info-circle info-btn" @onclick="AbrirModalInfo"></i></span>
                             
                             <div class="level-badge @ObtenerClaseMedalla(ficha.SemanasRunning)">
                                 @if (ficha.SemanasRunning >= 32) { <span><i class="fas fa-fire"></i> ÉLITE</span> }
@@ -111,17 +114,17 @@
 
                     @* PRS (RÉCORDS RUNNING) *@
                     <div class="prs-grid">
-                        @foreach (var pr in ficha.PRs)
+                        @foreach (var pr in ficha.PRs.Where(p => p.Seleccionado).Take(6))
                         {
                             <div class="pr-item">
                                 <div class="pr-val">@pr.Marca <span class="pr-unit">@pr.Unidad</span></div>
                                 <span class="pr-lbl">@pr.Ejercicio</span>
                             </div>
                         }
-                        @if (ficha.PRs.Count == 0)
+                        @if (!ficha.PRs.Any(p => p.Seleccionado))
                         {
                             <div style="grid-column: span 3; text-align: center; color: #888; font-size: 0.8rem;">
-                                No hay récords registrados aún.
+                                Toca el icono del trofeo arriba para destacar tus récords.
                             </div>
                         }
                     </div>
@@ -131,7 +134,267 @@
     </div>
 </div>
 
+@* --- MODAL INFO RANGOS RUNNING --- *@
+@if (mostrarModalInfo)
+{
+    <div class="modal-overlay fade-in" @onclick="() => mostrarModalInfo = false">
+        <div class="modal-content custom-modal" style="height: auto; max-height: 80vh;" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h5>RANGOS RUNNING</h5>
+                <button class="btn-icon-header" @onclick="() => mostrarModalInfo = false"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body scroll-custom">
+                <p style="color:#aaa; font-size:0.85rem; text-align:center; margin-bottom: 20px; line-height: 1.4;">
+                    Empiezas con <strong style="color:white;">70 Puntos (OVR)</strong>.<br>
+                    Completa al menos el <strong style="color:#F8C545;">75% de tus entrenamientos</strong> semanales para sumar semanas de experiencia y subir de rango:
+                </p>
+
+                <div class="rank-list">
+                    <div class="rank-item">
+                        <div class="level-badge badge-elite" style="font-size: 0.9rem; padding: 5px 15px;"><span><i class="fas fa-fire"></i> ÉLITE</span></div>
+                        <span class="rank-pts">32+ SEMANAS</span>
+                    </div>
+                    <div class="rank-item">
+                        <div class="level-badge badge-pro" style="font-size: 0.9rem; padding: 5px 15px;"><span><i class="fas fa-medal"></i> PRO</span></div>
+                        <span class="rank-pts">20 - 31 SEMANAS</span>
+                    </div>
+                    <div class="rank-item">
+                        <div class="level-badge badge-avanzado" style="font-size: 0.9rem; padding: 5px 15px;"><span><i class="fas fa-star"></i> AVANZADO</span></div>
+                        <span class="rank-pts">12 - 19 SEMANAS</span>
+                    </div>
+                    <div class="rank-item">
+                        <div class="level-badge badge-intermedio" style="font-size: 0.9rem; padding: 5px 15px;"><span><i class="fas fa-shield-alt"></i> INTERMEDIO</span></div>
+                        <span class="rank-pts">4 - 11 SEMANAS</span>
+                    </div>
+                    <div class="rank-item">
+                        <div class="level-badge badge-novato" style="font-size: 0.9rem; padding: 5px 15px;"><span><i class="fas fa-seedling"></i> NOVATO</span></div>
+                        <span class="rank-pts">0 - 3 SEMANAS</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@* --- MODAL DE SUBTÍTULOS (ESTILOS RESTAURADOS) --- *@
+@if (mostrarModalSubtitulos)
+{
+    <div class="modal-overlay fade-in" @onclick="CerrarModalSubtitulos">
+        <div class="modal-content custom-modal" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h5>ELIGE TU LEMA</h5>
+                <button class="btn-icon-header" @onclick="CerrarModalSubtitulos"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-tabs">
+                <div class="tab-btn @(tabActiva == "Comedia" ? "active" : "")" @onclick='() => tabActiva = "Comedia"'>Divertidos</div>
+                <div class="tab-btn @(tabActiva == "Motivacional" ? "active" : "")" @onclick='() => tabActiva = "Motivacional"'>Motivacionales</div>
+            </div>
+            <div class="modal-body scroll-custom">
+                <div class="frases-grid">
+                    @foreach (var frase in listaSubtitulos.Where(f => f.Categoria == tabActiva))
+                    {
+                        <div class="frase-item @(ficha?.Subtitulo == frase.Texto ? "selected" : "")" @onclick="() => SeleccionarFrase(frase.Texto)">
+                            <i class="fas fa-quote-left quote-mark"></i> <span>@frase.Texto</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@* --- MODAL DE DISEÑO --- *@
+@if (mostrarModalColores)
+{
+    <div class="modal-overlay fade-in" @onclick="IntentoCerrarModalColores">
+        <div class="modal-content custom-modal" style="height: auto; max-height: 90vh;" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h5>PERSONALIZAR</h5>
+                <button class="btn-icon-header" @onclick="CerrarModalColores"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body scroll-custom">
+
+                @* 1. FOTO DE PERFIL *@
+                <div class="color-picker-group">
+                    <label><i class="fas fa-user-circle"></i> FILTRO FOTO PERFIL</label>
+                    <div class="filters-row">
+                        <button class="btn-filter @(ficha.FiltroFoto == "none" ? "active" : "")" @onclick='() => ficha.FiltroFoto = "none"'>Normal</button>
+                        <button class="btn-filter @(ficha.FiltroFoto == "grayscale(100%)" ? "active" : "")" @onclick='() => ficha.FiltroFoto = "grayscale(100%)"'>B&N</button>
+                        <button class="btn-filter @(ficha.FiltroFoto == "sepia(80%)" ? "active" : "")" @onclick='() => ficha.FiltroFoto = "sepia(80%)"'>Sepia</button>
+                        <button class="btn-filter @(ficha.FiltroFoto == "contrast(120%) saturate(150%)" ? "active" : "")" @onclick='() => ficha.FiltroFoto = "contrast(120%) saturate(150%)"'>Épico</button>
+                    </div>
+                </div>
+
+                @* 2. IMAGEN DE FONDO CUSTOM *@
+                <div class="color-picker-group mt-3">
+                    <label><i class="fas fa-image"></i> IMAGEN DE FONDO</label>
+
+                    <div class="upload-bg-box">
+                        <InputFile OnChange="SubirFondoCustom" accept="image/*" id="bg-upload" style="display:none;" />
+                        <label for="bg-upload" class="btn-upload-bg">
+                            @if (subiendoFondo)
+                            {
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>SUBIENDO...</span>
+                            }
+                            else
+                            {
+                                <i class="fas fa-upload"></i>
+                                <span>CARGAR FONDO PROPIO</span>
+                            }
+                        </label>
+                        @if (!string.IsNullOrEmpty(ficha.FondoCustomUrl))
+                        {
+                            <button class="btn-quitar-bg mt-2" @onclick="QuitarFondoCustom"><i class="fas fa-trash"></i> QUITAR FONDO</button>
+
+                            <div class="bg-controls fade-in mt-3">
+                                <label style="font-size: 0.8rem;"><i class="fas fa-adjust"></i> FILTRO DEL FONDO</label>
+                                <div class="filters-row mt-1 mb-3">
+                                    <button class="btn-filter @(ficha.FiltroFondo == "none" ? "active" : "")" @onclick='() => ficha.FiltroFondo = "none"'>Normal</button>
+                                    <button class="btn-filter @(ficha.FiltroFondo == "grayscale(100%)" ? "active" : "")" @onclick='() => ficha.FiltroFondo = "grayscale(100%)"'>B&N</button>
+                                    <button class="btn-filter @(ficha.FiltroFondo == "sepia(80%)" ? "active" : "")" @onclick='() => ficha.FiltroFondo = "sepia(80%)"'>Sepia</button>
+                                    <button class="btn-filter @(ficha.FiltroFondo == "blur(3px)" ? "active" : "")" @onclick='() => ficha.FiltroFondo = "blur(3px)"'>Borrosito</button>
+                                </div>
+
+                                <label style="font-size: 0.8rem;"><i class="fas fa-eye"></i> OPACIDAD (TRANSPARENCIA)</label>
+                                <div class="range-container">
+                                    <span style="color:#888; font-size: 0.8rem;">Suave</span>
+                                    <input type="range" class="custom-range" min="0.1" max="1" step="0.05" @bind="ficha.OpacidadFondo" @bind:event="oninput" />
+                                    <span style="color:#888; font-size: 0.8rem;">Sólido</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                @* 3. COLORES DE TEXTO *@
+                <div class="color-picker-group mt-3">
+                    <label><i class="fas fa-font"></i> COLOR DE TEXTO (Nombres y Títulos)</label>
+                    <input type="color" @bind="ficha.ColorTexto" class="color-input" />
+                </div>
+
+                <div class="color-picker-group mt-3">
+                    <label><i class="fas fa-sort-numeric-up-alt"></i> COLOR DE NÚMEROS (Stats y PRs)</label>
+                    <input type="color" @bind="ficha.ColorNumeros" class="color-input" />
+                </div>
+                <div class="color-picker-group mt-3">
+                    <label><i class="fas fa-paint-brush"></i> COLOR DE DETALLES (Frase y Unidades)</label>
+                    <input type="color" @bind="ficha.ColorDetalles" class="color-input" />
+                </div>
+
+                @* 4. COLORES BASE *@
+                <div class="color-picker-group mt-3">
+                    <label><i class="fas fa-bolt"></i> COLOR PRINCIPAL (Bordes)</label>
+                    <input type="color" @bind="ficha.ColorPrimario" class="color-input" />
+                </div>
+
+                <div class="color-picker-group mt-3">
+                    <label><i class="fas fa-fill-drip"></i> COLOR DE FONDO 1</label>
+                    <input type="color" @bind="ficha.ColorFondo1" class="color-input" />
+                </div>
+                <div class="color-picker-group mt-3">
+                    <label><i class="fas fa-fill"></i> COLOR DE FONDO 2</label>
+                    <input type="color" @bind="ficha.ColorFondo2" class="color-input" />
+                </div>
+                <div class="color-picker-group mt-3">
+                    <label style="font-size: 0.9rem;"><i class="fas fa-medal"></i> OPACIDAD FONDO MEDALLAS</label>
+                    <div class="range-container">
+                        <span style="color:#888; font-size: 0.8rem;">0%</span>
+                        <input type="range" class="custom-range" min="0" max="1" step="0.05" @bind="ficha.OpacidadMedallas" @bind:event="oninput" />
+                        <span style="color:#888; font-size: 0.8rem;">100%</span>
+                    </div>
+                </div>
+
+                @* 5. TEXTURAS *@
+                <div class="color-picker-group mt-3">
+                    <label><i class="fas fa-layer-group"></i> TEXTURA BASE</label>
+                    <div class="texture-grid">
+                        <div class="texture-item @(ficha.Textura == "" ? "selected" : "")" @onclick='() => ficha.Textura = ""'><span>LISA</span></div>
+                        <div class="texture-item carbon @(ficha.Textura == "carbon" ? "selected" : "")" @onclick='() => ficha.Textura = "carbon"'><span>CARBONO</span></div>
+                        <div class="texture-item metal @(ficha.Textura == "metal" ? "selected" : "")" @onclick='() => ficha.Textura = "metal"'><span>METAL</span></div>
+                        <div class="texture-item geo @(ficha.Textura == "geo" ? "selected" : "")" @onclick='() => ficha.Textura = "geo"'><span>PUNTOS</span></div>
+                    </div>
+                </div>
+
+                <div class="botones-colores mt-4 mb-3">
+                    <button class="btn-restaurar" @onclick="RestaurarColores">
+                        <i class="fas fa-undo"></i> ORIGINAL
+                    </button>
+                    <button class="btn-guardar-colores" @onclick="GuardarColores">
+                        @if (guardandoColores)
+                        {
+                            <i class="fas fa-spinner fa-spin"></i>
+                        }
+                        else
+                        {
+
+                            <span>GUARDAR</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@* --- MODAL DE SELECCIÓN DE PRS --- *@
+@if (mostrarModalPRs)
+{
+    <div class="modal-overlay fade-in" @onclick="CerrarModalPRs">
+        <div class="modal-content custom-modal" style="height: auto; max-height: 80vh;" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h5><i class="fas fa-trophy" style="color: #F8C545; margin-right: 8px;"></i> TUS RÉCORDS</h5>
+                <button class="btn-icon-header" @onclick="CerrarModalPRs"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="modal-body scroll-custom">
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <span style="color: #aaa; font-size: 0.85rem;">Elige hasta 6 para mostrar en tu tarjeta.</span><br />
+                    <strong style="color: #F8C545; font-size: 1.1rem; font-family: 'Oswald';">
+                        SELECCIONADOS: @ficha.PRs.Count(p => p.Seleccionado) / 6
+                    </strong>
+                </div>
+
+                <div class="pr-list-container">
+                    @foreach (var pr in ficha.PRs)
+                    {
+                        <div class="module-row" @onclick="() => TogglePR(pr)">
+                            <div style="display: flex; flex-direction: column;">
+                                <span class="mod-name" style="color: @(pr.Seleccionado ? "#F8C545" : "white");">@pr.Ejercicio</span>
+                                <span style="font-size: 0.75rem; color: #888;">Marca: @pr.Marca @pr.Unidad</span>
+                            </div>
+                            <div class="switch-track @(pr.Seleccionado ? "on" : "off")">
+                                <div class="switch-thumb"></div>
+                            </div>
+                        </div>
+                    }
+                    @if (ficha.PRs.Count == 0)
+                    {
+                        <p class="text-center text-muted">Aún no tienes marcas registradas con tu coach.</p>
+                    }
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn w-100" style="background:#F8C545; color:black; font-weight:bold; border-radius:50px; padding: 12px;" @onclick="GuardarPRs" disabled="@guardandoPRs">
+                    @if (guardandoPRs)
+                    {
+                        <i class="fas fa-spinner fa-spin"></i>
+                    }
+                    else
+                    {
+
+                        <span>GUARDAR SELECCIÓN</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+
 <style>
+    /* Estilos base (idénticos) */
     .main-layout { position: fixed; top:0; left:0; width:100vw; height:100vh; background:#050505; display:flex; flex-direction:column; z-index:1; }
     .navbar-container { flex-shrink:0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom:10px; padding-left:20px; padding-right:20px; background:#111; border-bottom:1px solid #F8C545; display:flex; justify-content:space-between; align-items:center; z-index:100; font-family:'Oswald'; color:white; }
     .nav-left { color:#F8C545; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:0.9rem; }
@@ -139,10 +402,12 @@
     .nav-right { width:60px; }
     .content-area { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; overflow:hidden; background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%); }
 
-    /* ESTILO BOTÓN INFO RUNNING */
-    .info-running-container { width: 100%; text-align: center; z-index: 10; }
-    .btn-info-running { background: rgba(248, 197, 69, 0.1); border: 1px solid #F8C545; color: #F8C545; padding: 10px 20px; border-radius: 50px; font-family: 'Oswald'; font-size: 0.9rem; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 0 15px rgba(248, 197, 69, 0.2); }
-    .btn-info-running:active { transform: scale(0.95); background: rgba(248, 197, 69, 0.3); }
+    /* Info Icon & Rank List Styles (Traídos de ficha-atleta) */
+    .info-btn { font-size: 0.9rem; color: #aaa; cursor: pointer; margin-left: 5px; transition: 0.2s; }
+    .info-btn:active { color: #fff; }
+    .rank-list { display: flex; flex-direction: column; gap: 15px; }
+    .rank-item { display: flex; justify-content: space-between; align-items: center; background: #222; padding: 15px; border-radius: 10px; border: 1px solid #333; }
+    .rank-pts { color: #fff; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; }
 
     /* PANTALLA VACÍA */
     .upload-photo-section { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; width: 100%; text-align: center; padding: 20px; z-index: 10; position: relative; }
@@ -200,38 +465,121 @@
     @@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
     @@keyframes shineBadge { 0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; } }
     @@keyframes fireBorder { 0% { box-shadow: 0 0 5px #ff0000, inset 0 0 5px #ff0000; } 100% { box-shadow: 0 0 15px #ff7f00, inset 0 0 10px #ff7f00; } }
+
+    /* MODALES ESTILOS COMUNES */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 5000; display: flex; justify-content: center; align-items: flex-end; padding-bottom: calc(env(safe-area-inset-bottom) + 0px); }
+    .custom-modal { background: #1a1a1a; width: 100%; height: 70vh; border-top-left-radius: 25px; border-top-right-radius: 25px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -10px 40px rgba(0,0,0,0.9); animation: slideUp 0.3s ease-out; }
+    .modal-header { padding: 20px 25px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; background:#111; }
+    .modal-header h5 { margin:0; color:#F8C545; font-family:'Oswald'; letter-spacing:1px; font-size: 1.2rem; }
+    .btn-icon-header { background: none; border: none; color: #888; font-size: 1.4rem; cursor: pointer; padding: 5px; }
+    .modal-body { padding: 20px; overflow-y: auto; flex: 1; -webkit-overflow-scrolling: touch; }
+
+    /* ESTILOS DEL MODAL DE SUBTITULOS ARREGLADOS */
+    .modal-tabs { display:flex; border-bottom:1px solid #333; background:#111; }
+    .tab-btn { flex:1; text-align:center; padding:15px; color:#888; font-family:'Oswald'; font-size:1rem; cursor:pointer; border-bottom: 3px solid transparent; transition:0.3s;}
+    .tab-btn.active { color:#F8C545; border-bottom: 3px solid #F8C545; font-weight:bold; background:rgba(255,255,255,0.02);}
+    .frases-grid { display:flex; flex-direction:column; gap:12px; padding-bottom:30px; }
+    .frase-item { background:#222; border:1px solid #333; padding:18px; border-radius:12px; color:#ddd; font-style:italic; font-size:1rem; cursor:pointer; display:flex; align-items:center; gap:15px; transition:0.2s;}
+    .frase-item.selected { border-color:#F8C545; background:rgba(248, 197, 69, 0.15); color:white; font-weight:bold;}
+    .quote-mark { color:#555; font-size:1.4rem; }
+    .selected .quote-mark { color:#F8C545; }
+    
+    /* MODAL COLORES Y DEMÁS */
+    .color-picker-group { display: flex; flex-direction: column; gap: 8px; background: #222; padding: 15px; border-radius: 12px; border: 1px solid #333; }
+    .color-picker-group label { color: white; font-family: 'Oswald'; font-size: 0.9rem; letter-spacing: 1px; }
+    .color-input { width: 100%; height: 50px; border: none; border-radius: 8px; cursor: pointer; padding: 0; background: none; }
+    .color-input::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-input::-webkit-color-swatch { border: 2px solid #444; border-radius: 8px; }
+    
+    .filters-row { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; -webkit-overflow-scrolling: touch; }
+    .btn-filter { flex-shrink: 0; background: #111; color: #aaa; border: 1px solid #444; padding: 8px 15px; border-radius: 50px; font-family: 'Oswald'; font-size: 0.9rem; cursor: pointer; transition: 0.2s; }
+    .btn-filter.active { background: #F8C545; color: #000; border-color: #F8C545; font-weight: bold; }
+
+    .upload-bg-box { display: flex; flex-direction: column; gap: 10px; }
+    .btn-upload-bg { width: 100%; background: #28a745; color: white; border: none; padding: 12px; border-radius: 8px; font-family: 'Oswald'; font-size: 1rem; text-align: center; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(40,167,69,0.3); }
+    .btn-quitar-bg { width: 100%; background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; padding: 10px; border-radius: 8px; font-family: 'Oswald'; font-size: 0.9rem; text-align: center; }
+    
+    .bg-controls { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; }
+    .range-container { display: flex; align-items: center; gap: 10px; }
+    .custom-range { flex: 1; -webkit-appearance: none; height: 5px; border-radius: 5px; background: #444; outline: none; }
+    .custom-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #F8C545; cursor: pointer; }
+
+    .texture-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .texture-item { aspect-ratio: 1/1; background: #333; border: 2px solid #444; border-radius: 8px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-family: 'Oswald'; font-size: 0.7rem; color: #aaa; position: relative; overflow: hidden; transition: 0.2s; }
+    .texture-item span { position: relative; z-index: 2; }
+    .texture-item.selected { border-color: #F8C545; color: #F8C545; font-weight: bold; }
+    .texture-item.carbon::before { content:''; position:absolute; top:0; left:0; width:100%; height:100%; background: repeating-linear-gradient(45deg, rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 3px, transparent 3px, transparent 6px); z-index: 1; }
+    .texture-item.metal::before { content:''; position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.2) 100%); z-index: 1; }
+    .texture-item.geo::before { content:''; position:absolute; top:0; left:0; width:100%; height:100%; background-image: radial-gradient(rgba(255,255,255,0.2) 1.5px, transparent 1.5px); background-size: 8px 8px; z-index: 1; }
+
+    .botones-colores { display: flex; gap: 10px; width: 100%; }
+    .btn-restaurar { background: transparent; color: #888; border: 1px solid #444; padding: 15px; border-radius: 50px; font-family: 'Oswald'; font-weight: bold; font-size: 1rem; width: 40%; cursor: pointer; transition: 0.2s; }
+    .btn-guardar-colores { flex: 1; background: #F8C545; color: black; border: none; padding: 15px; border-radius: 50px; font-family: 'Oswald'; font-weight: bold; font-size: 1.2rem; cursor: pointer; box-shadow: 0 5px 15px rgba(248,197,69,0.3); transition: 0.2s; }
 </style>
 
 @code {
+    [Parameter] public Guid? TargetUserId { get; set; }
+    private bool EsMiFicha => !TargetUserId.HasValue || TargetUserId.Value == Sesion.Usuario.UsuarioID;
     private bool cargando = true;
+    private bool solicitandoFoto = false;
     private FichaAtletaDto ficha;
 
-    // Usamos tu mismo DTO pero le agregamos SemanasRunning
-    public class FichaAtletaDto {
-        public string Nombre { get; set; } public string Apellidos { get; set; }
-        public string FotoUrl { get; set; } public string BoxNombre { get; set; } public string LogoBoxUrl { get; set; }
-        public int DiasEntrenadosAnio { get; set; } 
-        public int SemanasRunning { get; set; } // <--- EL NUEVO CAMPO
+    // --- VARIABLES DE MODALES ---
+    private bool mostrarModalSubtitulos = false;
+    private string tabActiva = "Comedia";
+    private List<SubtituloDto> listaSubtitulos = new();
+
+    private bool mostrarModalColores = false;
+    private bool guardandoColores = false;
+    private bool subiendoFondo = false;
+    
+    // VARIABLE DEL MODAL DE INFORMACIÓN
+    private bool mostrarModalInfo = false;
+
+    private bool mostrarModalPRs = false;
+    private bool guardandoPRs = false;
+
+    // --- DTOs ---
+    public class FichaAtletaDto
+    {
+        public string Nombre { get; set; }
+        public string Apellidos { get; set; }
+        public string FotoUrl { get; set; }
+        public string BoxNombre { get; set; }
+        public string LogoBoxUrl { get; set; }
+        public int DiasEntrenadosAnio { get; set; }
+        public int SemanasRunning { get; set; }
         public string Subtitulo { get; set; }
-        public string ColorPrimario { get; set; } public string ColorTexto { get; set; } 
-        public string ColorNumeros { get; set; } public string ColorFondo1 { get; set; } 
-        public string ColorFondo2 { get; set; } public string Textura { get; set; } 
-        public string FiltroFoto { get; set; } public string FiltroFondo { get; set; }
-        public double OpacidadFondo { get; set; } public string FondoCustomUrl { get; set; } 
-        public string ColorDetalles { get; set; } public double OpacidadMedallas { get; set; }
+        public string ColorPrimario { get; set; }
+        public string ColorTexto { get; set; }
+        public string ColorNumeros { get; set; }
+        public string ColorFondo1 { get; set; }
+        public string ColorFondo2 { get; set; }
+        public string Textura { get; set; }
+        public string FiltroFoto { get; set; }
+        public string FiltroFondo { get; set; }
+        public double OpacidadFondo { get; set; }
+        public string FondoCustomUrl { get; set; }
+        public string ColorDetalles { get; set; }
+        public double OpacidadMedallas { get; set; }
         public List<FichaPRDto> PRs { get; set; } = new();
     }
 
-    public class FichaPRDto { public string Ejercicio { get; set; } public string Marca { get; set; } public string Unidad { get; set; } }
+    public class FichaPRDto { public string Ejercicio { get; set; } public string Marca { get; set; } public string Unidad { get; set; } public bool Seleccionado { get; set; } }
+    public class SubtituloDto { public int SubtituloID { get; set; } public string Texto { get; set; } public string Categoria { get; set; } }
+    public class RespuestaFondoDto { public string url { get; set; } }
 
     protected override async Task OnInitializedAsync()
     {
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
-        try {
-            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/running/{Sesion.Usuario.UsuarioID}";
+        try
+        {
+            Guid idConsulta = TargetUserId ?? Sesion.Usuario.UsuarioID;
+
+            // RUTA ESPECÍFICA PARA RUNNING
+            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/running/{idConsulta}";
             ficha = await Http.GetFromJsonAsync<FichaAtletaDto>(url);
-            
-            // Valores por defecto si vienen nulos
+
             if (string.IsNullOrEmpty(ficha.ColorDetalles)) ficha.ColorDetalles = "#aaaaaa";
             if (string.IsNullOrEmpty(ficha.ColorTexto)) ficha.ColorTexto = "#FFFFFF";
             if (string.IsNullOrEmpty(ficha.ColorNumeros)) ficha.ColorNumeros = "#FFFFFF";
@@ -239,22 +587,176 @@
             if (string.IsNullOrEmpty(ficha.FiltroFoto)) ficha.FiltroFoto = "none";
             if (string.IsNullOrEmpty(ficha.FiltroFondo)) ficha.FiltroFondo = "none";
             if (ficha.OpacidadFondo <= 0) ficha.OpacidadFondo = 1.0;
-        } catch { } finally { cargando = false; }
+        }
+        catch { }
+        finally { cargando = false; }
     }
+
+    private void ActivarCambioFoto() => solicitandoFoto = true;
+    private void IrAPerfil() => Nav.NavigateTo("/mi-perfil");
 
     private string ObtenerClaseMedalla(int semanas)
     {
-        if (semanas >= 32) return "badge-elite"; // 8 meses
-        if (semanas >= 20) return "badge-pro";   // 5 meses
-        if (semanas >= 12) return "badge-avanzado"; // 3 meses
-        if (semanas >= 4) return "badge-intermedio"; // 1 mes
+        if (semanas >= 32) return "badge-elite";
+        if (semanas >= 20) return "badge-pro";
+        if (semanas >= 12) return "badge-avanzado";
+        if (semanas >= 4) return "badge-intermedio";
         return "badge-novato";
     }
 
-    private async Task MostrarInfoRunning()
+    // MÉTODO PARA ABRIR EL MODAL DE INFORMACIÓN
+    private void AbrirModalInfo() => mostrarModalInfo = true;
+
+    // ==========================================
+    // MÉTODOS DE PRS
+    // ==========================================
+    private void AbrirModalPRs() => mostrarModalPRs = true;
+    private void CerrarModalPRs() => mostrarModalPRs = false;
+
+    private void TogglePR(FichaPRDto pr)
     {
-        await App.Current.MainPage.DisplayAlert("Reglas Running", 
-            "Registra tus récords en carrera (5k, 10k, 21k, etc) con tu coach para que aparezcan aquí.\n\nTienes que completar el 75% de tus entrenamientos para sumar una semana más a tus estadísticas y subir de rango.", 
-            "ENTENDIDO");
+        if (pr.Seleccionado) pr.Seleccionado = false;
+        else
+        {
+            if (ficha.PRs.Count(p => p.Seleccionado) < 6) pr.Seleccionado = true;
+            else App.Current.MainPage.DisplayAlert("Límite", "Solo puedes mostrar 6 récords en tu tarjeta.", "OK");
+        }
+    }
+
+    private async Task GuardarPRs()
+    {
+        guardandoPRs = true;
+        try
+        {
+            var seleccionados = ficha.PRs.Where(p => p.Seleccionado).Select(p => p.Ejercicio).ToList();
+            var payload = new { UsuarioId = Sesion.Usuario.UsuarioID, Ejercicios = seleccionados };
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/guardar-prs", payload);
+            if (response.IsSuccessStatusCode) mostrarModalPRs = false;
+        }
+        catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }
+        finally { guardandoPRs = false; }
+    }
+
+    // ==========================================
+    // MÉTODOS DE SUBTÍTULOS
+    // ==========================================
+    private async Task AbrirModalSubtitulos()
+    {
+        mostrarModalSubtitulos = true;
+        if (listaSubtitulos.Count == 0)
+        {
+            try { listaSubtitulos = await Http.GetFromJsonAsync<List<SubtituloDto>>("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/catalogo-subtitulos"); } catch { }
+        }
+    }
+    private void CerrarModalSubtitulos() => mostrarModalSubtitulos = false;
+
+    private async Task SeleccionarFrase(string textoFrase)
+    {
+        ficha.Subtitulo = textoFrase;
+        mostrarModalSubtitulos = false;
+        try
+        {
+            var payload = new { UsuarioId = Sesion.Usuario.UsuarioID, Subtitulo = textoFrase };
+            await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/guardar-subtitulo", payload);
+        }
+        catch { }
+    }
+
+    // ==========================================
+    // MÉTODOS DE COLORES Y FONDOS
+    // ==========================================
+    private string backupColorPrimario; private string backupColorTexto; private string backupColorNumeros; private string backupColorDetalles;
+    private string backupColorFondo1; private string backupColorFondo2; private string backupTextura; private string backupFiltroFoto;
+    private string backupFiltroFondo; private double backupOpacidadFondo; private string backupFondoCustomUrl; private double backupOpacidadMedallas;
+
+    private void AbrirModalColores()
+    {
+        backupColorPrimario = ficha.ColorPrimario; backupColorTexto = ficha.ColorTexto; backupColorNumeros = ficha.ColorNumeros; backupColorDetalles = ficha.ColorDetalles;
+        backupColorFondo1 = ficha.ColorFondo1; backupColorFondo2 = ficha.ColorFondo2; backupTextura = ficha.Textura; backupFiltroFoto = ficha.FiltroFoto;
+        backupFiltroFondo = ficha.FiltroFondo; backupOpacidadFondo = ficha.OpacidadFondo; backupFondoCustomUrl = ficha.FondoCustomUrl; backupOpacidadMedallas = ficha.OpacidadMedallas;
+        mostrarModalColores = true;
+    }
+
+    private async Task IntentoCerrarModalColores()
+    {
+        bool hayCambios = (backupColorPrimario != ficha.ColorPrimario || backupColorTexto != ficha.ColorTexto || backupColorNumeros != ficha.ColorNumeros || backupColorDetalles != ficha.ColorDetalles || backupColorFondo1 != ficha.ColorFondo1 || backupColorFondo2 != ficha.ColorFondo2 || backupTextura != ficha.Textura || backupFiltroFoto != ficha.FiltroFoto || backupFiltroFondo != ficha.FiltroFondo || backupOpacidadFondo != ficha.OpacidadFondo || backupFondoCustomUrl != ficha.FondoCustomUrl || backupOpacidadMedallas != ficha.OpacidadMedallas);
+
+        if (hayCambios)
+        {
+            bool descartar = await App.Current.MainPage.DisplayAlert("Cambios sin guardar", "Hiciste modificaciones en tu diseño. ¿Estás seguro de que quieres salir y descartarlos?", "Sí, descartar", "No, seguir editando");
+            if (descartar)
+            {
+                ficha.ColorPrimario = backupColorPrimario; ficha.ColorTexto = backupColorTexto; ficha.ColorNumeros = backupColorNumeros; ficha.ColorDetalles = backupColorDetalles;
+                ficha.ColorFondo1 = backupColorFondo1; ficha.ColorFondo2 = backupColorFondo2; ficha.Textura = backupTextura; ficha.FiltroFoto = backupFiltroFoto;
+                ficha.FiltroFondo = backupFiltroFondo; ficha.OpacidadFondo = backupOpacidadFondo; ficha.FondoCustomUrl = backupFondoCustomUrl; ficha.OpacidadMedallas = backupOpacidadMedallas;
+                mostrarModalColores = false;
+            }
+        }
+        else { mostrarModalColores = false; }
+    }
+
+    private void CerrarModalColores() => mostrarModalColores = false;
+
+    private void RestaurarColores()
+    {
+        if (ficha != null)
+        {
+            ficha.ColorPrimario = "#FFD700"; ficha.ColorTexto = "#FFFFFF"; ficha.ColorNumeros = "#FFFFFF"; ficha.ColorFondo1 = "#111111";
+            ficha.ColorFondo2 = "#2a2a2a"; ficha.Textura = ""; ficha.FiltroFoto = "none"; ficha.FiltroFondo = "none";
+            ficha.OpacidadFondo = 1.0; ficha.FondoCustomUrl = ""; ficha.ColorDetalles = "#aaaaaa"; ficha.OpacidadMedallas = 0.2;
+        }
+    }
+
+    private void QuitarFondoCustom() { ficha.FondoCustomUrl = ""; }
+
+    private async Task SubirFondoCustom(InputFileChangeEventArgs e)
+    {
+        var archivo = e.File; if (archivo == null) return;
+        subiendoFondo = true;
+        try
+        {
+            using var form = new MultipartFormDataContent();
+            using var fileStream = archivo.OpenReadStream(maxAllowedSize: 5120000);
+            using var streamContent = new StreamContent(fileStream);
+            streamContent.Headers.ContentType = new MediaTypeHeaderValue(archivo.ContentType);
+            form.Add(streamContent, "archivo", archivo.Name);
+            form.Add(new StringContent(Sesion.Usuario.UsuarioID.ToString()), "usuarioId");
+
+            var response = await Http.PostAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/subir-fondo", form);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<RespuestaFondoDto>();
+                if (result != null) { ficha.FondoCustomUrl = result.url; ficha.OpacidadFondo = 0.6; }
+            }
+        }
+        catch { }
+        finally { subiendoFondo = false; }
+    }
+
+    private async Task GuardarColores()
+    {
+        guardandoColores = true;
+        try
+        {
+            var payload = new
+            {
+                UsuarioId = Sesion.Usuario.UsuarioID,
+                ColorPrimario = ficha.ColorPrimario,
+                ColorTexto = ficha.ColorTexto,
+                ColorNumeros = ficha.ColorNumeros,
+                ColorFondo1 = ficha.ColorFondo1,
+                ColorFondo2 = ficha.ColorFondo2,
+                Textura = ficha.Textura,
+                FiltroFoto = ficha.FiltroFoto,
+                ColorDetalles = ficha.ColorDetalles,
+                FiltroFondo = ficha.FiltroFondo,
+                OpacidadFondo = ficha.OpacidadFondo,
+                OpacidadMedallas = ficha.OpacidadMedallas
+            };
+            await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/guardar-colores", payload);
+            mostrarModalColores = false;
+        }
+        catch { }
+        finally { guardandoColores = false; }
     }
 }

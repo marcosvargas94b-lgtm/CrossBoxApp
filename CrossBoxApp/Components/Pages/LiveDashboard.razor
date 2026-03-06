@@ -170,9 +170,11 @@
                             @foreach (var b in wodHoy.Bloques)
                             {
                                 <option value="@b.SegmentoClaseID" selected="@(b.SegmentoClaseID == segmentoSeleccionadoID)">
-                                    @(string.IsNullOrEmpty(b.NombreSegmento) ? "BLOQUE" : b.NombreSegmento.ToUpper())
+                                    @(b.EsTextoLibre
+                                                            ? (string.IsNullOrEmpty(b.TiempoFormato) ? "WOD" : b.TiempoFormato.ToUpper())
+                                                            : (string.IsNullOrEmpty(b.NombreSegmento) ? "BLOQUE" : b.NombreSegmento.ToUpper()))
                                 </option>
-                            }
+                             }
                         </select>
                         <i class="fas fa-chevron-down select-arrow"></i>
                     </div>
@@ -226,19 +228,40 @@
                             {
                                 <div class="wod-block fade-in">
                                     <h4 class="block-title">
-                                        @(string.IsNullOrEmpty(bloque.NombreSegmento) ? "BLOQUE" : bloque.NombreSegmento.ToUpper())
-                                    </h4>
-                                    @if (bloque.Ejercicios != null)
+                                        @(bloque.EsTextoLibre
+                                                                ? (string.IsNullOrEmpty(bloque.TiempoFormato) ? "RUTINA" : bloque.TiempoFormato.ToUpper())
+                                                                : (string.IsNullOrEmpty(bloque.NombreSegmento) ? "BLOQUE" : bloque.NombreSegmento.ToUpper()))
+                    </h4>
+
+                    @if (bloque.Ejercicios != null)
                                     {
                                         <div class="exercises-wrapper">
-                                            @foreach (var ej in bloque.Ejercicios)
+                                            @if (bloque.EsTextoLibre)
                                             {
-                                                <div class="ejercicio-row-clean">
-                                                    <span class="ej-reps">@ej.PesoRepeticiones</span>
-                                                    <div class="ej-nombre">
-                                                        @((MarkupString)FormatearPesoPlateado(ej.Descripcion))
+                                                @* MODO TEXTO LIBRE: Cortamos por cada "Enter" y dibujamos las filas *@
+                                                var textoCompleto = bloque.Ejercicios.FirstOrDefault()?.Descripcion ?? "";
+                                                var lineas = textoCompleto.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+                                                foreach (var linea in lineas)
+                                                {
+                                                    <div class="ejercicio-row-clean">
+                                                        <span class="ej-reps" style="color: #555; font-size: 0.9em;"><i class="fas fa-angle-right"></i></span>
+                                                        <div class="ej-nombre">@linea</div>
                                                     </div>
-                                                </div>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                @* MODO TRADICIONAL: Bloques, reps y pesos *@
+                                                @foreach (var ej in bloque.Ejercicios)
+                                                {
+                                                    <div class="ejercicio-row-clean">
+                                                        <span class="ej-reps">@ej.PesoRepeticiones</span>
+                                                        <div class="ej-nombre">
+                                                            @((MarkupString)FormatearPesoPlateado(ej.Descripcion))
+                                                        </div>
+                                                    </div>
+                                                }
                                             }
                                         </div>
                                     }
@@ -252,8 +275,11 @@
                     }
                 </div>
 
-                @* --- BOTONES FLOTANTES DE CONTROL DE ZOOM (ABAJO DERECHA) --- *@
+                @* --- BOTONES FLOTANTES DE CONTROL DE ZOOM Y EDICIÓN --- *@
                 <div class="wod-zoom-controls">
+                    <button class="btn-zoom-float" style="background-color: #F8C545; border: none; color: black;" @onclick="AbrirModalEdicionWod" title="Editar WOD">
+                        <i class="fas fa-edit"></i>
+                    </button>
                     <button class="btn-zoom-float @(wodBloqueado ? "locked" : "unlocked")" @onclick="ToggleCandadoWod">
                         <i class="fas @(wodBloqueado ? "fa-lock" : "fa-lock-open")"></i>
                     </button>
@@ -469,6 +495,123 @@
     </div>
 }
 
+@* --- MODAL EDITAR WOD EN VIVO --- *@
+@if (mostrarModalWodEdicion)
+{
+    <div class="modal-overlay overlay-wod">
+        <div class="modal-content custom-modal modal-wod" style="max-width: 600px; width: 100%;">
+
+            <div class="modal-header">
+                <h5 style="margin:0; color:#F8C545; font-family:'Oswald'">
+                    EDITAR WOD ACTUAL
+                    <span style="font-size:0.7rem; color:#aaa; margin-left:10px;">
+                        @(modoTextoLibre ? "(TEXTO LIBRE)" : "(POR BLOQUES)")
+                    </span>
+                </h5>
+                <button class="btn-close-custom" @onclick="() => mostrarModalWodEdicion = false"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="modal-body" style="padding-bottom: 20px;">
+                @if (cargandoOperacionWod)
+                {
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-warning" role="status"></div>
+                        <p class="mt-2 text-muted">Guardando cambios...</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="fade-in">
+                        @foreach (var bloque in listaBloquesEditor)
+                        {
+                            <div class="card p-2 mb-3" style="background-color: #252525; border: 1px solid #444;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span style="color:#F8C545; font-weight:bold; font-family:'Oswald'">BLOQUE</span>
+                                    <button class="btn-icon delete-btn" @onclick="() => EliminarBloque(bloque)"><i class="fas fa-trash"></i></button>
+                                </div>
+
+                                @if (!modoTextoLibre)
+                                {
+                                    <select @bind="bloque.SegmentoClaseID" class="form-control input-dark mb-2">
+                                        <option value="@Guid.Empty" selected disabled>-- Selecciona Segmento --</option>
+                                        @if (listaSegmentos != null)
+                                        {
+                                            @foreach (var seg in listaSegmentos)
+                                            {
+                                                <option value="@seg.Id">@seg.Nombre</option>
+                                            }
+                                        }
+                                    </select>
+                                }
+
+                                <input type="text" @bind="bloque.TiempoFormato" class="form-control input-dark mb-3" placeholder="Tiempo / Formato (Ej: AMRAP 15 MIN)" style="border-color: #555;" />
+
+                                @if (modoTextoLibre)
+                                {
+                                    <textarea @bind="bloque.TextoLibre" class="form-control input-dark" style="height: auto !important; min-height: 150px; resize: vertical; border-color: #F8C545;" placeholder="Escribe aquí los ejercicios..."></textarea>
+                                }
+                                else
+                                {
+                                    @foreach (var ejercicio in bloque.Ejercicios)
+                                    {
+                                        <div class="ejercicio-row-clean" style="display: flex; gap: 6px; align-items: center; margin-bottom: 8px; background: #1f1f1f; padding: 8px; border-radius: 8px; border: 1px solid #333;">
+                                            <input type="text" @bind="ejercicio.Reps" class="form-control input-dark text-center" style="width: 70px;" placeholder="Reps" />
+                                            <input type="text" @bind="ejercicio.NombreBase" class="form-control input-dark" style="flex: 1;" placeholder="Ejercicio" />
+                                            <button class="btn-icon weight-btn @(ejercicio.TienePesos ? "active" : "")" @onclick="() => AbrirEditorPeso(ejercicio)" style="width: 38px; background: #333; color: #888; border: none; border-radius: 6px;">
+                                                <i class="fas fa-dumbbell"></i>
+                                                @if (ejercicio.TienePesos)
+                                                {
+                                                    <span class="dot-indicator" style="position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: #F8C545; border-radius: 50%;"></span>
+                                                }
+                                            </button>
+                                            <button class="btn-icon delete-btn" @onclick="() => EliminarEjercicio(bloque, ejercicio)" style="width: 38px; background: transparent; color: #dc3545; border: none;"><i class="fas fa-times"></i></button>
+                                        </div>
+                                    }
+                                    <button class="btn-add-ejercicio" style="width: 100%; background: transparent; border: 1px dashed #555; color: #888; padding: 8px; border-radius: 8px; margin-top: 5px;" @onclick="() => AgregarEjercicio(bloque)">
+                                        <i class="fas fa-plus"></i> Ejercicio
+                                    </button>
+                                }
+                            </div>
+                        }
+                        <button class="btn btn-outline-warning w-100 py-2" @onclick="AgregarBloque" style="color: #F8C545; border-color: #F8C545; background: transparent; border-radius: 8px; font-weight: bold;">+ Añadir Bloque</button>
+                    </div>
+                }
+            </div>
+
+            @if (!cargandoOperacionWod)
+            {
+                <div class="modal-footer" style="background: #222; border-top: 1px solid #333; padding: 15px;">
+                    <button class="btn w-100" style="background-color:#F8C545; color:black; font-weight:bold; padding: 12px; border-radius: 8px; border: none;" @onclick="GuardarWodEditado">ACTUALIZAR WOD</button>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@* BOTTOM SHEET PESOS *@
+@if (mostrarModalPeso && ejercicioEnEdicion != null)
+{
+    <div class="sheet-backdrop visible" @onclick="CerrarEditorPeso"></div>
+    <div class="bottom-sheet slide-in-bottom">
+        <div class="sheet-handle"></div>
+        <div class="text-center mb-4">
+            <h5 style="color:#F8C545; font-family:'Oswald'; margin:0;">PESOS (Rx)</h5>
+            <p style="color:#888; font-size:0.8rem; margin-top:5px;">@(string.IsNullOrEmpty(ejercicioEnEdicion.NombreBase) ? "Ejercicio" : ejercicioEnEdicion.NombreBase)</p>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                <label style="color:white; font-size:0.8rem; display:block; text-align:center;">HOMBRE</label>
+                <input type="text" @bind="ejercicioEnEdicion.PesoH" class="form-control input-dark text-center" style="font-size:1.5rem; color:#F8C545; font-weight:bold; border: 1px solid #333;" placeholder="--" />
+            </div>
+            <div class="col-6">
+                <label style="color:white; font-size:0.8rem; display:block; text-align:center;">MUJER</label>
+                <input type="text" @bind="ejercicioEnEdicion.PesoM" class="form-control input-dark text-center" style="font-size:1.5rem; color:#F8C545; font-weight:bold; border: 1px solid #333;" placeholder="--" />
+            </div>
+        </div>
+        <button class="btn w-100 mt-4 py-3" style="background:#F8C545; color:black; font-weight:bold; border-radius:50px; border: none;" @onclick="CerrarEditorPeso">LISTO</button>
+    </div>
+}
+
 <style>
     /* ... ESTILOS GENERALES ... */
     .flex-column-layout { display: flex; flex-direction: column; height: 100%; padding: 15px; }
@@ -640,6 +783,35 @@
     private IAudioPlayer playerBeep;
     private IAudioPlayer playerGo;
     private IAudioPlayer playerMedio;
+
+
+    // --- CLASES Y VARIABLES DEL EDITOR WOD ---
+    public class EjercicioEditorViewModel
+    {
+        public string Reps { get; set; }
+        public string NombreBase { get; set; }
+        public string PesoH { get; set; }
+        public string PesoM { get; set; }
+        public bool TienePesos => !string.IsNullOrEmpty(PesoH) || !string.IsNullOrEmpty(PesoM);
+    }
+
+    public class BloqueEditorViewModel
+    {
+        public Guid SegmentoClaseID { get; set; }
+        public string NombreSegmento { get; set; }
+        public string TiempoFormato { get; set; }
+        public string TextoLibre { get; set; }
+        public List<EjercicioEditorViewModel> Ejercicios { get; set; } = new List<EjercicioEditorViewModel>();
+    }
+
+    private bool mostrarModalWodEdicion = false;
+    private bool modoTextoLibre = false;
+    private bool cargandoOperacionWod = false;
+    private List<SegmentoDto> listaSegmentos = new List<SegmentoDto>();
+    private List<BloqueEditorViewModel> listaBloquesEditor = new List<BloqueEditorViewModel>();
+    private bool mostrarModalPeso = false;
+    private EjercicioEditorViewModel ejercicioEnEdicion;
+
 
     private bool mostrarBuscador = false;
     private bool wodExpandido = false;
@@ -1077,6 +1249,171 @@
     {
         await JS.InvokeVoidAsync("resetWodZoom");
     }
+
+    // --- MÉTODOS DEL EDITOR DE WOD EN VIVO ---
+    private async Task CargarSegmentos()
+    {
+        try
+        {
+            var r = await Http.GetAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/segmentos");
+            if (r.IsSuccessStatusCode) listaSegmentos = await r.Content.ReadFromJsonAsync<List<SegmentoDto>>();
+        }
+        catch { }
+    }
+
+    private async Task AbrirModalEdicionWod()
+    {
+        if (wodHoy == null || wodHoy.Bloques == null || !wodHoy.Bloques.Any())
+        {
+            await App.Current.MainPage.DisplayAlert("Aviso", "No hay WOD cargado hoy para editar. Prográmalo desde la pantalla de Inicio.", "Entendido");
+            return;
+        }
+
+        if (listaSegmentos == null || !listaSegmentos.Any()) await CargarSegmentos();
+
+        // 1. Detectar Formato
+        var primerBloque = wodHoy.Bloques.First();
+        modoTextoLibre = primerBloque.EsTextoLibre;
+
+        // 2. Poblar Editor
+        listaBloquesEditor = new List<BloqueEditorViewModel>();
+        foreach (var b in wodHoy.Bloques)
+        {
+            var bloqueEdit = new BloqueEditorViewModel
+            {
+                SegmentoClaseID = b.SegmentoClaseID,
+                NombreSegmento = b.NombreSegmento,
+                TiempoFormato = b.TiempoFormato,
+                Ejercicios = new List<EjercicioEditorViewModel>()
+            };
+
+            if (modoTextoLibre)
+            {
+                bloqueEdit.TextoLibre = string.Join("\n", b.Ejercicios.Select(e => e.Descripcion));
+            }
+            else
+            {
+                foreach (var ej in b.Ejercicios)
+                {
+                    bloqueEdit.Ejercicios.Add(new EjercicioEditorViewModel
+                    {
+                        Reps = ej.PesoRepeticiones,
+                        NombreBase = ej.Descripcion
+                    });
+                }
+            }
+            listaBloquesEditor.Add(bloqueEdit);
+        }
+
+        mostrarModalWodEdicion = true;
+    }
+
+    private void AgregarBloque() { var nb = new BloqueEditorViewModel(); if (!modoTextoLibre) nb.Ejercicios.Add(new EjercicioEditorViewModel()); listaBloquesEditor.Add(nb); }
+    private void EliminarBloque(BloqueEditorViewModel b) => listaBloquesEditor.Remove(b);
+    private void AgregarEjercicio(BloqueEditorViewModel b) => b.Ejercicios.Add(new EjercicioEditorViewModel());
+    private void EliminarEjercicio(BloqueEditorViewModel b, EjercicioEditorViewModel e) => b.Ejercicios.Remove(e);
+    private void AbrirEditorPeso(EjercicioEditorViewModel ej) { ejercicioEnEdicion = ej; mostrarModalPeso = true; }
+    private void CerrarEditorPeso() { mostrarModalPeso = false; ejercicioEnEdicion = null; }
+
+    private async Task GuardarWodEditado()
+    {
+        // Validación de supervivencia
+        if (listaBloquesEditor.Count == 0)
+        {
+            await App.Current.MainPage.DisplayAlert("Alto", "No puedes dejar el WOD vacío. Debe tener al menos un bloque.", "Entendido");
+            return;
+        }
+
+        if (!modoTextoLibre && listaBloquesEditor.Any(b => b.SegmentoClaseID == Guid.Empty))
+        {
+            await App.Current.MainPage.DisplayAlert("Faltan datos", "Selecciona el TIPO DE SEGMENTO en todos los bloques.", "Entendido");
+            return;
+        }
+
+        var wodPayload = new
+        {
+            BoxID = Sesion.Usuario.BoxID,
+            FechaProgramacion = wodHoy.FechaProgramacion, // Conservamos la fecha original del WOD
+            Bloques = new List<object>()
+        };
+
+        foreach (var bEdit in listaBloquesEditor)
+        {
+            var infoSegmento = listaSegmentos?.FirstOrDefault(s => s.Id == bEdit.SegmentoClaseID);
+            string nombreSeg = infoSegmento != null ? infoSegmento.Nombre : "un bloque";
+
+            var bloqueApi = new
+            {
+                SegmentoClaseID = bEdit.SegmentoClaseID == Guid.Empty ? null : (Guid?)bEdit.SegmentoClaseID,
+                NombreSegmento = nombreSeg,
+                TiempoFormato = bEdit.TiempoFormato ?? "",
+                EsTextoLibre = modoTextoLibre,
+                Ejercicios = new List<object>()
+            };
+
+            if (modoTextoLibre)
+            {
+                if (string.IsNullOrWhiteSpace(bEdit.TextoLibre)) continue;
+                bloqueApi.Ejercicios.Add(new { PesoRepeticiones = "", Descripcion = bEdit.TextoLibre });
+            }
+            else
+            {
+                foreach (var ejEdit in bEdit.Ejercicios)
+                {
+                    bool tieneReps = !string.IsNullOrWhiteSpace(ejEdit.Reps);
+                    bool tieneNombre = !string.IsNullOrWhiteSpace(ejEdit.NombreBase);
+
+                    if (!tieneReps && !tieneNombre) continue;
+                    if (tieneReps && !tieneNombre) { await App.Current.MainPage.DisplayAlert("Error", $"En '{nombreSeg}', pusiste repeticiones pero falta el nombre del ejercicio.", "Corregir"); return; }
+                    if (!tieneReps && tieneNombre) { await App.Current.MainPage.DisplayAlert("Error", $"En '{nombreSeg}', falta poner las repeticiones.", "Corregir"); return; }
+
+                    string descFinal = ejEdit.NombreBase;
+                    if (ejEdit.TienePesos) descFinal += $" ({ejEdit.PesoH}/{ejEdit.PesoM})";
+
+                    bloqueApi.Ejercicios.Add(new { PesoRepeticiones = ejEdit.Reps, Descripcion = descFinal });
+                }
+            }
+
+            if (bloqueApi.Ejercicios.Count == 0)
+            {
+                await App.Current.MainPage.DisplayAlert("Bloque Vacío", $"Tienes un bloque vacío, agrégale información o elimínalo.", "Entendido");
+                return;
+            }
+
+            wodPayload.Bloques.Add(bloqueApi);
+        }
+
+        cargandoOperacionWod = true;
+        StateHasChanged();
+
+        try
+        {
+            var r = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/guardar", wodPayload);
+
+            if (r.IsSuccessStatusCode)
+            {
+                mostrarModalWodEdicion = false;
+                // MAGIA: Recargamos solo la visualización del WOD. Los atletas siguen intactos.
+                await CargarWodHoy();
+                await App.Current.MainPage.DisplayAlert("Actualizado", "El WOD se actualizó en pantalla.", "OK");
+            }
+            else
+            {
+                var errorMsg = await r.Content.ReadAsStringAsync();
+                await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar: " + errorMsg, "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK");
+        }
+        finally
+        {
+            cargandoOperacionWod = false;
+            StateHasChanged();
+        }
+    }
+
 
     public async ValueTask DisposeAsync()
     {
