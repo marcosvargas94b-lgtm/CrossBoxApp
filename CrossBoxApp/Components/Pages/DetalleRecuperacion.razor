@@ -22,12 +22,86 @@
             <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
         } else {
             
-            @* TARJETA PRINCIPAL DEL MAPA *@
+            @* ============================================ *@
+            @* EVALUAR RPE SI TERMINÓ RUTINA HOY            *@
+            @* ============================================ *@
+            @* ============================================ *@
+            @* EVALUAR RPE Y SCALING SI TERMINÓ RUTINA HOY  *@
+            @* ============================================ *@
+            @if (datos.RutinaHoyParaRPE != null && !rpeEnviado)
+            {
+                <div class="rpe-container fade-in mb-4">
+                    <h5><i class="fas fa-fire-alt me-2" style="color:#ff4d4d;"></i>¿CÓMO TE FUE HOY?</h5>
+                    <p>Evalúa tu esfuerzo para calcular el desgaste con precisión milimétrica.</p>
+
+                    @if (datos.RequiereScaling)
+                    {
+                        <label class="section-label" style="color:#F8C545; text-align:left; margin-top:10px;">1. NIVEL DE PESO (SCALING):</label>
+                        <div class="scaling-grid mb-3">
+                            <div class="scale-btn @(scalingSeleccionado == "Rx" ? "active rx" : "")" @onclick='() => scalingSeleccionado = "Rx"'>
+                                <span class="s-title">RX</span>
+                                <span class="s-desc">Peso Oficial (100%)</span>
+                            </div>
+                            <div class="scale-btn @(scalingSeleccionado == "Scaled Pro" ? "active pro" : "")" @onclick='() => scalingSeleccionado = "Scaled Pro"'>
+                                <span class="s-title">SCALED PRO</span>
+                                <span class="s-desc">Peso Retador (80%)</span>
+                            </div>
+                            <div class="scale-btn @(scalingSeleccionado == "Scaled" ? "active std" : "")" @onclick='() => scalingSeleccionado = "Scaled"'>
+                                <span class="s-title">SCALED</span>
+                                <span class="s-desc">Peso Moderado (60%)</span>
+                            </div>
+                            <div class="scale-btn @(scalingSeleccionado == "Bodyweight" ? "active bw" : "")" @onclick='() => scalingSeleccionado = "Bodyweight"'>
+                                <span class="s-title">ADAPTADO</span>
+                                <span class="s-desc">Sin peso (35%)</span>
+                            </div>
+                        </div>
+                    }
+
+                    <label class="section-label" style="color:#F8C545; text-align:left;">@(datos.RequiereScaling ? "2. " : "")INTENSIDAD (RPE):</label>
+                    <div class="rpe-scale">
+                        @for (int i = 1; i <= 10; i++)
+                        {
+                            int rpeValor = i;
+                            <button class="rpe-btn @(rpeSeleccionado == rpeValor ? "selected" : "")"
+                                    style="border-color: @GetColorRPE(rpeValor);"
+                                    @onclick="() => rpeSeleccionado = rpeValor">
+                                @rpeValor
+                            </button>
+                        }
+                    </div>
+
+                    <div class="rpe-legend">
+                        <span>Suave</span>
+                        <span>Máximo</span>
+                    </div>
+
+                    @if (rpeSeleccionado > 0 && (!datos.RequiereScaling || !string.IsNullOrEmpty(scalingSeleccionado)))
+                    {
+                        <div class="text-center mt-2 fade-in">
+                            <span class="rpe-label" style="color: @GetColorRPE(rpeSeleccionado)">
+                                @GetTextoRPE(rpeSeleccionado)
+                            </span>
+                            <button class="btn-save-rpe mt-3" @onclick="GuardarRPE">
+                                @if (guardandoRpe)
+                                {
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                }
+                                else
+                                {
+
+                                    <span>CALCULAR IMPACTO</span>
+                                }
+                            </button>
+                        </div>
+                    }
+                </div>
+            }
             <div class="focus-card fade-in">
                 <div class="readiness-score">
-                    <span class="big-num">@datos.DisponibilidadGlobal%</span>
+                    <span class="big-num">@datos.DisponibilidadGlobal<small style="font-size: 2rem;">%</small></span>
                     <span class="score-label">ENERGÍA MUSCULAR</span>
                     <p class="status-msg">@datos.Mensaje.ToUpper()</p>
+                    <div class="btn-detalles" style="color:#aaa; font-weight:normal;">Algoritmo de Fisiología Activo</div>
                 </div>
                 <div class="map-container">
                     <MapaCalor Datos="datos.Musculos" />
@@ -46,7 +120,43 @@
 
             <div class="divider-line mt-4 mb-4"></div>
 
-            @* NUEVO MÓDULO: TIEMPO DE RECUPERACIÓN POR MÚSCULO *@
+            @* ============================================ *@
+            @* MÓDULO DE FISIOLOGÍA                         *@
+            @* ============================================ *@
+            <div class="stats-section fade-in mb-4 @(datos.TieneDatosFisiologicos ? "" : "watermark-box")" @onclick="AbrirModalFisiologia">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="section-title"><i class="fas fa-dna me-2" style="color:#00C3A5;"></i>PERFIL FISIOLÓGICO</h5>
+                        <p class="section-sub mb-0">Edad, Peso, Estatura y Sexo.</p>
+                    </div>
+                    <i class="fas fa-pen" style="color:#F8C545; font-size:1.2rem;"></i>
+                </div>
+                
+                @if (datos.TieneDatosFisiologicos)
+                {
+                    <div class="mt-3" style="color:#00C3A5; font-size:0.85rem; font-weight:bold; font-family:'Oswald';">
+                        <i class="fas fa-check-circle me-1"></i> METABOLISMO CALIBRADO
+                    </div>
+                    @* AQUÍ MOSTRAMOS LOS DATOS GUARDADOS *@
+                    <div class="fisio-data-row mt-2">
+                        <span>@(datos.Sexo == "M" ? "HOMBRE" : "MUJER")</span>
+                        <div class="fisio-dot"></div>
+                        <span>@datos.Edad AÑOS</span>
+                        <div class="fisio-dot"></div>
+                        <span>@datos.Peso KG</span>
+                        <div class="fisio-dot"></div>
+                        <span>@datos.Estatura CM</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="mt-3 text-warning" style="font-size:0.85rem; font-style:italic;">
+                        <i class="fas fa-exclamation-circle me-1"></i> Toca aquí e ingresa tus datos para mayor precisión en tu recuperación.
+                    </div>
+                }
+            </div>
+
+            @* TIEMPO DE RECUPERACIÓN POR MÚSCULO *@
             <div class="stats-section fade-in mb-4">
                 <h5 class="section-title"><i class="fas fa-stopwatch me-2"></i>TIEMPO DE RECUPERACIÓN</h5>
                 <p class="section-sub">Horas estimadas para que el músculo alcance su 100%.</p>
@@ -82,7 +192,7 @@
             </div>
 
             @* GRÁFICA DE BARRAS (VOLUMEN) *@
-            <div class="stats-section fade-in">
+            <div class="stats-section fade-in mb-4">
                 <h5 class="section-title"><i class="fas fa-chart-column me-2"></i>CARGA MUSCULAR SEMANAL</h5>
                 <p class="section-sub">Volumen de series por grupo muscular en los últimos 7 días.</p>
                 
@@ -117,13 +227,12 @@
                 }
             </div>
 
-            @* NUEVO MÓDULO: SUGERENCIA DE ENTRENAMIENTO *@
-            <div class="stats-section fade-in mt-4 mb-4">
+            @* SUGERENCIA DE ENTRENAMIENTO *@
+            <div class="stats-section fade-in mb-4">
                 <h5 class="section-title"><i class="fas fa-bolt me-2" style="color: #00C3A5;"></i>MÚSCULOS FRESCOS</h5>
                 <p class="section-sub">Grupos musculares en óptimas condiciones para entrenar hoy.</p>
 
                 @{
-                    // Filtramos los músculos que están al 95% o más de recuperación
                     var musculosFrescos = datos.Musculos.Where(m => m.Porcentaje >= 95).ToList();
 
                     if (musculosFrescos.Any())
@@ -150,44 +259,122 @@
     </div>
 </div>
 
+@* ============================================ *@
+@* MODAL DE DATOS FISIOLÓGICOS                  *@
+@* ============================================ *@
+@if (mostrarModalFisiologia)
+{
+    <div class="modal-overlay fade-in">
+        <div class="modal-content custom-modal slide-up">
+            <div class="modal-header">
+                <h5 style="margin:0; color:#F8C545; font-family:'Oswald';">
+                    <i class="fas fa-dna me-2"></i> BIOMETRÍA
+                </h5>
+                <button class="btn-close-custom" @onclick="CerrarModalFisio"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="modal-body">
+                <p style="color:#aaa; font-size:0.8rem; margin-bottom: 20px;">
+                    Estos datos son privados y se usan exclusivamente para calibrar la velocidad de regeneración de tu tejido muscular.
+                </p>
+
+                <label class="form-label text-warning">Sexo Biológico</label>
+                <select class="form-control input-dark mb-3" @bind="fisioEdit.Sexo">
+                    <option value="" disabled selected>Selecciona...</option>
+                    <option value="M">Masculino</option>
+                    <option value="F">Femenino</option>
+                </select>
+
+                <label class="form-label text-warning">Edad (Años)</label>
+                <input type="number" class="form-control input-dark mb-3" placeholder="Ej: 28" @bind="fisioEdit.Edad" />
+
+                <label class="form-label text-warning">Peso (KG)</label>
+                <input type="number" class="form-control input-dark mb-3" placeholder="Ej: 75.5" @bind="fisioEdit.Peso" />
+
+                <label class="form-label text-warning">Estatura (CM)</label>
+                <input type="number" class="form-control input-dark mb-3" placeholder="Ej: 175" @bind="fisioEdit.Estatura" />
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-clear" @onclick="LimpiarDatosFisio" title="Limpiar todos los datos">
+                    <i class="fas fa-trash"></i>
+                </button>
+                <button class="btn-cancel" @onclick="CerrarModalFisio">Cancelar</button>
+                <button class="btn-confirm @(FormularioFisioValido ? "" : "btn-disabled")" 
+                        @onclick="GuardarFisiologia" disabled="@(!FormularioFisioValido || guardandoFisio)">
+                    @if(guardandoFisio) { <i class="fas fa-spinner fa-spin"></i> } else { <span>GUARDAR</span> }
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 <style>
+    /* ESTILOS BASE */
     .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
-    
     .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
     .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
     .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
     .nav-right { width: 60px; }
-    
     .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; background: radial-gradient(circle at top, #1a1a1a 0%, #000 100%); }
 
+    /* TARJETA MAPA */
     .focus-card { background: #111; border: 1px solid #333; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-    
     .readiness-score { display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 20px; }
     .big-num { font-family: 'Oswald'; font-size: 4.5rem; font-weight: 900; line-height: 1; color: white; }
     .score-label { font-size: 0.8rem; letter-spacing: 2px; color: #F8C545; font-weight: bold; margin-top: 5px; }
     .status-msg { font-size: 0.85rem; color: #FFFFFF; font-weight: 800; margin-top: 10px; font-style: italic; }
-    
     .map-container { width: 100%; display: flex; justify-content: center; }
 
+    /* LEYENDA */
     .gradient-legend-container { width: 100%; max-width: 500px; padding: 15px 20px; background: #111; border-radius: 15px; border: 1px solid #222; display: flex; flex-direction: column; gap: 8px; }
-    .gradient-bar { width: 100%; height: 10px; border-radius: 5px; background: linear-gradient(to right, #FF3B30 0%, #FF9500 40%, #FFCC00 80%, #3D4046 100%); }
+    .gradient-bar { width: 100%; height: 10px; border-radius: 5px; background: linear-gradient(to right, #FF3B30 0%, #FF9500 40%, #FFCC00 80%, #00C3A5 100%); }
     .gradient-labels { display: flex; justify-content: space-between; color: #888; font-size: 0.65rem; font-weight: bold; letter-spacing: 1px; }
-
     .divider-line { width: 100%; max-width: 500px; height: 1px; background: #333; }
 
-    .stats-section { width: 100%; max-width: 500px; background: #111; padding: 20px; border-radius: 20px; border: 1px solid #333; }
+    /* SECCIONES ESTADÍSTICAS */
+    .stats-section { width: 100%; max-width: 500px; background: #111; padding: 20px; border-radius: 20px; border: 1px solid #333; cursor: pointer; transition: 0.3s; }
     .section-title { font-family: 'Oswald'; color: white; letter-spacing: 1px; margin-bottom: 2px; font-size: 1.1rem; }
     .section-sub { color: #888; font-size: 0.8rem; margin-bottom: 25px; }
-    
     .empty-state { color: #666; font-style: italic; font-size: 0.85rem; }
 
-    /* NUEVOS ESTILOS: LISTA DE RECUPERACIÓN POR HORAS */
+    /* CAJA MARCA DE AGUA FISIOLOGÍA */
+    .watermark-box { opacity: 0.5; border: 1px dashed #F8C545; }
+    .watermark-box:hover, .watermark-box:active { opacity: 1; background: #1a1a1a; }
+    .fisio-data-row { display: flex; justify-content: center; align-items: center; gap: 10px; background: #222; padding: 10px; border-radius: 8px; color: white; font-family: 'Oswald'; font-size: 0.9rem; }
+    .fisio-dot { width: 4px; height: 4px; background: #F8C545; border-radius: 50%; }
+
+    /* MODAL FISIO */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(4px); }
+    .custom-modal { background: #1a1a1a; width: 100%; max-width: 400px; border-radius: 12px; border: 1px solid #F8C545; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+    .modal-header { padding: 15px 20px; background: #222; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; border-radius: 12px 12px 0 0; }
+    .btn-close-custom { background: none; border: none; color: #888; font-size: 1.2rem; cursor: pointer; }
+    .modal-body { padding: 20px; color: white; }
+    .modal-footer { padding: 15px; border-top: 1px solid #333; display: flex; gap: 10px; background: #222; border-radius: 0 0 12px 12px; }
+    .input-dark { background: #121212 !important; border: 1px solid #444; color: white !important; }
+    .input-dark:focus { border-color: #F8C545; box-shadow: 0 0 5px rgba(248, 197, 69, 0.3); }
+    .btn-confirm { background: #F8C545; color: black; border: none; padding: 10px; font-weight: bold; flex: 2; border-radius: 5px; transition: 0.2s; }
+    .btn-disabled { background: #444; color: #888; cursor: not-allowed; }
+    .btn-cancel { background: transparent; color: white; border: 1px solid #444; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
+    .btn-clear { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; border: 1px solid #ff4d4d; padding: 10px; border-radius: 5px; flex: 0.5; display: flex; justify-content: center; align-items: center; transition: 0.2s; cursor: pointer; }
+    .btn-clear:active { background: #ff4d4d; color: white; }
+
+    /* RPE (INTENSIDAD) */
+    .rpe-container { width: 100%; max-width: 500px; background: linear-gradient(145deg, #1f1111, #111); border: 1px solid #ff4d4d; border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 0 20px rgba(255, 77, 77, 0.15); }
+    .rpe-container h5 { font-family: 'Oswald'; color: white; margin-bottom: 5px; }
+    .rpe-container p { color: #aaa; font-size: 0.8rem; margin-bottom: 15px; }
+    .rpe-scale { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+    .rpe-btn { width: 40px; height: 40px; border-radius: 50%; background: #222; color: white; font-family: 'Oswald'; font-size: 1.1rem; border: 2px solid; cursor: pointer; transition: 0.2s; }
+    .rpe-btn.selected { transform: scale(1.15); box-shadow: 0 0 10px rgba(255,255,255,0.5); background: white; color: black !important; font-weight: bold; }
+    .rpe-label { font-family: 'Oswald'; font-size: 1.2rem; letter-spacing: 1px; display: block; margin-top: 10px; }
+    .btn-save-rpe { background: white; color: black; font-family: 'Oswald'; padding: 8px 25px; border-radius: 50px; font-weight: bold; border: none; }
+
+    /* RESTO ESTILOS (Progreso, Gráficas, Animaciones) */
     .recovery-list { display: flex; flex-direction: column; gap: 15px; width: 100%; }
     .recovery-item { display: flex; flex-direction: column; gap: 6px; }
     .recovery-header { display: flex; justify-content: space-between; align-items: center; }
     .muscle-name { color: white; font-family: 'Oswald'; font-size: 0.95rem; letter-spacing: 1px; }
     .time-left { color: #F8C545; font-size: 0.75rem; font-weight: bold; background: rgba(248, 197, 69, 0.1); padding: 3px 8px; border-radius: 10px; }
-    
     .progress-bg { width: 100%; height: 8px; background: #222; border-radius: 4px; overflow: hidden; }
     .progress-fill { height: 100%; border-radius: 4px; transition: width 1s ease-in-out; }
 
@@ -199,41 +386,168 @@
     .bar-fill { width: 100%; border-radius: 6px; transition: height 1s ease-out; }
     .chart-label { color: #aaa; font-size: 0.65rem; margin-top: 10px; text-transform: uppercase; font-weight: bold; text-align: center; line-height: 1; }
 
+    .fresh-muscles-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+    .fresh-chip { background: rgba(0, 195, 165, 0.15); color: #00C3A5; border: 1px solid rgba(0, 195, 165, 0.4); padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-family: 'Oswald', sans-serif; letter-spacing: 1px; font-weight: bold; }
+
     .fade-in { animation: fadeIn 0.5s ease; }
+    .slide-up { animation: slideUp 0.3s ease-out; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @@keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
-    .fresh-muscles-container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-top: 15px;
-    }
-
-    .fresh-chip {
-        background: rgba(0, 195, 165, 0.15); /* Fondo verde translúcido */
-        color: #00C3A5; /* Texto verde neón */
-        border: 1px solid rgba(0, 195, 165, 0.4);
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-family: 'Oswald', sans-serif;
-        letter-spacing: 1px;
-        font-weight: bold;
-        transition: all 0.3s ease;
-    }
+    /* Estilos del Scaling */
+    .scaling-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .scale-btn { background: #222; border: 1px solid #333; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; }
+    .scale-title { font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; color: white; }
+    .scale-desc { font-family: 'Roboto'; font-size: 0.7rem; color: #888; }
+    
+    .scale-btn.active { transform: scale(1.05); z-index: 10; }
+    .scale-btn.active.rx { border-color: #ff4d4d; background: rgba(255, 77, 77, 0.1); }
+    .scale-btn.active.rx .scale-title { color: #ff4d4d; }
+    
+    .scale-btn.active.pro { border-color: #FFD700; background: rgba(255, 215, 0, 0.1); }
+    .scale-btn.active.pro .scale-title { color: #FFD700; }
+    
+    .scale-btn.active.std { border-color: #00C3A5; background: rgba(0, 195, 165, 0.1); }
+    .scale-btn.active.std .scale-title { color: #00C3A5; }
+    
+    .scale-btn.active.bw { border-color: #B0C4DE; background: rgba(176, 196, 222, 0.1); }
+    .scale-btn.active.bw .scale-title { color: #B0C4DE; }
 </style>
 
 @code {
     private EstadoRecuperacionDto datos;
+    private string scalingSeleccionado = "";
 
-    protected override async Task OnInitializedAsync() {
+    // RPE
+    private int rpeSeleccionado = 0;
+    private bool guardandoRpe = false;
+    private bool rpeEnviado = false;
+
+    // FISIOLOGIA
+    private bool mostrarModalFisiologia = false;
+    private GuardarFisiologiaDto fisioEdit = new GuardarFisiologiaDto();
+    private bool guardandoFisio = false;
+
+    // Regla: Es válido si está 100% Lleno, O 100% Vacío (Para permitir limpiar). No se vale dejar a medias.
+    private bool EstaVacio => (fisioEdit.Edad == null || fisioEdit.Edad == 0) &&
+                              (fisioEdit.Peso == null || fisioEdit.Peso == 0) &&
+                              (fisioEdit.Estatura == null || fisioEdit.Estatura == 0) &&
+                              string.IsNullOrEmpty(fisioEdit.Sexo);
+
+    private bool EstaCompleto => (fisioEdit.Edad > 0) && (fisioEdit.Peso > 0) && (fisioEdit.Estatura > 0) && !string.IsNullOrEmpty(fisioEdit.Sexo);
+
+    private bool FormularioFisioValido => EstaVacio || EstaCompleto;
+
+    // --- SOLO DEJAMOS EL DTO PARA GUARDAR QUE NO SE COMPARTE ---
+    public class GuardarFisiologiaDto { public Guid UsuarioId { get; set; } public int? Edad { get; set; } public decimal? Peso { get; set; } public decimal? Estatura { get; set; } public string Sexo { get; set; } }
+
+    protected override async Task OnInitializedAsync()
+    {
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
-        try {
-            datos = await Http.GetFromJsonAsync<EstadoRecuperacionDto>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/recuperacion/{Sesion.Usuario.UsuarioID}");
-        } catch { }
+        await CargarDatos();
     }
 
-    private string Abreviar(string nombre) {
+    private async Task CargarDatos()
+    {
+        try
+        {
+            string tipoLugar = Sesion.Usuario.TipoLugar ?? "";
+            string endpoint = tipoLugar == "Gimnasio" ? "rutinasgym" : "rutinasbox";
+
+            datos = await Http.GetFromJsonAsync<EstadoRecuperacionDto>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/{endpoint}/recuperacion/{Sesion.Usuario.UsuarioID}");
+        }
+        catch { }
+    }
+
+    // --- LÓGICA RPE ---
+    private string GetColorRPE(int rpe)
+    {
+        if (rpe <= 4) return "#00C3A5"; // Verde (Fácil)
+        if (rpe <= 7) return "#F8C545"; // Amarillo (Moderado)
+        return "#ff4d4d";               // Rojo (Difícil)
+    }
+
+    private string GetTextoRPE(int rpe)
+    {
+        if (rpe <= 4) return "ENTRENAMIENTO LIGERO";
+        if (rpe <= 7) return "ESFUERZO MODERADO";
+        if (rpe <= 9) return "MUY DESAFIANTE";
+        return "ESFUERZO MÁXIMO / AL FALLO";
+    }
+
+    private async Task GuardarRPE()
+    {
+        if (rpeSeleccionado == 0) return;
+        if (datos.RequiereScaling && string.IsNullOrEmpty(scalingSeleccionado)) return;
+
+        guardandoRpe = true;
+        try
+        {
+            string tipoLugar = Sesion.Usuario.TipoLugar ?? "";
+
+            if (tipoLugar == "Gimnasio")
+            {
+                var req = new { RpeScore = rpeSeleccionado };
+                await Http.PostAsJsonAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/guardar-rpe/{datos.RutinaHoyParaRPE}", req);
+            }
+            else
+            {
+                var req = new { RpeScore = rpeSeleccionado, NivelScaling = scalingSeleccionado };
+                await Http.PostAsJsonAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasbox/guardar-rpe-box/{datos.RutinaHoyParaRPE}", req);
+            }
+
+            rpeEnviado = true;
+            await CargarDatos(); // Recargar con la nueva fatiga matemática
+        }
+        catch { }
+        finally { guardandoRpe = false; }
+    }
+
+    // --- LÓGICA FISIOLOGÍA ---
+    private void AbrirModalFisiologia()
+    {
+        // Cargamos los datos actuales si es que existen
+        fisioEdit = new GuardarFisiologiaDto
+        {
+            UsuarioId = Sesion.Usuario.UsuarioID,
+            Edad = datos?.Edad,
+            Peso = datos?.Peso,
+            Estatura = datos?.Estatura,
+            Sexo = datos?.Sexo ?? ""
+        };
+        mostrarModalFisiologia = true;
+    }
+
+    private void CerrarModalFisio() => mostrarModalFisiologia = false;
+
+    private void LimpiarDatosFisio()
+    {
+        fisioEdit.Edad = null;
+        fisioEdit.Peso = null;
+        fisioEdit.Estatura = null;
+        fisioEdit.Sexo = "";
+    }
+
+    private async Task GuardarFisiologia()
+    {
+        if (!FormularioFisioValido) return;
+        guardandoFisio = true;
+        try
+        {
+            // El backend ya tiene la capacidad de recibir nulls en caso de que limpiara todo
+            var res = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/guardar-fisiologia", fisioEdit);
+            if (res.IsSuccessStatusCode)
+            {
+                mostrarModalFisiologia = false;
+                await CargarDatos(); // Recalcular con el nuevo metabolismo
+            }
+        }
+        catch { }
+        finally { guardandoFisio = false; }
+    }
+
+    private string Abreviar(string nombre)
+    {
         if (string.IsNullOrEmpty(nombre)) return "";
         if (nombre == "Espalda Alta") return "ESP.A";
         if (nombre == "Antebrazos") return "ANTE.";
@@ -243,7 +557,6 @@
         return nombre.Substring(0, Math.Min(6, nombre.Length)).ToUpper() + ".";
     }
 
-    // Reutilizamos la lógica del gradiente para que las barras coincidan con el color del muñeco
     private string GetColorForBar(int p)
     {
         if (p <= 40) return InterpolateColor(255, 59, 48, 255, 149, 0, p / 40.0);

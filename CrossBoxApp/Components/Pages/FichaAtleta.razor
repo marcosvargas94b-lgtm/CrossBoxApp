@@ -10,18 +10,36 @@
 
 <div class="main-layout">
     @* NAVBAR *@
+    @* NAVBAR *@
     <div class="navbar-container">
-        <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
+        <div class="nav-left" @onclick='() => Nav.NavigateTo("/comunidad")'>
             <i class="fas fa-arrow-left"></i> VOLVER
         </div>
         <div class="nav-title">CARD</div>
         <div class="nav-right text-end">
             @if (ficha != null && !string.IsNullOrEmpty(ficha.FotoUrl) && EsMiFicha)
             {
-                <i class="fas fa-palette nav-icon me-3" @onclick="AbrirModalColores"></i>
-                <i class="fas fa-tags nav-icon me-3" @onclick="AbrirModalSubtitulos"></i>
-                <i class="fas fa-camera nav-icon" @onclick="ActivarCambioFoto"></i>
-                <i class="fas fa-trophy nav-icon me-3" @onclick="AbrirModalPRs" title="Elegir PRs"></i>
+                <div class="menu-config-wrapper" @onclick="ToggleMenuConfig">
+                    <i class="fas fa-ellipsis-v nav-icon"></i>
+
+                    @if (mostrarMenuConfig)
+                    {
+                        <div class="config-dropdown fade-in" @onclick:stopPropagation="true">
+                            <div class="config-item" @onclick="AbrirModalColores">
+                                <i class="fas fa-palette" style="color: #F8C545;"></i> <span>Diseño</span>
+                            </div>
+                            <div class="config-item" @onclick="AbrirModalSubtitulos">
+                                <i class="fas fa-tags" style="color: #00C3A5;"></i> <span>Frases</span>
+                            </div>
+                            <div class="config-item" @onclick="ActivarCambioFoto">
+                                <i class="fas fa-camera" style="color: #ff4d4d;"></i> <span>Foto</span>
+                            </div>
+                            <div class="config-item" @onclick="AbrirModalPRs">
+                                <i class="fas fa-trophy" style="color: #FFD700;"></i> <span>Récords</span>
+                            </div>
+                        </div>
+                    }
+                </div>
             }
         </div>
     </div>
@@ -35,15 +53,24 @@
         {
             <div class="upload-photo-section slide-in">
                 <i class="fas fa-user-astronaut empty-avatar-icon"></i>
-                <h2>¡PREPARA TU CARTA!</h2>
-                <p>Sube tu foto principal.</p>
-                <div class="upload-box">
-                    <i class="fas fa-upload mb-2" style="font-size:2rem; color:#F8C545;"></i>
-                    <button class="btn-subir mt-2" @onclick="IrAPerfil">IR A MI PERFIL</button>
-                </div>
-                @if (solicitandoFoto && !string.IsNullOrEmpty(ficha?.FotoUrl))
+
+                @if (EsMiFicha)
                 {
-                    <button class="btn-cancelar mt-3" @onclick="() => solicitandoFoto = false">CANCELAR</button>
+                    <h2>¡PREPARA TU CARTA!</h2>
+                    <p>Sube tu foto principal.</p>
+                    <div class="upload-box">
+                        <i class="fas fa-upload mb-2" style="font-size:2rem; color:#F8C545;"></i>
+                        <button class="btn-subir mt-2" @onclick="IrAPerfil">IR A MI PERFIL</button>
+                    </div>
+                    @if (solicitandoFoto && !string.IsNullOrEmpty(ficha?.FotoUrl))
+                    {
+                        <button class="btn-cancelar mt-3" @onclick="() => solicitandoFoto = false">CANCELAR</button>
+                    }
+                }
+                else
+                {
+                    <h2>TARJETA OCULTA</h2>
+                    <p style="color:#aaa;">Este atleta aún no ha subido su foto de perfil para activar su Player Card.</p>
                 }
             </div>
         }
@@ -142,7 +169,14 @@
                         @if (!ficha.PRs.Any(p => p.Seleccionado))
                         {
                             <div style="grid-column: span 3; text-align: center; color: #888; font-size: 0.8rem;">
-                                Toca el icono del trofeo arriba para destacar tus récords.
+                                @if (EsMiFicha)
+                                {
+                                    <span>Toca el menú superior para destacar tus récords.</span>
+                                }
+                                else
+                                {
+                                    <span>Récords ocultos o no registrados.</span>
+                                }
                             </div>
                         }
                     </div>
@@ -389,6 +423,14 @@
 }
 
 <style>
+    /* Estilos Hamburguesa Config */
+    .menu-config-wrapper { position: relative; display: inline-block; padding: 5px 10px; }
+    .config-dropdown { position: absolute; top: 40px; right: 0; background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 10px; width: 160px; box-shadow: 0 10px 25px rgba(0,0,0,0.8); z-index: 1000; display: flex; flex-direction: column; gap: 5px; }
+    .config-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+    .config-item:hover, .config-item:active { background: #2a2a2a; }
+    .config-item span { color: white; font-family: 'Oswald'; font-size: 0.95rem; font-weight: bold; letter-spacing: 1px; }
+    .config-item i { width: 20px; text-align: center; font-size: 1.1rem; }
+
     .main-layout { position: fixed; top:0; left:0; width:100vw; height:100vh; background:#050505; display:flex; flex-direction:column; z-index:1; }
     .navbar-container { flex-shrink:0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom:10px; padding-left:20px; padding-right:20px; background:#111; border-bottom:1px solid #F8C545; display:flex; justify-content:space-between; align-items:center; z-index:100; font-family:'Oswald'; color:white; }
     .nav-icon { color:#F8C545; font-size:1.4rem; cursor:pointer; transition:0.2s; }
@@ -591,11 +633,11 @@
     private bool cargando = true;
     private bool solicitandoFoto = false;
     private FichaAtletaDto ficha;
-    
+
     private bool mostrarModalSubtitulos = false;
     private string tabActiva = "Comedia";
     private List<SubtituloDto> listaSubtitulos = new();
-    
+
     private bool mostrarModalColores = false;
     private bool guardandoColores = false;
     private bool subiendoFondo = false;
@@ -607,7 +649,7 @@
         public int DiasEntrenadosAnio { get; set; } public int Rx { get; set; } public int Avanzado { get; set; }
         public int Intermedio { get; set; } public int Principiante { get; set; }
         public string Subtitulo { get; set; }
-        
+
         public string ColorPrimario { get; set; }
         public string ColorTexto { get; set; } 
         public string ColorNumeros { get; set; } 
@@ -620,7 +662,7 @@
         public string FondoCustomUrl { get; set; } 
         public string ColorDetalles { get; set; }
         public double OpacidadMedallas { get; set; }
-        
+
         public List<FichaPRDto> PRs { get; set; } = new();
     }
 
@@ -663,7 +705,7 @@
     private bool mostrarModalPRs = false;
     private bool guardandoPRs = false;
 
-    private void AbrirModalPRs() => mostrarModalPRs = true;
+    private void AbrirModalPRs() { mostrarMenuConfig = false; mostrarModalPRs = true; }
     private void CerrarModalPRs()
     {
         // Al cerrar sin guardar, recargamos la página para deshacer los clicks (opcional pero seguro)
@@ -687,6 +729,13 @@
                 App.Current.MainPage.DisplayAlert("Límite", "Solo puedes mostrar 6 récords en tu tarjeta.", "OK");
             }
         }
+    }
+
+    private bool mostrarMenuConfig = false;
+
+    private void ToggleMenuConfig()
+    {
+        mostrarMenuConfig = !mostrarMenuConfig;
     }
 
     private async Task GuardarPRs()
@@ -718,6 +767,7 @@
 
     private async Task AbrirModalSubtitulos()
     {
+        mostrarMenuConfig = false;
         mostrarModalSubtitulos = true;
         if(listaSubtitulos.Count == 0) {
             try { 
@@ -752,6 +802,7 @@
 
     private void AbrirModalColores()
     {
+        mostrarMenuConfig = false;
         backupColorPrimario = ficha.ColorPrimario;
         backupColorTexto = ficha.ColorTexto;
         backupColorNumeros = ficha.ColorNumeros;

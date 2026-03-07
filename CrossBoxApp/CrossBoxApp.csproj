@@ -13,9 +13,9 @@
 		<Nullable>enable</Nullable>
 
 		<ApplicationTitle>AFTRACK</ApplicationTitle>
-		<ApplicationId>aftrack.aftrack</ApplicationId>
+		<!--<ApplicationId>aftrack.aftrack</ApplicationId>-->
 		<ApplicationId>com.alfafit.aftrack</ApplicationId>
-		<!--<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>-->
+		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
 		<ApplicationVersion>9</ApplicationVersion>
 
 		<WindowsPackageType>None</WindowsPackageType>
@@ -48,7 +48,7 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(TargetFramework)'=='net9.0-ios'">
-	  <CodesignKey>Apple Development: Created via API (9G8X59256X)</CodesignKey>
+	  <CodesignKey>Apple Development: Created via API (2539FHHKVH)</CodesignKey>
 	  <CodesignProvision>VS: com.alfafit.aftrack Development</CodesignProvision>
 	</PropertyGroup>
 

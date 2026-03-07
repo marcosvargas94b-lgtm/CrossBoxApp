@@ -259,6 +259,12 @@
             .WithAutomaticReconnect()
             .Build();
 
+        hubConnection.Reconnected += async (connectionId) =>
+         {
+             // Si el internet parpadea, nos volvemos a unir a la sala del Box
+             await hubConnection.SendAsync("JoinBoxGroup", Sesion.Usuario.BoxID.ToString());
+         };
+
         hubConnection.On<CheckInDto>("NuevoAtletaEnClase", (atleta) =>
         {
             InvokeAsync(async () =>
@@ -284,7 +290,7 @@
     {
         try
         {
-            // OJO: Usar tu endpoint correcto. Aquí supongo que devuelve una lista con id y descripcion
+            
             var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/agendaapi/lista-horarios/{Sesion.Usuario.BoxID}");
             if (response.IsSuccessStatusCode)
             {

@@ -216,25 +216,29 @@
         }
         else
         {
-            <div class="recovery-section fade-in">
-                @if (resumenRecuperacion != null)
-                {
-                    <div class="card-recuperacion-master" @onclick='() => Nav.NavigateTo("/detalle-recuperacion")'>
-                        <div class="info-content">
-                            <span class="label-top">ESTADO DE RECUPERACIÓN</span>
-                            <h2 class="display-porcentaje">@resumenRecuperacion.DisponibilidadGlobal<small>%</small></h2>
-                            <p class="status-desc">@resumenRecuperacion.Mensaje.ToUpper()</p>
-                            <div class="btn-detalles">DETALLES <i class="fas fa-chevron-right"></i></div>
-                        </div>
-
-                        <div class="visual-content">
-                            <MapaCalor Datos="resumenRecuperacion.Musculos" />
-                        </div>
-
-                        <div class="bg-blur-glow"></div>
+            @if (Sesion.Usuario?.TipoLugar != "Running")
+            { 
+                <div class="recovery-section fade-in">
+            @if (resumenRecuperacion != null)
+            {
+                <div class="card-recuperacion-master" @onclick='() => Nav.NavigateTo("/detalle-recuperacion")'>
+                    <div class="info-content">
+                        <span class="label-top">ESTADO DE RECUPERACIÓN</span>
+                        <h2 class="display-porcentaje">@resumenRecuperacion.DisponibilidadGlobal<small>%</small></h2>
+                        <p class="status-desc">@resumenRecuperacion.Mensaje.ToUpper()</p>
+                        <div class="btn-detalles">DETALLES <i class="fas fa-chevron-right"></i></div>
+                        <div style="font-size: 0.65rem; color: #888; margin-top: 5px; font-family:'Roboto';">Configura para mayor precisión</div>
                     </div>
-                }
-            </div>
+
+                    <div class="visual-content">
+                        <MapaCalor Datos="resumenRecuperacion.Musculos" />
+                    </div>
+
+                    <div class="bg-blur-glow"></div>
+                </div>
+            }
+        </div>
+            }
 
             @* ========================================== *@
             @* PUERTA DE ENTRADA A LA COMUNIDAD           *@
@@ -255,7 +259,7 @@
                     <div class="card-overlay"></div>
 
                     <button class="btn-edit-corner" @onclick:stopPropagation="true" @onclick="AbrirModalBanner">
-                        <i class="fas fa-pen"></i> PERSONALIZAR
+                        <i class="fas fa-pen"></i> CUSTOMIZE
                     </button>
 
                     <div class="entry-content">
@@ -282,7 +286,7 @@
                 @if (EstaActivo("AGENDA"))
                 {
                     <div class="menu-card" @onclick="IrAAgenda">
-                        <i class="fas fa-dumbbell card-icon"></i>
+                        <i class="fas fa-calendar card-icon"></i>
                         <h3>AGENDA TU CLASE</h3><p>Elige tu horario...</p>
                     </div>
                 }
@@ -292,7 +296,7 @@
                         <div class="sparkle s1"></div>
                         <div class="sparkle s2"></div>
                     </div>
-                    <i class="fas fa-calendar card-icon gym-icon"></i>
+                    <i class="fas fa-dumbbell card-icon gym-icon"></i>
                     <h3 class="gym-title">RUTINA SEMANAL</h3>
                     <p style="color:dark;">Planifica y ejecuta tus días</p>
                 </div>
@@ -324,8 +328,8 @@
                 @if (EstaActivo("SOCIAL"))
                 {
                     <div class="menu-card" @onclick="IrACompaneros">
-                        <i class="fas fa-users card-icon" style="color:#00BFFF;"></i>
-                        <h3>¡HEY! HOLA</h3><p>Compañeros y MATCHES</p>
+                        <i class="fas fa-heart card-icon" style="color:darkred;"></i>
+                        <h3>¿Alguien tiene tu atención?</h3><p>Busca hacer MATCH</p>
                     </div>
                 }
 
@@ -1167,13 +1171,34 @@
 
     /* Tarjeta de Recuperación (Ajustada para que mida lo mismo que el Banner) */
     .recovery-section { width: 100%; max-width: 600px; margin: 0 auto 20px auto; padding: 0; }
-    .card-recuperacion-master { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 28px; display: flex; padding: 20px 15px; height: 220px; position: relative; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.4); cursor: pointer; }
+    .card-recuperacion-master {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 28px;
+        display: flex;
+        padding: 20px 15px; 
+        height: 260px; 
+        position: relative;
+        overflow: hidden; /* Esto corta todo lo que sale, por eso se decapitaba */
+        box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+        cursor: pointer;
+    }
     .info-content { flex: 1; display: flex; flex-direction: column; justify-content: center; z-index: 5; }
     .label-top { font-family: 'Oswald'; color: #F8C545; font-size: 0.75rem; letter-spacing: 2px; font-weight: bold; line-height: 1.1; }
     .display-porcentaje { font-family: 'Oswald'; font-size: 3.5rem; color: white; margin: 5px 0; font-weight: 900; line-height: 1; }
     .status-desc { color: white; font-weight: 800; font-size: 0.8rem; line-height: 1.2; margin-bottom: 10px; text-shadow: 1px 1px 3px rgba(0,0,0,0.8); }
     .btn-detalles { font-size: 0.65rem; color: #F8C545; font-weight: bold; letter-spacing: 1px; }
-    .visual-content { flex: 1.8; height: 120%; display: flex; justify-content: flex-end; align-items: center; z-index: 5; transform: translateY(-5%); }
+   .visual-content {
+        flex: 1.8; 
+        height: 120%; 
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        z-index: 5;        
+        transform: translateY(-12%); 
+    }
     .bg-blur-glow { position: absolute; top: -20%; right: -10%; width: 180px; height: 180px; background: radial-gradient(circle, rgba(248, 197, 69, 0.2) 0%, transparent 70%); z-index: 1; }
 
     /* Misceláneos */
@@ -1344,11 +1369,21 @@
     {
         try
         {
-            // Cambia la URL por la de tu API real
-            var response = await Http.GetFromJsonAsync<EstadoRecuperacionDto>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/recuperacion/{Sesion.Usuario.UsuarioID}");
-            if (response != null)
+            string tipoLugar = Sesion.Usuario.TipoLugar ?? "";
+
+            // 1. SI ES RUNNING, NO HACEMOS NADA
+            if (tipoLugar == "Running") return; 
+
+            // 2. SI ES GIMNASIO (Llama a tu endpoint actual que funciona perfecto)
+            if (tipoLugar == "Gimnasio")
             {
-                resumenRecuperacion = response;
+                resumenRecuperacion = await Http.GetFromJsonAsync<EstadoRecuperacionDto>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/recuperacion/{Sesion.Usuario.UsuarioID}");
+            }
+            // 3. SI ES CROSSFIT, FUNCIONAL O CALISTENIA
+            else
+            {
+                // Este endpoint "rutinasbox/recuperacion" es el que vamos a crear a continuación en el backend
+                resumenRecuperacion = await Http.GetFromJsonAsync<EstadoRecuperacionDto>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasbox/recuperacion/{Sesion.Usuario.UsuarioID}");
             }
         }
         catch (Exception ex)

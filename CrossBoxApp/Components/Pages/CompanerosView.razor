@@ -11,7 +11,7 @@
         <div class="nav-left" @onclick="Volver">
             <i class="fas fa-arrow-left"></i> VOLVER
         </div>
-        <div class="nav-title">COMPAÑEROS</div>
+        <div class="nav-title">ENTRENAS CON</div>
         <div class="nav-right"></div>
     </div>
 
@@ -24,6 +24,14 @@
                    placeholder="Buscar compañero..."
                    @bind="busqueda"
                    @bind:event="oninput" />
+        </div>
+
+        <div class="secret-match-info fade-in">
+            <i class="fas fa-user-secret icon-secret"></i>
+            <p>
+                <strong>¿Viste a alguien interesante?</strong> Dale un toque. Es 100% anónimo.
+                Solo si la otra persona también te elige, <span>haremos magia</span> y les compartiremos su WhatsApp.
+            </p>
         </div>
 
         @if (lista == null)
@@ -160,6 +168,47 @@
         color: #666;
     }
 
+    /* --- LEYENDA MATCH SECRETO --- */
+    .secret-match-info {
+        width: 100%;
+        max-width: 800px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px dashed rgba(248, 197, 69, 0.3);
+        border-radius: 12px;
+        padding: 15px 20px;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .icon-secret {
+        font-size: 2rem;
+        color: #555;
+        text-shadow: 0 0 10px rgba(248, 197, 69, 0.2);
+    }
+
+    .secret-match-info p {
+        margin: 0;
+        font-family: 'Roboto';
+        font-size: 0.85rem;
+        color: #888;
+        line-height: 1.4;
+    }
+
+        .secret-match-info p strong {
+            color: #ccc;
+            font-family: 'Oswald';
+            letter-spacing: 0.5px;
+            font-size: 0.95rem;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .secret-match-info p span {
+            color: #F8C545;
+            font-weight: bold;
+        }
     /* --- ESTILO TIPO REEL (VERTICAL) --- */
     .grid-container {
         width: 100%;

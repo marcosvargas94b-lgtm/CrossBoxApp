@@ -78,7 +78,7 @@
             }
         </div>
 
-@* --- SECCIÓN: GENERADOR DE HISTORIAS CON IA --- *@
+        @* --- SECCIÓN: GENERADOR DE HISTORIAS CON IA --- *@
         @if (logDeHoy != null && logDeHoy.Realizado == true)
         {
             <div class="story-generator-card fade-in mt-4">
@@ -101,7 +101,21 @@
     </div>
 </div>
 
-@* --- MODAL FEEDBACK NORMAL (Tu código existente) --- *@
+@* --- PANTALLA ANIMADA DE ÉXITO --- *@
+@if (mostrarExitoAnimacion)
+{
+    <div class="success-overlay">
+        <div class="success-content bounce-in">
+            <div class="success-icon-container">
+                <i class="fas fa-check"></i>
+            </div>
+            <h2>¡BRUTAL!</h2>
+            <p>Entrenamiento registrado con éxito.</p>
+        </div>
+    </div>
+}
+
+@* --- MODAL FEEDBACK NORMAL --- *@
 @if (mostrarModal && logSeleccionado != null)
 {
     <div class="modal-overlay fade-in">
@@ -136,7 +150,7 @@
                             }
                             else
                             {
-                                <i class="far fa-circle"></i> <span>NO REALIZADO</span>
+                                <i class="far fa-circle"></i> <span>MARCA AL REALIZAR</span>
                             }
                         </div>
                     </div>
@@ -166,54 +180,40 @@
                                       class="feedback-textarea" 
                                       placeholder="Ej: Me sentí fuerte en las subidas..."></textarea>
 
-                          <label class="section-label mt-4" style="color:#F8C545;">
+                            <label class="section-label mt-4" style="color:#F8C545;">
                                 <i class="fas fa-camera"></i> EVIDENCIA DE PARCIALES <span class="text-danger">*</span>
                             </label>
-
-                            @if (!string.IsNullOrEmpty(logSeleccionado.EvidenciaUrl))
-                            {
-                                @* SI YA HAY FOTOS, OCULTAMOS EL CARGADOR Y PONEMOS ESTE MENSAJE ESTILIZADO *@
-                                <div class="mt-2" style="border: 1px solid #28a745; padding: 15px; border-radius: 8px; background: rgba(40,167,69,0.1); display:flex; align-items:center; gap:10px;">
-                                    <i class="fas fa-check-circle" style="color:#28a745; font-size: 1.5rem;"></i>
-                                    <div style="display:flex; flex-direction:column;">
-                                        <span style="color:#28a745; font-family:'Oswald'; font-weight:bold; font-size:0.9rem;">EVIDENCIA ENVIADA</span>
-                                        <span style="color:#aaa; font-size:0.75rem;">El coach revisará tus capturas.</span>
-                                    </div>
-                                </div>
-                            }
-                            else
-                            {
-                                @* SI NO HAY FOTOS, MOSTRAMOS EL CARGADOR NORMAL *@
-                                <p style="font-size: 0.75rem; color: #aaa; margin-top:-5px; margin-bottom: 10px;">
-                                    Sube captura de tu reloj o app. Es obligatorio para verificar tu entrenamiento.
-                                </p>
-
-                                <div class="evidence-container">
-                                    @for (int i = 0; i < previewsEvidencia.Count; i++)
-                                    {
-                                        int index = i;
-                                        <div class="evidence-box fade-in">
-                                            <img src="@previewsEvidencia[index]" />
-                                            <button class="btn-remove-ev" @onclick="() => QuitarFoto(index)">
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </div>
-                                    }
-
-                                    <div class="evidence-add" @onclick="AgregarFotoEvidencia">
-                                        <i class="fas fa-plus"></i>
-                                    </div>
-                                </div>
-                            }
-                            <p style="font-size: 0.75rem; color: #aaa; margin-top:-5px; margin-bottom: 10px;">
+                            <p style="font-size: 0.75rem; color: #aaa; margin-top:-5px; margin-bottom: 15px;">
                                 Sube captura de tu reloj o app. Es obligatorio para verificar tu entrenamiento.
                             </p>
-                        
-                            
-                            @if(!string.IsNullOrEmpty(logSeleccionado.EvidenciaUrl) && previewsEvidencia.Count == 0)
+
+                            @* ZONA DE SUBIDA DE FOTOS SIEMPRE VISIBLE *@
+                            <div class="evidence-container">
+                                @for (int i = 0; i < previewsEvidencia.Count; i++)
+                                {
+                                    int index = i;
+                                    <div class="evidence-box fade-in">
+                                        <img src="@previewsEvidencia[index]" />
+                                        <button class="btn-remove-ev" @onclick="() => QuitarFoto(index)">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                }
+
+                                <div class="evidence-add" @onclick="AgregarFotoEvidencia">
+                                    <i class="fas fa-plus"></i>
+                                </div>
+                            </div>
+
+                            @* CUADRO VERDE SI YA TIENE EVIDENCIA EN BD *@
+                            @if (!string.IsNullOrEmpty(logSeleccionado.EvidenciaUrl))
                             {
-                                <div class="mt-2 text-success" style="font-size: 0.8rem; font-family:'Oswald';">
-                                    <i class="fas fa-check-circle"></i> Ya tienes evidencia guardada previamente.
+                                <div class="mt-3 fade-in" style="border: 1px solid #28a745; padding: 12px 15px; border-radius: 8px; background: rgba(40,167,69,0.1); display:flex; align-items:center; gap:10px;">
+                                    <i class="fas fa-check-circle" style="color:#28a745; font-size: 1.5rem;"></i>
+                                    <div style="display:flex; flex-direction:column;">
+                                        <span style="color:#28a745; font-family:'Oswald'; font-weight:bold; font-size:0.9rem;">EVIDENCIA ENVIADA PREVIAMENTE</span>
+                                        <span style="color:#aaa; font-size:0.75rem;">El coach ya tiene un registro guardado.</span>
+                                    </div>
                                 </div>
                             }
                         </div>
@@ -250,35 +250,35 @@
             <div class="modal-body">
                 @if (string.IsNullOrEmpty(historiaGeneradaBase64))
                 {
-                    <div style="display:flex; gap: 10px; margin-bottom: 15px;">
+                    <div class="story-upload-grid">
                         @* CAJA 1: MAPA STRAVA *@
-                        <div style="flex:1;">
-                            <label class="section-label" style="color:#F8C545; font-size:0.7rem; text-align:center;">1. TU RELOJ O MAPA STRAVA</label>
-                            <div class="map-picker-box @(mapaHistoria != null ? "has-image" : "")" style="height:120px;" @onclick="SeleccionarMapaHistoria">
+                        <div class="upload-col">
+                            <label>1. TU RELOJ O MAPA STRAVA</label>
+                            <div class="map-picker-box story-aspect @(mapaHistoria != null ? "has-image" : "")" @onclick="SeleccionarMapaHistoria">
                                 @if (previewMapaHistoria != null)
                                 {
                                     <img src="@previewMapaHistoria" class="map-preview-img" />
-                                    <div class="map-picker-overlay" style="font-size:0.8rem;"><i class="fas fa-sync-alt"></i> Cambiar</div>
+                                    <div class="map-picker-overlay"><i class="fas fa-sync-alt"></i> Cambiar</div>
                                 }
                                 else
                                 {
-                                    <i class="fas fa-map-marked-alt map-icon" style="font-size:1.5rem;"></i>
+                                    <i class="fas fa-map-marked-alt map-icon"></i>
                                 }
                             </div>
                         </div>
 
-                        @* CAJA 2: SELFIE (NUEVO) *@
-                        <div style="flex:1;">
-                            <label class="section-label" style="color:#F8C545; font-size:0.7rem; text-align:center;">2. TU FOTO DE HOY</label>
-                            <div class="map-picker-box @(fotoAtleta != null ? "has-image" : "")" style="height:120px;" @onclick="SeleccionarFotoAtleta">
+                        @* CAJA 2: SELFIE *@
+                        <div class="upload-col">
+                            <label>2. TU FOTO DE HOY</label>
+                            <div class="map-picker-box story-aspect @(fotoAtleta != null ? "has-image" : "")" @onclick="SeleccionarFotoAtleta">
                                 @if (previewFotoAtleta != null)
                                 {
                                     <img src="@previewFotoAtleta" class="map-preview-img" />
-                                    <div class="map-picker-overlay" style="font-size:0.8rem;"><i class="fas fa-sync-alt"></i> Cambiar</div>
+                                    <div class="map-picker-overlay"><i class="fas fa-sync-alt"></i> Cambiar</div>
                                 }
                                 else
                                 {
-                                    <i class="fas fa-user-circle map-icon" style="font-size:1.5rem;"></i>
+                                    <i class="fas fa-user-circle map-icon"></i>
                                 }
                             </div>
                         </div>
@@ -392,6 +392,17 @@
     .btn-create-story { background: transparent; color: white; border: 1px solid #555; padding: 12px; border-radius: 8px; font-family: 'Oswald'; font-weight: bold; letter-spacing: 1px; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; }
     .btn-create-story:active { background: rgba(255,255,255,0.1); transform: scale(0.98); }
 
+    /* --- ANIMACIÓN DE ÉXITO PANTALLA COMPLETA --- */
+    .success-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+    .success-content { display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .success-icon-container { width: 100px; height: 100px; background: #28a745; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 3.5rem; color: white; margin-bottom: 20px; box-shadow: 0 0 30px rgba(40, 167, 69, 0.6); animation: pulseGreen 1.5s infinite; }
+    .success-content h2 { font-family: 'Oswald'; color: white; font-size: 2.5rem; margin: 0; letter-spacing: 2px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .success-content p { color: #F8C545; font-family: 'Roboto'; font-weight: bold; font-size: 1.1rem; margin-top: 5px; text-transform: uppercase; }
+
+    .bounce-in { animation: bounceInMsg 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards; }
+    @@keyframes bounceInMsg { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+    @@keyframes pulseGreen { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
+
     /* --- MODALES GENERALES --- */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
     .custom-modal { background: #121212; width: 90%; max-width: 400px; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; border: 1px solid #333; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
@@ -405,20 +416,80 @@
     .modal-body { padding: 20px; color: white; overflow-y: auto; background-color: #121212; }
 
     /* --- MODAL DE HISTORIA (UI) --- */
-    .map-picker-box { width: 100%; height: 200px; border: 2px dashed #444; border-radius: 12px; background: #1a1a1a; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; position: relative; overflow: hidden; transition: 0.2s; }
-    .map-picker-box:active { background: #222; border-color: #F8C545; }
-    .map-icon { font-size: 3rem; color: #555; margin-bottom: 10px; }
-    .map-picker-box span { color: #888; font-family: 'Roboto'; font-size: 0.9rem; text-align: center; padding: 0 20px; }
-    .map-preview-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.6; }
-    .map-picker-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-family: 'Oswald'; font-size: 1.2rem; color: white; text-shadow: 0 2px 10px black; gap: 8px; font-weight: bold; }
+    .story-upload-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
     
-    .story-switches { background: rgba(255,255,255,0.03); border: 1px solid #333; border-radius: 10px; padding: 15px; display: flex; flex-direction: column; gap: 15px; }
-    .switch-row { display: flex; justify-content: space-between; align-items: center; color: #ccc; font-family: 'Roboto'; font-size: 0.9rem; }
-    .switch-row i { color: #F8C545; width: 20px; text-align: center; margin-right: 5px; }
+    .upload-col {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end; /* Esto empuja las cajas abajo, alineándolas perfecto aunque el texto varíe */
+    }
 
-    .story-result-container { display: flex; flex-direction: column; align-items: center; }
-    .story-final-img { width: 70%; max-width: 250px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 2px solid #333; }
+    .upload-col label {
+        color: #F8C545;
+        font-size: 0.7rem;
+        text-align: center;
+        font-family: 'Oswald';
+        font-weight: bold;
+        margin-bottom: 8px;
+        min-height: 32px; /* Fuerza a que ambos títulos midan lo mismo */
+        display: flex;
+        align-items: flex-end; /* Pega el texto abajo */
+        justify-content: center;
+        line-height: 1.2;
+    }
 
+    .map-picker-box.story-aspect { 
+        width: 100%; 
+        height: auto; 
+        aspect-ratio: 9/16; /* ¡MAGIA! Toma la proporción exacta de una historia de Instagram */
+        border: 2px dashed #444; 
+        border-radius: 12px; 
+        background: #1a1a1a; 
+        display: flex; 
+        flex-direction: column; 
+        justify-content: center; 
+        align-items: center; 
+        cursor: pointer; 
+        position: relative; 
+        overflow: hidden; 
+        transition: 0.2s; 
+    }
+
+    .map-picker-box.story-aspect.has-image {
+        border: 2px solid #F8C545;
+    }
+
+    .map-picker-box.story-aspect:active { 
+        background: #222; 
+        transform: scale(0.97);
+    }
+
+    .map-icon { 
+        font-size: 2.5rem; 
+        color: #555; 
+    }
+
+    .map-preview-img { 
+        width: 100%; 
+        height: 100%; 
+        /* Al ser el contenedor 9:16, el cover recorta exactamente lo que recortará el servidor */
+        object-fit: cover; 
+        opacity: 0.6; 
+    }
+
+    .map-picker-overlay { 
+        position: absolute; 
+        top: 0; left: 0; width: 100%; height: 100%; 
+        display: flex; flex-direction: column; 
+        justify-content: center; align-items: center; 
+        font-family: 'Oswald'; font-size: 1rem; 
+        color: white; text-shadow: 0 2px 10px black; gap: 5px; font-weight: bold; 
+    }
     /* TARJETA DEL PLAN Y FEEDBACK */
     .coach-card { background: linear-gradient(145deg, #1e1e1e, #252525); border-left: 4px solid #F8C545; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .card-label { color: #F8C545; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; font-family: 'Oswald'; letter-spacing: 1px; }
@@ -468,6 +539,27 @@
     .slide-up { animation: slideUp 0.3s ease; }
     @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @@keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    /* --- RESULTADO DE LA HISTORIA IA --- */
+    .story-result-container { 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        padding-top: 10px;
+    }
+    
+    .story-final-img { 
+        width: 100%; 
+        max-width: 300px; 
+        height: auto;
+        max-height: 60vh; /* ¡ESTO EVITA QUE SE SALGA DE LA PANTALLA! */
+        object-fit: contain; /* ¡ESTO MANTIENE LA PROPORCIÓN 9:16 INTACTA! */
+        border-radius: 10px; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+        border: 2px solid #333; 
+    }
 </style>
 
 @code {
@@ -482,6 +574,7 @@
     // Modal Normal (Feedback)
     private bool mostrarModal = false;
     private bool guardando = false;
+    private bool mostrarExitoAnimacion = false; // VARIABLE NUEVA DE ANIMACION
     private RunningLogs logSeleccionado;
     private DateTime fechaSeleccionada;
 
@@ -499,13 +592,13 @@
     private FileResult mapaHistoria = null;
     private string previewMapaHistoria = null;
     
-    // Foto 2: Selfie / Atleta (NUEVO)
+    // Foto 2: Selfie / Atleta
     private FileResult fotoAtleta = null;
     private string previewFotoAtleta = null;
 
     private bool incluirTituloHistoria = true;
     private bool incluirDescHistoria = true;
-private string tituloHistoria = "";
+    private string tituloHistoria = "";
     private string descripcionHistoria = "";
 
     public class RunningLogs
@@ -659,8 +752,16 @@ private string tituloHistoria = "";
             if (resp.IsSuccessStatusCode)
             {
                 mostrarModal = false;
-                await App.Current.MainPage.DisplayAlert("¡Excelente!", "Reporte y evidencia guardados correctamente.", "OK");
                 await CargarCalendario();
+                
+                // MUESTRA LA ANIMACIÓN EN LUGAR DEL DISPLAY ALERT FEO
+                mostrarExitoAnimacion = true;
+                StateHasChanged();
+                
+                await Task.Delay(1800); // Lo dejamos visible por casi 2 segundos
+                
+                mostrarExitoAnimacion = false;
+                StateHasChanged();
             }
             else
             {
@@ -684,7 +785,7 @@ private string tituloHistoria = "";
         if (valor <= 4) return "#ADFF2F"; 
         if (valor <= 6) return "#FFD700"; 
         if (valor <= 8) return "#FF8C00"; 
-        return "#FF0000";                 
+        return "#FF0000";                  
     }
 
     private void CerrarModal() => mostrarModal = false;
@@ -740,7 +841,6 @@ private string tituloHistoria = "";
         catch { await App.Current.MainPage.DisplayAlert("Aviso", "No se pudo cargar el mapa.", "OK"); }
     }
 
-    // --- NUEVO: MÉTODO PARA SELECCIONAR LA SELFIE ---
     private async Task SeleccionarFotoAtleta()
     {
         try
@@ -765,7 +865,7 @@ private string tituloHistoria = "";
         catch { await App.Current.MainPage.DisplayAlert("Aviso", "No se pudo cargar tu foto.", "OK"); }
     }
 
-private async Task GenerarHistoriaApi()
+    private async Task GenerarHistoriaApi()
     {
         if (mapaHistoria == null || fotoAtleta == null || logDeHoy == null) return;
 
@@ -779,8 +879,7 @@ private async Task GenerarHistoriaApi()
             form.Add(new StringContent(DateTime.Today.ToString("dd MMMM yyyy").ToUpper()), "Fecha");
             form.Add(new StringContent((logDeHoy.RPE ?? 0).ToString()), "RPE");
             
-           // --- AQUÍ MANDAMOS LO QUE EL USUARIO ESCRIBIÓ ---
-            // Si están vacíos, mandamos un espacio " " para que el Backend no llore
+            // --- AQUÍ MANDAMOS LO QUE EL USUARIO ESCRIBIÓ ---
             string tituloFinal = incluirTituloHistoria ? (string.IsNullOrWhiteSpace(tituloHistoria) ? " " : tituloHistoria) : " ";
             string descFinal = incluirDescHistoria ? (string.IsNullOrWhiteSpace(descripcionHistoria) ? " " : descripcionHistoria) : " ";
             string rpeString = string.IsNullOrWhiteSpace(logDeHoy.RPE.ToString()) ? "0" : logDeHoy.RPE.ToString();

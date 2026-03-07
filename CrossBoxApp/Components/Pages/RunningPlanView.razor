@@ -121,6 +121,20 @@
     </div>
 </div>
 
+@* --- PANTALLA ANIMADA DE ÉXITO (NUEVO) --- *@
+@if (mostrarExitoAnimacion)
+{
+    <div class="success-overlay">
+        <div class="success-content bounce-in">
+            <div class="success-icon-container">
+                <i class="fas fa-check"></i>
+            </div>
+            <h2>¡HECHO!</h2>
+            <p>@mensajeExitoAnimacion</p>
+        </div>
+    </div>
+}
+
 @if (mostrarModal)
 {
     <div class="modal-overlay fade-in">
@@ -220,9 +234,11 @@
             <div class="modal-footer">
                 @if (logEditando.RunningLogID != Guid.Empty)
                 {
-                    <button class="btn-delete" @onclick="EliminarLog"><i class="fas fa-trash"></i></button>
+                    <button class="btn-delete" @onclick="EliminarLog" disabled="@guardando"><i class="fas fa-trash"></i></button>
                 }
-                <button class="btn-confirm" @onclick="GuardarLog">GUARDAR CAMBIOS</button>
+                <button class="btn-confirm" @onclick="GuardarLog" disabled="@guardando">
+                    @if (guardando) { <i class="fas fa-spinner fa-spin"></i> } else { <span>GUARDAR CAMBIOS</span> }
+                </button>
             </div>
         </div>
     </div>
@@ -240,72 +256,24 @@
     /* --- ESTRUCTURA BASE --- */
     .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
 
-    .navbar-container {
-        flex-shrink: 0;
-        padding-top: calc(env(safe-area-inset-top) + 10px);
-        padding-bottom: 10px;
-        padding-left: 20px;
-        padding-right: 20px;
-        background-color: #0d0d0d;
-        border-bottom: 1px solid #F8C545;
-        color: white;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 100;
-        font-family: 'Oswald';
-        min-height: 60px;
-    }
-
-    .nav-left {
-        color: #F8C545;
-        font-weight: bold;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 0.9rem;
-        white-space: nowrap;
-        z-index: 10;
-    }
-
-    .nav-center {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        flex: 1;
-        overflow: hidden;
-        padding: 0 10px;
-    }
-
-    .nav-title-main {
-        font-weight: bold;
-        font-size: 1.1rem;
-        color: white;
-        letter-spacing: 1px;
-        white-space: nowrap;
-    }
-
-    .nav-title-sub {
-        font-size: 0.75rem;
-        color: #888;
-        font-family: 'Roboto';
-        font-weight: normal;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100%;
-    }
-
-    .nav-right {
-        display: flex;
-        justify-content: flex-end;
-        z-index: 10;
-        min-width: 60px;
-    }
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
+    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 0.9rem; white-space: nowrap; z-index: 10; }
+    .nav-center { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; overflow: hidden; padding: 0 10px; }
+    .nav-title-main { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; white-space: nowrap; }
+    .nav-title-sub { font-size: 0.75rem; color: #888; font-family: 'Roboto'; font-weight: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .nav-right { display: flex; justify-content: flex-end; z-index: 10; min-width: 60px; }
     
     .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
+
+    /* --- ANIMACIÓN DE ÉXITO PANTALLA COMPLETA --- */
+    .success-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+    .success-content { display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .success-icon-container { width: 100px; height: 100px; background: #28a745; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 3.5rem; color: white; margin-bottom: 20px; box-shadow: 0 0 30px rgba(40, 167, 69, 0.6); animation: pulseGreen 1.5s infinite; }
+    .success-content h2 { font-family: 'Oswald'; color: white; font-size: 2.5rem; margin: 0; letter-spacing: 2px; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .success-content p { color: #F8C545; font-family: 'Roboto'; font-weight: bold; font-size: 1.1rem; margin-top: 5px; text-transform: uppercase; }
+    .bounce-in { animation: bounceInMsg 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards; }
+    @@keyframes bounceInMsg { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+    @@keyframes pulseGreen { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
 
     /* --- CALENDARIO --- */
     .month-control { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px solid #333; width: 100%; max-width: 500px; }
@@ -414,9 +382,12 @@
     private int diasVaciosInicio;
 
     private bool mostrarModal = false;
+    private bool guardando = false;
+    private bool mostrarExitoAnimacion = false;
+    private string mensajeExitoAnimacion = "";
     private RunningLogs logEditando = new RunningLogs();
     private DateTime fechaSeleccionada;
-    private bool yaEstabaVerificado = false; // Variable para saber si ya estaba guardado en BD
+    private bool yaEstabaVerificado = false; 
     
     private string semanaSeleccionadaId;
     public string SemanaSeleccionadaBind 
@@ -533,8 +504,15 @@
             
             if (response.IsSuccessStatusCode)
             {
-                await App.Current.MainPage.DisplayAlert("¡Éxito!", "Semana cobrada al perfil del atleta.", "OK");
                 await CargarHistorialAcreditadas(); 
+                
+                // MUESTRA LA ANIMACIÓN
+                mensajeExitoAnimacion = "Semana cobrada al perfil del atleta.";
+                mostrarExitoAnimacion = true;
+                StateHasChanged();
+                await Task.Delay(1800);
+                mostrarExitoAnimacion = false;
+                StateHasChanged();
             }
             else
             {
@@ -564,7 +542,6 @@
 
         if (existente != null)
         {
-            // Verificamos si ya estaba guardado como verificado en la BD
             yaEstabaVerificado = (existente.CoachVerificado == true);
 
             logEditando = new RunningLogs
@@ -619,6 +596,9 @@
         }
         if (logEditando.Descripcion == null) logEditando.Descripcion = "";
 
+        guardando = true;
+        StateHasChanged();
+        
         try
         {
             var resp = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/guardar", logEditando);
@@ -626,10 +606,17 @@
             {
                 mostrarModal = false;
                 await CargarCalendario();
+                
+                // MUESTRA LA ANIMACIÓN EN LUGAR DEL ALERT
+                mensajeExitoAnimacion = "Rutina guardada correctamente.";
+                mostrarExitoAnimacion = true;
+                StateHasChanged();
+                await Task.Delay(1800);
+                mostrarExitoAnimacion = false;
+                StateHasChanged();
             }
             else
             {
-                // Ahora si falla leeremos el mensaje exacto que escupe nuestro nuevo Backend
                 var error = await resp.Content.ReadAsStringAsync();
                 if (string.IsNullOrWhiteSpace(error)) error = resp.StatusCode.ToString();
                 
@@ -637,6 +624,11 @@
             }
         }
         catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }
+        finally
+        {
+            guardando = false;
+            StateHasChanged();
+        }
     }
 
     private async Task EliminarLog()
