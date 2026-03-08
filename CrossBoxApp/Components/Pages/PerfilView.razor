@@ -5,204 +5,210 @@
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject SesionService Sesion
+@inject IJSRuntime JS
 
-<div class="main-layout">
+@* ENVOLVEMOS TODA LA PÁGINA EN EL TEMA *@
+<div style="@EstilosTema">
 
-    @* NAVBAR FIJA *@
-    <div class="navbar-container">
-        <div class="nav-left" @onclick="Volver">
-            <i class="fas fa-arrow-left"></i> VOLVER
+    <div class="main-layout">
+
+        @* NAVBAR FIJA *@
+        <div class="navbar-container">
+            <div class="nav-left" @onclick="Volver">
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </div>
+            <div class="nav-title">EDITAR PERFIL</div>
+            <div class="nav-right"></div>
         </div>
-        <div class="nav-title">EDITAR PERFIL</div>
-        <div class="nav-right"></div>
-    </div>
 
-    @* CONTENIDO PRINCIPAL *@
-    <div class="scrollable-content">
+        @* CONTENIDO PRINCIPAL *@
+        <div class="scrollable-content">
 
-        @if (cargandoDatos)
-        {
-            <div class="full-screen-loader">
-                <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;"></div>
-                <p class="mt-3 text-muted">Cargando perfil...</p>
-            </div>
-        }
-        else
-        {
-            <div class="profile-wrapper fade-in">
-
-                @* --- FOTO DE PERFIL (AVATAR) --- *@
-                <div class="photo-section">
-                    <div class="image-wrapper" @onclick='() => SeleccionarFoto("Avatar")'>
-                        @if (cargandoAvatar)
-                        {
-                            <div class="loading-overlay"><div class="spinner-border text-warning"></div></div>
-                        }
-
-                        @if (!string.IsNullOrEmpty(previewAvatar))
-                        {
-                            <img src="@previewAvatar" class="profile-img" />
-                        }
-                        else
-                        {
-                            <div class="avatar-placeholder">@(miPerfil.Nombre?.Substring(0, 1) ?? "A")</div>
-                        }
-
-                        <div class="upload-btn">
-                            <i class="fas fa-camera"></i>
-                        </div>
-                    </div>
-                    <p class="username">@(Sesion.Usuario?.Nombre + " " + Sesion.Usuario?.Apellidos)</p>
-                    <small class="text-muted">Toca para cambiar foto</small>
+            @if (cargandoDatos)
+            {
+                <div class="full-screen-loader">
+                    <div class="spinner-border" style="color: var(--theme-primary); width: 3rem; height: 3rem;"></div>
+                    <p class="mt-3" style="color: var(--theme-text-muted);">Cargando perfil...</p>
                 </div>
+            }
+            else
+            {
+                <div class="profile-wrapper fade-in">
 
-                <div class="form-section">
+                    @* --- FOTO DE PERFIL (AVATAR) --- *@
+                    <div class="photo-section">
+                        <div class="image-wrapper" @onclick='() => SeleccionarFoto("Avatar")'>
+                            @if (cargandoAvatar)
+                            {
+                                <div class="loading-overlay"><div class="spinner-border" style="color: var(--theme-primary);"></div></div>
+                            }
 
-                    @* --- DATOS PERSONALES --- *@
-                    <h5 class="section-subtitle">DATOS PERSONALES <span style="color:red">*</span></h5>
+                            @if (!string.IsNullOrEmpty(previewAvatar))
+                            {
+                                <img src="@previewAvatar" class="profile-img" />
+                            }
+                            else
+                            {
+                                <div class="avatar-placeholder">@(miPerfil.Nombre?.Substring(0, 1) ?? "A")</div>
+                            }
 
-                    <label class="lbl-input">Nombre <span class="text-danger">*</span></label>
-                    <input type="text" @bind="miPerfil.Nombre" class="input-dark mb-3" placeholder="Obligatorio" />
-
-                    <label class="lbl-input">Apellidos <span class="text-danger">*</span></label>
-                    <input type="text" @bind="miPerfil.Apellidos" class="input-dark mb-3" placeholder="Obligatorio" />
-
-                    @* --- APODO --- *@
-                    <div class="row-switch">
-                        <div style="flex:1; margin-right:10px;">
-                            <label class="lbl-input">Apodo (Nickname)</label>
-                            <input type="text" @bind="miPerfil.Apodo" class="input-dark" placeholder="Opcional (Ej. La Bestia)" />
+                            <div class="upload-btn">
+                                <i class="fas fa-camera"></i>
+                            </div>
                         </div>
-                        <div class="switch-container">
-                            <label class="lbl-small">¿USAR?</label>
-                            <label class="switch">
-                                <input type="checkbox" @bind="miPerfil.UsarApodo">
-                                <span class="slider round"></span>
-                            </label>
-                        </div>
-                    </div>
-                    <small class="text-info-app mb-2"><i class="fas fa-info-circle"></i> Si activas esto, aparecerás con tu apodo en los resultados.</small>
-
-                    @* --- NUEVO: SWITCH MOSTRAR PRs --- *@
-                    <div class="row-switch mt-3 mb-4" style="background: #1a1a1a; padding: 10px; border-radius: 8px; border: 1px dashed #444;">
-                        <div style="flex:1; margin-right:10px;">
-                            <label class="lbl-input" style="margin-bottom:0; color: #F8C545;"><i class="fas fa-trophy"></i> Público: Mis Récords</label>
-                            <small class="text-muted" style="font-size: 0.75rem; display:block; line-height:1.2; margin-top: 4px;">
-                                Permite que otros atletas vean tus mejores marcas en tu perfil público.
-                            </small>
-                        </div>
-                        <div class="switch-container">
-                            <label class="lbl-small">¿MOSTRAR?</label>
-                            <label class="switch">
-                                <input type="checkbox" @bind="miPerfil.MostrarPRS">
-                                <span class="slider round"></span>
-                            </label>
-                        </div>
+                        <p class="username">@(Sesion.Usuario?.Nombre + " " + Sesion.Usuario?.Apellidos)</p>
+                        <small style="color: var(--theme-text-muted);">Toca para cambiar foto</small>
                     </div>
 
-                    <label class="lbl-input">Acerca de mí</label>
-                    <textarea @bind="miPerfil.Descripcion" class="input-dark text-area" placeholder="Opcional: Gymrat, Crossfitero..."></textarea>
+                    <div class="form-section">
 
-                    <label class="lbl-input">WhatsApp (Avisos y Recuperación)</label>
-                    <div class="whatsapp-input-group">
-                        <div class="ws-icon-box"><i class="fas fa-comment-dots"></i></div>
-                        <input type="tel" 
-                               @bind="miPerfil.Whatsapp" 
-                               class="ws-input-field" 
-                               placeholder="Opcional (10 dígitos)" 
-                               maxlength="10"
-                               oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
-                    </div>
+                        @* --- DATOS PERSONALES --- *@
+                        <h5 class="section-subtitle">DATOS PERSONALES <span class="text-danger">*</span></h5>
 
-                    @* --- FOTOS CERTIFICADO --- *@
-                    <h5 class="section-subtitle mt-4"><i class="fas fa-certificate text-warning"></i> FOTOS CERTIFICADO</h5>
-                    <p class="text-muted small mb-3">Opcionales. Se usarán para generar tus diplomas al terminar una clase.</p>
+                        <label class="lbl-input">Nombre <span class="text-danger">*</span></label>
+                        <input type="text" @bind="miPerfil.Nombre" class="input-dark mb-3" placeholder="Obligatorio" />
 
-                    <div class="cert-grid">
-                        @* FOTO 1 *@
-                        <div class="cert-box">
-                            <label>FOTO 1 (Acción)</label>
-                            <div class="cert-preview" @onclick='() => SeleccionarFoto("Cert1")'>
+                        <label class="lbl-input">Apellidos <span class="text-danger">*</span></label>
+                        <input type="text" @bind="miPerfil.Apellidos" class="input-dark mb-3" placeholder="Obligatorio" />
 
-                                @if (cargandoCert1)
-                                {
-                                    <div class="loading-overlay-square"><div class="spinner-border text-warning spinner-sm"></div></div>
-                                }
+                        @* --- APODO --- *@
+                        <div class="row-switch">
+                            <div style="flex:1; margin-right:10px;">
+                                <label class="lbl-input">Apodo (Nickname)</label>
+                                <input type="text" @bind="miPerfil.Apodo" class="input-dark" placeholder="Opcional (Ej. La Bestia)" />
+                            </div>
+                            <div class="switch-container">
+                                <label class="lbl-small">¿USAR?</label>
+                                <label class="switch">
+                                    <input type="checkbox" @bind="miPerfil.UsarApodo">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <small class="text-info-app mb-2"><i class="fas fa-info-circle"></i> Si activas esto, aparecerás con tu apodo en los resultados.</small>
 
-                                @if (!string.IsNullOrEmpty(previewCert1))
-                                {
-                                    <img src="@previewCert1" class="cert-img-full" />
-                                    if (!cargandoCert1)
-                                    {
-                                        <button class="btn-delete-img" @onclick:stopPropagation="true" @onclick='() => EliminarFoto("Cert1")'>
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    }
-                                }
-                                else if (!cargandoCert1)
-                                {
-                                    <i class="fas fa-plus fa-2x text-muted"></i>
-                                }
+                        @* --- NUEVO: SWITCH MOSTRAR PRs --- *@
+                        <div class="row-switch mt-3 mb-4" style="background: var(--theme-card); padding: 10px; border-radius: 8px; border: 1px dashed var(--theme-border);">
+                            <div style="flex:1; margin-right:10px;">
+                                <label class="lbl-input" style="margin-bottom:0;"><i class="fas fa-trophy"></i> Público: Mis Récords</label>
+                                <small style="color: var(--theme-text-muted); font-size: 0.75rem; display:block; line-height:1.2; margin-top: 4px;">
+                                    Permite que otros atletas vean tus mejores marcas en tu perfil público.
+                                </small>
+                            </div>
+                            <div class="switch-container">
+                                <label class="lbl-small">¿MOSTRAR?</label>
+                                <label class="switch">
+                                    <input type="checkbox" @bind="miPerfil.MostrarPRS">
+                                    <span class="slider round"></span>
+                                </label>
                             </div>
                         </div>
 
-                        @* FOTO 2 *@
-                        <div class="cert-box">
-                            <label>FOTO 2 (Pose)</label>
-                            <div class="cert-preview" @onclick='() => SeleccionarFoto("Cert2")'>
+                        <label class="lbl-input">Acerca de mí</label>
+                        <textarea @bind="miPerfil.Descripcion" class="input-dark text-area" placeholder="Opcional: Gymrat, Crossfitero..."></textarea>
 
-                                @if (cargandoCert2)
-                                {
-                                    <div class="loading-overlay-square"><div class="spinner-border text-warning spinner-sm"></div></div>
-                                }
+                        <label class="lbl-input">WhatsApp (Avisos y Recuperación)</label>
+                        <div class="whatsapp-input-group">
+                            <div class="ws-icon-box"><i class="fas fa-comment-dots"></i></div>
+                            <input type="tel" 
+                                   @bind="miPerfil.Whatsapp" 
+                                   class="ws-input-field" 
+                                   placeholder="Opcional (10 dígitos)" 
+                                   maxlength="10"
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
+                        </div>
 
-                                @if (!string.IsNullOrEmpty(previewCert2))
-                                {
-                                    <img src="@previewCert2" class="cert-img-full" />
-                                    if (!cargandoCert2)
+                        @* --- FOTOS CERTIFICADO --- *@
+                        <h5 class="section-subtitle mt-4"><i class="fas fa-certificate" style="color: var(--theme-primary);"></i> FOTOS CERTIFICADO</h5>
+                        <p style="color: var(--theme-text-muted);" class="small mb-3">Opcionales. Se usarán para generar tus diplomas al terminar una clase.</p>
+
+                        <div class="cert-grid">
+                            @* FOTO 1 *@
+                            <div class="cert-box">
+                                <label>FOTO 1 (Acción)</label>
+                                <div class="cert-preview" @onclick='() => SeleccionarFoto("Cert1")'>
+
+                                    @if (cargandoCert1)
                                     {
-                                        <button class="btn-delete-img" @onclick:stopPropagation="true" @onclick='() => EliminarFoto("Cert2")'>
-                                            <i class="fas fa-times"></i>
-                                        </button>
+                                        <div class="loading-overlay-square"><div class="spinner-border spinner-sm" style="color: var(--theme-primary);"></div></div>
                                     }
-                                }
-                                else if (!cargandoCert2)
-                                {
-                                    <i class="fas fa-plus fa-2x text-muted"></i>
-                                }
+
+                                    @if (!string.IsNullOrEmpty(previewCert1))
+                                    {
+                                        <img src="@previewCert1" class="cert-img-full" />
+                                        if (!cargandoCert1)
+                                        {
+                                            <button class="btn-delete-img" @onclick:stopPropagation="true" @onclick='() => EliminarFoto("Cert1")'>
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        }
+                                    }
+                                    else if (!cargandoCert1)
+                                    {
+                                        <i class="fas fa-plus fa-2x" style="color: var(--theme-text-muted);"></i>
+                                    }
+                                </div>
+                            </div>
+
+                            @* FOTO 2 *@
+                            <div class="cert-box">
+                                <label>FOTO 2 (Pose)</label>
+                                <div class="cert-preview" @onclick='() => SeleccionarFoto("Cert2")'>
+
+                                    @if (cargandoCert2)
+                                    {
+                                        <div class="loading-overlay-square"><div class="spinner-border spinner-sm" style="color: var(--theme-primary);"></div></div>
+                                    }
+
+                                    @if (!string.IsNullOrEmpty(previewCert2))
+                                    {
+                                        <img src="@previewCert2" class="cert-img-full" />
+                                        if (!cargandoCert2)
+                                        {
+                                            <button class="btn-delete-img" @onclick:stopPropagation="true" @onclick='() => EliminarFoto("Cert2")'>
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        }
+                                    }
+                                    else if (!cargandoCert2)
+                                    {
+                                        <i class="fas fa-plus fa-2x" style="color: var(--theme-text-muted);"></i>
+                                    }
+                                </div>
                             </div>
                         </div>
+
+                        @* --- BOTÓN GUARDAR --- *@
+                        <button class="btn-save mt-4" @onclick="GuardarTodo" disabled="@guardando">
+                            @if (guardando)
+                            {
+                                <span><i class="fas fa-spinner fa-spin"></i> GUARDANDO...</span>
+                            }
+                            else
+                            {
+                                <span>GUARDAR CAMBIOS</span>
+                            }
+                        </button>
                     </div>
 
-                    @* --- BOTÓN GUARDAR --- *@
-                    <button class="btn-save mt-4" @onclick="GuardarTodo" disabled="@guardando">
-                        @if (guardando)
-                        {
-                            <span><i class="fas fa-spinner fa-spin"></i> GUARDANDO...</span>
-                        }
-                        else
-                        {
-                            <span>GUARDAR CAMBIOS</span>
-                        }
-                    </button>
                 </div>
 
-            </div>
-
-            <div style="height: 60px;"></div>
-        }
+                <div style="height: 60px;"></div>
+            }
+        </div>
     </div>
+
 </div>
 
 <style>
-    /* Estructura Base (Igual que MisPropositos para respetar el Notch) */
+    /* Estructura Base */
     .main-layout {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: #0d0d0d;
+        background-color: var(--theme-bg);
         display: flex;
         flex-direction: column;
         z-index: 1;
@@ -214,9 +220,9 @@
         padding-bottom: 10px;
         padding-left: 20px;
         padding-right: 20px;
-        background-color: #1a1a1a;
-        border-bottom: 1px solid #F8C545;
-        color: white;
+        background-color: var(--theme-bg);
+        border-bottom: 1px solid var(--theme-primary);
+        color: var(--theme-text);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -226,7 +232,7 @@
     }
 
     .nav-left {
-        color: #F8C545;
+        color: var(--theme-primary);
         font-weight: bold;
         cursor: pointer;
         display: flex;
@@ -253,7 +259,7 @@
         flex-direction: column;
         align-items: center;
         -webkit-overflow-scrolling: touch;
-        padding-bottom: 40px; /* Espacio extra abajo */
+        padding-bottom: 40px; 
     }
 
     .profile-wrapper {
@@ -291,29 +297,29 @@
         height: 100%;
         border-radius: 50%;
         object-fit: cover;
-        border: 3px solid #F8C545;
+        border: 3px solid var(--theme-primary);
     }
 
     .avatar-placeholder {
         width: 100%;
         height: 100%;
         border-radius: 50%;
-        background: #333;
-        color: white;
+        background: var(--theme-card);
+        color: var(--theme-text);
         display: flex;
         justify-content: center;
         align-items: center;
         font-size: 2.5rem;
         font-family: 'Oswald';
-        border: 3px solid #F8C545;
+        border: 3px solid var(--theme-primary);
     }
 
     .upload-btn {
         position: absolute;
         bottom: 0;
         right: 0;
-        background-color: #F8C545;
-        color: black;
+        background-color: var(--theme-primary);
+        color: var(--theme-bg);
         width: 35px;
         height: 35px;
         border-radius: 50%;
@@ -326,16 +332,16 @@
     .username {
         font-family: 'Oswald';
         font-size: 1.2rem;
-        color: #F8C545;
+        color: var(--theme-primary);
         margin: 0;
         text-transform: uppercase;
     }
 
     /* Inputs */
     .section-subtitle {
-        color: #888;
+        color: var(--theme-text-muted);
         font-size: 0.9rem;
-        border-bottom: 1px solid #333;
+        border-bottom: 1px solid var(--theme-border);
         padding-bottom: 5px;
         margin-bottom: 15px;
         font-weight: bold;
@@ -344,7 +350,7 @@
     }
 
     .lbl-input {
-        color: #F8C545;
+        color: var(--theme-primary);
         font-size: 0.85rem;
         margin-bottom: 4px;
         display: block;
@@ -354,9 +360,9 @@
 
     .input-dark {
         width: 100%;
-        background-color: #1a1a1a;
-        border: 1px solid #444;
-        color: white;
+        background-color: var(--theme-bg);
+        border: 1px solid var(--theme-border);
+        color: var(--theme-text);
         padding: 10px;
         border-radius: 8px;
         outline: none;
@@ -364,9 +370,14 @@
         font-size: 1rem;
     }
 
-        .input-dark:focus {
-            border-color: #F8C545;
-        }
+    .input-dark:focus {
+        border-color: var(--theme-primary);
+        box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    }
+
+    .input-dark::placeholder {
+        color: var(--theme-text-muted);
+    }
 
     .text-area {
         height: 80px;
@@ -397,7 +408,7 @@
 
     .lbl-small {
         font-size: 0.65rem;
-        color: #ccc;
+        color: var(--theme-text-muted);
         margin-bottom: 2px;
     }
 
@@ -408,11 +419,11 @@
         height: 24px;
     }
 
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
 
     .slider {
         position: absolute;
@@ -421,44 +432,44 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: #333;
+        background-color: var(--theme-border);
         transition: .4s;
         border-radius: 34px;
     }
 
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-    input:checked + .slider {
-        background-color: #F8C545;
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: var(--theme-text-muted);
+        transition: .4s;
+        border-radius: 50%;
     }
 
-        input:checked + .slider:before {
-            transform: translateX(22px);
-            background-color: black;
-        }
+    input:checked + .slider {
+        background-color: var(--theme-primary);
+    }
+
+    input:checked + .slider:before {
+        transform: translateX(22px);
+        background-color: var(--theme-bg);
+    }
 
     .text-info-app {
         display: block;
         font-size: 0.75rem;
-        color: #888;
+        color: var(--theme-text-muted);
     }
 
     /* WhatsApp Style */
     .whatsapp-input-group {
         display: flex;
         align-items: center;
-        background-color: #1a1a1a;
-        border: 1px solid #444;
+        background-color: var(--theme-bg);
+        border: 1px solid var(--theme-border);
         border-radius: 8px;
         overflow: hidden;
         height: 45px;
@@ -466,7 +477,7 @@
     }
 
     .ws-icon-box {
-        background-color: #25D366;
+        background-color: #25D366; /* Siempre Verde Semántico */
         color: white;
         width: 45px;
         height: 100%;
@@ -480,20 +491,24 @@
         flex-grow: 1;
         background: transparent;
         border: none;
-        color: white;
+        color: var(--theme-text);
         padding: 0 15px;
         height: 100%;
         outline: none;
         font-size: 1rem;
     }
 
-        .ws-input-field::-webkit-outer-spin-button, .ws-input-field::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
+    .ws-input-field::-webkit-outer-spin-button, .ws-input-field::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
 
     .ws-input-field {
         -moz-appearance: textfield;
+    }
+    
+    .ws-input-field::placeholder {
+        color: var(--theme-text-muted);
     }
 
     /* Certificados */
@@ -507,18 +522,18 @@
         text-align: center;
     }
 
-        .cert-box label {
-            color: #ccc;
-            font-size: 0.75rem;
-            display: block;
-            margin-bottom: 5px;
-        }
+    .cert-box label {
+        color: var(--theme-text-muted);
+        font-size: 0.75rem;
+        display: block;
+        margin-bottom: 5px;
+    }
 
     .cert-preview {
         width: 100%;
-        height: 160px; /* Aumentamos un poquito la altura para que se vea mejor */
-        background-color: #1a1a1a;
-        border: 2px dashed #444;
+        height: 160px;
+        background-color: var(--theme-bg);
+        border: 2px dashed var(--theme-border);
         border-radius: 10px;
         display: flex;
         justify-content: center;
@@ -526,14 +541,13 @@
         cursor: pointer;
         position: relative;
         overflow: hidden;
-        /* Quitamos el background-size y background-position de aquí */
     }
 
     .cert-img-full {
         width: 100%;
         height: 100%;
-        object-fit: contain; /* Muestra la foto completa sin recortes */
-        background-color: #000; /* Fondo negro por si la foto es más estrecha */
+        object-fit: contain; 
+        background-color: #000; 
     }
 
     .btn-delete-img {
@@ -589,8 +603,8 @@
     /* Botón Guardar */
     .btn-save {
         width: 100%;
-        background: linear-gradient(45deg, #F8C545, #e0a800);
-        color: black;
+        background: var(--theme-primary);
+        color: var(--theme-bg);
         font-family: 'Oswald';
         font-size: 1.1rem;
         border: none;
@@ -598,14 +612,14 @@
         border-radius: 8px;
         font-weight: bold;
         letter-spacing: 1px;
-        box-shadow: 0 4px 15px rgba(248,197,69,0.3);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
 
-        .btn-save:disabled {
-            background: #333;
-            color: #666;
-            box-shadow: none;
-        }
+    .btn-save:disabled {
+        background: var(--theme-border);
+        color: var(--theme-text-muted);
+        box-shadow: none;
+    }
 
     .fade-in {
         animation: fadeIn 0.5s ease;
@@ -616,7 +630,6 @@
             opacity: 0;
             transform: translateY(10px);
         }
-
         to {
             opacity: 1;
             transform: translateY(0);
@@ -625,6 +638,17 @@
 </style>
 
 @code {
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9; 
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
     public class PerfilEdicionDto
     {
         public Guid UsuarioID { get; set; }
@@ -658,6 +682,18 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // LEER EL CACHÉ LOCAL AL INSTANTE
+        try 
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache)) 
+            { 
+                EstilosTema = cache; 
+                StateHasChanged(); 
+            }
+        } 
+        catch { }
+
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
         await CargarDatos();
     }
@@ -677,9 +713,10 @@
                     miPerfil.Whatsapp = miPerfil.Whatsapp.Substring(3);
                 }
 
-                previewAvatar = miPerfil.FotoPerfilUrl ?? "";
-                previewCert1 = miPerfil.FotoCertificado1Url ?? "";
-                previewCert2 = miPerfil.FotoCertificado2Url ?? "";
+                // Asegurar burla de caché para las fotos
+                previewAvatar = !string.IsNullOrEmpty(miPerfil.FotoPerfilUrl) ? $"{miPerfil.FotoPerfilUrl}?t={DateTime.Now.Ticks}" : "";
+                previewCert1 = !string.IsNullOrEmpty(miPerfil.FotoCertificado1Url) ? $"{miPerfil.FotoCertificado1Url}?t={DateTime.Now.Ticks}" : "";
+                previewCert2 = !string.IsNullOrEmpty(miPerfil.FotoCertificado2Url) ? $"{miPerfil.FotoCertificado2Url}?t={DateTime.Now.Ticks}" : "";
             }
         }
         catch (Exception ex)

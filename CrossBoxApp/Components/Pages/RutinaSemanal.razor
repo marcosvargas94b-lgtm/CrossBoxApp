@@ -4,199 +4,209 @@
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject SesionService Sesion
+@inject IJSRuntime JS
 
-<div class="main-layout">
-    @* NAVBAR *@
-    <div class="navbar-container">
-        <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
-            <i class="fas fa-arrow-left"></i> VOLVER
-        </div>
-        <div class="nav-title">RUTINA SEMANAL</div>
-        <div class="nav-right"></div>
-    </div>
+@* ENVOLVEMOS TODA LA VISTA EN EL TEMA GLOBAL *@
+<div style="@EstilosTema">
 
-    <div class="scrollable-content">
-        @* SELECTOR DE SEMANAS *@
-        <div class="week-selector-container fade-in">
-            <i class="fas fa-calendar-alt text-warning me-2"></i>
-            <select class="week-select" @onchange="CambiarSemana">
-                @foreach (var semana in semanasDelMes)
-                {
-                    <option value="@semana.Lunes.ToString("yyyy-MM-dd")" selected="@(semana.Lunes == lunesActual)">
-                        Semana del @semana.Lunes.ToString("dd MMM") al @semana.Lunes.AddDays(6).ToString("dd MMM")
-                    </option>
-                }
-            </select>
+    <div class="main-layout">
+        @* NAVBAR *@
+        <div class="navbar-container">
+            <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </div>
+            <div class="nav-title">RUTINA SEMANAL</div>
+            <div class="nav-right"></div>
         </div>
 
-        @if (cargando)
-        {
-            <div class="text-center mt-5"><div class="spinner-border text-warning"></div></div>
-        }
-        else
-        {
-            @* BANNERS DE LOS DÍAS *@
-            <div class="dias-list mt-3">
-                @for (int i = 0; i < 7; i++)
-                {
-                    var fechaDia = lunesActual.AddDays(i);
-                    var rutinaDelDia = rutinasSemana.FirstOrDefault(r => r.Fecha.Date == fechaDia.Date);
-                    
-                    int estado = rutinaDelDia?.Estado ?? -1; // -1: Gris, 0: Amarillo, 1: Verde
-
-                    <div class="dia-banner slide-in @GetBannerClass(estado)" style="animation-delay: @(i * 0.1)s;">
-                        <div class="dia-info">
-                            <span class="dia-nombre">@fechaDia.ToString("dddd").ToUpper() @fechaDia.ToString("dd")</span>
-
-                            @if (estado == -1)
-                            {
-                                <span class="dia-status">SIN ENTRENAMIENTO</span>
-                            }
-                            else if (estado == 0)
-                            {
-                                <span class="dia-status">ENTRENAMIENTO PENDIENTE</span>
-                            }
-                            else if (estado == 2)
-                            {
-                                <span class="dia-status"><i class="fas fa-fire"></i> EN PROGRESO (EN EL GYM)</span>
-                            }
-                            else if (estado == 3)
-                            {
-                                <span class="dia-status"><i class="fas fa-pause-circle"></i> ENTRENAMIENTO PAUSADO</span>
-                            }
-                            else if (estado == 1)
-                            {
-                                <span class="dia-status"><i class="fas fa-check-circle"></i> RUTINA COMPLETADA</span>
-                            }
-                        </div>
-
-                        <div class="dia-actions">
-                            @if (estado == -1)
-                            {
-                                <button class="btn-action btn-add" @onclick="() => AbrirModal(fechaDia)">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            }
-                            else
-                            {
-                                <button class="btn-action btn-edit" @onclick="() => AbrirModal(fechaDia, rutinaDelDia.RutinaDiaID)">
-                                    <i class="fas fa-pencil-alt"></i>
-                                </button>
-                                <button class="btn-action btn-play" @onclick="() => IrAEjecutar(rutinaDelDia.RutinaDiaID)">
-                                    <i class="fas fa-play"></i>
-                                </button>
-                            }
-                        </div>
-                    </div>
-                }
-            </div>
-        }
-    </div>
-</div>
-
-@* ========================================== *@
-@* MODAL ARMADOR DE RUTINAS *@
-@* ========================================== *@
-@if (mostrarModal)
-{
-    <div class="modal-overlay" @onclick="() => mostrarModal = false">
-        <div class="modal-content custom-modal" @onclick:stopPropagation="true">
-            <div class="modal-header">
-                <h5>RUTINA: @fechaEditando.ToString("dddd dd MMM").ToUpper()</h5>
-                <button class="btn-icon-header" @onclick="() => mostrarModal = false"><i class="fas fa-times"></i></button>
-            </div>
-
-            <div class="modal-body scroll-custom">
-                @if (cargandoModal)
-                {
-                    <div class="text-center mt-4"><i class="fas fa-spinner fa-spin text-warning fs-3"></i><p class="text-muted mt-2">Cargando rutina...</p></div>
-                }
-                else
-                {
-                    @* CONTROLES PARA AGREGAR BLOQUES *@
-                    <div class="add-blocks-row">
-                        <button class="btn-bloque" @onclick="() => AgregarBloque(1)">+ EJERCICIO IND.</button>
-                        <button class="btn-bloque" @onclick="() => AgregarBloque(2)">+ BI-SERIE</button>
-                        <button class="btn-bloque" @onclick="() => AgregarBloque(3)">+ TRI-SERIE</button>
-                    </div>
-
-                    <div class="bloques-container mt-3">
-                        @if (!bloquesUI.Any())
-                        {
-                            <div class="text-center text-muted mt-4" style="font-style:italic;">Agrega bloques a tu entrenamiento.</div>
-                        }
-
-                        @foreach (var bloque in bloquesUI)
-                        {
-                            <div class="bloque-card slide-in">
-                                <div class="bloque-header">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="bloque-tipo">
-                                            @(bloque.TipoBloque == 1 ? "INDIVIDUAL" : bloque.TipoBloque == 2 ? "BI-SERIE" : "TRI-SERIE")
-                                        </span>
-                                        @* LAS SERIES AHORA ESTÁN A NIVEL BLOQUE *@
-                                        <input type="text" class="custom-input series-input m-0" placeholder="Series (Ej. 4)" @bind="bloque.Series" />
-                                    </div>
-                                    <button class="btn-remove-bloque" @onclick="() => bloquesUI.Remove(bloque)"><i class="fas fa-trash"></i></button>
-                                </div>
-
-                                @* EJERCICIOS DEL BLOQUE (Músculo y Reps a nivel ejercicio) *@
-                                <div class="ejercicios-list mt-3">
-                                    @for (int j = 0; j < bloque.Ejercicios.Count; j++)
-                                    {
-                                        var ej = bloque.Ejercicios[j];
-                                        <div class="ejercicio-row">
-                                            <div class="ej-num">@(j + 1)</div>
-                                            <div class="ej-inputs">
-                                                <input type="text" class="custom-input" placeholder="Nombre de Ejercicio" @bind="ej.NombreEjercicio" />
-
-                                                <div class="series-reps-row mt-2">
-                                                    <select class="custom-input half" @bind="ej.GrupoMuscular">
-                                                        <option value="">Músculo...</option>
-                                                        @foreach (var m in catalogoMusculos)
-                                                        {
-                                                            <option value="@m">@m</option>
-                                                        }
-                                                    </select>
-                                                    <input type="text" class="custom-input half" placeholder="Reps (Ej. 10-12)" @bind="ej.Repeticiones" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        }
-                    </div>
-                }
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn-save w-100" @onclick="GuardarRutinaDia" disabled="@(guardandoRutina || cargandoModal)">
-                    @if (guardandoRutina)
+        <div class="scrollable-content">
+            @* SELECTOR DE SEMANAS *@
+            <div class="week-selector-container fade-in">
+                <i class="fas fa-calendar-alt me-2" style="color: var(--theme-primary);"></i>
+                <select class="week-select" @onchange="CambiarSemana">
+                    @foreach (var semana in semanasDelMes)
                     {
-                        <i class="fas fa-spinner fa-spin"></i>
+                        <option value="@semana.Lunes.ToString("yyyy-MM-dd")" selected="@(semana.Lunes == lunesActual)">
+                            Semana del @semana.Lunes.ToString("dd MMM") al @semana.Lunes.AddDays(6).ToString("dd MMM")
+                        </option>
+                    }
+                </select>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="text-center mt-5">
+                    <div class="spinner-border" style="color: var(--theme-primary);"></div>
+                </div>
+            }
+            else
+            {
+                @* BANNERS DE LOS DÍAS *@
+                <div class="dias-list mt-3">
+                    @for (int i = 0; i < 7; i++)
+                    {
+                        var fechaDia = lunesActual.AddDays(i);
+                        var rutinaDelDia = rutinasSemana.FirstOrDefault(r => r.Fecha.Date == fechaDia.Date);
+                        
+                        int estado = rutinaDelDia?.Estado ?? -1; // -1: Gris, 0: Amarillo, 1: Verde, 2: Naranja (Progreso)
+
+                        <div class="dia-banner slide-in @GetBannerClass(estado)" style="animation-delay: @(i * 0.1)s;">
+                            <div class="dia-info">
+                                <span class="dia-nombre">@fechaDia.ToString("dddd").ToUpper() @fechaDia.ToString("dd")</span>
+
+                                @if (estado == -1)
+                                {
+                                    <span class="dia-status">SIN ENTRENAMIENTO</span>
+                                }
+                                else if (estado == 0)
+                                {
+                                    <span class="dia-status">ENTRENAMIENTO PENDIENTE</span>
+                                }
+                                else if (estado == 2)
+                                {
+                                    <span class="dia-status"><i class="fas fa-fire"></i> EN PROGRESO (EN EL GYM)</span>
+                                }
+                                else if (estado == 3)
+                                {
+                                    <span class="dia-status"><i class="fas fa-pause-circle"></i> ENTRENAMIENTO PAUSADO</span>
+                                }
+                                else if (estado == 1)
+                                {
+                                    <span class="dia-status"><i class="fas fa-check-circle"></i> RUTINA COMPLETADA</span>
+                                }
+                            </div>
+
+                            <div class="dia-actions">
+                                @if (estado == -1)
+                                {
+                                    <button class="btn-action btn-add" @onclick="() => AbrirModal(fechaDia)">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn-action btn-edit" @onclick="() => AbrirModal(fechaDia, rutinaDelDia.RutinaDiaID)">
+                                        <i class="fas fa-pencil-alt"></i>
+                                    </button>
+                                    <button class="btn-action btn-play" @onclick="() => IrAEjecutar(rutinaDelDia.RutinaDiaID)">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    @* ========================================== *@
+    @* MODAL ARMADOR DE RUTINAS *@
+    @* ========================================== *@
+    @if (mostrarModal)
+    {
+        <div class="modal-overlay" @onclick="() => mostrarModal = false">
+            <div class="modal-content custom-modal" @onclick:stopPropagation="true">
+                <div class="modal-header">
+                    <h5 style="color: var(--theme-primary);">RUTINA: @fechaEditando.ToString("dddd dd MMM").ToUpper()</h5>
+                    <button class="btn-icon-header" @onclick="() => mostrarModal = false"><i class="fas fa-times"></i></button>
+                </div>
+
+                <div class="modal-body scroll-custom">
+                    @if (cargandoModal)
+                    {
+                        <div class="text-center mt-4">
+                            <i class="fas fa-spinner fa-spin fs-3" style="color: var(--theme-primary);"></i>
+                            <p class="mt-2" style="color: var(--theme-text-muted);">Cargando rutina...</p>
+                        </div>
                     }
                     else
                     {
+                        @* CONTROLES PARA AGREGAR BLOQUES *@
+                        <div class="add-blocks-row">
+                            <button class="btn-bloque" @onclick="() => AgregarBloque(1)">+ EJERCICIO IND.</button>
+                            <button class="btn-bloque" @onclick="() => AgregarBloque(2)">+ BI-SERIE</button>
+                            <button class="btn-bloque" @onclick="() => AgregarBloque(3)">+ TRI-SERIE</button>
+                        </div>
 
-                        <span>GUARDAR ENTRENAMIENTO</span>
+                        <div class="bloques-container mt-3">
+                            @if (!bloquesUI.Any())
+                            {
+                                <div class="text-center mt-4" style="font-style:italic; color: var(--theme-text-muted);">Agrega bloques a tu entrenamiento.</div>
+                            }
+
+                            @foreach (var bloque in bloquesUI)
+                            {
+                                <div class="bloque-card slide-in" style="border-left-color: var(--theme-primary);">
+                                    <div class="bloque-header">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="bloque-tipo" style="color: var(--theme-primary);">
+                                                @(bloque.TipoBloque == 1 ? "INDIVIDUAL" : bloque.TipoBloque == 2 ? "BI-SERIE" : "TRI-SERIE")
+                                            </span>
+                                            <input type="text" class="custom-input series-input m-0" placeholder="Series (Ej. 4)" @bind="bloque.Series" />
+                                        </div>
+                                        <button class="btn-remove-bloque" @onclick="() => bloquesUI.Remove(bloque)"><i class="fas fa-trash"></i></button>
+                                    </div>
+
+                                    @* EJERCICIOS DEL BLOQUE *@
+                                    <div class="ejercicios-list mt-3">
+                                        @for (int j = 0; j < bloque.Ejercicios.Count; j++)
+                                        {
+                                            var ej = bloque.Ejercicios[j];
+                                            <div class="ejercicio-row">
+                                                <div class="ej-num">@(j + 1)</div>
+                                                <div class="ej-inputs">
+                                                    <input type="text" class="custom-input" placeholder="Nombre de Ejercicio" @bind="ej.NombreEjercicio" />
+
+                                                    <div class="series-reps-row mt-2">
+                                                        <select class="custom-input half" @bind="ej.GrupoMuscular">
+                                                            <option value="">Músculo...</option>
+                                                            @foreach (var m in catalogoMusculos)
+                                                            {
+                                                                <option value="@m">@m</option>
+                                                            }
+                                                        </select>
+                                                        <input type="text" class="custom-input half" placeholder="Reps (Ej. 10-12)" @bind="ej.Repeticiones" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
                     }
-                </button>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn-save w-100" @onclick="GuardarRutinaDia" disabled="@(guardandoRutina || cargandoModal)">
+                        @if (guardandoRutina)
+                        {
+                            <i class="fas fa-spinner fa-spin"></i>
+                        }
+                        else
+                        {
+                            <span>GUARDAR ENTRENAMIENTO</span>
+                        }
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
-}
+    }
+</div>
+
 <style>
-    .main-layout { position: fixed; top:0; left:0; width:100vw; height:100vh; background:#050505; display:flex; flex-direction:column; z-index:1; }
-    .navbar-container { flex-shrink:0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom:10px; padding-left:15px; padding-right:15px; background:#111; border-bottom:1px solid #F8C545; display:flex; justify-content:space-between; align-items:center; z-index:100; font-family:'Oswald'; color:white; min-height:60px; }
-    .nav-left { color:#F8C545; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:0.9rem; }
-    .nav-title { font-weight:bold; font-size:1.1rem; color:white; letter-spacing:1px; }
-    .scrollable-content { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 50px; background: radial-gradient(circle at top, #1a1a1a 0%, #050505 100%); -webkit-overflow-scrolling: touch; }
+    /* --- ESTRUCTURA BASE --- */
+    .main-layout { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--theme-bg); display: flex; flex-direction: column; z-index: 1; }
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom: 10px; padding-left: 15px; padding-right: 15px; background: var(--theme-bg); border-bottom: 1px solid var(--theme-primary); display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; color: var(--theme-text); min-height: 60px; }
+    .nav-left { color: var(--theme-primary); font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: var(--theme-text); letter-spacing: 1px; }
+    .scrollable-content { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 50px; background: radial-gradient(circle at top, var(--theme-card) 0%, var(--theme-bg) 100%); -webkit-overflow-scrolling: touch; }
 
     /* SELECTOR DE SEMANA */
-    .week-selector-container { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 10px 15px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-    .week-select { flex: 1; background: transparent; border: none; color: white; font-family: 'Oswald'; font-size: 1.1rem; outline: none; -webkit-appearance: none; }
-    .week-select option { background: #111; color: white; }
+    .week-selector-container { background: var(--theme-card); border: 1px solid var(--theme-border); border-radius: 12px; padding: 10px 15px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+    .week-select { flex: 1; background: transparent; border: none; color: var(--theme-text); font-family: 'Oswald'; font-size: 1.1rem; outline: none; -webkit-appearance: none; }
+    .week-select option { background: var(--theme-card); color: var(--theme-text); }
 
     /* BANNERS */
     .dias-list { display: flex; flex-direction: column; gap: 12px; }
@@ -207,71 +217,63 @@
     .dia-actions { display: flex; gap: 10px; }
 
     /* COLORES BANNERS */
-    .banner-gris { background: #1a1a1a; border-color: #333; color: #888; }
-    .banner-gris .dia-status { color: #555; }
+    .banner-gris { background: var(--theme-card); border-color: var(--theme-border); color: var(--theme-text-muted); }
+    .banner-gris .dia-status { color: var(--theme-text-muted); opacity: 0.6; }
     
-    .banner-amarillo { background: rgba(248, 197, 69, 0.1); border-color: #F8C545; color: white; box-shadow: 0 0 15px rgba(248, 197, 69, 0.15); }
+    .banner-amarillo { background: rgba(248, 197, 69, 0.05); border-color: #F8C545; color: white; box-shadow: 0 0 15px rgba(248, 197, 69, 0.1); }
     .banner-amarillo .dia-status { color: #F8C545; }
 
-    .banner-verde { background: rgba(40, 167, 69, 0.1); border-color: #28a745; color: white; box-shadow: 0 0 15px rgba(40, 167, 69, 0.15); }
+    .banner-verde { background: rgba(40, 167, 69, 0.05); border-color: #28a745; color: white; box-shadow: 0 0 15px rgba(40, 167, 69, 0.1); }
     .banner-verde .dia-status { color: #28a745; }
 
     /* BOTONES BANNERS */
     .btn-action { width: 45px; height: 45px; border-radius: 50%; border: none; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; transition: 0.2s; }
-    .btn-add { background: #333; color: #aaa; }
-    .btn-edit { background: transparent; border: 2px solid #F8C545; color: #F8C545; }
-    .btn-play { background: #F8C545; color: #000; box-shadow: 0 0 10px rgba(248,197,69,0.5); }
-    .btn-action:active { transform: scale(0.9); }
+    .btn-add { background: var(--theme-border); color: var(--theme-text-muted); }
+    .btn-edit { background: transparent; border: 2px solid var(--theme-primary); color: var(--theme-primary); }
+    .btn-play { background: var(--theme-primary); color: var(--theme-bg); box-shadow: 0 0 10px rgba(0,0,0,0.3); }
 
-    /* MODAL */
+    /* MODAL (Bottom Sheet) */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 5000; display: flex; justify-content: center; align-items: flex-end; padding-bottom: calc(env(safe-area-inset-bottom) + 0px); }
-    .custom-modal { background: #111; width: 100%; height: 85vh; border-top-left-radius: 25px; border-top-right-radius: 25px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -10px 40px rgba(0,0,0,0.9); animation: slideUp 0.3s ease-out; }
-    .modal-header { padding: 20px 25px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; background:#1a1a1a; }
-    .modal-header h5 { margin:0; color:#F8C545; font-family:'Oswald'; font-size: 1.3rem; }
-    .btn-icon-header { background: none; border: none; color: #888; font-size: 1.4rem; cursor: pointer; }
+    .custom-modal { background: var(--theme-bg); width: 100%; height: 85vh; border-top-left-radius: 25px; border-top-right-radius: 25px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -10px 40px rgba(0,0,0,0.9); animation: slideUp 0.3s ease-out; border: 1px solid var(--theme-border); }
+    .modal-header { padding: 20px 25px; border-bottom: 1px solid var(--theme-border); display: flex; justify-content: space-between; align-items: center; background: var(--theme-card); }
+    .btn-icon-header { background: none; border: none; color: var(--theme-text-muted); font-size: 1.4rem; cursor: pointer; }
     .modal-body { padding: 15px; overflow-y: auto; flex: 1; }
-    .modal-footer { padding: 15px; background: #1a1a1a; border-top: 1px solid #333; }
+    .modal-footer { padding: 15px; background: var(--theme-card); border-top: 1px solid var(--theme-border); }
 
     /* FORMULARIO DE BLOQUES */
     .add-blocks-row { display: flex; gap: 8px; }
-    .btn-bloque { flex: 1; background: #222; border: 1px solid #444; color: white; padding: 10px 5px; font-family: 'Oswald'; font-size: 0.8rem; border-radius: 8px; }
-    .btn-bloque:active { background: #F8C545; color: black; }
+    .btn-bloque { flex: 1; background: var(--theme-bg); border: 1px solid var(--theme-border); color: var(--theme-text); padding: 10px 5px; font-family: 'Oswald'; font-size: 0.8rem; border-radius: 8px; transition: 0.2s; }
+    .btn-bloque:active { background: var(--theme-primary); color: var(--theme-bg); }
 
     .bloques-container { display: flex; flex-direction: column; gap: 15px; }
-    .bloque-card { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 15px; border-left: 4px solid #F8C545; }
-    .bloque-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 8px; }
-    .bloque-tipo { color: #F8C545; font-family: 'Oswald'; font-weight: bold; letter-spacing: 1px; }
+    .bloque-card { background: var(--theme-card); border: 1px solid var(--theme-border); border-radius: 12px; padding: 15px; border-left: 4px solid; }
+    .bloque-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--theme-border); padding-bottom: 8px; }
+    .bloque-tipo { font-family: 'Oswald'; font-weight: bold; letter-spacing: 1px; }
     .btn-remove-bloque { background: none; border: none; color: #ff4d4d; font-size: 1.1rem; }
 
-    .form-group label { color: #aaa; font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; display: block; }
-    .custom-input { width: 100%; background: #222; border: 1px solid #444; color: white; padding: 10px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 8px; outline: none; }
-    .custom-input:focus { border-color: #F8C545; }
+    .custom-input { width: 100%; background: var(--theme-bg); border: 1px solid var(--theme-border); color: var(--theme-text); padding: 10px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 8px; outline: none; }
+    .custom-input:focus { border-color: var(--theme-primary); }
     
-    .ejercicio-row { display: flex; gap: 10px; align-items: flex-start; background: #111; padding: 10px; border-radius: 8px; margin-bottom: 8px; }
-    .ej-num { background: #333; color: white; width: 25px; height: 25px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.8rem; font-weight: bold; flex-shrink: 0; margin-top: 5px; }
+    .ejercicio-row { display: flex; gap: 10px; align-items: flex-start; background: var(--theme-bg); padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--theme-border); }
+    .ej-num { background: var(--theme-border); color: var(--theme-text); width: 25px; height: 25px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 0.8rem; font-weight: bold; flex-shrink: 0; margin-top: 5px; }
     .ej-inputs { flex: 1; }
     .series-reps-row { display: flex; gap: 10px; }
     .half { flex: 1; margin-bottom: 0; }
 
-    .btn-save { background: #F8C545; color: black; border: none; padding: 15px; border-radius: 50px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; box-shadow: 0 5px 15px rgba(248,197,69,0.3); }
+    .btn-save { background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 15px; border-radius: 50px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; box-shadow: 0 5px 15px rgba(0,0,0,0.3); cursor: pointer;}
 
     .fade-in { animation: fadeIn 0.4s ease; }
     .slide-in { animation: slideIn 0.3s ease-out backwards; }
     @@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     @@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
     @@keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
-    .series-input { width: 100px; padding: 4px 10px; font-size: 0.85rem; border-color: #F8C545; background: rgba(248, 197, 69, 0.1); color: #F8C545; font-weight: bold; }
-    .series-input::placeholder { color: rgba(248, 197, 69, 0.5); }
-    /* Nuevo estilo para rutinas en progreso */
-    .banner-naranja { background: rgba(255, 149, 0, 0.15); border-color: #FF9500; color: white; box-shadow: 0 0 15px rgba(255, 149, 0, 0.2); }
-    .banner-naranja .dia-status { color: #FF9500; animation: blink 2s infinite; }
-    
-    @@keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-    .banner-naranja { background: rgba(255, 149, 0, 0.15); border-color: #FF9500; color: white; box-shadow: 0 0 15px rgba(255, 149, 0, 0.2); }
+    .series-input { width: 100px; padding: 4px 10px; font-size: 0.85rem; border-color: var(--theme-primary); background: rgba(255, 255, 255, 0.05); color: var(--theme-primary); font-weight: bold; }
+    .series-input::placeholder { color: var(--theme-text-muted); opacity: 0.5; }
+
+    /* Semántica Naranja (En progreso) */
+    .banner-naranja { background: rgba(255, 149, 0, 0.1); border-color: #FF9500; color: white; box-shadow: 0 0 15px rgba(255, 149, 0, 0.15); }
     .banner-naranja .dia-status { color: #FF9500; animation: blink 2s infinite; }
-    
-    /* Pausada (Ya se fue a su casa, se queda naranja pero no parpadea) */
     .banner-pausado { background: rgba(255, 149, 0, 0.05); border-color: #cc7a00; color: #ccc; }
     .banner-pausado .dia-status { color: #FF9500; }
     
@@ -279,6 +281,17 @@
 </style>
 
 @code {
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9; 
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
     private bool cargando = true;
     private List<SemanaInfo> semanasDelMes = new();
     private DateTime lunesActual;
@@ -299,7 +312,6 @@
     public class SemanaInfo { public DateTime Lunes { get; set; } }
     public class RutinaResumenDto { public Guid RutinaDiaID { get; set; } public DateTime Fecha { get; set; } public int Estado { get; set; } }
 
-    // DTOs de UI adaptados
     public class BloqueUI
     {
         public int TipoBloque { get; set; }
@@ -308,11 +320,22 @@
     }
     public class EjercicioUI { public string NombreEjercicio { get; set; } = ""; public string Repeticiones { get; set; } = ""; public string GrupoMuscular { get; set; } = ""; }
 
-    // DTO para recibir del API
     public class GuardarDiaDto { public Guid UsuarioId { get; set; } public DateTime Fecha { get; set; } public List<BloqueUI> Bloques { get; set; } = new(); }
 
     protected override async Task OnInitializedAsync()
     {
+        // LEER EL CACHÉ LOCAL AL INSTANTE
+        try 
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache)) 
+            { 
+                EstilosTema = cache; 
+                StateHasChanged(); 
+            }
+        } 
+        catch { }
+
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
         CalcularSemanasDelMes();
         lunesActual = semanasDelMes.FirstOrDefault(s => s.Lunes <= DateTime.Today && s.Lunes.AddDays(6) >= DateTime.Today)?.Lunes ?? semanasDelMes.First().Lunes;
@@ -357,16 +380,13 @@
 
     private string GetBannerClass(int estado)
     {
-        if (estado == 0) return "banner-amarillo"; // Cargada sin empezar
-        if (estado == 2) return "banner-naranja";  // ACTIVO EN EL GYM (Parpadeando)
-        if (estado == 3) return "banner-pausado";  // Pausado (Naranja estático, ya está en su casa)
-        if (estado == 1) return "banner-verde";    // Completado
+        if (estado == 0) return "banner-amarillo"; 
+        if (estado == 2) return "banner-naranja";  
+        if (estado == 3) return "banner-pausado";  
+        if (estado == 1) return "banner-verde";    
         return "banner-gris";
     }
 
-    // =====================================
-    // LÓGICA DE EDICIÓN Y LLENADO DEL MODAL
-    // =====================================
     private async Task AbrirModal(DateTime fecha, Guid? rutinaDiaId = null)
     {
         fechaEditando = fecha;

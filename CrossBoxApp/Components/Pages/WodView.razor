@@ -4,78 +4,83 @@
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject SesionService Sesion
+@inject IJSRuntime JS
 
-<div class="main-layout">
+@* ENVOLVEMOS TODA LA VISTA EN EL TEMA GLOBAL *@
+<div style="@EstilosTema">
 
-    <div class="navbar-container">
-        <div class="nav-left" @onclick="Volver">
-            <i class="fas fa-arrow-left"></i> VOLVER
+    <div class="main-layout">
+
+        <div class="navbar-container">
+            <div class="nav-left" @onclick="Volver">
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </div>
+            <div class="nav-title">WOD DEL DÍA</div>
+            <div class="nav-right"></div>
         </div>
-        <div class="nav-title">WOD DEL DÍA</div>
-        <div class="nav-right"></div>
-    </div>
 
-    <div class="scrollable-content">
+        <div class="scrollable-content">
 
-        <h2 class="date-header">@DateTime.Now.ToString("dddd, dd MMMM").ToUpper()</h2>
+            <h2 class="date-header">@DateTime.Now.ToString("dddd, dd MMMM").ToUpper()</h2>
 
-        @if (cargando)
-        {
-            <div class="loading-state">
-                <div class="spinner-border text-warning" role="status"></div>
-                <p>Cargando entrenamiento...</p>
-            </div>
-        }
-        else if (wodData == null || wodData.Segmentos.Count == 0)
-        {
-            <div class="empty-state fade-in">
-                <i class="fas fa-bed"></i>
-                <h3>DÍA DE DESCANSO</h3>
-                <p>No hay programación cargada para hoy en @(Sesion.Usuario?.BoxNombre ?? "tu Box").</p>
-            </div>
-        }
-        else
-        {
-            <div class="wod-segments fade-in">
-                @foreach (var segmento in wodData.Segmentos)
-                {
-                    <div class="segment-card">
-                        <div class="segment-header">
-                            @segmento.Titulo.ToUpper()
-                        </div>
-
-                        <div class="segment-body">
-                            @foreach (var ejercicio in segmento.Ejercicios)
-                            {
-                                <div class="exercise-row-unified">
-                                    <span class="text-desc">
-                                        @ejercicio.Descripcion
-                                    </span>
-
-                                    @if (!string.IsNullOrEmpty(ejercicio.PesoRepeticiones))
-                                    {
-                                        <span class="text-reps">
-                                            - @ejercicio.PesoRepeticiones
-                                        </span>
-                                    }
-                                </div>
-                            }
-                        </div>
-                    </div>
-                }
-            </div>
-
-            @if (Sesion.Usuario != null && (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.Usuario.TipoUsuarioID == 3))
+            @if (cargando)
             {
-                <div class="admin-actions mt-4 mb-4">
-                    <button class="btn btn-danger w-100" @onclick="EliminarWodActual">
-                        <i class="fas fa-trash-alt"></i> ELIMINAR WOD DEL DÍA
-                    </button>
+                <div class="loading-state">
+                    <div class="spinner-border" style="color: var(--theme-primary);" role="status"></div>
+                    <p style="color: var(--theme-text-muted); margin-top: 10px;">Cargando entrenamiento...</p>
                 </div>
             }
-        }
+            else if (wodData == null || wodData.Segmentos.Count == 0)
+            {
+                <div class="empty-state fade-in">
+                    <i class="fas fa-bed" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px; color: var(--theme-text-muted);"></i>
+                    <h3 style="color: var(--theme-text-muted);">DÍA DE DESCANSO</h3>
+                    <p style="color: var(--theme-text-muted);">No hay programación cargada para hoy en @(Sesion.Usuario?.BoxNombre ?? "tu Box").</p>
+                </div>
+            }
+            else
+            {
+                <div class="wod-segments fade-in">
+                    @foreach (var segmento in wodData.Segmentos)
+                    {
+                        <div class="segment-card">
+                            <div class="segment-header">
+                                @segmento.Titulo.ToUpper()
+                            </div>
 
-        <div style="height: 40px;"></div>
+                            <div class="segment-body">
+                                @foreach (var ejercicio in segmento.Ejercicios)
+                                {
+                                    <div class="exercise-row-unified">
+                                        <span class="text-desc">
+                                            @ejercicio.Descripcion
+                                        </span>
+
+                                        @if (!string.IsNullOrEmpty(ejercicio.PesoRepeticiones))
+                                        {
+                                            <span class="text-reps">
+                                                - @ejercicio.PesoRepeticiones
+                                            </span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (Sesion.Usuario != null && (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.Usuario.TipoUsuarioID == 3))
+                {
+                    <div class="admin-actions mt-4 mb-4">
+                        <button class="btn btn-danger w-100" style="font-family: 'Oswald'; font-weight: bold; letter-spacing: 1px; padding: 12px;" @onclick="EliminarWodActual">
+                            <i class="fas fa-trash-alt"></i> ELIMINAR WOD DEL DÍA
+                        </button>
+                    </div>
+                }
+            }
+
+            <div style="height: 40px;"></div>
+        </div>
     </div>
 </div>
 
@@ -87,7 +92,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background-color: #0d0d0d;
+        background-color: var(--theme-bg);
         display: flex;
         flex-direction: column;
         z-index: 1;
@@ -99,9 +104,9 @@
         padding-bottom: 10px;
         padding-left: 20px;
         padding-right: 20px;
-        background-color: #0d0d0d;
-        border-bottom: 1px solid #F8C545;
-        color: white;
+        background-color: var(--theme-bg);
+        border-bottom: 1px solid var(--theme-primary);
+        color: var(--theme-text);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -111,7 +116,7 @@
     }
 
     .nav-left {
-        color: #F8C545;
+        color: var(--theme-primary);
         font-weight: bold;
         cursor: pointer;
         display: flex;
@@ -123,7 +128,7 @@
     .nav-title {
         font-weight: bold;
         font-size: 1.1rem;
-        color: white;
+        color: var(--theme-text);
         letter-spacing: 1px;
     }
 
@@ -147,10 +152,10 @@
         font-family: 'Oswald';
         font-size: 1.5rem;
         text-align: center;
-        color: white;
+        color: var(--theme-text);
         margin-top: 10px;
         margin-bottom: 25px;
-        border-bottom: 1px solid #333;
+        border-bottom: 1px solid var(--theme-border);
         padding-bottom: 10px;
         letter-spacing: 1px;
     }
@@ -163,8 +168,8 @@
 
     /* Tarjeta de Segmento */
     .segment-card {
-        background-color: #1a1a1a;
-        border: 1px solid #333;
+        background-color: var(--theme-card);
+        border: 1px solid var(--theme-border);
         border-radius: 12px;
         margin-bottom: 25px;
         overflow: hidden;
@@ -172,8 +177,8 @@
     }
 
     .segment-header {
-        background-color: #F8C545;
-        color: #0d0d0d;
+        background-color: var(--theme-primary);
+        color: var(--theme-bg);
         font-family: 'Oswald';
         font-size: 1.1rem;
         font-weight: bold;
@@ -188,7 +193,7 @@
     /* Filas de Ejercicios */
     .exercise-row-unified {
         padding: 12px 0;
-        border-bottom: 1px solid #333;
+        border-bottom: 1px solid var(--theme-border);
         white-space: normal;
         word-wrap: break-word;
         line-height: 1.4;
@@ -201,14 +206,14 @@
     .text-desc {
         font-family: 'Roboto', sans-serif;
         font-size: 1rem;
-        color: #eee;
-        white-space: pre-wrap; 
+        color: var(--theme-text);
+        white-space: pre-wrap;
     }
 
     .text-reps {
         font-family: 'Oswald', sans-serif;
         font-size: 1.05rem;
-        color: #F8C545;
+        color: var(--theme-primary);
         font-weight: bold;
         margin-left: 6px;
     }
@@ -217,19 +222,11 @@
     .loading-state, .empty-state {
         text-align: center;
         margin-top: 50px;
-        color: #666;
         font-family: 'Roboto';
     }
 
-        .empty-state i {
-            font-size: 3rem;
-            margin-bottom: 15px;
-            color: #333;
-        }
-
         .empty-state h3 {
             font-family: 'Oswald';
-            color: #888;
             margin-bottom: 5px;
         }
 
@@ -238,15 +235,18 @@
     }
 
     @@keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
+        from
 
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
     }
 
     .admin-actions {
@@ -257,11 +257,34 @@
 </style>
 
 @code {
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9;
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
     private WodDiaDto wodData;
     private bool cargando = true;
 
     protected override async Task OnInitializedAsync()
     {
+        // LEER EL CACHÉ LOCAL AL INSTANTE
+        try
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache))
+            {
+                EstilosTema = cache;
+                StateHasChanged();
+            }
+        }
+        catch { }
+
         try
         {
             if (Sesion.Usuario == null)

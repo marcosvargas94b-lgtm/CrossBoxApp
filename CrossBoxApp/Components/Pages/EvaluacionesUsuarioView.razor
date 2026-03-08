@@ -4,8 +4,9 @@
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject SesionService Sesion
-
-<div class="main-layout">
+@inject IJSRuntime JS
+<div style="@EstilosTema">
+<div class="main-layout" >
 
     <div class="navbar-container">
         <div class="nav-left" @onclick="Volver">
@@ -23,7 +24,7 @@
         @if (cargando)
         {
             <div class="text-center mt-5">
-                <div class="spinner-border text-warning"></div>
+                <div class="spinner-border" style="color: var(--theme-primary);"></div>
             </div>
         }
         else if (listaEvaluaciones == null || listaEvaluaciones.Count == 0)
@@ -97,7 +98,7 @@
     <div class="modal-overlay fade-in">
         <div class="modal-content custom-modal slide-up">
             <div class="modal-header">
-                <h5 style="color:#F8C545; margin:0; font-family:'Oswald'">
+                <h5 style="color:var(--theme-primary); margin:0; font-family:'Oswald'">
                     @(esModoNuevaMarca ? "NUEVA MARCA" : "EDITAR REGISTRO")
                 </h5>
                 <button class="btn-close-custom" @onclick="() => mostrarModal = false"><i class="fas fa-times"></i></button>
@@ -120,10 +121,10 @@
         </div>
     </div>
 }
-
+</div>
 <style>
    /* --- ESTRUCTURA BASE Y NAVBAR BLINDADA --- */
-    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
+    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--theme-bg); display: flex; flex-direction: column; z-index: 1; }
 
     .navbar-container {
         flex-shrink: 0;
@@ -131,9 +132,9 @@
         padding-bottom: 10px;
         padding-left: 20px;
         padding-right: 20px;
-        background-color: #0d0d0d;
-        border-bottom: 1px solid #F8C545;
-        color: white;
+        background-color: var(--theme-bg);
+        border-bottom: 1px solid var(--theme-primary);
+        color: var(--theme-text);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -143,7 +144,7 @@
     }
 
     .nav-left {
-        color: #F8C545;
+        color: var(--theme-primary);
         font-weight: bold;
         cursor: pointer;
         display: flex;
@@ -167,14 +168,14 @@
     .nav-title-main {
         font-weight: bold;
         font-size: 1.1rem;
-        color: white;
+        color: var(--theme-text);
         letter-spacing: 1px;
         white-space: nowrap;
     }
 
     .nav-title-sub {
         font-size: 0.75rem;
-        color: #888;
+        color: var(--theme-text-muted);
         font-family: 'Roboto';
         font-weight: normal;
         white-space: nowrap;
@@ -200,20 +201,20 @@
     .eval-grid { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 15px; }
 
     .eval-card { 
-        border: 1px solid #333; border-radius: 12px; overflow: hidden; 
-        background: #1a1a1a; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        border: 1px solid var(--theme-border); border-radius: 12px; overflow: hidden; 
+        background: var(--theme-card); box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     }
 
     .card-header-yellow { 
-        background-color: #F8C545; padding: 8px 15px; 
+        background-color: var(--theme-primary); padding: 8px 15px; 
         display: flex; justify-content: space-between; 
-        font-size: 0.8rem; font-weight: bold; color: black; font-family: 'Oswald';
+        font-size: 0.8rem; font-weight: bold; color: var(--theme-bg); font-family: 'Oswald';
     }
 
     .card-body-dark { padding: 15px; }
 
     .test-name { 
-        color: white; font-family: 'Oswald'; font-size: 1.2rem; margin-bottom: 10px; 
+        color: var(--theme-text); font-family: 'Oswald'; font-size: 1.2rem; margin-bottom: 10px; 
         text-transform: uppercase;
     }
 
@@ -222,18 +223,18 @@
     .result-display { display: flex; flex-direction: column; }
     .value-row { display: flex; align-items: baseline; gap: 5px; }
     
-    .result-value { color: #F8C545; font-size: 1.8rem; font-weight: bold; line-height: 1; font-family: 'Oswald'; }
-    .result-unit { color: #F8C545; font-size: 1rem; font-weight: bold; text-transform: uppercase; font-family: 'Oswald'; }
-    .result-date { color: #666; font-size: 0.75rem; margin-top: 4px; font-family: 'Roboto'; }
+    .result-value { color: var(--theme-primary); font-size: 1.8rem; font-weight: bold; line-height: 1; font-family: 'Oswald'; }
+    .result-unit { color: var(--theme-primary); font-size: 1rem; font-weight: bold; text-transform: uppercase; font-family: 'Oswald'; }
+    .result-date { color: var(--theme-text-muted); font-size: 0.75rem; margin-top: 4px; font-family: 'Roboto'; }
 
     .action-buttons { display: flex; gap: 8px; }
 
     .btn-icon { 
-        background: transparent; border: 1px solid #444; color: #aaa; 
+        background: transparent; border: 1px solid var(--theme-border); color: var(--theme-text-muted); 
         border-radius: 8px; padding: 8px 12px; font-size: 1rem; cursor: pointer; transition: 0.2s;
     }
     .btn-icon:active { transform: scale(0.95); }
-    .btn-icon.edit:hover { color: #F8C545; border-color: #F8C545; background: rgba(248,197,69,0.1); }
+    .btn-icon.edit:hover { color: var(--theme-primary); border-color: var(--theme-primary); background: rgba(255,255,255,0.05); }
     .btn-icon.delete:hover { color: #d9534f; border-color: #d9534f; background: rgba(217,83,79,0.1); }
     
     .btn-icon.new-record { 
@@ -243,43 +244,64 @@
     .btn-icon.new-record:hover { background-color: rgba(40, 167, 69, 0.1); }
 
     .btn-ingresar {
-        width: 100%; background: transparent; border: 1px dashed #F8C545; 
-        color: #F8C545; padding: 10px; border-radius: 8px; font-weight: bold;
+        width: 100%; background: transparent; border: 1px dashed var(--theme-primary); 
+        color: var(--theme-primary); padding: 10px; border-radius: 8px; font-weight: bold;
         font-family: 'Oswald'; transition: 0.2s;
     }
-    .btn-ingresar:active { background: rgba(248,197,69,0.1); }
+    .btn-ingresar:active { background: rgba(255,255,255,0.05); }
 
     /* MODAL STYLES */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
-    .custom-modal { background: #1a1a1a; width: 90%; max-width: 400px; border: 1px solid #F8C545; border-radius: 12px; padding: 0; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+    .custom-modal { background: var(--theme-card); width: 90%; max-width: 400px; border: 1px solid var(--theme-primary); border-radius: 12px; padding: 0; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
     
-    .modal-header { padding: 15px; background: #222; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
-    .modal-body { padding: 25px 20px; color: white; }
-    .modal-footer { padding: 15px; border-top: 1px solid #333; background: #222; display: flex; justify-content: flex-end; gap: 10px; }
+    .modal-header { padding: 15px; background: var(--theme-bg); border-bottom: 1px solid var(--theme-border); display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 25px 20px; color: var(--theme-text); }
+    .modal-footer { padding: 15px; border-top: 1px solid var(--theme-border); background: var(--theme-bg); display: flex; justify-content: flex-end; gap: 10px; }
 
-    .test-title-modal { color: white; font-family: 'Oswald'; margin-bottom: 20px; font-size: 1.5rem; text-transform: uppercase; }
-    .lbl-input { color: #aaa; margin-bottom: 10px; display: block; font-size: 0.9rem; }
+    .test-title-modal { color: var(--theme-text); font-family: 'Oswald'; margin-bottom: 20px; font-size: 1.5rem; text-transform: uppercase; }
+    .lbl-input { color: var(--theme-text-muted); margin-bottom: 10px; display: block; font-size: 0.9rem; }
 
     .input-with-unit { display: flex; align-items: center; justify-content: center; gap: 10px; }
     .big-input { 
-        background: #333 !important; color: white !important; border: 1px solid #F8C545; 
+        background: var(--theme-bg) !important; color: var(--theme-text) !important; border: 1px solid var(--theme-primary); 
         text-align: center; font-size: 2rem; font-weight: bold; width: 140px; 
         padding: 10px; border-radius: 10px; font-family: 'Oswald';
     }
-    .big-input:focus { background-color: #444 !important; box-shadow: 0 0 15px rgba(248, 197, 69, 0.3); }
-    .unit-label { color: #F8C545; font-size: 1.5rem; font-family: 'Oswald'; font-weight: bold; text-transform: uppercase; }
+    
+    /* --- FIX: PLACEHOLDER MÁS PEQUEÑO QUE EL TEXTO --- */
+    .big-input::placeholder {
+        font-size: 1rem;
+        font-weight: normal;
+        color: var(--theme-text-muted);
+        opacity: 0.5;
+        vertical-align: middle;
+    }
+    
+    .big-input:focus { background-color: var(--theme-card) !important; box-shadow: 0 0 15px rgba(255, 255, 255, 0.1); }
+    .unit-label { color: var(--theme-primary); font-size: 1.5rem; font-family: 'Oswald'; font-weight: bold; text-transform: uppercase; }
 
-    .btn-close-custom { background: none; border: none; color: white; font-size: 1.2rem; }
-    .btn-cancel { background: #333; color: white; border: none; padding: 10px 20px; border-radius: 5px; }
-    .btn-confirm { background: #F8C545; color: black; border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; font-family: 'Oswald'; }
+    .btn-close-custom { background: none; border: none; color: var(--theme-text); font-size: 1.2rem; }
+    .btn-cancel { background: var(--theme-border); color: var(--theme-text); border: none; padding: 10px 20px; border-radius: 5px; }
+    .btn-confirm { background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 10px 20px; font-weight: bold; border-radius: 5px; font-family: 'Oswald'; }
 
-    .empty-state { text-align: center; margin-top: 60px; color: #666; font-family: 'Roboto'; }
+    .empty-state { text-align: center; margin-top: 60px; color: var(--theme-text-muted); font-family: 'Roboto'; }
     .fade-in { animation: fadeIn 0.5s ease; }
     .slide-up { animation: slideUp 0.3s ease; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     @@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 </style>
 @code {
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9; 
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
     [Parameter] public Guid UsuarioId { get; set; }
     [Parameter] public string NombreAtleta { get; set; }
     
@@ -292,6 +314,18 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // LEER EL CACHÉ LOCAL AL INSTANTE
+        try 
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache)) 
+            { 
+                EstilosTema = cache; 
+                StateHasChanged(); 
+            }
+        } 
+        catch { }
+
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
 
         if (Sesion.Usuario.TipoUsuarioID != 1 && !Sesion.TienePermiso("MANAGE_EVALUATIONS")) 
@@ -320,7 +354,7 @@
     {
         testSeleccionado = item;
         esModoNuevaMarca = esNuevaMarca;
-        // Si es nueva marca, ponemos 0 para que sea fácil escribir. Si es editar, ponemos el valor actual.
+        // Si es nueva marca, ponemos "" para que sea fácil escribir. Si es editar, ponemos el valor actual.
         valorInput = esNuevaMarca ? "" : (item.Valor ?? "");
         mostrarModal = true;
     }

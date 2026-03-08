@@ -3,157 +3,177 @@
 @inject HttpClient Http
 @inject NavigationManager Nav
 @inject SesionService Sesion
+@inject IJSRuntime JS
 
-<div class="main-layout">
+@* ENVOLVEMOS TODA LA PÁGINA EN EL TEMA *@
+<div style="@EstilosTema">
 
-    <div class="navbar-container">
-        <div class="nav-left" @onclick="Volver">
-            <i class="fas fa-arrow-left"></i> VOLVER
-        </div>
-        <div class="nav-title">LEADERBOARD DIARIO</div>
-        <div class="nav-right"></div>
-    </div>
+    <div class="main-layout">
 
-    <div class="scrollable-content">
-
-        <div class="date-header">
-            @DateTime.Now.ToString("dddd, dd MMMM").ToUpper()
+        <div class="navbar-container">
+            <div class="nav-left" @onclick="Volver">
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </div>
+            <div class="nav-title">LEADERBOARD DIARIO</div>
+            <div class="nav-right"></div>
         </div>
 
-        @* --- SELECTOR DE PESTAÑAS (Ahora son 3) --- *@
-        <div class="filter-tabs fade-in">
-            <button class="tab-btn @(tabActiva == "REPS" ? "active" : "")" @onclick='() => CambiarTab("REPS")'>
-                <i class="fas fa-redo-alt"></i> REPS
-            </button>
-            <button class="tab-btn @(tabActiva == "RONDAS" ? "active" : "")" @onclick='() => CambiarTab("RONDAS")'>
-                <i class="fas fa-sync-alt"></i> RONDAS
-            </button>
-            <button class="tab-btn @(tabActiva == "TIEMPO" ? "active" : "")" @onclick='() => CambiarTab("TIEMPO")'>
-                <i class="fas fa-stopwatch"></i> TIEMPO
-            </button>
+        <div class="scrollable-content">
+
+            <div class="date-header">
+                @DateTime.Now.ToString("dddd, dd MMMM").ToUpper()
+            </div>
+
+            @* --- SELECTOR DE PESTAÑAS (Ahora son 3) --- *@
+            <div class="filter-tabs fade-in">
+                <button class="tab-btn @(tabActiva == "REPS" ? "active" : "")" @onclick='() => CambiarTab("REPS")'>
+                    <i class="fas fa-redo-alt"></i> REPS
+                </button>
+                <button class="tab-btn @(tabActiva == "RONDAS" ? "active" : "")" @onclick='() => CambiarTab("RONDAS")'>
+                    <i class="fas fa-sync-alt"></i> RONDAS
+                </button>
+                <button class="tab-btn @(tabActiva == "TIEMPO" ? "active" : "")" @onclick='() => CambiarTab("TIEMPO")'>
+                    <i class="fas fa-stopwatch"></i> TIEMPO
+                </button>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="text-center mt-5">
+                    <div class="spinner-border" style="color: var(--theme-primary);" role="status"></div>
+                    <p class="mt-2" style="color: var(--theme-text-muted);">Cargando resultados...</p>
+                </div>
+            }
+            else if (listaActual == null || listaActual.Count == 0)
+            {
+                <div class="empty-state fade-in">
+                    <i class="fas fa-dumbbell" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px; color: var(--theme-text-muted);"></i>
+                    <h3 style="color: var(--theme-text-muted);">SIN RESULTADOS</h3>
+                    <p style="color: var(--theme-text-muted);">Aún no hay registros de @(tabActiva) para hoy.</p>
+                </div>
+            }
+            else
+            {
+                <div class="podium-list fade-in">
+                    @foreach (var item in listaActual)
+                    {
+                        <div class="score-row @(item.Posicion == 1 ? "gold" : "") @(item.EsEquipo ? "team-border" : "")">
+
+                            @* 1. POSICIÓN *@
+                            <div class="pos-column">
+                                @if (item.Posicion == 1) { <i class="fas fa-crown gold-icon"></i> }
+                                else if (item.Posicion == 2) { <i class="fas fa-medal silver-icon"></i> }
+                                else if (item.Posicion == 3) { <i class="fas fa-medal bronze-icon"></i> }
+                                else { <span>@item.Posicion</span> }
+                            </div>
+
+                            @* 2. AVATAR *@
+                            <div class="avatar-column">
+                                @if (!string.IsNullOrEmpty(item.Foto))
+                                {
+                                    <img src="@item.Foto" class="score-avatar" />
+                                }
+                                else
+                                {
+                                    <div class="score-placeholder">
+                                        @(item.EsEquipo ? "T" : item.Nombre.Substring(0, 1).ToUpper())
+                                    </div>
+                                }
+                            </div>
+
+                            @* 3. NOMBRE *@
+                            <div class="name-column">
+                                <span class="name-text">@item.Nombre</span>
+                                @if (item.EsEquipo)
+                                {
+                                    <span class="team-badge">EQUIPO</span>
+                                }
+                            </div>
+
+                            @* 4. RESULTADO (DINÁMICO SEGÚN PESTAÑA) *@
+                            <div class="reps-column">
+                                @if (tabActiva == "REPS")
+                                {
+                                    <span class="reps-val">@item.Reps</span>
+                                    <small>REPS</small>
+                                }
+                                else if (tabActiva == "RONDAS")
+                                {
+                                    <span class="reps-val">@item.Rondas</span>
+                                    <small>RONDAS</small>
+                                }
+                                else
+                                {
+                                    <span class="reps-val">@item.Tiempo</span>
+                                    <small>TIME</small>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            <div style="height: 40px;"></div>
         </div>
-
-        @if (cargando)
-        {
-            <div class="text-center mt-5">
-                <div class="spinner-border text-warning" role="status"></div>
-                <p class="mt-2 text-muted">Cargando resultados...</p>
-            </div>
-        }
-        else if (listaActual == null || listaActual.Count == 0)
-        {
-            <div class="empty-state fade-in">
-                <i class="fas fa-dumbbell" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px;"></i>
-                <h3>SIN RESULTADOS</h3>
-                <p>Aún no hay registros de @(tabActiva) para hoy.</p>
-            </div>
-        }
-        else
-        {
-            <div class="podium-list fade-in">
-                @foreach (var item in listaActual)
-                {
-                    <div class="score-row @(item.Posicion == 1 ? "gold" : "") @(item.EsEquipo ? "team-border" : "")">
-
-                        @* 1. POSICIÓN *@
-                        <div class="pos-column">
-                            @if (item.Posicion == 1) { <i class="fas fa-crown gold-icon"></i> }
-                            else if (item.Posicion == 2) { <i class="fas fa-medal silver-icon"></i> }
-                            else if (item.Posicion == 3) { <i class="fas fa-medal bronze-icon"></i> }
-                            else { <span>@item.Posicion</span> }
-                        </div>
-
-                        @* 2. AVATAR *@
-                        <div class="avatar-column">
-                            @if (!string.IsNullOrEmpty(item.Foto))
-                            {
-                                <img src="@item.Foto" class="score-avatar" />
-                            }
-                            else
-                            {
-                                <div class="score-placeholder">
-                                    @(item.EsEquipo ? "T" : item.Nombre.Substring(0, 1).ToUpper())
-                                </div>
-                            }
-                        </div>
-
-                        @* 3. NOMBRE *@
-                        <div class="name-column">
-                            <span class="name-text">@item.Nombre</span>
-                            @if (item.EsEquipo)
-                            {
-                                <span class="team-badge">EQUIPO</span>
-                            }
-                        </div>
-
-                        @* 4. RESULTADO (DINÁMICO SEGÚN PESTAÑA) *@
-                        <div class="reps-column">
-                            @if (tabActiva == "REPS")
-                            {
-                                <span class="reps-val">@item.Reps</span>
-                                <small>REPS</small>
-                            }
-                            else if (tabActiva == "RONDAS")
-                            {
-                                <span class="reps-val">@item.Rondas</span>
-                                <small>RONDAS</small>
-                            }
-                            else
-                            {
-                                <span class="reps-val">@item.Tiempo</span>
-                                <small>TIME</small>
-                            }
-                        </div>
-                    </div>
-                }
-            </div>
-        }
-
-        <div style="height: 40px;"></div>
     </div>
 </div>
 
 <style>
     /* --- ESTRUCTURA BASE --- */
-    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
-    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: #0d0d0d; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
-    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
-    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
+    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--theme-bg); display: flex; flex-direction: column; z-index: 1; }
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: var(--theme-bg); border-bottom: 1px solid var(--theme-primary); color: var(--theme-text); display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
+    .nav-left { color: var(--theme-primary); font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: var(--theme-text); letter-spacing: 1px; }
     .nav-right { width: 60px; }
     .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
 
     /* --- TABS --- */
-    .filter-tabs { display: flex; gap: 5px; margin-bottom: 20px; background: #1a1a1a; padding: 5px; border-radius: 12px; width: 100%; max-width: 600px; border: 1px solid #333; }
-    .tab-btn { flex: 1; background: transparent; border: none; color: #888; padding: 10px 5px; font-family: 'Oswald'; font-size: 0.85rem; border-radius: 8px; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 5px; }
-    .tab-btn.active { background: #F8C545; color: black; font-weight: bold; }
+    .filter-tabs { display: flex; gap: 5px; margin-bottom: 20px; background: var(--theme-card); padding: 5px; border-radius: 12px; width: 100%; max-width: 600px; border: 1px solid var(--theme-border); }
+    .tab-btn { flex: 1; background: transparent; border: none; color: var(--theme-text-muted); padding: 10px 5px; font-family: 'Oswald'; font-size: 0.85rem; border-radius: 8px; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 5px; }
+    .tab-btn.active { background: var(--theme-primary); color: var(--theme-bg); font-weight: bold; }
 
     /* --- LEADERBOARD ITEMS --- */
-    .date-header { font-family: 'Oswald'; font-size: 1.3rem; color: #888; margin-bottom: 20px; text-align: center; width: 100%; letter-spacing: 1px; }
+    .date-header { font-family: 'Oswald'; font-size: 1.3rem; color: var(--theme-text-muted); margin-bottom: 20px; text-align: center; width: 100%; letter-spacing: 1px; }
     .podium-list { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 12px; }
-    .score-row { display: flex; align-items: center; background: #1a1a1a; padding: 12px 15px; border-radius: 15px; border: 1px solid #333; position: relative; }
-    .score-row.gold { border: 1px solid #FFD700; background: linear-gradient(90deg, rgba(248, 197, 69, 0.1) 0%, rgba(26, 26, 26, 1) 100%); }
-    .score-row.team-border { border-left: 4px solid #F8C545; }
-    .pos-column { width: 35px; text-align: center; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; color: #555; }
+    .score-row { display: flex; align-items: center; background: var(--theme-card); padding: 12px 15px; border-radius: 15px; border: 1px solid var(--theme-border); position: relative; }
+    
+    /* El ORO mantiene su color universal independiente del tema del gym */
+    .score-row.gold { border: 1px solid #FFD700; background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, var(--theme-card) 100%); }
+    .score-row.team-border { border-left: 4px solid var(--theme-primary); }
+    
+    .pos-column { width: 35px; text-align: center; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; color: var(--theme-text-muted); }
     .avatar-column { margin-right: 15px; }
-    .score-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #333; }
-    .score-placeholder { width: 48px; height: 48px; border-radius: 50%; background: #252525; color: #F8C545; display: flex; align-items: center; justify-content: center; font-weight: bold; font-family: 'Oswald'; border: 2px solid #333; font-size: 1.2rem; }
+    .score-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid var(--theme-border); }
+    .score-placeholder { width: 48px; height: 48px; border-radius: 50%; background: var(--theme-bg); color: var(--theme-primary); display: flex; align-items: center; justify-content: center; font-weight: bold; font-family: 'Oswald'; border: 2px solid var(--theme-border); font-size: 1.2rem; }
     .name-column { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .name-text { font-size: 0.95rem; color: #fff; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .team-badge { font-size: 0.6rem; background: #F8C545; color: black; padding: 1px 6px; border-radius: 4px; width: fit-content; font-weight: bold; margin-top: 3px; }
+    .name-text { font-size: 0.95rem; color: var(--theme-text); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .team-badge { font-size: 0.6rem; background: var(--theme-primary); color: var(--theme-bg); padding: 1px 6px; border-radius: 4px; width: fit-content; font-weight: bold; margin-top: 3px; }
     .reps-column { text-align: right; font-family: 'Oswald'; display: flex; flex-direction: column; justify-content: center; min-width: 70px; }
-    .reps-val { font-size: 1.3rem; color: #F8C545; font-weight: bold; line-height: 1; }
-    .reps-column small { font-size: 0.65rem; color: #666; margin-top: 2px; }
+    .reps-val { font-size: 1.3rem; color: var(--theme-primary); font-weight: bold; line-height: 1; }
+    .reps-column small { font-size: 0.65rem; color: var(--theme-text-muted); margin-top: 2px; }
 
-    /* ICONOS PREMIOS */
+    /* ICONOS PREMIOS (Se mantienen porque son estándar de medallas) */
     .gold-icon { color: #FFD700; font-size: 1.3rem; }
     .silver-icon { color: #C0C0C0; font-size: 1.2rem; }
     .bronze-icon { color: #CD7F32; font-size: 1.2rem; }
-    .empty-state { text-align: center; margin-top: 60px; color: #444; }
+    
+    .empty-state { text-align: center; margin-top: 60px; font-family: 'Oswald'; }
     .fade-in { animation: fadeIn 0.4s ease-out; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 @code {
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9; 
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
     private string tabActiva = "REPS";
     private bool cargando = true;
     private List<LeaderboardItem> listaActual = new();
@@ -162,7 +182,7 @@
     {
         public string Nombre { get; set; }
         public int Reps { get; set; }
-        public int Rondas { get; set; } // <-- CAMPO AÑADIDO
+        public int Rondas { get; set; } 
         public string Tiempo { get; set; }
         public int Posicion { get; set; }
         public string Foto { get; set; }
@@ -171,6 +191,18 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // LEER EL CACHÉ LOCAL AL INSTANTE
+        try 
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache)) 
+            { 
+                EstilosTema = cache; 
+                StateHasChanged(); 
+            }
+        } 
+        catch { }
+
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
         await CargarDatos();
     }

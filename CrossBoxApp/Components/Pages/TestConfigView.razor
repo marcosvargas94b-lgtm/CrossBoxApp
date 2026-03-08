@@ -1,124 +1,131 @@
 ﻿@page "/test-config"
 @using CrossBoxApp.Models
 @using CrossBoxApp.Models.Services
+@using System.Net.Http.Json
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject SesionService Sesion
+@inject IJSRuntime JS
 
-<div class="main-layout">
+@* ENVOLVEMOS TODA LA PÁGINA EN EL TEMA *@
+<div style="@EstilosTema">
 
-    <div class="navbar-container">
-        <div class="nav-left" @onclick="Volver">
-            <i class="fas fa-arrow-left"></i> VOLVER
-        </div>
-        <div class="nav-title">CONFIGURACIÓN TESTS</div>
-        <div class="nav-right" @onclick="AbrirModal">
-            <i class="fas fa-plus" style="color:#F8C545; font-size:1.2rem;"></i>
-        </div>
-    </div>
+    <div class="main-layout">
 
-    <div class="scrollable-content">
-        
-        @if (cargando)
-        {
-            <div class="text-center mt-5">
-                <div class="spinner-border text-warning"></div>
+        <div class="navbar-container">
+            <div class="nav-left" @onclick="Volver">
+                <i class="fas fa-arrow-left"></i> VOLVER
             </div>
-        }
-        else if (listaTests.Count == 0)
-        {
-            <div class="empty-state fade-in">
-                <i class="fas fa-clipboard-list" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px;"></i>
-                <p>No hay Tests configurados en tu Box.</p>
-                <button class="btn-agregar-primero" @onclick="AbrirModal">AGREGAR PRIMERO</button>
+            <div class="nav-title">CONFIGURACIÓN TESTS</div>
+            <div class="nav-right" @onclick="AbrirModal">
+                <i class="fas fa-plus" style="color: var(--theme-primary); font-size:1.2rem;"></i>
             </div>
-        }
-        else
-        {
-            @foreach (var grupo in listaTests)
+        </div>
+
+        <div class="scrollable-content">
+            
+            @if (cargando)
             {
-                <div class="group-card fade-in">
-                    <div class="group-header">
-                        @grupo.CategoriaNombre.ToUpper() 
-                    </div>
-                    <div class="group-body">
-                        @foreach (var item in grupo.Items)
-                        {
-                            <div class="test-item">
-                                <div class="test-info">
-                                    <span class="test-name">@item.Nombre</span>
-                                    <span class="test-measure">@item.MedidaNombre</span>
-                                </div>
-
-                                @if (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.TienePermiso("DELETE_DATA"))
-                                {
-                                    <button class="btn-delete" @onclick="() => EliminarTest(item)">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                }
-                            </div>
-                        }
-                    </div>
+                <div class="text-center mt-5">
+                    <div class="spinner-border" style="color: var(--theme-primary);"></div>
                 </div>
             }
-        }
-        
-        <div style="height: 40px;"></div>
-    </div>
-</div>
+            else if (listaTests.Count == 0)
+            {
+                <div class="empty-state fade-in">
+                    <i class="fas fa-clipboard-list" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px; color: var(--theme-text-muted);"></i>
+                    <p style="color: var(--theme-text-muted);">No hay Tests configurados en tu Box.</p>
+                    <button class="btn-agregar-primero" style="border-color: var(--theme-primary); color: var(--theme-primary);" @onclick="AbrirModal">AGREGAR PRIMERO</button>
+                </div>
+            }
+            else
+            {
+                @foreach (var grupo in listaTests)
+                {
+                    <div class="group-card fade-in">
+                        <div class="group-header" style="background: var(--theme-primary); color: var(--theme-bg);">
+                            @grupo.CategoriaNombre.ToUpper() 
+                        </div>
+                        <div class="group-body">
+                            @foreach (var item in grupo.Items)
+                            {
+                                <div class="test-item" style="border-bottom-color: var(--theme-border);">
+                                    <div class="test-info">
+                                        <span class="test-name" style="color: var(--theme-text);">@item.Nombre</span>
+                                        <span class="test-measure" style="color: var(--theme-primary);">@item.MedidaNombre</span>
+                                    </div>
 
-@if (mostrarModal)
-{
-    <div class="modal-overlay fade-in">
-        <div class="modal-content custom-modal slide-up">
-            <div class="modal-header">
-                <h5 style="color:#F8C545; margin:0; font-family:'Oswald'">NUEVO TEST</h5>
-                <button class="btn-close-custom" @onclick="CerrarModal"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                
-                <label class="lbl-input">Categoría (Grupo):</label>
-                <select @bind="nuevoTest.TestID" class="form-control input-dark mb-3">
-                    <option value="">-- Seleccionar --</option>
-                    @foreach(var cat in catalogos.Categorias) { <option value="@cat.Id">@cat.Nombre</option> }
-                </select>
-
-                <label class="lbl-input">Nombre del Test:</label>
-                <input type="text" @bind="nuevoTest.Descripcion" class="form-control input-dark mb-3" placeholder="Ej: Fran, 1RM Back Squat" />
-
-                <label class="lbl-input">Tipo de Medida:</label>
-                <select @bind="nuevoTest.MedidaTestID" class="form-control input-dark mb-3">
-                    <option value="">-- Seleccionar --</option>
-                    @foreach(var med in catalogos.Medidas) { <option value="@med.Id">@med.Nombre</option> }
-                </select>
-
-            </div>
-            <div class="modal-footer">
-                <button class="btn-cancel" @onclick="CerrarModal">Cancelar</button>
-                <button class="btn-confirm" @onclick="GuardarTest">Guardar</button>
-            </div>
+                                    @if (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.TienePermiso("DELETE_DATA"))
+                                    {
+                                        <button class="btn-delete" @onclick="() => EliminarTest(item)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+            
+            <div style="height: 40px;"></div>
         </div>
     </div>
-}
+
+    @if (mostrarModal)
+    {
+        <div class="modal-overlay fade-in">
+            <div class="modal-content custom-modal slide-up" style="border-color: var(--theme-primary);">
+                <div class="modal-header" style="background: var(--theme-card); border-bottom-color: var(--theme-border);">
+                    <h5 style="color: var(--theme-primary); margin:0; font-family:'Oswald'">NUEVO TEST</h5>
+                    <button class="btn-close-custom" @onclick="CerrarModal"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body" style="background: var(--theme-bg);">
+                    
+                    <label class="lbl-input" style="color: var(--theme-text-muted);">Categoría (Grupo):</label>
+                    <select @bind="nuevoTest.TestID" class="form-control input-dark mb-3">
+                        <option value="">-- Seleccionar --</option>
+                        @foreach(var cat in catalogos.Categorias) { <option value="@cat.Id">@cat.Nombre</option> }
+                    </select>
+
+                    <label class="lbl-input" style="color: var(--theme-text-muted);">Nombre del Test:</label>
+                    <input type="text" @bind="nuevoTest.Descripcion" class="form-control input-dark mb-3" placeholder="Ej: Fran, 1RM Back Squat" />
+
+                    <label class="lbl-input" style="color: var(--theme-text-muted);">Tipo de Medida:</label>
+                    <select @bind="nuevoTest.MedidaTestID" class="form-control input-dark mb-3">
+                        <option value="">-- Seleccionar --</option>
+                        @foreach(var med in catalogos.Medidas) { <option value="@med.Id">@med.Nombre</option> }
+                    </select>
+
+                </div>
+                <div class="modal-footer" style="background: var(--theme-card); border-top-color: var(--theme-border);">
+                    <button class="btn-cancel" @onclick="CerrarModal">Cancelar</button>
+                    <button class="btn-confirm" style="background: var(--theme-primary); color: var(--theme-bg);" @onclick="GuardarTest">Guardar</button>
+                </div>
+            </div>
+        </div>
+    }
+
+</div>
 
 <style>
     /* --- ESTRUCTURA BASE --- */
     .main-layout {
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1;
+        background-color: var(--theme-bg); display: flex; flex-direction: column; z-index: 1;
     }
 
     .navbar-container {
         flex-shrink: 0;
         padding-top: calc(env(safe-area-inset-top) + 5px);
         padding-bottom: 10px; padding-left: 20px; padding-right: 20px;
-        background-color: #0d0d0d; border-bottom: 1px solid #F8C545;
-        color: white; display: flex; justify-content: space-between; align-items: center;
+        background-color: var(--theme-bg); border-bottom: 1px solid var(--theme-primary);
+        color: var(--theme-text); display: flex; justify-content: space-between; align-items: center;
         z-index: 100; font-family: 'Oswald'; min-height: 60px;
     }
 
-    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
-    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
+    .nav-left { color: var(--theme-primary); font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: var(--theme-text); letter-spacing: 1px; }
     .nav-right { width: 60px; display: flex; justify-content: flex-end; cursor: pointer; }
 
     .scrollable-content {
@@ -128,10 +135,9 @@
     }
 
     /* --- ESTILOS ESPECÍFICOS CONFIG --- */
-    
     .group-card { 
-        background: #1a1a1a; 
-        border: 1px solid #333; 
+        background: var(--theme-card); 
+        border: 1px solid var(--theme-border); 
         border-radius: 10px; 
         margin-bottom: 20px; 
         overflow: hidden; 
@@ -141,8 +147,6 @@
     }
     
     .group-header { 
-        background: #F8C545; 
-        color: black; 
         padding: 10px 15px; 
         font-family: 'Oswald'; 
         font-weight: bold; 
@@ -157,51 +161,52 @@
         justify-content: space-between; 
         align-items: center; 
         padding: 12px 0; 
-        border-bottom: 1px solid #333; 
+        border-bottom: 1px solid; 
     }
     .test-item:last-child { border-bottom: none; }
     
     .test-info { display: flex; flex-direction: column; gap: 2px; }
-    .test-name { color: #eee; font-family: 'Roboto'; font-size: 1rem; }
-    .test-measure { color: #F8C545; font-size: 0.8rem; font-style: italic; }
+    .test-name { font-family: 'Roboto'; font-size: 1rem; }
+    .test-measure { font-size: 0.8rem; font-style: italic; }
     
     .btn-delete { 
         background: transparent; 
-        border: 1px solid #333; 
+        border: 1px solid var(--theme-border); 
         color: #d9534f; 
         font-size: 0.9rem; 
         padding: 5px 10px; 
         border-radius: 5px;
         transition: 0.2s;
+        cursor: pointer;
     }
     .btn-delete:active { background: #d9534f; color: white; border-color: #d9534f; }
 
     .btn-agregar-primero {
         background: transparent;
-        border: 1px solid #F8C545;
-        color: #F8C545;
+        border: 1px solid;
         padding: 10px 20px;
         border-radius: 30px;
         font-weight: bold;
         margin-top: 15px;
+        cursor: pointer;
     }
 
     /* MODAL */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
-    .custom-modal { background: #1a1a1a; width: 90%; max-width: 400px; border: 1px solid #F8C545; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-    .modal-header { background: #222; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+    .custom-modal { background: var(--theme-card); width: 90%; max-width: 400px; border: 1px solid; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+    .modal-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; }
     .modal-body { padding: 20px; }
-    .modal-footer { padding: 15px; background: #222; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #333; }
+    .modal-footer { padding: 15px; display: flex; justify-content: flex-end; gap: 10px; }
     
-    .lbl-input { color: #aaa; font-size: 0.9rem; margin-bottom: 5px; display: block; }
-    .input-dark { background: #333 !important; color: white !important; border: 1px solid #555; }
-    .input-dark:focus { border-color: #F8C545; box-shadow: none; }
+    .lbl-input { font-size: 0.9rem; margin-bottom: 5px; display: block; font-weight: bold; }
+    .input-dark { background: var(--theme-bg) !important; color: var(--theme-text) !important; border: 1px solid var(--theme-border); width: 100%; padding: 10px; border-radius: 8px; }
+    .input-dark:focus { border-color: var(--theme-primary); outline: none; }
 
-    .btn-close-custom { background: none; border: none; color: white; font-size: 1.2rem; }
-    .btn-confirm { background: #F8C545; color: black; border: none; padding: 8px 20px; font-weight: bold; border-radius: 5px; }
-    .btn-cancel { background: #333; color: white; border: none; padding: 8px 20px; border-radius: 5px; }
+    .btn-close-custom { background: none; border: none; color: var(--theme-text); font-size: 1.2rem; cursor: pointer; }
+    .btn-confirm { border: none; padding: 8px 20px; font-weight: bold; border-radius: 5px; cursor: pointer; }
+    .btn-cancel { background: var(--theme-border); color: var(--theme-text); border: none; padding: 8px 20px; border-radius: 5px; cursor: pointer; }
 
-    .empty-state { text-align: center; margin-top: 50px; color: #666; font-family: 'Roboto'; }
+    .empty-state { text-align: center; margin-top: 50px; font-family: 'Roboto'; }
     .fade-in { animation: fadeIn 0.5s ease; }
     .slide-up { animation: slideUp 0.3s ease; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -209,6 +214,17 @@
 </style>
 
 @code {
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9; 
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
     private List<TestGroupDto> listaTests = new List<TestGroupDto>();
     private TestConfigCatalogsDto catalogos = new TestConfigCatalogsDto { Categorias = new(), Medidas = new() };
     private CreateTestBoxes nuevoTest = new CreateTestBoxes();
@@ -218,6 +234,18 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // LEER EL CACHÉ LOCAL AL INSTANTE
+        try 
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache)) 
+            { 
+                EstilosTema = cache; 
+                StateHasChanged(); 
+            }
+        } 
+        catch { }
+
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
 
         if (Sesion.Usuario.TipoUsuarioID != 1 && !Sesion.TienePermiso("MANAGE_WOD"))

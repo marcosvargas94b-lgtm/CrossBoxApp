@@ -1,14 +1,15 @@
 ﻿@page "/calculadora-rm"
 @inject NavigationManager Nav
-
-<div class="main-layout">
+@inject IJSRuntime JS
+<div style="@EstilosTema">
+<div class="main-layout" >
     @* NAVBAR *@
     <div class="navbar-container">
         <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
             <i class="fas fa-arrow-left"></i> VOLVER
         </div>
         <div class="nav-title">
-            <i class="fas fa-calculator" style="color:#F8C545; margin-right:5px;"></i> CALCULADORA %
+            <i class="fas fa-calculator" style="color:var(--theme-primary); margin-right:5px;"></i> CALCULADORA %
         </div>
         <div class="nav-right"></div>
     </div>
@@ -103,7 +104,7 @@
                     @if (discosAlternativos.Count > 0)
                     {
                         <div class="plate-suggestion mt-3 alternate-box">
-                            <label><i class="fas fa-sync-alt text-warning"></i> VARIANTE (Sin discos grandes):</label>
+                            <label><i class="fas fa-sync-alt" style="color: var(--theme-primary);"></i> VARIANTE (Sin discos grandes):</label>
                             <div class="plates-row">
                                 @foreach(var disco in discosAlternativos)
                                 {
@@ -117,61 +118,66 @@
         </div>
     </div>
 </div>
-
+</div>
 <style>
-    .main-layout { position: fixed; top:0; left:0; width:100vw; height:100vh; background:#000; display:flex; flex-direction:column; z-index:1; }
-    .navbar-container { flex-shrink:0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom:10px; padding-left:20px; padding-right:20px; background:#111; border-bottom:1px solid #F8C545; display:flex; justify-content:space-between; align-items:center; z-index:100; font-family:'Oswald'; color:white; }
+    /* VARIABLES INYECTADAS Y ESTRUCTURA BASE */
+    .main-layout { position: fixed; top:0; left:0; width:100vw; height:100vh; background: var(--theme-bg); display:flex; flex-direction:column; z-index:1; }
+    .navbar-container { flex-shrink:0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom:10px; padding-left:20px; padding-right:20px; background: var(--theme-bg); border-bottom:1px solid var(--theme-primary); display:flex; justify-content:space-between; align-items:center; z-index:100; font-family:'Oswald'; color: var(--theme-text); }
+    .nav-left { color: var(--theme-primary); font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: var(--theme-text); letter-spacing: 1px; display: flex; align-items: center; }
     .scroll-custom { flex:1; overflow-y:auto; padding: 20px; -webkit-overflow-scrolling: touch; }
 
     /* TARJETA PRINCIPAL */
-    .calc-card { background: #151515; border: 1px solid #333; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+    .calc-card { background: var(--theme-card); border: 1px solid var(--theme-border); border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 
     /* SWITCH CUSTOM */
-    .unit-switch-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 10px; font-family: 'Oswald'; font-size: 1.2rem; color: #666; }
+    .unit-switch-container { display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 10px; font-family: 'Oswald'; font-size: 1.2rem; color: var(--theme-text-muted); }
     .unit-switch-container span { transition: 0.3s; cursor: pointer; }
-    .unit-switch-container span.active { color: #F8C545; font-weight: bold; text-shadow: 0 0 10px rgba(248,197,69,0.5); }
-    .switch-track { width: 60px; height: 30px; background: #222; border-radius: 50px; position: relative; cursor: pointer; border: 1px solid #444; }
-    .switch-thumb { width: 24px; height: 24px; background: #F8C545; border-radius: 50%; position: absolute; top: 2px; transition: 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); box-shadow: 0 0 10px rgba(248,197,69,0.5); }
+    .unit-switch-container span.active { color: var(--theme-primary); font-weight: bold; text-shadow: 0 0 10px var(--theme-primary); }
+    .switch-track { width: 60px; height: 30px; background: var(--theme-bg); border-radius: 50px; position: relative; cursor: pointer; border: 1px solid var(--theme-border); }
+    .switch-thumb { width: 24px; height: 24px; background: var(--theme-primary); border-radius: 50%; position: absolute; top: 2px; transition: 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); box-shadow: 0 0 10px var(--theme-primary); }
     .switch-thumb.left { left: 3px; }
     .switch-thumb.right { left: 31px; }
 
     /* INPUTS */
     .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
     .input-box { display: flex; flex-direction: column; gap: 5px; }
-    .input-box label { font-family: 'Roboto'; font-size: 0.75rem; color: #888; font-weight: bold; letter-spacing: 1px; }
+    .input-box label { font-family: 'Roboto'; font-size: 0.75rem; color: var(--theme-text-muted); font-weight: bold; letter-spacing: 1px; }
     .input-wrapper { position: relative; width: 100%; }
-    .input-wrapper input { width: 100%; background: #222; border: 1px solid #444; color: #fff; font-family: 'Oswald'; font-size: 1.5rem; padding: 10px 40px 10px 15px; border-radius: 10px; text-align: center; }
-    .input-wrapper input:focus { border-color: #F8C545; outline: none; }
-    .unit-label { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #666; font-family: 'Oswald'; font-size: 0.9rem; }
+    .input-wrapper input { width: 100%; background: var(--theme-bg); border: 1px solid var(--theme-border); color: var(--theme-text); font-family: 'Oswald'; font-size: 1.5rem; padding: 10px 40px 10px 15px; border-radius: 10px; text-align: center; }
+    .input-wrapper input:focus { border-color: var(--theme-primary); outline: none; }
+    .unit-label { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--theme-text-muted); font-family: 'Oswald'; font-size: 0.9rem; }
 
     /* SELECT NATIVO (RULETA MÓVIL) */
     .select-wrapper { position: relative; width: 100%; }
-    .select-wrapper select { width: 100%; background: #222; border: 1px solid #444; color: #F8C545; font-family: 'Oswald'; font-size: 1.1rem; padding: 15px; border-radius: 10px; appearance: none; -webkit-appearance: none; cursor: pointer; }
-    .select-wrapper select:focus { border-color: #F8C545; outline: none; }
-    .select-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #888; pointer-events: none; }
+    .select-wrapper select { width: 100%; background: var(--theme-bg); border: 1px solid var(--theme-border); color: var(--theme-primary); font-family: 'Oswald'; font-size: 1.1rem; padding: 15px; border-radius: 10px; appearance: none; -webkit-appearance: none; cursor: pointer; }
+    .select-wrapper select:focus { border-color: var(--theme-primary); outline: none; }
+    .select-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--theme-text-muted); pointer-events: none; }
 
     /* BOTÓN */
-    .btn-calcular { width: 100%; background: #F8C545; color: #000; border: none; padding: 15px; border-radius: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.2rem; cursor: pointer; transition: 0.2s; box-shadow: 0 5px 15px rgba(248,197,69,0.3); }
+    .btn-calcular { width: 100%; background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 15px; border-radius: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.2rem; cursor: pointer; transition: 0.2s; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
     .btn-calcular:active { transform: scale(0.97); }
 
     /* RESULTADOS */
-    .results-section { background: #0a0a0a; border: 1px dashed #333; border-radius: 15px; padding: 20px; }
-    .total-weight-box { text-align: center; border-bottom: 1px solid #222; padding-bottom: 15px; }
-    .total-weight-box h3 { font-family: 'Roboto'; font-size: 0.8rem; color: #888; margin: 0; letter-spacing: 2px; }
-    .big-number { font-family: 'Oswald'; font-size: 3.5rem; color: #fff; font-weight: 900; line-height: 1.1; text-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-    .big-number small { font-size: 1.5rem; color: #F8C545; }
-    .target-info { font-family: 'Roboto'; font-size: 0.8rem; color: #555; margin: 0; font-style: italic; }
+    .results-section { background: var(--theme-bg); border: 1px dashed var(--theme-border); border-radius: 15px; padding: 20px; }
+    .total-weight-box { text-align: center; border-bottom: 1px solid var(--theme-border); padding-bottom: 15px; }
+    .total-weight-box h3 { font-family: 'Roboto'; font-size: 0.8rem; color: var(--theme-text-muted); margin: 0; letter-spacing: 2px; }
+    .big-number { font-family: 'Oswald'; font-size: 3.5rem; color: var(--theme-text); font-weight: 900; line-height: 1.1; text-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+    .big-number small { font-size: 1.5rem; color: var(--theme-primary); }
+    .target-info { font-family: 'Roboto'; font-size: 0.8rem; color: var(--theme-text-muted); margin: 0; font-style: italic; }
 
     /* DISCOS (PLATES) */
-    .plate-suggestion label { font-family: 'Roboto'; font-size: 0.8rem; color: #aaa; margin-bottom: 8px; display: block; font-weight: bold; }
+    .plate-suggestion label { font-family: 'Roboto'; font-size: 0.8rem; color: var(--theme-text-muted); margin-bottom: 8px; display: block; font-weight: bold; }
     .plates-row { display: flex; flex-wrap: wrap; gap: 8px; }
     .plate { display: flex; justify-content: center; align-items: center; width: 45px; height: 45px; border-radius: 50%; font-family: 'Oswald'; font-weight: bold; font-size: 1rem; box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 4px 6px rgba(0,0,0,0.3); }
     
-    .badge-optimal { background: #222; color: #fff; border: 2px solid #28a745; }
-    .badge-alt { background: #1a1a1a; color: #ccc; border: 2px solid #F8C545; }
+    /* El badge verde lo mantenemos porque significa "Correcto/Óptimo" independientemente del tema */
+    .badge-optimal { background: var(--theme-bg); color: var(--theme-text); border: 2px solid #28a745; }
+    
+    .badge-alt { background: var(--theme-card); color: var(--theme-text-muted); border: 2px solid var(--theme-primary); }
 
-    .alternate-box { background: rgba(248,197,69,0.05); padding: 15px; border-radius: 10px; border: 1px dashed rgba(248,197,69,0.3); }
-    .alert-bar-only { background: rgba(255,255,255,0.05); color: #fff; text-align: center; padding: 15px; border-radius: 10px; font-style: italic; font-family: 'Roboto'; }
+    .alternate-box { background: var(--theme-card); padding: 15px; border-radius: 10px; border: 1px dashed var(--theme-primary); }
+    .alert-bar-only { background: rgba(255,255,255,0.05); color: var(--theme-text); text-align: center; padding: 15px; border-radius: 10px; font-style: italic; font-family: 'Roboto'; }
 
     .fade-in { animation: fadeIn 0.4s ease; }
     .slide-in-up { animation: slideInUp 0.4s ease; }
@@ -180,6 +186,17 @@
 </style>
 
 @code {
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9; 
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
     private bool esLibras = true;
     private decimal? peso1RM;
     private decimal? porcentaje;
@@ -187,14 +204,28 @@
     
     private bool calculoRealizado = false;
     private decimal pesoObjetivo = 0;
-    private decimal pesoReal = 0; // Lo que realmente suma con los discos
+    private decimal pesoReal = 0; 
     
     private List<decimal> discosIdeales = new();
     private List<decimal> discosAlternativos = new();
 
-    // Discos estándar de gimnasio (Por lado)
     private readonly decimal[] discosLbs = { 45m, 35m, 25m, 15m, 10m, 5m, 2.5m };
     private readonly decimal[] discosKgs = { 25m, 20m, 15m, 10m, 5m, 2.5m, 1.25m };
+
+    protected override async Task OnInitializedAsync()
+    {
+        // LEER EL CACHÉ LOCAL AL INSTANTE
+        try 
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache)) 
+            { 
+                EstilosTema = cache; 
+                StateHasChanged(); 
+            }
+        } 
+        catch { }
+    }
 
     private void ToggleUnidad() => CambiarUnidad(!esLibras);
 
@@ -202,7 +233,7 @@
     {
         if (esLibras == aLibras) return;
         esLibras = aLibras;
-        pesoBarra = esLibras ? 45m : 20m; // Ajusta barra por defecto
+        pesoBarra = esLibras ? 45m : 20m; 
         calculoRealizado = false;
     }
 
@@ -213,9 +244,8 @@
         pesoObjetivo = (peso1RM.Value * porcentaje.Value) / 100m;
         
         var discosDisponibles = esLibras ? discosLbs : discosKgs;
-        decimal saltoMinimo = discosDisponibles.Last() * 2; // Lo mínimo que se puede agregar (ej. 5 lbs en total)
+        decimal saltoMinimo = discosDisponibles.Last() * 2; 
 
-        // Verificamos si la barra pesa más que el objetivo
         if (pesoObjetivo <= pesoBarra)
         {
             pesoReal = pesoBarra;
@@ -225,18 +255,14 @@
             return;
         }
 
-        // Calculamos cuánto falta y redondeamos a la combinación de discos más cercana posible
         decimal pesoFaltante = pesoObjetivo - pesoBarra;
         decimal faltanteRedondeado = Math.Round(pesoFaltante / saltoMinimo) * saltoMinimo;
         
         pesoReal = pesoBarra + faltanteRedondeado;
         decimal targetPorLado = faltanteRedondeado / 2m;
 
-        // 1. CÁLCULO ÓPTIMO (Algoritmo Avaro)
         discosIdeales = ObtenerCombinacion(targetPorLado, discosDisponibles);
 
-        // 2. CÁLCULO VARIANTE (Ignorando el disco más pesado disponible)
-        // Por ejemplo, si el óptimo usó de 45, la variante ignora los de 45.
         discosAlternativos.Clear();
         if (discosIdeales.Count > 0)
         {
@@ -247,7 +273,6 @@
             {
                 discosAlternativos = ObtenerCombinacion(targetPorLado, discosSinElMayor);
                 
-                // Si la alternativa resulta ser exactamente igual a la ideal (ej. solo eran discos de 10), la borramos
                 if (discosAlternativos.SequenceEqual(discosIdeales))
                 {
                     discosAlternativos.Clear();

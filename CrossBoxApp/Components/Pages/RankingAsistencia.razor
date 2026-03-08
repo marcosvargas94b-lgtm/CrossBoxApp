@@ -2,149 +2,154 @@
 @inject HttpClient Http
 @inject NavigationManager Nav
 @inject CrossBoxApp.Models.Services.SesionService Sesion
+@inject IJSRuntime JS
 
-<div class="main-layout">
+@* ENVOLVEMOS TODA LA PÁGINA EN EL TEMA *@
+<div style="@EstilosTema">
 
-    <div class="navbar-container">
-        <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
-            <i class="fas fa-arrow-left"></i> VOLVER
-        </div>
-        <div class="nav-title">RANKING ANUAL</div>
-        <div class="nav-right"></div>
-    </div>
+    <div class="main-layout">
 
-    <div class="scrollable-content">
-        
-        <div class="subtitle-header fade-in">
-            Los más constantes del @DateTime.Now.Year
+        <div class="navbar-container">
+            <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </div>
+            <div class="nav-title">RANKING ANUAL</div>
+            <div class="nav-right"></div>
         </div>
 
-        @if (cargando)
-        {
-            <div class="loading-container">
-                <div class="spinner-border text-warning" role="status"></div>
-                <p>Calculando posiciones...</p>
-            </div>
-        }
-        else if (ranking == null || ranking.Count == 0)
-        {
-            <div class="empty-state fade-in">
-                <i class="fas fa-ghost"></i>
-                <p>Aún no hay registros de asistencia este año.</p>
-            </div>
-        }
-        else
-        {
-            <div class="podium-container fade-in">
-                
-                @* --- SEGUNDO LUGAR --- *@
-                @if (ranking.Count >= 2)
-                {
-                    var segundo = ranking[1];
-                    <div class="podium-place second">
-                        <div class="avatar-wrapper">
-                            @if (!string.IsNullOrEmpty(segundo.Foto))
-                            {
-                                <img src="@segundo.Foto" class="avatar-img" />
-                            }
-                            else
-                            {
-                                <div class="avatar-placeholder">@ObtenerInicial(segundo.Nombre)</div>
-                            }
-                            <div class="badge-rank">2</div>
-                        </div>
-                        <div class="podium-step step-2">
-                            <div class="dias-count">@segundo.Dias</div>
-                            <div class="dias-label">DÍAS</div>
-                        </div>
-                        <div class="podium-name">@segundo.Nombre</div>
-                    </div>
-                }
-
-                @* --- PRIMER LUGAR --- *@
-                @if (ranking.Count >= 1)
-                {
-                    var primero = ranking[0];
-                    <div class="podium-place first">
-                        <div class="crown"><i class="fas fa-crown"></i></div>
-                        <div class="avatar-wrapper">
-                            @if (!string.IsNullOrEmpty(primero.Foto))
-                            {
-                                <img src="@primero.Foto" class="avatar-img" />
-                            }
-                            else
-                            {
-                                <div class="avatar-placeholder">@ObtenerInicial(primero.Nombre)</div>
-                            }
-                            <div class="badge-rank gold">1</div>
-                        </div>
-                        <div class="podium-step step-1">
-                            <div class="dias-count">@primero.Dias</div>
-                            <div class="dias-label">DÍAS</div>
-                        </div>
-                        <div class="podium-name gold-text">@primero.Nombre</div>
-                    </div>
-                }
-
-                @* --- TERCER LUGAR --- *@
-                @if (ranking.Count >= 3)
-                {
-                    var tercero = ranking[2];
-                    <div class="podium-place third">
-                        <div class="avatar-wrapper">
-                            @if (!string.IsNullOrEmpty(tercero.Foto))
-                            {
-                                <img src="@tercero.Foto" class="avatar-img" />
-                            }
-                            else
-                            {
-                                <div class="avatar-placeholder">@ObtenerInicial(tercero.Nombre)</div>
-                            }
-                            <div class="badge-rank bronze">3</div>
-                        </div>
-                        <div class="podium-step step-3">
-                            <div class="dias-count">@tercero.Dias</div>
-                            <div class="dias-label">DÍAS</div>
-                        </div>
-                        <div class="podium-name">@tercero.Nombre</div>
-                    </div>
-                }
+        <div class="scrollable-content">
+            
+            <div class="subtitle-header fade-in">
+                Los más constantes del @DateTime.Now.Year
             </div>
 
-            @* --- LISTA RESTANTE --- *@
-            <div class="ranking-list fade-in">
-                @for (int i = 3; i < ranking.Count; i++)
-                {
-                    var atleta = ranking[i];
-                    var maxDias = ranking[0].Dias > 0 ? ranking[0].Dias : 1; 
-
-                    <div class="ranking-item">
-                        <div class="rank-number">@(i + 1)</div>
-                        <div class="rank-avatar">
-                             @if (!string.IsNullOrEmpty(atleta.Foto))
-                            {
-                                <img src="@atleta.Foto" class="mini-img" />
-                            }
-                            else
-                            {
-                                <div class="mini-placeholder">@ObtenerInicial(atleta.Nombre)</div>
-                            }
+            @if (cargando)
+            {
+                <div class="loading-container">
+                    <div class="spinner-border" style="color: var(--theme-primary);" role="status"></div>
+                    <p style="color: var(--theme-text-muted);">Calculando posiciones...</p>
+                </div>
+            }
+            else if (ranking == null || ranking.Count == 0)
+            {
+                <div class="empty-state fade-in">
+                    <i class="fas fa-ghost"></i>
+                    <p>Aún no hay registros de asistencia este año.</p>
+                </div>
+            }
+            else
+            {
+                <div class="podium-container fade-in">
+                    
+                    @* --- SEGUNDO LUGAR --- *@
+                    @if (ranking.Count >= 2)
+                    {
+                        var segundo = ranking[1];
+                        <div class="podium-place second">
+                            <div class="avatar-wrapper">
+                                @if (!string.IsNullOrEmpty(segundo.Foto))
+                                {
+                                    <img src="@segundo.Foto" class="avatar-img" />
+                                }
+                                else
+                                {
+                                    <div class="avatar-placeholder">@ObtenerInicial(segundo.Nombre)</div>
+                                }
+                                <div class="badge-rank">2</div>
+                            </div>
+                            <div class="podium-step step-2">
+                                <div class="dias-count">@segundo.Dias</div>
+                                <div class="dias-label">DÍAS</div>
+                            </div>
+                            <div class="podium-name">@segundo.Nombre</div>
                         </div>
-                        <div class="rank-info">
-                            <div class="rank-name">@atleta.Nombre</div>
-                            <div class="rank-bar-bg">
-                                <div class="rank-bar-fill" style="width: @((double)atleta.Dias / maxDias * 100)%"></div>
+                    }
+
+                    @* --- PRIMER LUGAR --- *@
+                    @if (ranking.Count >= 1)
+                    {
+                        var primero = ranking[0];
+                        <div class="podium-place first">
+                            <div class="crown"><i class="fas fa-crown"></i></div>
+                            <div class="avatar-wrapper">
+                                @if (!string.IsNullOrEmpty(primero.Foto))
+                                {
+                                    <img src="@primero.Foto" class="avatar-img" />
+                                }
+                                else
+                                {
+                                    <div class="avatar-placeholder">@ObtenerInicial(primero.Nombre)</div>
+                                }
+                                <div class="badge-rank gold">1</div>
+                            </div>
+                            <div class="podium-step step-1">
+                                <div class="dias-count">@primero.Dias</div>
+                                <div class="dias-label">DÍAS</div>
+                            </div>
+                            <div class="podium-name gold-text">@primero.Nombre</div>
+                        </div>
+                    }
+
+                    @* --- TERCER LUGAR --- *@
+                    @if (ranking.Count >= 3)
+                    {
+                        var tercero = ranking[2];
+                        <div class="podium-place third">
+                            <div class="avatar-wrapper">
+                                @if (!string.IsNullOrEmpty(tercero.Foto))
+                                {
+                                    <img src="@tercero.Foto" class="avatar-img" />
+                                }
+                                else
+                                {
+                                    <div class="avatar-placeholder">@ObtenerInicial(tercero.Nombre)</div>
+                                }
+                                <div class="badge-rank bronze">3</div>
+                            </div>
+                            <div class="podium-step step-3">
+                                <div class="dias-count">@tercero.Dias</div>
+                                <div class="dias-label">DÍAS</div>
+                            </div>
+                            <div class="podium-name">@tercero.Nombre</div>
+                        </div>
+                    }
+                </div>
+
+                @* --- LISTA RESTANTE --- *@
+                <div class="ranking-list fade-in">
+                    @for (int i = 3; i < ranking.Count; i++)
+                    {
+                        var atleta = ranking[i];
+                        var maxDias = ranking[0].Dias > 0 ? ranking[0].Dias : 1; 
+
+                        <div class="ranking-item">
+                            <div class="rank-number">@(i + 1)</div>
+                            <div class="rank-avatar">
+                                 @if (!string.IsNullOrEmpty(atleta.Foto))
+                                {
+                                    <img src="@atleta.Foto" class="mini-img" />
+                                }
+                                else
+                                {
+                                    <div class="mini-placeholder">@ObtenerInicial(atleta.Nombre)</div>
+                                }
+                            </div>
+                            <div class="rank-info">
+                                <div class="rank-name">@atleta.Nombre</div>
+                                <div class="rank-bar-bg">
+                                    <div class="rank-bar-fill" style="width: @((double)atleta.Dias / maxDias * 100)%; background-color: var(--theme-primary);"></div>
+                                </div>
+                            </div>
+                            <div class="rank-days">
+                                <span style="color: var(--theme-primary);">@atleta.Dias</span> <small>días</small>
                             </div>
                         </div>
-                        <div class="rank-days">
-                            <span>@atleta.Dias</span> <small>días</small>
-                        </div>
-                    </div>
-                }
-            </div>
-        }
-        
-        <div style="height: 40px;"></div>
+                    }
+                </div>
+            }
+            
+            <div style="height: 40px;"></div>
+        </div>
     </div>
 </div>
 
@@ -153,7 +158,7 @@
     .main-layout {
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background-color: #0d0d0d;
+        background-color: var(--theme-bg);
         display: flex;
         flex-direction: column;
         z-index: 1;
@@ -165,9 +170,9 @@
         padding-bottom: 10px;
         padding-left: 20px;
         padding-right: 20px;
-        background-color: #0d0d0d;
-        border-bottom: 1px solid #F8C545;
-        color: white;
+        background-color: var(--theme-bg);
+        border-bottom: 1px solid var(--theme-primary);
+        color: var(--theme-text);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -177,7 +182,7 @@
     }
 
     .nav-left {
-        color: #F8C545;
+        color: var(--theme-primary);
         font-weight: bold;
         cursor: pointer;
         display: flex;
@@ -189,7 +194,7 @@
     .nav-title {
         font-weight: bold;
         font-size: 1.1rem;
-        color: white;
+        color: var(--theme-text);
         letter-spacing: 1px;
     }
 
@@ -210,14 +215,14 @@
     
     .subtitle-header {
         text-align: center;
-        color: #888;
+        color: var(--theme-text-muted);
         font-size: 0.9rem;
         margin-top: 5px;
         margin-bottom: 20px;
         font-family: 'Roboto', sans-serif;
     }
 
-    /* PODIO */
+    /* PODIO (Colores semánticos intocables para Oro, Plata y Bronce) */
     .podium-container { 
         display: flex; 
         justify-content: center; 
@@ -241,25 +246,25 @@
     }
     
     .avatar-img { 
-        width: 60px; height: 60px; border-radius: 50%; border: 2px solid #333; 
-        background-color: #222; object-fit: cover; aspect-ratio: 1 / 1; 
+        width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--theme-border); 
+        background-color: var(--theme-card); object-fit: cover; aspect-ratio: 1 / 1; 
     }
     
     .avatar-placeholder { 
-        width: 60px; height: 60px; border-radius: 50%; background: #444; 
-        color: white; display: flex; align-items: center; justify-content: center; 
+        width: 60px; height: 60px; border-radius: 50%; background: var(--theme-card); 
+        color: var(--theme-text); display: flex; align-items: center; justify-content: center; 
         font-weight: bold; font-family: 'Oswald'; font-size: 1.5rem; 
-        border: 2px solid #333; aspect-ratio: 1 / 1; 
+        border: 2px solid var(--theme-border); aspect-ratio: 1 / 1; 
     }
 
-    .first .avatar-img, .first .avatar-placeholder { width: 85px; height: 85px; border-color: #F8C545; font-size: 2rem; }
+    .first .avatar-img, .first .avatar-placeholder { width: 85px; height: 85px; border-color: #FFD700; font-size: 2rem; }
 
-    .badge-rank { position: absolute; bottom: -5px; right: calc(50% - 30px); margin-right: -5px; background: #444; color: white; width: 22px; height: 22px; border-radius: 50%; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; border: 2px solid #0d0d0d; font-weight: bold; z-index: 12; }
-    .first .badge-rank { right: calc(50% - 42px); background: #F8C545; color: black; width: 28px; height: 28px; font-size: 0.9rem; }
-    .badge-rank.gold { background: #F8C545; color: black; }
+    .badge-rank { position: absolute; bottom: -5px; right: calc(50% - 30px); margin-right: -5px; background: var(--theme-card); color: var(--theme-text); width: 22px; height: 22px; border-radius: 50%; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; border: 2px solid var(--theme-bg); font-weight: bold; z-index: 12; }
+    .first .badge-rank { right: calc(50% - 42px); background: #FFD700; color: black; width: 28px; height: 28px; font-size: 0.9rem; }
+    .badge-rank.gold { background: #FFD700; color: black; }
     .badge-rank.bronze { background: #cd7f32; }
 
-    .crown { color: #F8C545; font-size: 1.5rem; margin-bottom: 2px; animation: float 2.5s infinite ease-in-out; }
+    .crown { color: #FFD700; font-size: 1.5rem; margin-bottom: 2px; animation: float 2.5s infinite ease-in-out; }
     
     .podium-step { 
         width: 100%; border-top-left-radius: 10px; border-top-right-radius: 10px; 
@@ -268,7 +273,7 @@
         box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
     }
     
-    .step-1 { height: 150px; background: linear-gradient(180deg, #F8C545 0%, #b38600 100%); }
+    .step-1 { height: 150px; background: linear-gradient(180deg, #FFD700 0%, #b38600 100%); }
     .step-2 { height: 110px; background: linear-gradient(180deg, #e0e0e0 0%, #888 100%); }
     .step-3 { height: 80px; background: linear-gradient(180deg, #cd7f32 0%, #8a5a2b 100%); }
     
@@ -276,42 +281,42 @@
     .dias-label { font-size: 0.6rem; opacity: 0.7; }
     
     .podium-name { 
-        margin-top: 8px; font-size: 0.8rem; color: #ccc; 
+        margin-top: 8px; font-size: 0.8rem; color: var(--theme-text-muted); 
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
         max-width: 100%; padding: 0 2px; 
     }
-    .gold-text { color: #F8C545; font-weight: bold; font-size: 0.9rem; }
+    .gold-text { color: #FFD700; font-weight: bold; font-size: 0.9rem; }
 
     /* LISTA */
     .ranking-list { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 10px; }
     
     .ranking-item { 
-        display: flex; align-items: center; background: #1a1a1a; 
-        padding: 10px; border-radius: 12px; border: 1px solid #333; 
+        display: flex; align-items: center; background: var(--theme-card); 
+        padding: 10px; border-radius: 12px; border: 1px solid var(--theme-border); 
     }
     
-    .rank-number { font-family: 'Oswald'; font-size: 1.1rem; color: #666; width: 25px; text-align: center; }
+    .rank-number { font-family: 'Oswald'; font-size: 1.1rem; color: var(--theme-text-muted); width: 25px; text-align: center; }
     
     .mini-img { 
         width: 40px; height: 40px; border-radius: 50%; object-fit: cover; 
-        aspect-ratio: 1 / 1; margin-right: 10px; border: 1px solid #444; 
+        aspect-ratio: 1 / 1; margin-right: 10px; border: 1px solid var(--theme-border); 
     }
     
     .mini-placeholder { 
-        width: 40px; height: 40px; border-radius: 50%; background: #333; 
-        color: #888; display: flex; align-items: center; justify-content: center; 
-        font-weight: bold; margin-right: 10px; font-family: 'Oswald'; 
+        width: 40px; height: 40px; border-radius: 50%; background: var(--theme-bg); 
+        color: var(--theme-text-muted); display: flex; align-items: center; justify-content: center; 
+        font-weight: bold; margin-right: 10px; font-family: 'Oswald'; border: 1px solid var(--theme-border);
     }
     
     .rank-info { flex: 1; margin-right: 10px; }
-    .rank-name { font-size: 0.9rem; font-weight: bold; margin-bottom: 4px; color: white; }
-    .rank-bar-bg { width: 100%; height: 5px; background: #333; border-radius: 3px; }
-    .rank-bar-fill { height: 100%; background: #F8C545; border-radius: 3px; }
+    .rank-name { font-size: 0.9rem; font-weight: bold; margin-bottom: 4px; color: var(--theme-text); }
+    .rank-bar-bg { width: 100%; height: 5px; background: var(--theme-bg); border-radius: 3px; }
+    .rank-bar-fill { height: 100%; border-radius: 3px; }
     
-    .rank-days span { font-size: 1.1rem; font-weight: bold; color: #F8C545; font-family: 'Oswald'; }
-    .rank-days small { font-size: 0.7rem; color: #888; display: block; text-align: right; }
+    .rank-days span { font-size: 1.1rem; font-weight: bold; font-family: 'Oswald'; }
+    .rank-days small { font-size: 0.7rem; color: var(--theme-text-muted); display: block; text-align: right; }
 
-    .loading-container, .empty-state { text-align: center; padding: 50px; color: #666; }
+    .loading-container, .empty-state { text-align: center; padding: 50px; color: var(--theme-text-muted); }
     .empty-state i { font-size: 3rem; margin-bottom: 10px; opacity: 0.3; }
 
     @@keyframes float { 0% { transform: translateY(0); } 50% { transform: translateY(-5px); } 100% { transform: translateY(0); } }
@@ -320,11 +325,34 @@
 </style>
 
 @code {
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9; 
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
     private bool cargando = true;
     private List<RankingItemDto> ranking;
 
     protected override async Task OnInitializedAsync()
     {
+        // LEER EL CACHÉ LOCAL AL INSTANTE
+        try 
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache)) 
+            { 
+                EstilosTema = cache; 
+                StateHasChanged(); 
+            }
+        } 
+        catch { }
+
         try
         {
             var boxId = Sesion.Usuario.BoxID;

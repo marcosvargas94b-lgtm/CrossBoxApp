@@ -4,8 +4,9 @@
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject SesionService Sesion
-
-<div class="main-layout">
+@inject IJSRuntime JS
+<div style="@EstilosTema">
+<div class="main-layout" >
 
     @* --- NAVBAR (PROTEGIDO PARA NOTCH) --- *@
     <div class="navbar-container">
@@ -69,8 +70,8 @@
         @if (cargando)
         {
             <div class="text-center mt-4">
-                <div class="spinner-border text-warning"></div>
-                <p class="mt-2 text-muted">Cargando horarios...</p>
+                <div class="spinner-border" style="color: var(--theme-primary) !important;"></div>
+                <p class="mt-2" style="color: var(--theme-text-muted) !important;">Cargando horarios...</p>
             </div>
         }
         else
@@ -78,7 +79,7 @@
             <div class="cards-grid">
                 @if(agendaData.Count == 0)
                 {
-                     <div class="text-center text-muted mt-4">No hay horarios disponibles para este día.</div>
+                     <div class="text-center mt-4" style="color: var(--theme-text-muted) !important;">No hay horarios disponibles para este día.</div>
                 }
 
                 @foreach (var horario in agendaData)
@@ -91,7 +92,7 @@
                         <div class="card-body">
                             @if (horario.UsuariosInscritos.Count == 0)
                             {
-                                <p class="text-muted small mb-0">Sin atletas registrados aún.</p>
+                                <p class="small mb-0" style="color: var(--theme-text-muted) !important;">Sin atletas registrados aún.</p>
                             }
                             else
                             {
@@ -114,13 +115,14 @@
         <div style="height: 40px;"></div>
     </div>
 </div>
+</div>
 
 <style>
     /* --- ESTRUCTURA BASE (PROTECCIÓN NOTCH) --- */
     .main-layout {
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background-color: #0d0d0d;
+        background-color: var(--theme-bg) !important;
         display: flex;
         flex-direction: column;
         z-index: 1;
@@ -128,25 +130,24 @@
 
     .navbar-container {
         flex-shrink: 0;
-        /* --- AQUÍ ESTÁ LA PROTECCIÓN DEL NOTCH --- */
-        padding-top: calc(env(safe-area-inset-top) + 15px); /* Un poco más de aire para seguridad */
+        padding-top: calc(env(safe-area-inset-top) + 15px); 
         padding-bottom: 15px;
         padding-left: 20px;
         padding-right: 20px;
         
-        background-color: #0d0d0d;
-        border-bottom: 1px solid #F8C545;
-        color: white;
+        background-color: var(--theme-bg) !important;
+        border-bottom: 1px solid var(--theme-primary) !important;
+        color: var(--theme-text) !important;
         display: flex;
         justify-content: space-between;
         align-items: center;
         z-index: 100;
         font-family: 'Oswald';
-        min-height: 80px; /* Un poco más alto para compensar el notch */
+        min-height: 80px; 
     }
 
     .nav-left {
-        color: #F8C545;
+        color: var(--theme-primary) !important;
         font-weight: bold;
         cursor: pointer;
         display: flex;
@@ -158,7 +159,7 @@
     .nav-title {
         font-weight: bold;
         font-size: 1.1rem;
-        color: white;
+        color: var(--theme-text) !important;
         letter-spacing: 1px;
     }
 
@@ -184,11 +185,11 @@
 
     .tab-date {
         flex: 1;
-        background: #1a1a1a;
-        border: 1px solid #333;
+        background: var(--theme-card) !important;
+        border: 1px solid var(--theme-border) !important;
         border-radius: 10px;
         padding: 10px;
-        color: #888;
+        color: var(--theme-text-muted) !important;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -200,45 +201,67 @@
     .tab-date small { font-size: 0.75rem; font-family: 'Roboto'; }
 
     .tab-date.active {
-        background: #F8C545;
-        color: black;
-        border-color: #F8C545;
-        box-shadow: 0 0 15px rgba(248, 197, 69, 0.2);
+        background: var(--theme-primary) !important;
+        color: var(--theme-bg) !important;
+        border-color: var(--theme-primary) !important;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
         transform: scale(1.02);
     }
 
     /* --- RESTO DE ESTILOS --- */
-    .date-header { font-family: 'Oswald'; text-align: center; color: #F8C545; font-size: 1.5rem; margin-top: 5px; margin-bottom: 20px; letter-spacing: 1px; }
-    .booking-section { background: #1a1a1a; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; width: 100%; max-width: 600px; align-self: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-    .lbl-input { color: #aaa; font-size: 0.9rem; margin-bottom: 8px; display: block; }
+    .date-header { font-family: 'Oswald'; text-align: center; color: var(--theme-primary) !important; font-size: 1.5rem; margin-top: 5px; margin-bottom: 20px; letter-spacing: 1px; }
+    .booking-section { background: var(--theme-card) !important; padding: 20px; border-radius: 15px; border: 1px solid var(--theme-border) !important; margin-bottom: 20px; width: 100%; max-width: 600px; align-self: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+    .lbl-input { color: var(--theme-text-muted) !important; font-size: 0.9rem; margin-bottom: 8px; display: block; }
     .input-group { display: flex; gap: 10px; }
-    .input-dark { background: #333 !important; color: white !important; border: 1px solid #555; flex: 1; padding: 10px; border-radius: 8px; font-size: 1rem; }
-    .btn-reservar { background-color: #F8C545; color: black; font-weight: bold; border: none; padding: 0 20px; border-radius: 8px; font-family: 'Oswald'; transition: transform 0.2s; }
+    .input-dark { background: var(--theme-bg) !important; color: var(--theme-text) !important; border: 1px solid var(--theme-border) !important; flex: 1; padding: 10px; border-radius: 8px; font-size: 1rem; }
+    .btn-reservar { background-color: var(--theme-primary) !important; color: var(--theme-bg) !important; font-weight: bold; border: none; padding: 0 20px; border-radius: 8px; font-family: 'Oswald'; transition: transform 0.2s; }
     .btn-reservar:active { transform: scale(0.95); }
     
     .success-icon { font-size: 3rem; color: #28a745; margin-bottom: 10px; }
-    .success-text { color: #eee; font-size: 1.1rem; margin-bottom: 15px; font-weight: bold; }
+    .success-text { color: var(--theme-text) !important; font-size: 1.1rem; margin-bottom: 15px; font-weight: bold; }
     .btn-cancelar { background: transparent; border: 1px solid #dc3545; color: #dc3545; padding: 10px; border-radius: 50px; font-weight: bold; transition: all 0.2s; }
     .btn-cancelar:active { background: #dc3545; color: white; }
     
-    .divider { width: 100%; height: 1px; background: #333; margin: 10px 0 20px 0; }
+    .divider { width: 100%; height: 1px; background: var(--theme-border) !important; margin: 10px 0 20px 0; }
     
     .cards-grid { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 600px; align-self: center; }
-    .schedule-card { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; overflow: hidden; }
-    .card-header { background: #252525; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
-    .time-text { font-family: 'Oswald'; font-size: 1.1rem; color: white; font-weight: bold; }
-    .badge-count { background: #F8C545; color: black; padding: 3px 10px; border-radius: 10px; font-size: 0.8rem; font-weight: bold; }
+    .schedule-card { background: var(--theme-card) !important; border: 1px solid var(--theme-border) !important; border-radius: 12px; overflow: hidden; }
+    .card-header { background: var(--theme-bg) !important; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--theme-border) !important; }
+    .time-text { font-family: 'Oswald'; font-size: 1.1rem; color: var(--theme-text) !important; font-weight: bold; }
+    .badge-count { background: var(--theme-primary) !important; color: var(--theme-bg) !important; padding: 3px 10px; border-radius: 10px; font-size: 0.8rem; font-weight: bold; }
     .card-body { padding: 15px; }
     .user-list { display: flex; flex-direction: column; gap: 8px; }
-    .user-item { display: flex; align-items: center; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid #333; color: #ccc; font-size: 0.95rem; }
+    .user-item { display: flex; align-items: center; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--theme-border) !important; color: var(--theme-text) !important; font-size: 0.95rem; }
     .user-item:last-child { border-bottom: none; padding-bottom: 0; }
-    .user-item i { color: #F8C545; }
+    .user-item i { color: var(--theme-primary) !important; }
     
     .fade-in { animation: fadeIn 0.5s ease; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 @code {
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) PARA EVITAR FLASHAZOS AMARILLOS ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9; 
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
+    public class BoxConfigDTO 
+    { 
+        public string ThemePrimary { get; set; }
+        public string ThemeSecondary { get; set; }
+        public string ThemeBg { get; set; }
+        public string ThemeCard { get; set; }
+        public string ThemeBorder { get; set; }
+        public string ThemeText { get; set; }
+        public string ThemeTextMuted { get; set; }
+    }
+
     private List<AgendaVisualDto> agendaData = new List<AgendaVisualDto>();
     private Guid horarioSeleccionado;
     private bool cargando = true;
@@ -250,6 +273,51 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // 1. CARGAMOS CACHÉ INMEDIATO (Si ya se guardó antes, la app carga sin flashear)
+        try 
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache)) 
+            { 
+                EstilosTema = cache; 
+                StateHasChanged(); 
+            }
+        } 
+        catch { }
+
+        // 2. BUSCAMOS TEMA ACTUALIZADO EN LA BD
+        if (Sesion.Usuario != null)
+        {
+            try
+            {
+                var configBox = await Http.GetFromJsonAsync<BoxConfigDTO>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
+                if (configBox != null) 
+                {
+                    string p = string.IsNullOrEmpty(configBox.ThemePrimary) ? "#F8C545" : configBox.ThemePrimary;
+                    string s = string.IsNullOrEmpty(configBox.ThemeSecondary) ? "#dcb03d" : configBox.ThemeSecondary;
+                    string bg = string.IsNullOrEmpty(configBox.ThemeBg) ? "#0d0d0d" : configBox.ThemeBg;
+                    string c = string.IsNullOrEmpty(configBox.ThemeCard) ? "#1a1a1a" : configBox.ThemeCard;
+                    string b = string.IsNullOrEmpty(configBox.ThemeBorder) ? "#333333" : configBox.ThemeBorder;
+                    string t = string.IsNullOrEmpty(configBox.ThemeText) ? "#ffffff" : configBox.ThemeText;
+                    string tm = string.IsNullOrEmpty(configBox.ThemeTextMuted) ? "#888888" : configBox.ThemeTextMuted;
+
+                    EstilosTema = $@"
+                        --theme-primary: {p};
+                        --theme-secondary: {s};
+                        --theme-bg: {bg};
+                        --theme-card: {c};
+                        --theme-border: {b};
+                        --theme-text: {t};
+                        --theme-text-muted: {tm};
+                    ";
+                    
+                    // Actualizamos la caché local
+                    try { await JS.InvokeVoidAsync("localStorage.setItem", "tema_box", EstilosTema); } catch { }
+                }
+            }
+            catch { } // Si no hay internet, se queda con la caché o el Plata Mate
+        }
+
         await CargarDatos();
     }
 

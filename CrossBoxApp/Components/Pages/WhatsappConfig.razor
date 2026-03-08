@@ -2,195 +2,323 @@
 @inject HttpClient Http
 @inject NavigationManager Nav
 @inject CrossBoxApp.Models.Services.SesionService Sesion
+@inject IJSRuntime JS
 
-<div class="main-layout">
+@* ENVOLVEMOS TODA LA PÁGINA EN EL TEMA GLOBAL *@
+<div style="@EstilosTema">
 
-    <div class="navbar-container">
-        <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
-            <i class="fas fa-arrow-left"></i> VOLVER
+    <div class="main-layout">
+
+        <div class="navbar-container">
+            <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </div>
+            <div class="nav-title">WHATSAPP</div>
+            <div class="nav-right"></div>
         </div>
-        <div class="nav-title">WHATSAPP</div>
-        <div class="nav-right"></div>
-    </div>
 
-    <div class="scrollable-content">
-        
-        <div class="content-wrapper">
-            <div class="header-section text-center fade-in">
-                <i class="fas fa-comment-dots brand-icon"></i>
-                <h2>CONEXIÓN</h2>
-                <p>Vincula el celular del gimnasio para enviar notificaciones automáticas.</p>
-            </div>
+        <div class="scrollable-content">
 
-            <div class="card-status fade-in">
-                @if (cargando)
-                {
-                    <div class="text-center py-4">
-                        <div class="spinner-border text-success" role="status"></div>
-                        <p class="mt-3 text-white">Procesando...</p>
-                    </div>
-                }
-                else if (conectado)
-                {
-                    <div class="text-center py-4">
-                        <i class="fas fa-check-circle fa-4x mb-3 text-success" style="box-shadow: 0 0 30px rgba(40,167,69,0.5); border-radius: 50%;"></i>
-                        <h4 class="text-white">¡Conectado!</h4>
-                        <p class="text-muted">El servicio está activo y funcionando.</p>
-
-                        <button class="btn btn-outline-danger mt-4" @onclick="Desconectar">
-                            <i class="fas fa-sign-out-alt"></i> DESCONECTAR
-                        </button>
-                    </div>
-                }
-                else if (!string.IsNullOrEmpty(qrCodeBase64))
-                {
-                    <div class="qr-section text-center">
-                        <div class="alert-info-custom mb-3">
-                            <i class="fas fa-info-circle"></i>
-                            <span>Abre WhatsApp > Menú (3 puntos) > Dispositivos vinculados > Vincular</span>
-                        </div>
-
-                        <div class="qr-box">
-                            <img src="@qrCodeBase64" class="qr-img" />
-                        </div>
-
-                        <p class="timer text-warning mt-2"><small>El código cambia cada cierto tiempo.</small></p>
-
-                        <div class="mt-3 d-flex justify-content-center gap-2">
-                            <button class="btn btn-outline-light btn-sm" @onclick="GenerarQR">
-                                <i class="fas fa-sync"></i> Nuevo QR
-                            </button>
-                            <button class="btn btn-success btn-sm" @onclick="ConfirmarVinculacion">
-                                <i class="fas fa-check"></i> Ya escaneé
-                            </button>
-                        </div>
-                    </div>
-                }
-                else
-                {
-                    <div class="text-center py-4">
-                        <i class="fas fa-plug fa-3x mb-3 text-muted" style="opacity:0.3;"></i>
-                        <p class="text-muted">Estado: <strong>Desconectado</strong></p>
-
-                        <button class="btn-connect" @onclick="GenerarQR">
-                            <span><i class="fas fa-qrcode"></i> GENERAR CÓDIGO QR</span>
-                        </button>
-                    </div>
-                }
-            </div>
-
-            @if (conectado)
-            {
-                <div class="test-section mt-4 fade-in">
-                    <h5>🚀 Probar Envío</h5>
-
-                    <div class="input-row">
-                        <select class="form-select bg-dark text-white input-lada" @bind="ladaSeleccionada">
-                            <option value="521">🇲🇽 +52</option>
-                            <option value="1">🇺🇸 +1</option>
-                            <option value="502">🇬🇹 +502</option>
-                        </select>
-
-                        <input type="text" inputmode="numeric" class="form-control bg-dark text-white input-phone"
-                               placeholder="Tu número (10 dígitos)" @bind="telefonoInput" />
-                    </div>
-
-                    <button class="btn btn-primary btn-send-full mt-3" @onclick="EnviarPrueba">
-                        <i class="fas fa-paper-plane"></i> ENVIAR PRUEBA
-                    </button>
-
-                    <small class="text-muted d-block mt-2 text-center">Te llegará un mensaje de confirmación.</small>
+            <div class="content-wrapper">
+                <div class="header-section text-center fade-in">
+                    <i class="fas fa-comment-dots brand-icon"></i>
+                    <h2 style="color: var(--theme-text);">CONEXIÓN</h2>
+                    <p style="color: var(--theme-text-muted);">Vincula el celular del gimnasio para enviar notificaciones automáticas.</p>
                 </div>
-            }
+
+                <div class="card-status fade-in" style="background: var(--theme-card); border-color: var(--theme-border);">
+                    @if (cargando)
+                    {
+                        <div class="text-center py-4">
+                            <div class="spinner-border" role="status" style="color: var(--theme-primary);"></div>
+                            <p class="mt-3" style="color: var(--theme-text);">Procesando...</p>
+                        </div>
+                    }
+                    else if (conectado)
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle fa-4x mb-3" style="color: #25D366; filter: drop-shadow(0 0 15px rgba(37, 211, 102, 0.4));"></i>
+                            <h4 style="color: var(--theme-text);">¡Conectado!</h4>
+                            <p style="color: var(--theme-text-muted);">El servicio está activo y funcionando.</p>
+
+                            <button class="btn btn-outline-danger mt-4" @onclick="Desconectar">
+                                <i class="fas fa-sign-out-alt"></i> DESCONECTAR
+                            </button>
+                        </div>
+                    }
+                    else if (!string.IsNullOrEmpty(qrCodeBase64))
+                    {
+                        <div class="qr-section text-center">
+                            <div class="alert-info-custom mb-3" style="background: rgba(37, 211, 102, 0.05); border-color: #25D366; color: #25D366;">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Abre WhatsApp > Menú (3 puntos) > Dispositivos vinculados > Vincular</span>
+                            </div>
+
+                            <div class="qr-box">
+                                <img src="@qrCodeBase64" class="qr-img" />
+                            </div>
+
+                            <p class="timer mt-2" style="color: var(--theme-primary);"><small>El código cambia cada cierto tiempo.</small></p>
+
+                            <div class="mt-3 d-flex justify-content-center gap-2">
+                                <button class="btn btn-sm" style="border: 1px solid var(--theme-border); color: var(--theme-text);" @onclick="GenerarQR">
+                                    <i class="fas fa-sync"></i> Nuevo QR
+                                </button>
+                                <button class="btn btn-success btn-sm" style="background-color: #25D366; border: none; color: white;" @onclick="ConfirmarVinculacion">
+                                    <i class="fas fa-check"></i> Ya escaneé
+                                </button>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-plug fa-3x mb-3" style="color: var(--theme-border); opacity:0.5;"></i>
+                            <p style="color: var(--theme-text-muted);">Estado: <strong>Desconectado</strong></p>
+
+                            <button class="btn-connect" @onclick="GenerarQR">
+                                <span><i class="fas fa-qrcode"></i> GENERAR CÓDIGO QR</span>
+                            </button>
+                        </div>
+                    }
+                </div>
+
+                @if (conectado)
+                {
+                    <div class="test-section mt-4 fade-in" style="border-top-color: var(--theme-border);">
+                        <h5 style="color: var(--theme-primary); font-family: 'Oswald';">🚀 Probar Envío</h5>
+
+                        <div class="input-row">
+                            <select class="form-select text-white input-lada" style="background-color: var(--theme-bg); border-color: var(--theme-border);" @bind="ladaSeleccionada">
+                                <option value="521">🇲🇽 +52</option>
+                                <option value="1">🇺🇸 +1</option>
+                                <option value="502">🇬🇹 +502</option>
+                            </select>
+
+                            <input type="text" inputmode="numeric" class="form-control text-white input-phone" style="background-color: var(--theme-bg); border-color: var(--theme-border);"
+                                   placeholder="Tu número (10 dígitos)" @bind="telefonoInput" />
+                        </div>
+
+                        <button class="btn btn-send-full mt-3" style="background-color: var(--theme-primary); color: var(--theme-bg);" @onclick="EnviarPrueba">
+                            <i class="fas fa-paper-plane"></i> ENVIAR PRUEBA
+                        </button>
+
+                        <small style="color: var(--theme-text-muted);" class="d-block mt-2 text-center">Te llegará un mensaje de confirmación.</small>
+                    </div>
+                }
+            </div>
+
+            <div style="height: 40px;"></div>
         </div>
-        
-        <div style="height: 40px;"></div>
     </div>
 </div>
 
 <style>
     /* --- ESTRUCTURA BASE --- */
     .main-layout {
-        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--theme-bg);
+        display: flex;
+        flex-direction: column;
+        z-index: 1;
     }
 
     .navbar-container {
         flex-shrink: 0;
         padding-top: calc(env(safe-area-inset-top) + 5px);
-        padding-bottom: 10px; padding-left: 20px; padding-right: 20px;
-        background-color: #0d0d0d; border-bottom: 1px solid #F8C545;
-        color: white; display: flex; justify-content: space-between; align-items: center;
-        z-index: 100; font-family: 'Oswald'; min-height: 60px;
+        padding-bottom: 10px;
+        padding-left: 20px;
+        padding-right: 20px;
+        background-color: var(--theme-bg);
+        border-bottom: 1px solid var(--theme-primary);
+        color: var(--theme-text);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 100;
+        font-family: 'Oswald';
+        min-height: 60px;
     }
 
-    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
-    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
-    .nav-right { width: 60px; }
+    .nav-left {
+        color: var(--theme-primary);
+        font-weight: bold;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+    }
+
+    .nav-title {
+        font-weight: bold;
+        font-size: 1.1rem;
+        color: var(--theme-text);
+        letter-spacing: 1px;
+    }
+
+    .nav-right {
+        width: 60px;
+    }
 
     .scrollable-content {
-        flex-grow: 1; overflow-y: auto; padding: 20px;
-        display: flex; flex-direction: column; align-items: center;
-        -webkit-overflow-scrolling: touch; padding-bottom: 40px;
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 40px;
     }
 
     /* --- ESTILOS WHATSAPP --- */
-    
-    .content-wrapper { width: 100%; max-width: 500px; }
+    .content-wrapper {
+        width: 100%;
+        max-width: 500px;
+    }
 
-    .header-section { margin-bottom: 20px; }
-    .header-section h2 { font-family: 'Oswald'; margin-top: 10px; color: white; }
-    .header-section p { color: #888; font-size: 0.9rem; }
+    .header-section {
+        margin-bottom: 20px;
+    }
+
+        .header-section h2 {
+            font-family: 'Oswald';
+            margin-top: 10px;
+        }
+
+        .header-section p {
+            font-size: 0.9rem;
+        }
 
     .brand-icon {
-        font-size: 3.5rem; color: #25D366; margin-bottom: 10px;
-        text-shadow: 0 0 20px rgba(37, 211, 102, 0.3);
+        font-size: 3.5rem;
+        color: #25D366;
+        margin-bottom: 10px;
+        filter: drop-shadow(0 0 10px rgba(37, 211, 102, 0.3));
     }
 
     /* Card Status */
     .card-status {
-        background: #1a1a1a; border-radius: 15px; padding: 25px;
-        border: 1px solid #333; min-height: 300px;
-        display: flex; flex-direction: column; justify-content: center;
+        border-radius: 15px;
+        padding: 25px;
+        border: 1px solid;
+        min-height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
         box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     }
 
     .btn-connect {
-        background: #25D366; color: white; border: none; padding: 12px 25px;
-        border-radius: 50px; font-weight: bold; font-size: 1rem;
-        box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); transition: transform 0.2s;
+        background: #25D366;
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 50px;
+        font-weight: bold;
+        font-size: 1rem;
+        box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+        transition: transform 0.2s;
+        cursor: pointer;
     }
-    .btn-connect:active { transform: scale(0.95); }
+
+        .btn-connect:active {
+            transform: scale(0.95);
+        }
 
     .qr-box {
-        background: white; padding: 10px; display: inline-block;
-        border-radius: 10px; margin: 10px 0;
+        background: white;
+        padding: 10px;
+        display: inline-block;
+        border-radius: 10px;
+        margin: 10px 0;
     }
-    .qr-img { width: 220px; height: 220px; object-fit: contain; }
+
+    .qr-img {
+        width: 220px;
+        height: 220px;
+        object-fit: contain;
+    }
 
     .alert-info-custom {
-        background: rgba(37, 211, 102, 0.1); border: 1px solid #25D366;
-        color: #25D366; padding: 10px; border-radius: 8px; font-size: 0.85rem;
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        border: 1px solid;
     }
 
     /* Sección de Prueba */
-    .test-section { padding-top: 20px; border-top: 1px solid #333; color: white; }
+    .test-section {
+        padding-top: 20px;
+        border-top: 1px solid;
+    }
 
-    .input-row { display: flex; gap: 10px; }
-    .input-lada { width: 110px; border: 1px solid #444; flex-shrink: 0; }
-    .input-phone { flex-grow: 1; border: 1px solid #444; }
+    .input-row {
+        display: flex;
+        gap: 10px;
+    }
+
+    .input-lada {
+        width: 110px;
+        border: 1px solid;
+        flex-shrink: 0;
+    }
+
+    .input-phone {
+        flex-grow: 1;
+        border: 1px solid;
+    }
 
     .btn-send-full {
-        width: 100%; padding: 12px; font-weight: bold; text-transform: uppercase;
-        letter-spacing: 1px; border-radius: 8px; background-color: #0d6efd; border: none;
+        width: 100%;
+        padding: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-radius: 8px;
+        border: none;
+        font-family: 'Oswald';
+        cursor: pointer;
     }
-    .btn-send-full:active { transform: scale(0.98); }
 
-    .fade-in { animation: fadeIn 0.5s ease; }
-    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-send-full:active {
+            transform: scale(0.98);
+        }
+
+    .fade-in {
+        animation: fadeIn 0.5s ease;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 </style>
 
 @code {
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9;
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
     private bool verificandoEstado = true;
     private bool cargando = false;
     private bool conectado = false;
@@ -204,13 +332,25 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // LEER EL CACHÉ LOCAL AL INSTANTE
+        try
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache))
+            {
+                EstilosTema = cache;
+                StateHasChanged();
+            }
+        }
+        catch { }
+
         await VerificarEstadoEnVivo();
     }
 
     private async Task VerificarEstadoEnVivo()
     {
         verificandoEstado = true;
-        conectado = false; 
+        conectado = false;
         StateHasChanged();
 
         try
@@ -258,12 +398,11 @@
             if (response.IsSuccessStatusCode)
             {
                 var base64Raw = await response.Content.ReadAsStringAsync();
-                
-                // VALIDACIÓN 1: Si llega vacío o nulo
+
                 if (string.IsNullOrWhiteSpace(base64Raw) || base64Raw == "\"\"")
                 {
                     await App.Current.MainPage.DisplayAlert("Iniciando motor...", "El sistema de WhatsApp se está despertando. Por favor, toca 'Generar QR' de nuevo en 5 segundos.", "Entendido");
-                    return; // Salimos sin error técnico
+                    return;
                 }
 
                 string limpio = base64Raw.Replace("\"", "").Trim();
@@ -272,8 +411,7 @@
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                
-                // VALIDACIÓN 2: Si es un error feo de JSON o serialización
+
                 if (string.IsNullOrWhiteSpace(error) || error.Contains("Json") || error.Contains("JSON") || error.Contains("Object reference"))
                 {
                     await App.Current.MainPage.DisplayAlert("Reintentar", "Estamos estableciendo conexión segura con WhatsApp. Por favor, intenta de nuevo.", "OK");
@@ -286,10 +424,9 @@
         }
         catch (Exception ex)
         {
-            // VALIDACIÓN 3: Excepciones de código
             if (ex.Message.Contains("Json") || ex.Message.Contains("JSON") || ex.Message.Contains("reference"))
             {
-                 await App.Current.MainPage.DisplayAlert("Reintentar", "La conexión está inicializando. Por favor intenta generar el QR nuevamente.", "OK");
+                await App.Current.MainPage.DisplayAlert("Reintentar", "La conexión está inicializando. Por favor intenta generar el QR nuevamente.", "OK");
             }
             else
             {
@@ -312,7 +449,7 @@
             if (response.IsSuccessStatusCode)
             {
                 conectado = true;
-                qrCodeBase64 = null; 
+                qrCodeBase64 = null;
                 if (Sesion.Usuario.Box != null) Sesion.Usuario.Box.WhatsappActivo = true;
                 await App.Current.MainPage.DisplayAlert("¡Conectado!", "Tu WhatsApp ha sido vinculado exitosamente.", "OK");
             }
@@ -351,13 +488,11 @@
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                // Filtramos error feo también al desconectar
-                if (error.Contains("Json") || error.Contains("JSON")) 
+                if (error.Contains("Json") || error.Contains("JSON"))
                 {
-                     // Si falla al desconectar por error de JSON, asumimos que ya estaba desconectado o el server se reinició
-                     conectado = false;
-                     if (Sesion.Usuario.Box != null) Sesion.Usuario.Box.WhatsappActivo = false;
-                     await App.Current.MainPage.DisplayAlert("Listo", "Sesión cerrada.", "OK");
+                    conectado = false;
+                    if (Sesion.Usuario.Box != null) Sesion.Usuario.Box.WhatsappActivo = false;
+                    await App.Current.MainPage.DisplayAlert("Listo", "Sesión cerrada.", "OK");
                 }
                 else
                 {
@@ -383,7 +518,7 @@
             return;
         }
 
-        cargando = true; 
+        cargando = true;
         try
         {
             string numeroFinal = ladaSeleccionada + telefonoInput;
@@ -401,7 +536,7 @@
             if (response.IsSuccessStatusCode)
             {
                 await App.Current.MainPage.DisplayAlert("¡Éxito!", "Mensaje enviado. Revisa tu celular.", "OK");
-                telefonoInput = ""; 
+                telefonoInput = "";
             }
             else
             {

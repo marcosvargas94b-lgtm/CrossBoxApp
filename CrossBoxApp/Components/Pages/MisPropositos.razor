@@ -4,125 +4,127 @@
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject SesionService Sesion
+@inject IJSRuntime JS
 
-<div class="main-layout">
+@* ENVOLVEMOS TODA LA PÁGINA EN EL TEMA *@
+<div style="@EstilosTema">
 
-    <div class="navbar-container">
-        <div class="nav-left" @onclick="Volver">
-            <i class="fas fa-arrow-left"></i> VOLVER
-        </div>
-        <div class="nav-title">MIS PROPÓSITOS @DateTime.Now.Year</div>
-        <div class="nav-right"></div>
-    </div>
+    <div class="main-layout">
 
-    <div class="scrollable-content">
-        
-        <div class="chalkboard-header fade-in">
-            <p>"Lo que no se define, no se puede medir"</p>
-            <button class="btn-add-goal" @onclick="AbrirModalCrear">
-                <i class="fas fa-plus"></i> AGREGAR META
-            </button>
+        <div class="navbar-container">
+            <div class="nav-left" @onclick="Volver">
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </div>
+            <div class="nav-title">MIS PROPÓSITOS @DateTime.Now.Year</div>
+            <div class="nav-right"></div>
         </div>
 
-        @if (misPropositos == null)
-        {
-            <div class="text-center mt-5">
-                <div class="spinner-border text-warning"></div>
+        <div class="scrollable-content">
+            
+            <div class="chalkboard-header fade-in">
+                <p>"Lo que no se define, no se puede medir"</p>
+                <button class="btn-add-goal" @onclick="AbrirModalCrear">
+                    <i class="fas fa-plus"></i> AGREGAR META
+                </button>
             </div>
-        }
-        else if (misPropositos.Count == 0)
-        {
-            <div class="empty-state fade-in">
-                <i class="fas fa-bullseye"></i>
-                <p>Aún no tienes propósitos definidos.</p>
-            </div>
-        }
-        else
-        {
-            <div class="goals-list fade-in">
-                @foreach (var p in misPropositos)
-                {
-                    <div class="goal-card @(p.Cumplido ? "completed" : "pending")" @onclick="() => AbrirModalEditar(p)">
-                        <div class="goal-text">@p.Descripcion</div>
-                        <div class="goal-status">
-                            @if (p.Cumplido)
-                            {
-                                <i class="fas fa-trophy trophy-icon"></i>
-                            }
-                            else
-                            {
-                                <i class="far fa-circle circle-icon"></i>
-                            }
+
+            @if (misPropositos == null)
+            {
+                <div class="text-center mt-5">
+                    <div class="spinner-border" style="color: var(--theme-primary);"></div>
+                </div>
+            }
+            else if (misPropositos.Count == 0)
+            {
+                <div class="empty-state fade-in">
+                    <i class="fas fa-bullseye" style="color: var(--theme-text-muted);"></i>
+                    <p style="color: var(--theme-text-muted);">Aún no tienes propósitos definidos.</p>
+                </div>
+            }
+            else
+            {
+                <div class="goals-list fade-in">
+                    @foreach (var p in misPropositos)
+                    {
+                        <div class="goal-card @(p.Cumplido ? "completed" : "pending")" @onclick="() => AbrirModalEditar(p)">
+                            <div class="goal-text">@p.Descripcion</div>
+                            <div class="goal-status">
+                                @if (p.Cumplido)
+                                {
+                                    <i class="fas fa-trophy trophy-icon"></i>
+                                }
+                                else
+                                {
+                                    <i class="far fa-circle circle-icon"></i>
+                                }
+                            </div>
                         </div>
-                    </div>
-                }
-            </div>
-        }
-        
-        <div style="height: 40px;"></div>
-    </div>
-</div>
-
-@if (mostrarModal)
-{
-    <div class="modal-overlay fade-in">
-        <div class="modal-content custom-modal slide-up">
-            <div class="modal-header">
-                <h5 style="color:#F8C545; margin:0; font-family:'Oswald'">
-                    @(editandoID == 0 ? "NUEVA META" : "EDITAR META")
-                </h5>
-                <button class="btn-close-custom" @onclick="() => mostrarModal = false"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <textarea @bind="textoProposito" class="form-control input-dark" rows="3" placeholder="Ej: Sacar mi primer Muscle Up..."></textarea>
-                @if (editandoID != 0)
-                {
-                    <small class="text-muted mt-2 d-block" style="font-size:0.8rem;">
-                        <i class="fas fa-info-circle"></i> Nota: No puedes borrar metas, solo editarlas o cumplirlas.
-                    </small>
-                }
-            </div>
-            <div class="modal-footer">
-                <button class="btn-cancel" @onclick="() => mostrarModal = false">Cancelar</button>
-                <button class="btn-confirm" @onclick="Guardar">GUARDAR</button>
-            </div>
+                    }
+                </div>
+            }
+            
+            <div style="height: 40px;"></div>
         </div>
     </div>
-}
 
-@if (mostrarAnimacionLogro)
-{
-    <div class="celebration-overlay" @onclick="CerrarAnimacion">
-        <div class="trophy-animation">🏆</div>
-        <h1>¡FELICIDADES!</h1>
-        <p>Has cumplido tu propósito:</p>
-        <div class="achieved-goal">"@nombreLogroReciente"</div>
-        <small class="tap-hint">Toca para continuar</small>
-        
-        <div class="confetti"></div>
-        <div class="confetti"></div>
-        <div class="confetti"></div>
-    </div>
-}
+    @if (mostrarModal)
+    {
+        <div class="modal-overlay fade-in">
+            <div class="modal-content custom-modal slide-up">
+                <div class="modal-header">
+                    <h5 style="color:var(--theme-primary); margin:0; font-family:'Oswald'">
+                        @(editandoID == 0 ? "NUEVA META" : "EDITAR META")
+                    </h5>
+                    <button class="btn-close-custom" @onclick="() => mostrarModal = false"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <textarea @bind="textoProposito" class="form-control input-dark" rows="3" placeholder="Ej: Sacar mi primer Muscle Up..."></textarea>
+                    @if (editandoID != 0)
+                    {
+                        <small class="mt-2 d-block" style="font-size:0.8rem; color: var(--theme-text-muted);">
+                            <i class="fas fa-info-circle"></i> Nota: No puedes borrar metas, solo editarlas o cumplirlas.
+                        </small>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-cancel" @onclick="() => mostrarModal = false">Cancelar</button>
+                    <button class="btn-confirm" @onclick="Guardar">GUARDAR</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (mostrarAnimacionLogro)
+    {
+        <div class="celebration-overlay" @onclick="CerrarAnimacion">
+            <div class="trophy-animation">🏆</div>
+            <h1 style="color: var(--theme-primary);">¡FELICIDADES!</h1>
+            <p>Has cumplido tu propósito:</p>
+            <div class="achieved-goal" style="border-bottom: 2px solid var(--theme-primary);">"@nombreLogroReciente"</div>
+            <small class="tap-hint">Toca para continuar</small>
+        </div>
+    }
+
+</div>
 
 <style>
     /* --- ESTRUCTURA BASE --- */
     .main-layout {
         position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-        background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1;
+        background-color: var(--theme-bg); display: flex; flex-direction: column; z-index: 1;
     }
 
     .navbar-container {
         flex-shrink: 0;
         padding-top: calc(env(safe-area-inset-top) + 5px);
         padding-bottom: 10px; padding-left: 20px; padding-right: 20px;
-        background-color: #0d0d0d; border-bottom: 1px solid #F8C545;
-        color: white; display: flex; justify-content: space-between; align-items: center;
+        background-color: var(--theme-bg); border-bottom: 1px solid var(--theme-primary);
+        color: var(--theme-text); display: flex; justify-content: space-between; align-items: center;
         z-index: 100; font-family: 'Oswald'; min-height: 60px;
     }
 
-    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
-    .nav-title { font-weight: bold; font-size: 1.1rem; color: white; letter-spacing: 1px; }
+    .nav-left { color: var(--theme-primary); font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: var(--theme-text); letter-spacing: 1px; }
     .nav-right { width: 60px; }
 
     .scrollable-content {
@@ -133,28 +135,27 @@
         flex-direction: column;
         align-items: center;
         -webkit-overflow-scrolling: touch;
-        /* CAMBIO AQUÍ: */
-        padding-bottom: 100px; /* Mucho espacio al final para que nada se esconda */
+        padding-bottom: 100px;
     }
 
     /* --- ESTILOS PROPÓSITOS --- */
     
     .chalkboard-header { 
-        background: #1a1a1a; 
+        background: var(--theme-card); 
         padding: 20px; 
         border-radius: 10px; 
-        border: 1px dashed #666; 
+        border: 1px dashed var(--theme-border); 
         text-align: center; 
         margin-bottom: 25px; 
         width: 100%;
         max-width: 500px;
     }
-    .chalkboard-header p { font-style: italic; color: #aaa; font-family: 'Roboto'; margin-bottom: 15px; }
+    .chalkboard-header p { font-style: italic; color: var(--theme-text-muted); font-family: 'Roboto'; margin-bottom: 15px; }
     
     .btn-add-goal { 
-        background: #F8C545; color: black; border: none; padding: 10px 25px; 
+        background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 10px 25px; 
         border-radius: 30px; font-weight: bold; font-family: 'Oswald'; 
-        cursor: pointer; box-shadow: 0 4px 10px rgba(248,197,69,0.3); 
+        cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
         transition: transform 0.2s;
     }
     .btn-add-goal:active { transform: scale(0.95); }
@@ -165,46 +166,50 @@
     }
     
     .goal-card { 
-        background: #1a1a1a; padding: 15px 20px; border-radius: 10px; 
+        background: var(--theme-card); padding: 15px 20px; border-radius: 10px; 
         display: flex; justify-content: space-between; align-items: center;
-        border-left: 5px solid #444; transition: all 0.2s; cursor: pointer;
-        border: 1px solid #333; /* Borde sutil alrededor */
-        border-left-width: 5px; /* Recuperamos el borde izquierdo grueso */
+        border-left: 5px solid var(--theme-border); transition: all 0.2s; cursor: pointer;
+        border: 1px solid var(--theme-border); 
+        border-left-width: 5px;
     }
-    .goal-card:active { transform: scale(0.98); background: #222; }
+    .goal-card:active { transform: scale(0.98); background: var(--theme-bg); }
     
-    .goal-card.pending { border-left-color: #666; }
+    .goal-card.pending { border-left-color: var(--theme-text-muted); }
+    
+    /* El estado "Completado" SIEMPRE será Dorado por semántica de victoria */
     .goal-card.completed { 
         border-left-color: #FFD700; 
-        background: linear-gradient(90deg, #1a1a1a 0%, rgba(255, 215, 0, 0.05) 100%);
+        background: linear-gradient(90deg, var(--theme-card) 0%, rgba(255, 215, 0, 0.05) 100%);
         border-color: #443300;
     }
 
-    .goal-text { color: white; font-family: 'Roboto'; font-size: 1rem; flex: 1; padding-right: 15px; line-height: 1.4; }
+    .goal-text { color: var(--theme-text); font-family: 'Roboto'; font-size: 1rem; flex: 1; padding-right: 15px; line-height: 1.4; }
     .trophy-icon { color: #FFD700; font-size: 1.5rem; animation: popIn 0.5s; }
-    .circle-icon { color: #666; font-size: 1.3rem; }
+    .circle-icon { color: var(--theme-text-muted); font-size: 1.3rem; }
 
-    .empty-state { text-align: center; margin-top: 50px; color: #666; font-family: 'Roboto'; opacity: 0.8; }
-    .empty-state i { font-size: 4rem; margin-bottom: 15px; color: #333; }
+    .empty-state { text-align: center; margin-top: 50px; font-family: 'Roboto'; opacity: 0.8; }
+    .empty-state i { font-size: 4rem; margin-bottom: 15px; }
 
     /* --- MODALES --- */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 4000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
-    .custom-modal { background: #1a1a1a; width: 90%; max-width: 400px; border: 1px solid #F8C545; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
-    .modal-header { background: #222; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
-    .modal-body { padding: 20px; color: white; }
-    .modal-footer { padding: 15px; background: #222; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #333; }
+    .custom-modal { background: var(--theme-card); width: 90%; max-width: 400px; border: 1px solid var(--theme-primary); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+    .modal-header { background: var(--theme-bg); padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--theme-border); }
+    .modal-body { padding: 20px; color: var(--theme-text); }
+    .modal-footer { padding: 15px; background: var(--theme-bg); display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--theme-border); }
     
-    .btn-close-custom { background: none; border: none; color: white; font-size: 1.2rem; }
-    .btn-confirm { background: #F8C545; color: black; border: none; padding: 8px 20px; font-weight: bold; border-radius: 5px; }
-    .btn-cancel { background: #333; color: white; border: none; padding: 8px 20px; border-radius: 5px; }
-    .input-dark { background: #333 !important; color: white !important; border: 1px solid #555; }
-    .input-dark:focus { border-color: #F8C545; box-shadow: none; }
+    .btn-close-custom { background: none; border: none; color: var(--theme-text); font-size: 1.2rem; }
+    .btn-confirm { background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 8px 20px; font-weight: bold; border-radius: 5px; }
+    .btn-cancel { background: var(--theme-border); color: var(--theme-text); border: none; padding: 8px 20px; border-radius: 5px; }
+    
+    .input-dark { background: var(--theme-bg) !important; color: var(--theme-text) !important; border: 1px solid var(--theme-border); }
+    .input-dark:focus { border-color: var(--theme-primary); box-shadow: none; }
+    .input-dark::placeholder { color: var(--theme-text-muted); }
 
     /* --- CELEBRACIÓN --- */
     .celebration-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 5000; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; }
     .trophy-animation { font-size: 5rem; margin-bottom: 20px; animation: bounce 1s infinite; }
-    .celebration-overlay h1 { font-family: 'Oswald'; color: #F8C545; font-size: 2.5rem; margin-bottom: 10px; }
-    .achieved-goal { font-size: 1.4rem; font-style: italic; margin: 20px 20px; color: white; border-bottom: 2px solid #F8C545; display: inline-block; padding-bottom: 5px; }
+    .celebration-overlay h1 { font-family: 'Oswald'; font-size: 2.5rem; margin-bottom: 10px; }
+    .achieved-goal { font-size: 1.4rem; font-style: italic; margin: 20px 20px; color: white; display: inline-block; padding-bottom: 5px; }
     .tap-hint { opacity: 0.6; animation: pulse 2s infinite; }
 
     .fade-in { animation: fadeIn 0.5s ease; }
@@ -217,6 +222,17 @@
 </style>
 
 @code {
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9; 
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
     class PropositoDto { public int PropositoID { get; set; } public string Descripcion { get; set; } public bool Cumplido { get; set; } public bool EsNuevoLogro { get; set; } }
     
     private List<PropositoDto> misPropositos;
@@ -231,6 +247,18 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // LEER EL CACHÉ LOCAL AL INSTANTE
+        try 
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache)) 
+            { 
+                EstilosTema = cache; 
+                StateHasChanged(); 
+            }
+        } 
+        catch { }
+
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
         await CargarPropositos();
     }

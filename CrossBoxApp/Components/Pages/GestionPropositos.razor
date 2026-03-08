@@ -4,68 +4,74 @@
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject SesionService Sesion
+@inject IJSRuntime JS
 
-<div class="main-layout">
+@* ENVOLVEMOS TODA LA PÁGINA EN EL TEMA PARA QUE LAS VARIABLES FUNCIONEN *@
+<div style="@EstilosTema">
 
-    <div class="navbar-container">
-        <div class="nav-left" @onclick="Volver">
-            <i class="fas fa-arrow-left"></i> VOLVER
-        </div>
-        <div class="nav-center">
-            <div class="nav-title-main">PROPÓSITOS</div>
-            <div class="nav-title-sub">@NombreAtleta.Split(' ')[0].ToUpper()</div>
-        </div>
-        <div class="nav-right"></div>
-    </div>
+    <div class="main-layout">
 
-    <div class="scrollable-content">
-        
-        @if (propositos == null)
-        {
-            <div class="text-center mt-5">
-                <div class="spinner-border text-warning"></div>
+        <div class="navbar-container">
+            <div class="nav-left" @onclick="Volver">
+                <i class="fas fa-arrow-left"></i> VOLVER
             </div>
-        }
-        else if (propositos.Count == 0)
-        {
-            <div class="empty-state fade-in">
-                <i class="fas fa-bullseye" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px;"></i>
-                <p>Este atleta no tiene propósitos definidos.</p>
+            <div class="nav-center">
+                <div class="nav-title-main">PROPÓSITOS</div>
+                <div class="nav-title-sub">@NombreAtleta.Split(' ')[0].ToUpper()</div>
             </div>
-        }
-        else
-        {
-            <p class="instruction-text fade-in">Toca un reto para marcarlo como CUMPLIDO o PENDIENTE.</p>
+            <div class="nav-right"></div>
+        </div>
+
+        <div class="scrollable-content">
             
-            <div class="goals-list fade-in">
-                @foreach (var p in propositos)
-                {
-                    <div class="admin-goal-card @(p.Cumplido ? "is-done" : "")" @onclick="() => ToggleCumplido(p)">
-                        
-                        <div class="check-box">
-                            @if (p.Cumplido) 
-                            { 
-                                <i class="fas fa-check"></i> 
-                            }
-                        </div>
+            @if (propositos == null)
+            {
+                <div class="text-center mt-5">
+                    <div class="spinner-border" style="color: var(--theme-primary);"></div>
+                </div>
+            }
+            else if (propositos.Count == 0)
+            {
+                <div class="empty-state fade-in">
+                    <i class="fas fa-bullseye" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px; color: var(--theme-text-muted);"></i>
+                    <p style="color: var(--theme-text-muted);">Este atleta no tiene propósitos definidos.</p>
+                </div>
+            }
+            else
+            {
+                <p class="instruction-text fade-in">Toca un reto para marcarlo como CUMPLIDO o PENDIENTE.</p>
+                
+                <div class="goals-list fade-in">
+                    @foreach (var p in propositos)
+                    {
+                        <div class="admin-goal-card @(p.Cumplido ? "is-done" : "")" @onclick="() => ToggleCumplido(p)">
+                            
+                            <div class="check-box">
+                                @if (p.Cumplido) 
+                                { 
+                                    <i class="fas fa-check"></i> 
+                                }
+                            </div>
 
-                        <div class="goal-info">
-                            <span class="desc">@p.Descripcion</span>
-                            <span class="status">@(p.Cumplido ? "¡LOGRADO!" : "Pendiente")</span>
-                        </div>
+                            <div class="goal-info">
+                                <span class="desc">@p.Descripcion</span>
+                                <span class="status">@(p.Cumplido ? "¡LOGRADO!" : "Pendiente")</span>
+                            </div>
 
-                    </div>
-                }
-            </div>
-        }
-        
-        <div style="height: 40px;"></div>
+                        </div>
+                    }
+                </div>
+            }
+            
+            <div style="height: 40px;"></div>
+        </div>
     </div>
+
 </div>
 
 <style>
     /* --- ESTRUCTURA BASE Y NAVBAR BLINDADA --- */
-    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
+    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--theme-bg); display: flex; flex-direction: column; z-index: 1; }
 
     .navbar-container {
         flex-shrink: 0;
@@ -73,9 +79,9 @@
         padding-bottom: 10px;
         padding-left: 20px;
         padding-right: 20px;
-        background-color: #0d0d0d;
-        border-bottom: 1px solid #F8C545;
-        color: white;
+        background-color: var(--theme-bg);
+        border-bottom: 1px solid var(--theme-primary);
+        color: var(--theme-text);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -85,7 +91,7 @@
     }
 
     .nav-left {
-        color: #F8C545;
+        color: var(--theme-primary);
         font-weight: bold;
         cursor: pointer;
         display: flex;
@@ -109,14 +115,14 @@
     .nav-title-main {
         font-weight: bold;
         font-size: 1.1rem;
-        color: white;
+        color: var(--theme-text);
         letter-spacing: 1px;
         white-space: nowrap;
     }
 
     .nav-title-sub {
         font-size: 0.75rem;
-        color: #888;
+        color: var(--theme-text-muted);
         font-family: 'Roboto';
         font-weight: normal;
         white-space: nowrap;
@@ -140,20 +146,21 @@
     /* --- ESTILOS GESTIÓN --- */
     
     .instruction-text { 
-        text-align: center; color: #666; font-size: 0.85rem; 
+        text-align: center; color: var(--theme-text-muted); font-size: 0.85rem; 
         margin-bottom: 20px; font-family: 'Roboto';
     }
 
     .goals-list { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 10px; }
 
     .admin-goal-card {
-        background: #1a1a1a; padding: 15px; border-radius: 10px;
+        background: var(--theme-card); padding: 15px; border-radius: 10px;
         display: flex; align-items: center; gap: 15px; cursor: pointer;
-        border: 1px solid #333; transition: all 0.2s;
+        border: 1px solid var(--theme-border); transition: all 0.2s;
         box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
     .admin-goal-card:active { transform: scale(0.98); }
 
+    /* EL COLOR VERDE SE MANTIENE PORQUE REPRESENTA "ÉXITO/COMPLETADO" UNIVERSALMENTE */
     .admin-goal-card.is-done {
         border-color: #28a745;
         background: rgba(40, 167, 69, 0.1);
@@ -161,7 +168,7 @@
     }
 
     .check-box {
-        width: 32px; height: 32px; border-radius: 50%; border: 2px solid #666;
+        width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--theme-text-muted);
         display: flex; align-items: center; justify-content: center;
         transition: 0.2s; flex-shrink: 0;
     }
@@ -174,24 +181,35 @@
     .goal-info { display: flex; flex-direction: column; flex: 1; }
     
     .desc { 
-        font-size: 1rem; font-family: 'Roboto'; color: #eee; 
+        font-size: 1rem; font-family: 'Roboto'; color: var(--theme-text); 
         line-height: 1.4; margin-bottom: 3px;
     }
     
     .status { 
-        font-size: 0.75rem; color: #666; text-transform: uppercase; 
+        font-size: 0.75rem; color: var(--theme-text-muted); text-transform: uppercase; 
         font-weight: bold; letter-spacing: 0.5px; 
     }
     
     .is-done .status { color: #28a745; }
 
-    .empty-state { text-align: center; margin-top: 60px; color: #666; font-family: 'Roboto'; }
+    .empty-state { text-align: center; margin-top: 60px; font-family: 'Roboto'; }
 
     .fade-in { animation: fadeIn 0.5s ease; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 @code {
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9; 
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
     [Parameter] public Guid UsuarioId { get; set; }
     [Parameter] public string NombreAtleta { get; set; }
 
@@ -201,6 +219,18 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // LEER EL CACHÉ LOCAL AL INSTANTE
+        try 
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache)) 
+            { 
+                EstilosTema = cache; 
+                StateHasChanged(); 
+            }
+        } 
+        catch { }
+
         await Cargar();
     }
 

@@ -5,373 +5,208 @@
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject SesionService Sesion
+@inject IJSRuntime JS
 
-<div class="main-layout">
+@* ENVOLVEMOS TODA LA VISTA EN EL TEMA GLOBAL *@
+<div style="@EstilosTema">
 
-    <div class="navbar-container">
-        <div class="nav-left" @onclick="Volver">
-            <i class="fas fa-arrow-left"></i> VOLVER
+    <div class="main-layout">
+
+        <div class="navbar-container">
+            <div class="nav-left" @onclick="Volver">
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </div>
+            <div class="nav-title">SE ENTRENÓ</div>
+            <div class="nav-right"></div>
         </div>
-        <div class="nav-title">SE ENTRENÓ</div>
-        <div class="nav-right"></div>
-    </div>
 
-    <div class="scrollable-content">
-        
-        @if (!yaSubiFotoHoy)
-        {
-            <div class="upload-card fade-in">
-                <h3>¡Presume tu entreno!</h3>
-                <p>Sube tu foto de hoy para ganar Likes.</p>
+        <div class="scrollable-content">
+            
+            @if (!yaSubiFotoHoy)
+            {
+                <div class="upload-card fade-in">
+                    <h3>¡Presume tu entreno!</h3>
+                    <p style="color: var(--theme-text-muted);">Sube tu foto de hoy para ganar Likes.</p>
 
-                @* ÁREA DE CLIC PARA SELECCIONAR FOTO *@
-                <div class="image-preview-area" @onclick="SeleccionarFotoFeed">
-                    @if (string.IsNullOrEmpty(previewLocal))
-                    {
-                        <i class="fas fa-camera camera-icon"></i>
-                        <span>Toca aquí para subir foto</span>
-                    }
-                    else
-                    {
-                        <img src="@previewLocal" class="img-preview" />
-                    }
-                </div>
-
-                <input type="text" @bind="descripcion" class="input-dark mt-2" placeholder="Comentario (opcional)..." />
-
-                @if (!string.IsNullOrEmpty(previewLocal))
-                {
-                    <button class="btn-subir mt-2" @onclick="SubirFoto" disabled="@subiendo">
-                        @if (subiendo)
+                    @* ÁREA DE CLIC PARA SELECCIONAR FOTO *@
+                    <div class="image-preview-area" @onclick="SeleccionarFotoFeed">
+                        @if (string.IsNullOrEmpty(previewLocal))
                         {
-                            <span><i class="fas fa-spinner fa-spin"></i> SUBIENDO...</span>
+                            <i class="fas fa-camera camera-icon"></i>
+                            <span style="color: var(--theme-text-muted);">Toca aquí para subir foto</span>
                         }
                         else
                         {
-                            <span>PUBLICAR AHORA</span>
+                            <img src="@previewLocal" class="img-preview" />
                         }
-                    </button>
-                }
-            </div>
-        }
-        else
-        {
-            <div class="alert-success-custom fade-in">
-                <i class="fas fa-check-circle"></i> Tienes una foto activa. ¡Mira a los demás!
-            </div>
-        }
-
-        <hr class="divider" />
-
-        @if (feed == null)
-        {
-            <div class="text-center mt-5">
-                <div class="spinner-border text-warning"></div>
-            </div>
-        }
-        else if (feed.Count == 0)
-        {
-            <div class="text-center text-muted mt-5 empty-msg">
-                <i class="fas fa-images mb-3" style="font-size: 3rem; opacity: 0.3;"></i>
-                <p>Nadie ha subido fotos hoy. ¡Sé el primero!</p>
-            </div>
-        }
-        else
-        {
-            <div class="feed-list">
-                @foreach (var item in feed)
-                {
-                       <div class="feed-card fade-in">
-                        <div class="feed-header">
-
-                            @* 1. GRUPO IZQUIERDO: FOTO Y NOMBRE *@
-                            @* Usamos flex-grow: 1 para que este grupo empuje el botón de borrar a la derecha *@
-                            <div style="display:flex; align-items:center; gap:10px; flex-grow:1;">
-
-                                @if (!string.IsNullOrEmpty(item.FotoPerfilUsuario))
-                                {
-                                    <img src="@item.FotoPerfilUsuario" class="avatar-small"
-                                         @onclick="() => IrAlPerfil(item.UsuarioID)" style="cursor:pointer;" />
-                                }
-                                else
-                                {
-                                    <div class="avatar-small-initial" @onclick="() => IrAlPerfil(item.UsuarioID)" style="cursor:pointer;">
-                                        @(item.NombreUsuario?.Substring(0, 1).ToUpper() ?? "U")
-                                    </div>
-                                }
-
-                                <span class="feed-username clickable-name" @onclick="() => IrAlPerfil(item.UsuarioID)"
-                                      style="cursor:pointer; text-decoration:underline; text-underline-offset: 4px;">
-                                    @item.NombreUsuario
-                                </span>
-
-                            </div>
-
-                            @* 2. BOTÓN DERECHO: BORRAR (SOLO SI ES MI FOTO) *@
-                            @if (item.UsuarioID == Sesion.Usuario.UsuarioID)
-                            {
-                                <button class="btn-delete-feed" @onclick="() => BorrarMiFoto(item)">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            }
-
-                        </div>
-
-                        <img src="@item.FotoUrl" class="feed-image" />
-
-                        <div class="feed-footer">
-                            <div class="actions">
-                                <button class="btn-like @(item.YaDiLike ? "liked" : "")"
-                                        @onclick="() => DarLike(item)"
-                                        disabled="@item.YaDiLike">
-                                    <i class="fas fa-heart"></i> @item.Likes
-                                </button>
-                            </div>
-                            @if (!string.IsNullOrEmpty(item.Descripcion))
-                            {
-                                <p class="feed-desc"><strong>@item.NombreUsuario</strong> @item.Descripcion</p>
-                            }
-                        </div>
                     </div>
-                }
-            </div>
-        }
-        
-        <div style="height: 40px;"></div>
+
+                    <input type="text" @bind="descripcion" class="input-dark mt-2" placeholder="Comentario (opcional)..." />
+
+                    @if (!string.IsNullOrEmpty(previewLocal))
+                    {
+                        <button class="btn-subir mt-2" @onclick="SubirFoto" disabled="@subiendo">
+                            @if (subiendo)
+                            {
+                                <span><i class="fas fa-spinner fa-spin"></i> SUBIENDO...</span>
+                            }
+                            else
+                            {
+                                <span>PUBLICAR AHORA</span>
+                            }
+                        </button>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert-success-custom fade-in">
+                    <i class="fas fa-check-circle"></i> Tienes una foto activa. ¡Mira a los demás!
+                </div>
+            }
+
+            <hr class="divider" />
+
+            @if (feed == null)
+            {
+                <div class="text-center mt-5">
+                    <div class="spinner-border" style="color: var(--theme-primary);"></div>
+                </div>
+            }
+            else if (feed.Count == 0)
+            {
+                <div class="text-center mt-5 empty-msg">
+                    <i class="fas fa-images mb-3" style="font-size: 3rem; opacity: 0.3; color: var(--theme-text-muted);"></i>
+                    <p style="color: var(--theme-text-muted);">Nadie ha subido fotos hoy. ¡Sé el primero!</p>
+                </div>
+            }
+            else
+            {
+                <div class="feed-list">
+                    @foreach (var item in feed)
+                    {
+                           <div class="feed-card fade-in">
+                            <div class="feed-header">
+
+                                @* 1. GRUPO IZQUIERDO: FOTO Y NOMBRE *@
+                                <div style="display:flex; align-items:center; gap:10px; flex-grow:1;">
+
+                                    @if (!string.IsNullOrEmpty(item.FotoPerfilUsuario))
+                                    {
+                                        <img src="@item.FotoPerfilUsuario" class="avatar-small"
+                                             @onclick="() => IrAlPerfil(item.UsuarioID)" style="cursor:pointer;" />
+                                    }
+                                    else
+                                    {
+                                        <div class="avatar-small-initial" @onclick="() => IrAlPerfil(item.UsuarioID)" style="cursor:pointer;">
+                                            @(item.NombreUsuario?.Substring(0, 1).ToUpper() ?? "U")
+                                        </div>
+                                    }
+
+                                    <span class="feed-username clickable-name" @onclick="() => IrAlPerfil(item.UsuarioID)">
+                                        @item.NombreUsuario
+                                    </span>
+
+                                </div>
+
+                                @* 2. BOTÓN DERECHO: BORRAR (SOLO SI ES MI FOTO) *@
+                                @if (item.UsuarioID == Sesion.Usuario.UsuarioID)
+                                {
+                                    <button class="btn-delete-feed" @onclick="() => BorrarMiFoto(item)">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                }
+
+                            </div>
+
+                            <img src="@item.FotoUrl" class="feed-image" />
+
+                            <div class="feed-footer">
+                                <div class="actions">
+                                    <button class="btn-like @(item.YaDiLike ? "liked" : "")"
+                                            @onclick="() => DarLike(item)"
+                                            disabled="@item.YaDiLike">
+                                        <i class="fas fa-heart"></i> @item.Likes
+                                    </button>
+                                </div>
+                                @if (!string.IsNullOrEmpty(item.Descripcion))
+                                {
+                                    <p class="feed-desc"><strong style="color: var(--theme-primary);">@item.NombreUsuario</strong> @item.Descripcion</p>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            
+            <div style="height: 40px;"></div>
+        </div>
     </div>
+
 </div>
 
 <style>
     /* --- ESTRUCTURA BASE --- */
-    .main-layout {
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background-color: #0d0d0d;
-        display: flex;
-        flex-direction: column;
-        z-index: 1;
-    }
-
-    .navbar-container {
-        flex-shrink: 0;
-        padding-top: calc(env(safe-area-inset-top) + 5px);
-        padding-bottom: 10px;
-        padding-left: 20px;
-        padding-right: 20px;
-        background-color: #0d0d0d;
-        border-bottom: 1px solid #F8C545;
-        color: white;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 100;
-        font-family: 'Oswald';
-        min-height: 60px;
-    }
-
-    .nav-left {
-        color: #F8C545;
-        font-weight: bold;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.9rem;
-    }
-
-    .nav-title {
-        font-weight: bold;
-        font-size: 1.1rem;
-        color: white;
-        letter-spacing: 1px;
-    }
-
-    .nav-right { width: 60px; }
-
-    .scrollable-content {
-        flex-grow: 1;
-        overflow-y: auto;
-        padding: 15px; /* Padding un poco menor para el feed */
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 40px;
-    }
+    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--theme-bg); display: flex; flex-direction: column; z-index: 1; }
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: var(--theme-bg); border-bottom: 1px solid var(--theme-primary); color: var(--theme-text); display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
+    .nav-left { color: var(--theme-primary); font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: var(--theme-text); letter-spacing: 1px; }
+    .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
 
     /* --- ESTILOS DE FEED --- */
-    
-    .upload-card {
-        background: #1a1a1a;
-        padding: 20px;
-        border-radius: 15px;
-        border: 1px dashed #F8C545;
-        text-align: center;
-        margin-bottom: 20px;
-        width: 100%;
-        max-width: 500px;
-    }
-    .upload-card h3 { font-family: 'Oswald'; color: white; margin-top: 5px; }
-    .upload-card p { color: #888; font-size: 0.9rem; }
+    .upload-card { background: var(--theme-card); padding: 20px; border-radius: 15px; border: 1px dashed var(--theme-primary); text-align: center; margin-bottom: 20px; width: 100%; max-width: 500px; }
+    .upload-card h3 { font-family: 'Oswald'; color: var(--theme-text); margin-top: 5px; }
 
-   .image-preview-area {
-        background: #222;
-        width: 100%;
-        aspect-ratio: 1 / 1; 
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        cursor: pointer;
-        border-radius: 10px;
-        overflow: hidden;
-        border: 2px dashed #444; /* Un borde punteado sutil para que parezca zona de subida */
-        transition: border-color 0.3s;
-        margin-top: 10px;
-    }
-    .image-preview-area:active { border-color: #F8C545; }
+   .image-preview-area { background: var(--theme-bg); width: 100%; aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; flex-direction: column; cursor: pointer; border-radius: 10px; overflow: hidden; border: 2px dashed var(--theme-border); transition: border-color 0.3s; margin-top: 10px; }
+    .image-preview-area:active { border-color: var(--theme-primary); }
+    .camera-icon { font-size: 2.5rem; color: var(--theme-primary); margin-bottom: 10px; }
+    .img-preview { width: 100%; height: 100%; object-fit: cover; }
 
-    .camera-icon { font-size: 2.5rem; color: #F8C545; margin-bottom: 10px; }
+    .input-dark { width: 100%; background: var(--theme-bg); border: 1px solid var(--theme-border); color: var(--theme-text); padding: 10px; border-radius: 8px; }
+    .input-dark:focus { border-color: var(--theme-primary); outline: none; }
 
-    .img-preview {
-        width: 100%;
-        height: 100%;
-        object-fit: cover; /* Ahora recortará exactamente igual que la foto final */
-    }
-    .input-dark {
-        width: 100%;
-        background: #333;
-        border: 1px solid #444;
-        color: white;
-        padding: 10px;
-        border-radius: 8px;
-    }
-    .input-dark:focus { border-color: #F8C545; outline: none; }
-
-    .btn-subir {
-        width: 100%;
-        background: #F8C545;
-        border: none;
-        padding: 12px;
-        font-weight: bold;
-        border-radius: 8px;
-        color: black;
-        font-family: 'Oswald';
-        transition: transform 0.2s;
-    }
+    .btn-subir { width: 100%; background: var(--theme-primary); border: none; padding: 12px; font-weight: bold; border-radius: 8px; color: var(--theme-bg); font-family: 'Oswald'; transition: transform 0.2s; text-transform: uppercase; }
     .btn-subir:active { transform: scale(0.95); }
 
-    .alert-success-custom {
-        background: rgba(40, 167, 69, 0.2);
-        color: #28a745;
-        padding: 15px;
-        border-radius: 10px;
-        text-align: center;
-        border: 1px solid #28a745;
-        width: 100%;
-        max-width: 500px;
-        font-weight: bold;
-    }
+    .alert-success-custom { background: rgba(40, 167, 69, 0.1); color: #28a745; padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #28a745; width: 100%; max-width: 500px; font-weight: bold; }
+    .divider { width: 100%; height: 1px; background: var(--theme-border); margin: 20px 0; border: none; }
 
-    .divider { width: 100%; height: 1px; background: #333; margin: 20px 0; border: none; }
-
-    /* FEED LIST */
     .feed-list { width: 100%; max-width: 500px; }
+    .feed-card { background: var(--theme-card); border-radius: 15px; margin-bottom: 25px; overflow: hidden; border: 1px solid var(--theme-border); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .feed-header { padding: 12px 15px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--theme-border); }
 
-    .feed-card {
-        background: #1a1a1a;
-        border-radius: 15px;
-        margin-bottom: 25px;
-        overflow: hidden;
-        border: 1px solid #333;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    }
+    .avatar-small { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--theme-primary); }
+    .avatar-small-initial { width: 40px; height: 40px; background-color: var(--theme-bg); color: var(--theme-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-family: 'Oswald'; font-size: 1.1rem; border: 2px solid var(--theme-primary); }
+    .feed-username { font-family: 'Oswald'; font-size: 1rem; color: var(--theme-text); }
 
-    .feed-header {
-        padding: 12px 15px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        border-bottom: 1px solid #252525;
-    }
-
-    .avatar-small {
-        width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #F8C545;
-    }
-    .avatar-small-initial {
-        width: 40px; height: 40px; background-color: #333; color: #F8C545;
-        border-radius: 50%; display: flex; align-items: center; justify-content: center;
-        font-weight: bold; font-family: 'Oswald'; font-size: 1.1rem; border: 2px solid #F8C545;
-    }
-
-    .feed-username { font-family: 'Oswald'; font-size: 1rem; color: white; }
-
-    .feed-image {
-        width: 100%;
-        aspect-ratio: 1 / 1; /* Esto fuerza a que todas las fotos sean cuadradas como en Instagram */
-        object-fit: cover; /* Recorta la imagen para llenar el cuadrado sin deformarse */
-        display: block;
-    }
+    .feed-image { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; }
     .feed-footer { padding: 15px; }
 
-    .btn-like {
-        background: transparent;
-        border: 1px solid #666;
-        color: white;
-        padding: 6px 18px;
-        border-radius: 50px;
-        transition: all 0.3s;
-        font-weight: bold;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    
-    .btn-like.liked {
-        background: rgba(224, 36, 94, 0.2);
-        border-color: #e0245e;
-        color: #e0245e;
-    }
-    
-    .btn-like:active { transform: scale(0.9); }
+    .btn-like { background: transparent; border: 1px solid var(--theme-border); color: var(--theme-text); padding: 6px 18px; border-radius: 50px; transition: all 0.3s; font-weight: bold; display: flex; align-items: center; gap: 6px; }
+    .btn-like.liked { background: rgba(224, 36, 94, 0.1); border-color: #e0245e; color: #e0245e; }
+    .feed-desc { font-size: 0.95rem; margin-top: 10px; color: var(--theme-text); line-height: 1.4; }
 
-    .feed-desc {
-        font-size: 0.95rem;
-        margin-top: 10px;
-        color: #ddd;
-        line-height: 1.4;
-    }
-    .feed-desc strong { color: #F8C545; margin-right: 5px; font-family: 'Oswald'; }
-
-    .empty-msg { font-family: 'Roboto'; }
+    .clickable-name { cursor: pointer; transition: 0.2s; }
+    .clickable-name:active { color: var(--theme-primary); text-decoration: underline; }
+    .btn-delete-feed { background: transparent; border: none; color: var(--theme-text-muted); font-size: 1.1rem; padding: 5px 10px; cursor: pointer; }
+    .btn-delete-feed:active { color: #dc3545; transform: scale(0.9); }
 
     .fade-in { animation: fadeIn 0.5s ease; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .clickable-name {
-        cursor: pointer;
-        transition: color 0.2s;
-    }
-    .clickable-name:active {
-        color: #F8C545; /* Se pone amarillo al tocarlo */
-        text-decoration: underline;
-    }
-
-    .btn-delete-feed {
-        background: transparent;
-        border: none;
-        color: #666; /* Gris discreto */
-        font-size: 1.1rem;
-        padding: 5px 10px;
-        transition: color 0.2s;
-    }
-
-        .btn-delete-feed:active {
-            color: #dc3545; /* Rojo al presionar */
-            transform: scale(0.9);
-        }
 </style>
 
 @code {
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9; 
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
     private bool yaSubiFotoHoy = false;
     private List<FotoFeedDto> feed;
     private string previewLocal;
@@ -381,6 +216,18 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // LEER EL CACHÉ LOCAL AL INSTANTE
+        try 
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache)) 
+            { 
+                EstilosTema = cache; 
+                StateHasChanged(); 
+            }
+        } 
+        catch { }
+
         await CargarFeed();
     }
 
@@ -502,7 +349,6 @@
 
     private void IrAlPerfil(Guid targetId)
     {
-        // Si el ID es el mío, voy a "mi-perfil", si es de otro, voy al perfil público
         if (targetId == Sesion.Usuario.UsuarioID)
         {
             Nav.NavigateTo("/mi-perfil");
@@ -532,9 +378,7 @@
 
             if (resp.IsSuccessStatusCode)
             {
-                // Recargamos el feed para que desaparezca la foto
                 await CargarFeed();
-                // Actualizamos el estado para permitir subir otra si queremos
                 yaSubiFotoHoy = false;
                 await App.Current.MainPage.DisplayAlert("Listo", "Foto eliminada.", "OK");
             }
@@ -549,9 +393,7 @@
         }
     }
 
-    // Clase auxiliar para el Request (agrégala al final del archivo o en tus Models)
     public class BorrarFotoRequest { public Guid FotoID { get; set; } public Guid UsuarioID { get; set; } }
-
 
     private void Volver() => Nav.NavigateTo("/home");
 

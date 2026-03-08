@@ -12,608 +12,613 @@
 @inject IAudioManager AudioManager
 @implements IAsyncDisposable
 
-@* --- AVISO DE GIRO PARA MÓVIL --- *@
-<div class="rotate-warning">
-    <div class="phone-animation">
-        <i class="fas fa-mobile-alt"></i>
+@* ENVOLVEMOS TODA LA PÁGINA EN EL TEMA *@
+<div style="@EstilosTema">
+
+    @* --- AVISO DE GIRO PARA MÓVIL --- *@
+    <div class="rotate-warning">
+        <div class="phone-animation">
+            <i class="fas fa-mobile-alt"></i>
+        </div>
+        <h3>MODO DASHBOARD</h3>
+        <p>Para controlar la clase, gira tu teléfono en horizontal.</p>
     </div>
-    <h3>MODO DASHBOARD</h3>
-    <p>Para controlar la clase, gira tu teléfono en horizontal.</p>
-</div>
 
-<div class="dashboard-container @(wodExpandido ? "wod-wide" : "")">
+    <div class="dashboard-container @(wodExpandido ? "wod-wide" : "")">
 
-    @* --- PANEL 1: TIMER (CON OPCIÓN EMOM AGREGADA) --- *@
-    <div class="panel timer-panel @(verTimer ? "" : "collapsed")">
-        @if (verTimer)
-        {
-            <div class="panel-header">
-                <div class="header-left">
-                    <span><i class="fas fa-stopwatch"></i> TIMER</span>
-                    @if (timerCorriendo || tiempoTranscurrido > 0)
-                    {
-                        <span class="header-timer-secondary fade-in">
-                            @if (tipoTimer == 3) { <span>EMOM @rondaActual/@totalRondas</span> }
-                            else { @FormatoTiempo(tiempoTranscurrido) }
-                        </span>
-                    }
-                    @if (!timerCorriendo)
-                    {
-                        <button class="btn-icon-header ml-2" @onclick="() => modoConfiguracion = !modoConfiguracion"><i class="fas fa-cog"></i></button>
-                    }
-                </div>
-                <button class="btn-icon-header" @onclick="() => verTimer = false"><i class="fas fa-compress-arrows-alt"></i></button>
-            </div>
-
-            <div class="panel-content flex-column-layout">
-                @if (modoConfiguracion && !timerCorriendo)
-                {
-                    <div class="config-box slide-in">
-                        @* --- SELECCION DE TIPO CON EMOM AGREGADO --- *@
-                        <div class="timer-type-selector">
-                            <button class="type-btn @(tipoTimer == 1 ? "active" : "")" @onclick="() => CambiarTipoTimer(1)">
-                                <i class="fas fa-hourglass-start"></i> CUENTA ATRÁS
-                            </button>
-                            <button class="type-btn @(tipoTimer == 2 ? "active" : "")" @onclick="() => CambiarTipoTimer(2)">
-                                <i class="fas fa-sync-alt"></i> INTERVALOS
-                            </button>
-                            <button class="type-btn @(tipoTimer == 3 ? "active" : "")" @onclick="() => CambiarTipoTimer(3)">
-                                <i class="fas fa-redo"></i> EMOM
-                            </button>
-                        </div>
-
-                        <div class="inputs-grid">
-                            <div class="input-group">
-                                <label>TIEMPO TRABAJO @(tipoTimer == 3 ? "(MINUTO)" : "")</label>
-                                <div class="time-inputs">
-                                    <input type="number" @bind="inputMinutos" placeholder="00" />
-                                    <span class="colon">:</span>
-                                    <input type="number" @bind="inputSegundos" placeholder="00" />
-                                </div>
-                            </div>
-                            
-                            @if (tipoTimer == 2 || tipoTimer == 3)
-                            {
-                                <div class="inputs-row">
-                                    <div class="input-group">
-                                        <label>@(tipoTimer == 3 ? "MINUTOS (RONDAS)" : "RONDAS")</label>
-                                        <input type="number" @bind="inputRondas" class="single-input" />
-                                    </div>
-                                    
-                                    @* Ocultamos descanso si es EMOM *@
-                                    @if (tipoTimer == 2)
-                                    {
-                                        <div class="input-group">
-                                            <label>DESCANSO</label>
-                                            <div class="time-inputs">
-                                                <input type="number" @bind="inputMinDescanso" placeholder="00" />
-                                                <span class="colon">:</span>
-                                                <input type="number" @bind="inputSegDescanso" placeholder="00" />
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                            }
-                        </div>
-                        <button class="btn-save-timer" @onclick="GuardarConfiguracion">
-                            <i class="fas fa-check"></i> LISTO
-                        </button>
-                    </div>
-                }
-                else
-                {
-                    <div class="timer-visual-group">
-                        @if (enConteoPrevio)
+        @* --- PANEL 1: TIMER (CON OPCIÓN EMOM AGREGADA) --- *@
+        <div class="panel timer-panel @(verTimer ? "" : "collapsed")">
+            @if (verTimer)
+            {
+                <div class="panel-header">
+                    <div class="header-left">
+                        <span><i class="fas fa-stopwatch"></i> TIMER</span>
+                        @if (timerCorriendo || tiempoTranscurrido > 0)
                         {
-                            <div class="prep-display pulse-animation">
-                                <div class="prep-label">PREPARADOS</div>
-                                <div class="prep-number">@tiempoPrevio</div>
-                            </div>
+                            <span class="header-timer-secondary fade-in">
+                                @if (tipoTimer == 3) { <span>EMOM @rondaActual/@totalRondas</span> }
+                                else { @FormatoTiempo(tiempoTranscurrido) }
+                            </span>
                         }
-                        else
-                        {
-                            <div class="status-badge @(enDescanso ? "rest" : "work")">
-                                @if(tipoTimer == 3) { <span>EMOM</span> }
-                                else { @(enDescanso ? "DESCANSO" : "WORK") }
-                            </div>
-                            
-                            <div class="timer-display @(timerCorriendo ? (enDescanso ? "resting" : "running") : "")">
-                                @FormatoTiempo(tiempoRestanteActual)
-                            </div>
-                            
-                            @if (totalRondas > 1)
-                            {
-                                <div class="round-counter @(rondaActual == totalRondas ? "last-round-alert" : "")">
-                                    RONDA <span class="big-round">@rondaActual</span> / @totalRondas
-                                </div>
-                            }
-                        }
-                    </div>
-
-                    <div class="timer-controls-bottom">
                         @if (!timerCorriendo)
                         {
-                            <button class="btn-control-rect start" @onclick="IniciarSecuencia">
-                                <i class="fas fa-play"></i> INICIAR
-                            </button>
+                            <button class="btn-icon-header ml-2" @onclick="() => modoConfiguracion = !modoConfiguracion"><i class="fas fa-cog"></i></button>
                         }
-                        else
-                        {
-                            <button class="btn-control-rect stop" @onclick="PausarTimer">
-                                <i class="fas fa-pause"></i> PAUSAR
-                            </button>
-                        }
-                        <button class="btn-control-rect reset" @onclick="ResetTimer">
-                            <i class="fas fa-undo"></i> RESET
-                        </button>
                     </div>
-                }
-            </div>
-        }
-        else
-        {
-            <div class="vertical-bar" @onclick="() => verTimer = true"><span class="v-text">TIMER</span><i class="fas fa-stopwatch v-icon"></i></div>
-        }
-    </div>
-
-    @* --- PANEL 2: WOD (RECUPERADO SLIDER DE LETRA + NUEVO ZOOM) --- *@
-    <div class="panel wod-panel @(verWod ? "" : "collapsed")">
-        @if (verWod)
-        {
-            <div class="panel-header">
-                @if (wodHoy != null && wodHoy.Bloques != null && wodHoy.Bloques.Count > 0)
-                {
-                    <div class="header-select-wrapper" style="flex: 1; min-width: 0; margin-right: 10px;">
-                        <i class="fas fa-layer-group select-icon"></i>
-                        <select class="header-select" @onchange="CambiarBloqueVisible" style="text-overflow: ellipsis;">
-                            <option value="-1" selected="@(bloqueSeleccionadoIndex == -1)">WOD COMPLETO</option>
-                            @for (int i = 0; i < wodHoy.Bloques.Count; i++)
-                            {
-                                var b = wodHoy.Bloques[i];
-                                <option value="@i" selected="@(i == bloqueSeleccionadoIndex)">
-                                    @(b.EsTextoLibre
-                                                            ? (string.IsNullOrEmpty(b.TiempoFormato) ? "WOD" : b.TiempoFormato.ToUpper())
-                                                            : (string.IsNullOrEmpty(b.NombreSegmento) ? "BLOQUE" : b.NombreSegmento.ToUpper()))
-                    </option>
-                                        }
-                        </select>
-                        <i class="fas fa-chevron-down select-arrow"></i>
-                    </div>
-                }
-                else
-                {
-                    <span style="flex:1;">WOD</span>
-                }
-
-                <div style="display:flex; gap:10px; align-items:center; position:relative; flex-shrink: 0;">
-                    
-                    @* --- AQUÍ ESTÁ EL SLIDER QUE RECUPERAMOS --- *@
-                    <button class="btn-icon-header" @onclick="() => mostrarSliderLetra = !mostrarSliderLetra" title="Tamaño de letra">
-                        <i class="fas fa-text-height"></i>
-                    </button>
-                    @if (mostrarSliderLetra)
-                    {
-                        <div class="font-settings-popover fade-in" style="right: 0; top: 100%;">
-                            <i class="fas fa-font" style="font-size: 0.7rem;"></i>
-                            <input type="range" min="0.8" max="1.6" step="0.1" @bind="wodFontSize" @bind:event="oninput" />
-                            <i class="fas fa-font" style="font-size: 1rem;"></i>
-                        </div>
-                    }
-                    @* ------------------------------------------- *@
-
-                    <button class="btn-icon-header" @onclick="ToggleExpandirWod">
-                        <i class="fas @(wodExpandido ? "fa-compress" : "fa-expand")"></i>
-                    </button>
-                    <button class="btn-icon-header" @onclick="() => verWod = false">
-                        <i class="fas fa-compress-arrows-alt"></i>
-                    </button>
+                    <button class="btn-icon-header" @onclick="() => verTimer = false"><i class="fas fa-compress-arrows-alt"></i></button>
                 </div>
-            </div>
 
-            @if (!string.IsNullOrEmpty(UrlLogoBox))
-            {
-                <div class="wod-watermark" style="background-image: url('@UrlLogoBox');"></div>
-            }
-
-            @* --- CONTENEDOR DEL WOD CON ZOOM --- *@
-            <div class="panel-content" style="overflow: hidden; position: relative;">
-                
-                @* Este div "wod-zoom-target" es el que se moverá y escalará con JS 
-                   Y TAMBIÉN aplica el tamaño de letra del Slider *@
-                <div id="wod-zoom-target" class="bloques-container" style="transform-origin: 0 0; width: 100%; font-size: @(wodFontSize)rem;">
-                    @if (wodHoy != null && wodHoy.Bloques != null && wodHoy.Bloques.Count > 0)
+                <div class="panel-content flex-column-layout">
+                    @if (modoConfiguracion && !timerCorriendo)
                     {
-                        @for (int i = 0; i < wodHoy.Bloques.Count; i++)
-                        {
-                            var bloque = wodHoy.Bloques[i];
+                        <div class="config-box slide-in">
+                            @* --- SELECCION DE TIPO CON EMOM AGREGADO --- *@
+                            <div class="timer-type-selector">
+                                <button class="type-btn @(tipoTimer == 1 ? "active" : "")" @onclick="() => CambiarTipoTimer(1)">
+                                    <i class="fas fa-hourglass-start"></i> CUENTA ATRÁS
+                                </button>
+                                <button class="type-btn @(tipoTimer == 2 ? "active" : "")" @onclick="() => CambiarTipoTimer(2)">
+                                    <i class="fas fa-sync-alt"></i> INTERVALOS
+                                </button>
+                                <button class="type-btn @(tipoTimer == 3 ? "active" : "")" @onclick="() => CambiarTipoTimer(3)">
+                                    <i class="fas fa-redo"></i> EMOM
+                                </button>
+                            </div>
 
-                            @if (bloqueSeleccionadoIndex == -1 || i == bloqueSeleccionadoIndex)
-                            {
-                                <div class="wod-block fade-in">
-                                    <h4 class="block-title">
-                                        @(bloque.EsTextoLibre
-                                                                ? (string.IsNullOrEmpty(bloque.TiempoFormato) ? "RUTINA" : bloque.TiempoFormato.ToUpper())
-                                                                : (string.IsNullOrEmpty(bloque.NombreSegmento) ? "BLOQUE" : bloque.NombreSegmento.ToUpper()))
-                                     </h4>
-
-                                 @if (bloque.Ejercicios != null)
-                                    {
-                                        <div class="exercises-wrapper">
-                                            @if (bloque.EsTextoLibre)
-                                            {
-                                                @* MODO TEXTO LIBRE: Cortamos por cada "Enter" y dibujamos las filas *@
-                                                var textoCompleto = bloque.Ejercicios.FirstOrDefault()?.Descripcion ?? "";
-                                                var lineas = textoCompleto.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-                                                foreach (var linea in lineas)
-                                                {
-                                                    <div class="ejercicio-row-clean">
-                                                        <span class="ej-reps" style="color: #555; font-size: 0.9em;"><i class="fas fa-angle-right"></i></span>
-                                                        <div class="ej-nombre">@linea</div>
-                                                    </div>
-                                                }
-                                            }
-                                            else
-                                            {
-                                                @* MODO TRADICIONAL: Bloques, reps y pesos *@
-                                                @foreach (var ej in bloque.Ejercicios)
-                                                {
-                                                    <div class="ejercicio-row-clean">
-                                                        <span class="ej-reps">@ej.PesoRepeticiones</span>
-                                                        <div class="ej-nombre">
-                                                            @((MarkupString)FormatearPesoPlateado(ej.Descripcion))
-                                                        </div>
-                                                    </div>
-                                                }
-                                            }
-                                        </div>
-                                    }
+                            <div class="inputs-grid">
+                                <div class="input-group">
+                                    <label>TIEMPO TRABAJO @(tipoTimer == 3 ? "(MINUTO)" : "")</label>
+                                    <div class="time-inputs">
+                                        <input type="number" @bind="inputMinutos" placeholder="00" />
+                                        <span class="colon">:</span>
+                                        <input type="number" @bind="inputSegundos" placeholder="00" />
+                                    </div>
                                 </div>
-                            }
-                        }
+                                
+                                @if (tipoTimer == 2 || tipoTimer == 3)
+                                {
+                                    <div class="inputs-row">
+                                        <div class="input-group">
+                                            <label>@(tipoTimer == 3 ? "MINUTOS (RONDAS)" : "RONDAS")</label>
+                                            <input type="number" @bind="inputRondas" class="single-input" />
+                                        </div>
+                                        
+                                        @* Ocultamos descanso si es EMOM *@
+                                        @if (tipoTimer == 2)
+                                        {
+                                            <div class="input-group">
+                                                <label>DESCANSO</label>
+                                                <div class="time-inputs">
+                                                    <input type="number" @bind="inputMinDescanso" placeholder="00" />
+                                                    <span class="colon">:</span>
+                                                    <input type="number" @bind="inputSegDescanso" placeholder="00" />
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <button class="btn-save-timer" @onclick="GuardarConfiguracion">
+                                <i class="fas fa-check"></i> LISTO
+                            </button>
+                        </div>
                     }
                     else
                     {
-                        <div class="empty-state"><i class="fas fa-dumbbell"></i><p>@mensajeWod</p></div>
+                        <div class="timer-visual-group">
+                            @if (enConteoPrevio)
+                            {
+                                <div class="prep-display pulse-animation">
+                                    <div class="prep-label">PREPARADOS</div>
+                                    <div class="prep-number">@tiempoPrevio</div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="status-badge @(enDescanso ? "rest" : "work")">
+                                    @if(tipoTimer == 3) { <span>EMOM</span> }
+                                    else { @(enDescanso ? "DESCANSO" : "WORK") }
+                                </div>
+                                
+                                <div class="timer-display @(timerCorriendo ? (enDescanso ? "resting" : "running") : "")">
+                                    @FormatoTiempo(tiempoRestanteActual)
+                                </div>
+                                
+                                @if (totalRondas > 1)
+                                {
+                                    <div class="round-counter @(rondaActual == totalRondas ? "last-round-alert" : "")">
+                                        RONDA <span class="big-round">@rondaActual</span> / @totalRondas
+                                    </div>
+                                }
+                            }
+                        </div>
+
+                        <div class="timer-controls-bottom">
+                            @if (!timerCorriendo)
+                            {
+                                <button class="btn-control-rect start" @onclick="IniciarSecuencia">
+                                    <i class="fas fa-play"></i> INICIAR
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn-control-rect stop" @onclick="PausarTimer">
+                                    <i class="fas fa-pause"></i> PAUSAR
+                                </button>
+                            }
+                            <button class="btn-control-rect reset" @onclick="ResetTimer">
+                                <i class="fas fa-undo"></i> RESET
+                            </button>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="vertical-bar" @onclick="() => verTimer = true"><span class="v-text">TIMER</span><i class="fas fa-stopwatch v-icon"></i></div>
+            }
+        </div>
+
+        @* --- PANEL 2: WOD (RECUPERADO SLIDER DE LETRA + NUEVO ZOOM) --- *@
+        <div class="panel wod-panel @(verWod ? "" : "collapsed")">
+            @if (verWod)
+            {
+                <div class="panel-header">
+                    @if (wodHoy != null && wodHoy.Bloques != null && wodHoy.Bloques.Count > 0)
+                    {
+                        <div class="header-select-wrapper" style="flex: 1; min-width: 0; margin-right: 10px;">
+                            <i class="fas fa-layer-group select-icon"></i>
+                            <select class="header-select" @onchange="CambiarBloqueVisible" style="text-overflow: ellipsis;">
+                                <option value="-1" selected="@(bloqueSeleccionadoIndex == -1)">WOD COMPLETO</option>
+                                @for (int i = 0; i < wodHoy.Bloques.Count; i++)
+                                {
+                                    var b = wodHoy.Bloques[i];
+                                    <option value="@i" selected="@(i == bloqueSeleccionadoIndex)">
+                                        @(b.EsTextoLibre
+                                                                        ? (string.IsNullOrEmpty(b.TiempoFormato) ? "WOD" : b.TiempoFormato.ToUpper())
+                                                                        : (string.IsNullOrEmpty(b.NombreSegmento) ? "BLOQUE" : b.NombreSegmento.ToUpper()))
+                    </option>
+                                        }
+                            </select>
+                            <i class="fas fa-chevron-down select-arrow"></i>
+                        </div>
+                    }
+                    else
+                    {
+                        <span style="flex:1;">WOD</span>
+                    }
+
+                    <div style="display:flex; gap:10px; align-items:center; position:relative; flex-shrink: 0;">
+                        
+                        @* --- AQUÍ ESTÁ EL SLIDER QUE RECUPERAMOS --- *@
+                        <button class="btn-icon-header" @onclick="() => mostrarSliderLetra = !mostrarSliderLetra" title="Tamaño de letra">
+                            <i class="fas fa-text-height"></i>
+                        </button>
+                        @if (mostrarSliderLetra)
+                        {
+                            <div class="font-settings-popover fade-in" style="right: 0; top: 100%;">
+                                <i class="fas fa-font" style="font-size: 0.7rem;"></i>
+                                <input type="range" min="0.8" max="1.6" step="0.1" @bind="wodFontSize" @bind:event="oninput" />
+                                <i class="fas fa-font" style="font-size: 1rem;"></i>
+                            </div>
+                        }
+                        @* ------------------------------------------- *@
+
+                        <button class="btn-icon-header" @onclick="ToggleExpandirWod">
+                            <i class="fas @(wodExpandido ? "fa-compress" : "fa-expand")"></i>
+                        </button>
+                        <button class="btn-icon-header" @onclick="() => verWod = false">
+                            <i class="fas fa-compress-arrows-alt"></i>
+                        </button>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(UrlLogoBox))
+                {
+                    <div class="wod-watermark" style="background-image: url('@UrlLogoBox');"></div>
+                }
+
+                @* --- CONTENEDOR DEL WOD CON ZOOM --- *@
+                <div class="panel-content" style="overflow: hidden; position: relative;">
+                    
+                    @* Este div "wod-zoom-target" es el que se moverá y escalará con JS 
+                        Y TAMBIÉN aplica el tamaño de letra del Slider *@
+                    <div id="wod-zoom-target" class="bloques-container" style="transform-origin: 0 0; width: 100%; font-size: @(wodFontSize)rem;">
+                        @if (wodHoy != null && wodHoy.Bloques != null && wodHoy.Bloques.Count > 0)
+                        {
+                            @for (int i = 0; i < wodHoy.Bloques.Count; i++)
+                            {
+                                var bloque = wodHoy.Bloques[i];
+
+                                @if (bloqueSeleccionadoIndex == -1 || i == bloqueSeleccionadoIndex)
+                                {
+                                    <div class="wod-block fade-in">
+                                        <h4 class="block-title">
+                                            @(bloque.EsTextoLibre
+                                                                            ? (string.IsNullOrEmpty(bloque.TiempoFormato) ? "RUTINA" : bloque.TiempoFormato.ToUpper())
+                                                                            : (string.IsNullOrEmpty(bloque.NombreSegmento) ? "BLOQUE" : bloque.NombreSegmento.ToUpper()))
+                                         </h4>
+
+                                     @if (bloque.Ejercicios != null)
+                                        {
+                                            <div class="exercises-wrapper">
+                                                @if (bloque.EsTextoLibre)
+                                                {
+                                                    @* MODO TEXTO LIBRE: Cortamos por cada "Enter" y dibujamos las filas *@
+                                                    var textoCompleto = bloque.Ejercicios.FirstOrDefault()?.Descripcion ?? "";
+                                                    var lineas = textoCompleto.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+                                                    foreach (var linea in lineas)
+                                                    {
+                                                        <div class="ejercicio-row-clean">
+                                                            <span class="ej-reps" style="color: var(--theme-text-muted); font-size: 0.9em;"><i class="fas fa-angle-right"></i></span>
+                                                            <div class="ej-nombre">@linea</div>
+                                                        </div>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    @* MODO TRADICIONAL: Bloques, reps y pesos *@
+                                                    @foreach (var ej in bloque.Ejercicios)
+                                                    {
+                                                        <div class="ejercicio-row-clean">
+                                                            <span class="ej-reps">@ej.PesoRepeticiones</span>
+                                                            <div class="ej-nombre">
+                                                                @((MarkupString)FormatearPesoPlateado(ej.Descripcion))
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+                        }
+                        else
+                        {
+                            <div class="empty-state"><i class="fas fa-dumbbell"></i><p>@mensajeWod</p></div>
+                        }
+                    </div>
+
+                    @* --- BOTONES FLOTANTES DE CONTROL DE ZOOM Y EDICIÓN --- *@
+                    <div class="wod-zoom-controls">
+                        <button class="btn-zoom-float" style="background-color: var(--theme-primary); border: none; color: var(--theme-bg);" @onclick="AbrirModalEdicionWod" title="Editar WOD">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-zoom-float @(wodBloqueado ? "locked" : "unlocked")" @onclick="ToggleCandadoWod">
+                            <i class="fas @(wodBloqueado ? "fa-lock" : "fa-lock-open")"></i>
+                        </button>
+                    </div>
+
+                </div>
+            }
+            else
+            {
+                <div class="vertical-bar" @onclick="() => verWod = true"><span class="v-text">WORKOUT</span></div>
+            }
+        </div>
+
+        @* --- PANEL 3: LISTA ATLETAS (INTACTO) --- *@
+        <div class="panel list-panel @(verLista ? "" : "collapsed")">
+            @if (verLista)
+            {
+                <div class="panel-header">
+                    <span>CLASE</span>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        @if (Sesion.Usuario?.TipoLugar == "Crossfit")
+                        {
+                            <label class="switch-juez" title="Modo Juez (Capturar Tiempos)">
+                                <input type="checkbox" @bind="modoJuez">
+                                <span class="slider-juez round"></span>
+                            </label>
+                            @if (modoJuez)
+                            {
+                                <button class="btn-icon-header" style="color: var(--theme-primary);" @onclick="AbrirModalEquipos" title="Armar Equipos">
+                                    <i class="fas fa-users-cog"></i>
+                                </button>
+                            }
+                        }
+                        <button class="btn-icon-header" @onclick="AbrirModalAtletas"><i class="fas fa-user-plus"></i></button>
+                        <button class="btn-icon-header" @onclick="() => verLista = false"><i class="fas fa-compress-arrows-alt"></i></button>
+                    </div>
+                </div>
+
+                <div class="panel-content scroll-custom">
+                    @if (participantesVisuales != null && participantesVisuales.Count > 0)
+                    {
+                        <div class="atletas-grid">
+                            @foreach (var p in participantesVisuales)
+                            {
+                                <div class="atleta-card slide-in @(p.Finalizado ? "card-finished" : "") @(p.Atletas.Count > 1 ? "card-team" : "")"
+                                     @onclick="() => CapturarTiempo(p)">
+
+                                    <div class="delete-badge" @onclick:stopPropagation="true" @onclick="() => SolicitarEliminar(p)">
+                                        <i class="fas fa-times"></i>
+                                    </div>
+
+                                    <div class="card-inner-content">
+                                        @if (p.Atletas.Count > 1)
+                                        {
+                                            <div class="team-avatars">
+                                                @foreach (var a in p.Atletas)
+                                                {
+                                                    <div class="avatar-mini-team" style="@(!string.IsNullOrEmpty(a.FotoUrl) ? $"background-image: url('{a.FotoUrl}');" : "")">
+                                                        @if (string.IsNullOrEmpty(a.FotoUrl))
+                                                        {
+                                                            @a.NombreCompleto.Substring(0, 1).ToUpper()
+                                                        }
+                                                    </div>
+                                                }
+                                            </div>
+                                            <div class="name team-name">@(string.IsNullOrEmpty(p.NombreEquipo) ? "EQUIPO" : p.NombreEquipo)</div>
+                                        }
+                                        else
+                                        {
+                                            var atleta = p.Atletas.FirstOrDefault();
+                                            <div class="avatar" style="@(!string.IsNullOrEmpty(atleta?.FotoUrl) ? $"background-image: url('{atleta.FotoUrl}'); background-size:cover; border:none;" : "")">
+                                                @if (string.IsNullOrEmpty(atleta?.FotoUrl))
+                                                {
+                                                    @atleta?.NombreCompleto.Substring(0, 1).ToUpper()
+                                                }
+                                            </div>
+                                            <div class="name">@atleta?.NombreCompleto</div>
+                                        }
+
+                                        @if (p.Finalizado)
+                                        {
+                                            <div class="badge-time">@p.TiempoFinal</div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty-state"><i class="fas fa-users"></i><p>Esperando...</p></div>
                     }
                 </div>
 
-                @* --- BOTONES FLOTANTES DE CONTROL DE ZOOM Y EDICIÓN --- *@
-                <div class="wod-zoom-controls">
-                    <button class="btn-zoom-float" style="background-color: #F8C545; border: none; color: black;" @onclick="AbrirModalEdicionWod" title="Editar WOD">
-                        <i class="fas fa-edit"></i>
+                <div class="bottom-actions-row">
+                    <button class="btn-action-home" @onclick="IrAlHome" title="Salir al Inicio">
+                        <i class="fas fa-home"></i>
                     </button>
-                    <button class="btn-zoom-float @(wodBloqueado ? "locked" : "unlocked")" @onclick="ToggleCandadoWod">
-                        <i class="fas @(wodBloqueado ? "fa-lock" : "fa-lock-open")"></i>
+                    <button class="btn-action-finish" @onclick="IrAResumen">
+                        TERMINAR CLASE
                     </button>
                 </div>
-
-            </div>
-        }
-        else
-        {
-            <div class="vertical-bar" @onclick="() => verWod = true"><span class="v-text">WORKOUT</span></div>
-        }
+            }
+            else
+            {
+                <div class="vertical-bar" @onclick="() => verLista = true"><span class="v-text">ATLETAS</span></div>
+            }
+        </div>
     </div>
 
-    @* --- PANEL 3: LISTA ATLETAS (INTACTO) --- *@
-    <div class="panel list-panel @(verLista ? "" : "collapsed")">
-        @if (verLista)
-        {
-            <div class="panel-header">
-                <span>CLASE</span>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    @if (Sesion.Usuario?.TipoLugar == "Crossfit")
+    @* --- MODALES --- *@
+    @if (mostrarModalAtletas)
+    {
+        <div class="modal-overlay">
+            <div class="modal-content custom-modal">
+                <div class="modal-header">
+                    <h5 style="margin:0; color:var(--theme-primary); font-weight:bold;">SELECCIONAR ATLETA</h5>
+                    <div style="display:flex; gap:15px; align-items:center;">
+                        <button class="btn-icon-header" @onclick="() => mostrarBuscador = !mostrarBuscador"><i class="fas fa-search"></i></button>
+                        <button class="btn-icon-header" @onclick="() => mostrarModalAtletas = false"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    @if (mostrarBuscador)
                     {
-                        <label class="switch-juez" title="Modo Juez (Capturar Tiempos)">
-                            <input type="checkbox" @bind="modoJuez">
-                            <span class="slider-juez round"></span>
-                        </label>
-                        @if (modoJuez)
-                        {
-                            <button class="btn-icon-header text-warning" @onclick="AbrirModalEquipos" title="Armar Equipos">
-                                <i class="fas fa-users-cog"></i>
-                            </button>
-                        }
+                        <div class="search-box mb-3 slide-in">
+                            <input type="text" class="form-control input-dark search-input" placeholder="Buscar por nombre..." value="@filtroAtleta" @oninput="FiltrarAtletas" autofocus />
+                        </div>
                     }
-                    <button class="btn-icon-header" @onclick="AbrirModalAtletas"><i class="fas fa-user-plus"></i></button>
-                    <button class="btn-icon-header" @onclick="() => verLista = false"><i class="fas fa-compress-arrows-alt"></i></button>
+
+                    <div class="lista-atletas-scroll scroll-custom">
+                        @if (listaTodosAtletas == null)
+                        {
+                            <div class="text-center py-3"><div class="spinner-border" style="color: var(--theme-primary);"></div></div>
+                        }
+                        else if (listaAtletasFiltrada == null || listaAtletasFiltrada.Count == 0)
+                        {
+                            <p class="text-center text-muted mt-3">No hay resultados.</p>
+                        }
+                        else
+                        {
+                            @foreach (var atleta in listaAtletasFiltrada)
+                            {
+                                @if (!LiveState.AtletasEnClase.Any(x => x.UsuarioId == atleta.UsuarioId))
+                                {
+                                    <div class="atleta-row" @onclick="() => AgregarAtletaDesdeLista(atleta)">
+                                        <div class="atleta-info">
+                                            <div class="avatar-mini" style="@(!string.IsNullOrEmpty(atleta.FotoUrl) ? $"background-image: url('{atleta.FotoUrl}');" : "")">
+                                                @if (string.IsNullOrEmpty(atleta.FotoUrl))
+                                                {
+                                                    @atleta.NombreCompleto.Substring(0, 1).ToUpper()
+                                                }
+                                            </div>
+                                            <div style="display:flex; flex-direction:column;">
+                                                <span class="atleta-nombre">@atleta.NombreCompleto</span>
+                                            </div>
+                                        </div>
+                                        <i class="fas fa-plus-circle add-icon" style="color: var(--theme-primary);"></i>
+                                    </div>
+                                }
+                            }
+                        }
+                    </div>
                 </div>
             </div>
+        </div>
+    }
 
-            <div class="panel-content scroll-custom">
-                @if (participantesVisuales != null && participantesVisuales.Count > 0)
-                {
-                    <div class="atletas-grid">
-                        @foreach (var p in participantesVisuales)
+    @if (mostrarModalEquipos)
+    {
+        <div class="modal-overlay">
+            <div class="modal-content custom-modal">
+                <div class="modal-header">
+                    <h5 style="margin:0; color:var(--theme-primary);">CREAR EQUIPOS (PAREJAS)</h5>
+                    <button class="btn-icon-header" @onclick="CerrarModalEquipos"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-theme-muted text-center mb-3">Selecciona 2 atletas para unirlos.</p>
+                    <div class="team-builder-grid">
+                        @foreach (var p in participantesVisuales.Where(x => x.Atletas.Count == 1).ToList())
                         {
-                            <div class="atleta-card slide-in @(p.Finalizado ? "card-finished" : "") @(p.Atletas.Count > 1 ? "card-team" : "")"
-                                 @onclick="() => CapturarTiempo(p)">
+                            var esSeleccionado = (seleccionadoParaEquipo == p);
+                            <div class="atleta-select-row @(esSeleccionado ? "selected-theme" : "")" @onclick="() => SeleccionarParaEquipo(p)">
+                                <span class="name" style="color: var(--theme-text);">@p.Atletas[0].NombreCompleto</span>
+                                @if (esSeleccionado)
+                                {
+                                    <i class="fas fa-check-circle" style="color: var(--theme-bg);"></i>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
-                                <div class="delete-badge" @onclick:stopPropagation="true" @onclick="() => SolicitarEliminar(p)">
-                                    <i class="fas fa-times"></i>
-                                </div>
+    @if (mostrarModalEliminar)
+    {
+        <div class="modal-overlay">
+            <div class="modal-content custom-modal" style="height:auto; max-width:400px;">
+                <div class="modal-body text-center p-4">
+                    <i class="fas fa-exclamation-triangle mb-3" style="font-size:3rem; color: var(--theme-primary);"></i>
+                    <h4 class="mb-2" style="color: var(--theme-text);">¿Eliminar?</h4>
+                    <p class="mb-4" style="color: var(--theme-text-muted);">
+                        @(itemAEliminar?.Atletas.Count > 1 ? "Se eliminará el equipo." : "Se eliminará al atleta de la clase.")
+                    </p>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-control-rect reset" style="flex:1;" @onclick="CerrarModalEliminar">CANCELAR</button>
+                        <button class="btn-control-rect stop" style="flex:1;" @onclick="ConfirmarEliminar">ELIMINAR</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
-                                <div class="card-inner-content">
-                                    @if (p.Atletas.Count > 1)
+    @* --- MODAL EDITAR WOD EN VIVO --- *@
+    @if (mostrarModalWodEdicion)
+    {
+        <div class="modal-overlay overlay-wod">
+            <div class="modal-content custom-modal modal-wod" style="max-width: 600px; width: 100%;">
+
+                <div class="modal-header">
+                    <h5 style="margin:0; color:var(--theme-primary); font-family:'Oswald'">
+                        EDITAR WOD ACTUAL
+                        <span style="font-size:0.7rem; color:var(--theme-text-muted); margin-left:10px;">
+                            @(modoTextoLibre ? "(TEXTO LIBRE)" : "(POR BLOQUES)")
+                        </span>
+                    </h5>
+                    <button class="btn-close-custom" @onclick="() => mostrarModalWodEdicion = false"><i class="fas fa-times"></i></button>
+                </div>
+
+                <div class="modal-body scroll-custom" style="padding-bottom: 20px; overflow-y: auto;">
+                    @if (cargandoOperacionWod)
+                    {
+                        <div class="text-center py-5">
+                            <div class="spinner-border" style="color: var(--theme-primary);" role="status"></div>
+                            <p class="mt-2" style="color: var(--theme-text-muted);">Guardando cambios...</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="fade-in">
+                            @foreach (var bloque in listaBloquesEditor)
+                            {
+                                <div class="card p-2 mb-3" style="background-color: var(--theme-bg); border: 1px solid var(--theme-border);">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span style="color:var(--theme-primary); font-weight:bold; font-family:'Oswald'">BLOQUE</span>
+                                        <button class="btn-icon delete-btn" @onclick="() => EliminarBloque(bloque)"><i class="fas fa-trash"></i></button>
+                                    </div>
+
+                                    @if (!modoTextoLibre)
                                     {
-                                        <div class="team-avatars">
-                                            @foreach (var a in p.Atletas)
+                                        <select @bind="bloque.SegmentoClaseID" class="form-control input-dark mb-2">
+                                            <option value="@Guid.Empty" selected disabled>-- Selecciona Segmento --</option>
+                                            @if (listaSegmentos != null)
                                             {
-                                                <div class="avatar-mini-team" style="@(!string.IsNullOrEmpty(a.FotoUrl) ? $"background-image: url('{a.FotoUrl}');" : "")">
-                                                    @if (string.IsNullOrEmpty(a.FotoUrl))
-                                                    {
-                                                        @a.NombreCompleto.Substring(0, 1).ToUpper()
-                                                    }
-                                                </div>
+                                                @foreach (var seg in listaSegmentos)
+                                                {
+                                                    <option value="@seg.Id">@seg.Nombre</option>
+                                                }
                                             }
-                                        </div>
-                                        <div class="name team-name">@(string.IsNullOrEmpty(p.NombreEquipo) ? "EQUIPO" : p.NombreEquipo)</div>
+                                        </select>
+                                    }
+
+                                    <input type="text" @bind="bloque.TiempoFormato" class="form-control input-dark mb-3" placeholder="Tiempo / Formato (Ej: AMRAP 15 MIN)" />
+
+                                    @if (modoTextoLibre)
+                                    {
+                                        <textarea @bind="bloque.TextoLibre" class="form-control input-dark" style="height: auto !important; min-height: 150px; resize: vertical;" placeholder="Escribe aquí los ejercicios..."></textarea>
                                     }
                                     else
                                     {
-                                        var atleta = p.Atletas.FirstOrDefault();
-                                        <div class="avatar" style="@(!string.IsNullOrEmpty(atleta?.FotoUrl) ? $"background-image: url('{atleta.FotoUrl}'); background-size:cover; border:none;" : "")">
-                                            @if (string.IsNullOrEmpty(atleta?.FotoUrl))
-                                            {
-                                                @atleta?.NombreCompleto.Substring(0, 1).ToUpper()
-                                            }
-                                        </div>
-                                        <div class="name">@atleta?.NombreCompleto</div>
-                                    }
-
-                                    @if (p.Finalizado)
-                                    {
-                                        <div class="badge-time">@p.TiempoFinal</div>
+                                        @foreach (var ejercicio in bloque.Ejercicios)
+                                        {
+                                            <div class="ejercicio-row-clean" style="display: flex; gap: 6px; align-items: center; margin-bottom: 8px; background: var(--theme-card); padding: 8px; border-radius: 8px; border: 1px solid var(--theme-border);">
+                                                <input type="text" @bind="ejercicio.Reps" class="form-control input-dark text-center" style="width: 70px;" placeholder="Reps" />
+                                                <input type="text" @bind="ejercicio.NombreBase" class="form-control input-dark" style="flex: 1;" placeholder="Ejercicio" />
+                                                <button class="btn-icon weight-btn @(ejercicio.TienePesos ? "active" : "")" @onclick="() => AbrirEditorPeso(ejercicio)" style="width: 38px; background: var(--theme-bg); color: var(--theme-text-muted); border: none; border-radius: 6px;">
+                                                    <i class="fas fa-dumbbell"></i>
+                                                    @if (ejercicio.TienePesos)
+                                                    {
+                                                        <span class="dot-indicator" style="position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: var(--theme-primary); border-radius: 50%;"></span>
+                                                    }
+                                                </button>
+                                                <button class="btn-icon delete-btn" @onclick="() => EliminarEjercicio(bloque, ejercicio)" style="width: 38px; background: transparent; color: #dc3545; border: none;"><i class="fas fa-times"></i></button>
+                                            </div>
+                                        }
+                                        <button class="btn-add-ejercicio" style="width: 100%; background: transparent; border: 1px dashed var(--theme-border); color: var(--theme-text-muted); padding: 8px; border-radius: 8px; margin-top: 5px;" @onclick="() => AgregarEjercicio(bloque)">
+                                            <i class="fas fa-plus"></i> Ejercicio
+                                        </button>
                                     }
                                 </div>
-                            </div>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <div class="empty-state"><i class="fas fa-users"></i><p>Esperando...</p></div>
-                }
-            </div>
-
-            <div class="bottom-actions-row">
-                <button class="btn-action-home" @onclick="IrAlHome" title="Salir al Inicio">
-                    <i class="fas fa-home"></i>
-                </button>
-                <button class="btn-action-finish" @onclick="IrAResumen">
-                    TERMINAR CLASE
-                </button>
-            </div>
-        }
-        else
-        {
-            <div class="vertical-bar" @onclick="() => verLista = true"><span class="v-text">ATLETAS</span></div>
-        }
-    </div>
-</div>
-
-@* --- MODALES (INTACTOS) --- *@
-@if (mostrarModalAtletas)
-{
-    <div class="modal-overlay">
-        <div class="modal-content custom-modal">
-            <div class="modal-header">
-                <h5 style="margin:0; color:#F8C545; font-weight:bold;">SELECCIONAR ATLETA</h5>
-                <div style="display:flex; gap:15px; align-items:center;">
-                    <button class="btn-icon-header" @onclick="() => mostrarBuscador = !mostrarBuscador"><i class="fas fa-search"></i></button>
-                    <button class="btn-icon-header" @onclick="() => mostrarModalAtletas = false"><i class="fas fa-times"></i></button>
-                </div>
-            </div>
-            <div class="modal-body">
-                @if (mostrarBuscador)
-                {
-                    <div class="search-box mb-3 slide-in">
-                        <input type="text" class="form-control input-dark search-input" placeholder="Buscar por nombre..." value="@filtroAtleta" @oninput="FiltrarAtletas" autofocus />
-                    </div>
-                }
-
-                <div class="lista-atletas-scroll scroll-custom">
-                    @if (listaTodosAtletas == null)
-                    {
-                        <div class="text-center py-3"><div class="spinner-border text-warning"></div></div>
-                    }
-                    else if (listaAtletasFiltrada == null || listaAtletasFiltrada.Count == 0)
-                    {
-                        <p class="text-center text-muted mt-3">No hay resultados.</p>
-                    }
-                    else
-                    {
-                        @foreach (var atleta in listaAtletasFiltrada)
-                        {
-                            @if (!LiveState.AtletasEnClase.Any(x => x.UsuarioId == atleta.UsuarioId))
-                            {
-                                <div class="atleta-row" @onclick="() => AgregarAtletaDesdeLista(atleta)">
-                                    <div class="atleta-info">
-                                        <div class="avatar-mini" style="@(!string.IsNullOrEmpty(atleta.FotoUrl) ? $"background-image: url('{atleta.FotoUrl}');" : "")">
-                                            @if (string.IsNullOrEmpty(atleta.FotoUrl))
-                                            {
-                                                @atleta.NombreCompleto.Substring(0, 1).ToUpper()
-                                            }
-                                        </div>
-                                        <div style="display:flex; flex-direction:column;">
-                                            <span class="atleta-nombre">@atleta.NombreCompleto</span>
-                                        </div>
-                                    </div>
-                                    <i class="fas fa-plus-circle add-icon"></i>
-                                </div>
                             }
-                        }
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
-@if (mostrarModalEquipos)
-{
-    <div class="modal-overlay">
-        <div class="modal-content custom-modal">
-            <div class="modal-header">
-                <h5 style="margin:0; color:#F8C545;">CREAR EQUIPOS (PAREJAS)</h5>
-                <button class="btn-icon-header" @onclick="CerrarModalEquipos"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <p class="text-muted text-center mb-3">Selecciona 2 atletas para unirlos.</p>
-                <div class="team-builder-grid">
-                    @foreach (var p in participantesVisuales.Where(x => x.Atletas.Count == 1).ToList())
-                    {
-                        var esSeleccionado = (seleccionadoParaEquipo == p);
-                        <div class="atleta-select-row @(esSeleccionado ? "selected-yellow" : "")" @onclick="() => SeleccionarParaEquipo(p)">
-                            <span class="name">@p.Atletas[0].NombreCompleto</span>
-                            @if (esSeleccionado)
-                            {
-                                <i class="fas fa-check-circle text-black"></i>
-                            }
+                            <button class="btn w-100 py-2" @onclick="AgregarBloque" style="color: var(--theme-primary); border: 1px solid var(--theme-primary); background: transparent; border-radius: 8px; font-weight: bold;">+ Añadir Bloque</button>
                         </div>
                     }
                 </div>
-            </div>
-        </div>
-    </div>
-}
 
-@if (mostrarModalEliminar)
-{
-    <div class="modal-overlay">
-        <div class="modal-content custom-modal" style="height:auto; max-width:400px;">
-            <div class="modal-body text-center p-4">
-                <i class="fas fa-exclamation-triangle text-warning mb-3" style="font-size:3rem;"></i>
-                <h4 class="text-white mb-2">¿Eliminar?</h4>
-                <p class="text-muted mb-4">
-                    @(itemAEliminar?.Atletas.Count > 1 ? "Se eliminará el equipo." : "Se eliminará al atleta de la clase.")
-                </p>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn-control-rect reset" style="flex:1;" @onclick="CerrarModalEliminar">CANCELAR</button>
-                    <button class="btn-control-rect stop" style="flex:1;" @onclick="ConfirmarEliminar">ELIMINAR</button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
-@* --- MODAL EDITAR WOD EN VIVO --- *@
-@if (mostrarModalWodEdicion)
-{
-    <div class="modal-overlay overlay-wod">
-        <div class="modal-content custom-modal modal-wod" style="max-width: 600px; width: 100%;">
-
-            <div class="modal-header">
-                <h5 style="margin:0; color:#F8C545; font-family:'Oswald'">
-                    EDITAR WOD ACTUAL
-                    <span style="font-size:0.7rem; color:#aaa; margin-left:10px;">
-                        @(modoTextoLibre ? "(TEXTO LIBRE)" : "(POR BLOQUES)")
-                    </span>
-                </h5>
-                <button class="btn-close-custom" @onclick="() => mostrarModalWodEdicion = false"><i class="fas fa-times"></i></button>
-            </div>
-
-            <div class="modal-body scroll-custom" style="padding-bottom: 20px; overflow-y: auto;">
-                @if (cargandoOperacionWod)
+                @if (!cargandoOperacionWod)
                 {
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-warning" role="status"></div>
-                        <p class="mt-2 text-muted">Guardando cambios...</p>
-                    </div>
-                }
-                else
-                {
-                    <div class="fade-in">
-                        @foreach (var bloque in listaBloquesEditor)
-                        {
-                            <div class="card p-2 mb-3" style="background-color: #252525; border: 1px solid #444;">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span style="color:#F8C545; font-weight:bold; font-family:'Oswald'">BLOQUE</span>
-                                    <button class="btn-icon delete-btn" @onclick="() => EliminarBloque(bloque)"><i class="fas fa-trash"></i></button>
-                                </div>
-
-                                @if (!modoTextoLibre)
-                                {
-                                    <select @bind="bloque.SegmentoClaseID" class="form-control input-dark mb-2">
-                                        <option value="@Guid.Empty" selected disabled>-- Selecciona Segmento --</option>
-                                        @if (listaSegmentos != null)
-                                        {
-                                            @foreach (var seg in listaSegmentos)
-                                            {
-                                                <option value="@seg.Id">@seg.Nombre</option>
-                                            }
-                                        }
-                                    </select>
-                                }
-
-                                <input type="text" @bind="bloque.TiempoFormato" class="form-control input-dark mb-3" placeholder="Tiempo / Formato (Ej: AMRAP 15 MIN)" style="border-color: #555;" />
-
-                                @if (modoTextoLibre)
-                                {
-                                    <textarea @bind="bloque.TextoLibre" class="form-control input-dark" style="height: auto !important; min-height: 150px; resize: vertical; border-color: #F8C545;" placeholder="Escribe aquí los ejercicios..."></textarea>
-                                }
-                                else
-                                {
-                                    @foreach (var ejercicio in bloque.Ejercicios)
-                                    {
-                                        <div class="ejercicio-row-clean" style="display: flex; gap: 6px; align-items: center; margin-bottom: 8px; background: #1f1f1f; padding: 8px; border-radius: 8px; border: 1px solid #333;">
-                                            <input type="text" @bind="ejercicio.Reps" class="form-control input-dark text-center" style="width: 70px;" placeholder="Reps" />
-                                            <input type="text" @bind="ejercicio.NombreBase" class="form-control input-dark" style="flex: 1;" placeholder="Ejercicio" />
-                                            <button class="btn-icon weight-btn @(ejercicio.TienePesos ? "active" : "")" @onclick="() => AbrirEditorPeso(ejercicio)" style="width: 38px; background: #333; color: #888; border: none; border-radius: 6px;">
-                                                <i class="fas fa-dumbbell"></i>
-                                                @if (ejercicio.TienePesos)
-                                                {
-                                                    <span class="dot-indicator" style="position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: #F8C545; border-radius: 50%;"></span>
-                                                }
-                                            </button>
-                                            <button class="btn-icon delete-btn" @onclick="() => EliminarEjercicio(bloque, ejercicio)" style="width: 38px; background: transparent; color: #dc3545; border: none;"><i class="fas fa-times"></i></button>
-                                        </div>
-                                    }
-                                    <button class="btn-add-ejercicio" style="width: 100%; background: transparent; border: 1px dashed #555; color: #888; padding: 8px; border-radius: 8px; margin-top: 5px;" @onclick="() => AgregarEjercicio(bloque)">
-                                        <i class="fas fa-plus"></i> Ejercicio
-                                    </button>
-                                }
-                            </div>
-                        }
-                        <button class="btn btn-outline-warning w-100 py-2" @onclick="AgregarBloque" style="color: #F8C545; border-color: #F8C545; background: transparent; border-radius: 8px; font-weight: bold;">+ Añadir Bloque</button>
+                    <div class="modal-footer" style="background: var(--theme-card); border-top: 1px solid var(--theme-border); padding: 15px;">
+                        <button class="btn w-100" style="background-color:var(--theme-primary); color:var(--theme-bg); font-weight:bold; padding: 12px; border-radius: 8px; border: none;" @onclick="GuardarWodEditado">ACTUALIZAR WOD</button>
                     </div>
                 }
             </div>
+        </div>
+    }
 
-            @if (!cargandoOperacionWod)
-            {
-                <div class="modal-footer" style="background: #222; border-top: 1px solid #333; padding: 15px;">
-                    <button class="btn w-100" style="background-color:#F8C545; color:black; font-weight:bold; padding: 12px; border-radius: 8px; border: none;" @onclick="GuardarWodEditado">ACTUALIZAR WOD</button>
+    @* BOTTOM SHEET PESOS *@
+    @if (mostrarModalPeso && ejercicioEnEdicion != null)
+    {
+        <div class="sheet-backdrop visible" @onclick="CerrarEditorPeso"></div>
+        <div class="bottom-sheet slide-in-bottom">
+            <div class="sheet-handle"></div>
+            <div class="text-center mb-4">
+                <h5 style="color:var(--theme-primary); font-family:'Oswald'; margin:0;">PESOS (Rx)</h5>
+                <p style="color:var(--theme-text-muted); font-size:0.8rem; margin-top:5px;">@(string.IsNullOrEmpty(ejercicioEnEdicion.NombreBase) ? "Ejercicio" : ejercicioEnEdicion.NombreBase)</p>
+            </div>
+            <div class="row">
+                <div class="col-6">
+                    <label style="color:var(--theme-text); font-size:0.8rem; display:block; text-align:center;">HOMBRE</label>
+                    <input type="text" @bind="ejercicioEnEdicion.PesoH" class="form-control input-dark text-center" style="font-size:1.5rem; color:var(--theme-primary); font-weight:bold;" placeholder="--" />
                 </div>
-            }
+                <div class="col-6">
+                    <label style="color:var(--theme-text); font-size:0.8rem; display:block; text-align:center;">MUJER</label>
+                    <input type="text" @bind="ejercicioEnEdicion.PesoM" class="form-control input-dark text-center" style="font-size:1.5rem; color:var(--theme-primary); font-weight:bold;" placeholder="--" />
+                </div>
+            </div>
+            <button class="btn w-100 mt-4 py-3" style="background:var(--theme-primary); color:var(--theme-bg); font-weight:bold; border-radius:50px; border: none;" @onclick="CerrarEditorPeso">LISTO</button>
         </div>
-    </div>
-}
+    }
 
-@* BOTTOM SHEET PESOS *@
-@if (mostrarModalPeso && ejercicioEnEdicion != null)
-{
-    <div class="sheet-backdrop visible" @onclick="CerrarEditorPeso"></div>
-    <div class="bottom-sheet slide-in-bottom">
-        <div class="sheet-handle"></div>
-        <div class="text-center mb-4">
-            <h5 style="color:#F8C545; font-family:'Oswald'; margin:0;">PESOS (Rx)</h5>
-            <p style="color:#888; font-size:0.8rem; margin-top:5px;">@(string.IsNullOrEmpty(ejercicioEnEdicion.NombreBase) ? "Ejercicio" : ejercicioEnEdicion.NombreBase)</p>
-        </div>
-        <div class="row">
-            <div class="col-6">
-                <label style="color:white; font-size:0.8rem; display:block; text-align:center;">HOMBRE</label>
-                <input type="text" @bind="ejercicioEnEdicion.PesoH" class="form-control input-dark text-center" style="font-size:1.5rem; color:#F8C545; font-weight:bold; border: 1px solid #333;" placeholder="--" />
-            </div>
-            <div class="col-6">
-                <label style="color:white; font-size:0.8rem; display:block; text-align:center;">MUJER</label>
-                <input type="text" @bind="ejercicioEnEdicion.PesoM" class="form-control input-dark text-center" style="font-size:1.5rem; color:#F8C545; font-weight:bold; border: 1px solid #333;" placeholder="--" />
-            </div>
-        </div>
-        <button class="btn w-100 mt-4 py-3" style="background:#F8C545; color:black; font-weight:bold; border-radius:50px; border: none;" @onclick="CerrarEditorPeso">LISTO</button>
-    </div>
-}
+</div>
 
 <style>
     /* ... ESTILOS GENERALES ... */
@@ -625,38 +630,38 @@
     .btn-control-rect:active { transform: scale(0.98); }
     .btn-control-rect.start { background: #28a745; color: white; }
     .btn-control-rect.stop { background: #dc3545; color: white; }
-    .btn-control-rect.reset { background: #333; color: white; border: 1px solid #444; }
+    .btn-control-rect.reset { background: var(--theme-bg); color: var(--theme-text); border: 1px solid var(--theme-border); }
 
     .delete-badge { position: absolute; top: 5px; right: 5px; width: 20px; height: 20px; background: rgba(255, 0, 0, 0.2); color: #ff6b6b; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; cursor: pointer; z-index: 5; transition: 0.2s; }
     .delete-badge:hover { background: red; color: white; }
 
     .bottom-actions-row { display: flex; width: 100%; margin-top: auto; }
-    .btn-action-home { flex: 1; background: #333; border: none; border-right: 1px solid #222; color: #888; font-size: 1.2rem; cursor: pointer; padding: 15px; }
-    .btn-action-home:hover { background: #444; color: white; }
+    .btn-action-home { flex: 1; background: var(--theme-bg); border: none; border-right: 1px solid var(--theme-border); color: var(--theme-text-muted); font-size: 1.2rem; cursor: pointer; padding: 15px; }
+    .btn-action-home:hover { background: var(--theme-card); color: var(--theme-text); }
     .btn-action-finish { flex: 3; background: #dc3545; border: none; color: white; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; cursor: pointer; padding: 15px; }
     .btn-action-finish:hover { background: #bd2130; }
 
     /* ROTACIÓN */
-    .rotate-warning { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; color: #F8C545; text-align: center; padding: 40px; }
+    .rotate-warning { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: var(--theme-bg); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; color: var(--theme-primary); text-align: center; padding: 40px; }
     .phone-animation { font-size: 4rem; margin-bottom: 20px; animation: rotarCelular 2s infinite ease-in-out; }
     @@keyframes rotarCelular { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
     @@media (orientation: portrait) { .rotate-warning { display: flex; } .dashboard-container { display: none !important; } }
 
     /* DASHBOARD */
-    .dashboard-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0d0d0d; color: white; display: flex; flex-direction: row; padding: 15px; gap: 15px; box-sizing: border-box; overflow: hidden; }
-    .panel { flex: 1; display: flex; flex-direction: column; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); background: #111; overflow: hidden; border-radius: 15px; border: 1px solid #222; box-shadow: 0 4px 15px rgba(0,0,0,0.5); min-width: 0; position: relative; }
-    .panel.collapsed { flex: 0 0 60px !important; min-width: 60px; background: #000; cursor: pointer; border-color: #333; }
-    .panel.collapsed:hover { background: #1a1a1a; }
+    .dashboard-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: var(--theme-bg); color: var(--theme-text); display: flex; flex-direction: row; padding: 15px; gap: 15px; box-sizing: border-box; overflow: hidden; }
+    .panel { flex: 1; display: flex; flex-direction: column; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); background: var(--theme-card); overflow: hidden; border-radius: 15px; border: 1px solid var(--theme-border); box-shadow: 0 4px 15px rgba(0,0,0,0.5); min-width: 0; position: relative; }
+    .panel.collapsed { flex: 0 0 60px !important; min-width: 60px; background: var(--theme-bg); cursor: pointer; border-color: var(--theme-border); }
+    .panel.collapsed:hover { background: var(--theme-card); }
     .panel.collapsed .panel-content, .panel.collapsed .panel-header .header-left, .panel.collapsed .panel-header span, .panel.collapsed .panel-header .header-select-wrapper, .panel.collapsed .panel-header .btn-icon-header { display: none; opacity: 0; }
-    .panel-header { height: 50px; background: #1a1a1a; border-bottom: 2px solid #F8C545; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; font-family: 'Oswald'; font-size: 1.1rem; color: #F8C545; white-space: nowrap; flex-shrink: 0; z-index: 2; position: relative; }
+    .panel-header { height: 50px; background: var(--theme-bg); border-bottom: 2px solid var(--theme-primary); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; font-family: 'Oswald'; font-size: 1.1rem; color: var(--theme-primary); white-space: nowrap; flex-shrink: 0; z-index: 2; position: relative; }
     .panel-content { flex: 1; padding: 15px; overflow-y: auto; position: relative; z-index: 1; display: flex; flex-direction: column; }
-    .btn-icon-header { background: none; border: none; color: #888; font-size: 1rem; cursor: pointer; }
+    .btn-icon-header { background: none; border: none; color: var(--theme-text-muted); font-size: 1rem; cursor: pointer; }
     .wod-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; height: 70%; background-repeat: no-repeat; background-position: center; background-size: contain; opacity: 0.1; pointer-events: none; z-index: 0; }
-    .header-select-wrapper { display: flex; align-items: center; background-color: #000; border: 1px solid #333; border-radius: 4px; padding: 0 10px; height: 32px; position: relative; }
-    .select-icon { font-size: 0.8rem; color: #F8C545; margin-right: 8px; }
-    .header-select { background: transparent; border: none; color: white; font-family: 'Oswald'; font-size: 0.95rem; font-weight: bold; appearance: none; -webkit-appearance: none; width: 100%; cursor: pointer; outline: none; }
-    .header-select option { background-color: #1a1a1a; color: white; padding: 10px; }
-    .select-arrow { font-size: 0.7rem; color: #666; margin-left: 5px; pointer-events: none; }
+    .header-select-wrapper { display: flex; align-items: center; background-color: var(--theme-bg); border: 1px solid var(--theme-border); border-radius: 4px; padding: 0 10px; height: 32px; position: relative; }
+    .select-icon { font-size: 0.8rem; color: var(--theme-primary); margin-right: 8px; }
+    .header-select { background: transparent; border: none; color: var(--theme-text); font-family: 'Oswald'; font-size: 0.95rem; font-weight: bold; appearance: none; -webkit-appearance: none; width: 100%; cursor: pointer; outline: none; }
+    .header-select option { background-color: var(--theme-card); color: var(--theme-text); padding: 10px; }
+    .select-arrow { font-size: 0.7rem; color: var(--theme-text-muted); margin-left: 5px; pointer-events: none; }
     
     /* --- ZOOM CONTROLS --- */
     .wod-zoom-controls { position: absolute; bottom: 15px; right: 15px; display: flex; gap: 10px; z-index: 100; }
@@ -664,18 +669,18 @@
     .btn-zoom-float:active { transform: scale(0.9); }
     .btn-zoom-float.locked { background-color: #dc3545; color: white; } 
     .btn-zoom-float.unlocked { background-color: #28a745; color: white; } 
-    .btn-zoom-float:first-child { background-color: #333; color: #F8C545; border: 1px solid #F8C545; }
+    .btn-zoom-float:first-child { background-color: var(--theme-bg); color: var(--theme-primary); border: 1px solid var(--theme-primary); }
 
     /* POPUP DE FUENTE */
-    .font-settings-popover { position: absolute; top: 40px; right: 60px; background: #1a1a1a; padding: 10px; border: 1px solid #444; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.8); display: flex; align-items: center; gap: 8px; z-index: 100; color: #888; width: 180px;}
-    .font-settings-popover input[type=range] { width: 100%; accent-color: #F8C545; cursor: pointer; }
+    .font-settings-popover { position: absolute; top: 40px; right: 60px; background: var(--theme-card); padding: 10px; border: 1px solid var(--theme-border); border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.8); display: flex; align-items: center; gap: 8px; z-index: 100; color: var(--theme-text-muted); width: 180px;}
+    .font-settings-popover input[type=range] { width: 100%; accent-color: var(--theme-primary); cursor: pointer; }
 
     .wod-block { margin-bottom: 20px; break-inside: avoid; -webkit-column-break-inside: avoid; }
-    .block-title { color: #F8C545; background: transparent; padding: 2px 10px; margin: 0 0 2px 0; font-size: 1.1em; font-weight: bold; font-family: 'Oswald'; border-left: 4px solid #F8C545; border-bottom: 1px solid rgba(255, 255, 255, 0.1); text-transform: uppercase; letter-spacing: 1px; }
+    .block-title { color: var(--theme-primary); background: transparent; padding: 2px 10px; margin: 0 0 2px 0; font-size: 1.1em; font-weight: bold; font-family: 'Oswald'; border-left: 4px solid var(--theme-primary); border-bottom: 1px solid var(--theme-border); text-transform: uppercase; letter-spacing: 1px; }
     .ejercicio-row-clean { display: grid; grid-template-columns: 60px 1fr; gap: 8px; align-items: baseline; padding: 1px 0; margin-bottom: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.03); min-height: auto; line-height: 1; }
-    .ej-reps { color: #F8C545; font-weight: 900; font-family: 'Oswald'; font-size: 1.15em; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .ej-nombre { color: #e0e0e0; font-family: 'Roboto', sans-serif; font-size: 1em; font-weight: 500; line-height: 1.1; text-align: left; padding: 0; }
-    .scroll-custom::-webkit-scrollbar { width: 6px; } .scroll-custom::-webkit-scrollbar-track { background: #111; } .scroll-custom::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+    .ej-reps { color: var(--theme-primary); font-weight: 900; font-family: 'Oswald'; font-size: 1.15em; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ej-nombre { color: var(--theme-text); font-family: 'Roboto', sans-serif; font-size: 1em; font-weight: 500; line-height: 1.1; text-align: left; padding: 0; }
+    .scroll-custom::-webkit-scrollbar { width: 6px; } .scroll-custom::-webkit-scrollbar-track { background: var(--theme-card); } .scroll-custom::-webkit-scrollbar-thumb { background: var(--theme-border); border-radius: 10px; }
     .dashboard-container.wod-wide .list-panel { flex: 0 0 0 !important; width: 0 !important; padding: 0 !important; border: none !important; margin: 0 !important; }
     .dashboard-container.wod-wide .wod-panel { flex: 2; }
 
@@ -686,173 +691,107 @@
         width: 100%;
         padding-top: 5px;
     }
-    .vertical-bar { height: 100%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; animation: fadeIn 0.5s; }
+    .vertical-bar { height: 100%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--theme-text-muted); animation: fadeIn 0.5s; }
     .v-text { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); font-family: 'Oswald'; font-size: 1.2rem; letter-spacing: 3px; white-space: nowrap; margin-bottom: 10px; }
     .v-icon { font-size: 1.5rem; }
-    .header-timer-secondary { color: rgba(255,255,255,0.4); font-family: 'Oswald'; font-size: 1.2rem; margin-left: 15px; font-weight: bold; letter-spacing: 1px; }
-    .timer-type-selector { display: flex; background: #222; border-radius: 25px; padding: 4px; margin-bottom: 20px; width: 100%; border: 1px solid #444; }
-    .type-btn { flex: 1; background: transparent; border: none; color: #888; padding: 8px; border-radius: 20px; font-family: 'Oswald'; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; }
-    .type-btn.active { background: #F8C545; color: black; font-weight: bold; box-shadow: 0 2px 8px rgba(248, 197, 69, 0.3); }
-    .config-box { background: #1a1a1a; padding: 15px; border-radius: 15px; border: 1px solid #444; width: 100%; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); z-index: 10; margin: auto; max-height: 85vh; overflow-y: auto; }
+    .header-timer-secondary { color: var(--theme-text-muted); font-family: 'Oswald'; font-size: 1.2rem; margin-left: 15px; font-weight: bold; letter-spacing: 1px; }
+    .timer-type-selector { display: flex; background: var(--theme-bg); border-radius: 25px; padding: 4px; margin-bottom: 20px; width: 100%; border: 1px solid var(--theme-border); }
+    .type-btn { flex: 1; background: transparent; border: none; color: var(--theme-text-muted); padding: 8px; border-radius: 20px; font-family: 'Oswald'; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; }
+    .type-btn.active { background: var(--theme-primary); color: var(--theme-bg); font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0, 0.3); }
+    .config-box { background: var(--theme-card); padding: 15px; border-radius: 15px; border: 1px solid var(--theme-border); width: 100%; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); z-index: 10; margin: auto; max-height: 85vh; overflow-y: auto; }
     .inputs-grid { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
     .inputs-row { display: flex; gap: 10px; width: 100%; } .inputs-row .input-group { flex: 1; }
-    .input-group label { display: block; color: #F8C545; font-size: 0.8rem; margin-bottom: 5px; text-align: center; font-weight: bold; font-family: 'Oswald'; letter-spacing: 1px; }
-    .time-inputs { display: flex; justify-content: center; align-items: center; gap: 5px; background: #222; padding: 5px 15px; border-radius: 10px; border: 1px solid #333; }
-    .time-inputs input { width: 50px; font-size: 1.5rem; background: transparent; border: none; color: white; text-align: center; font-family: 'Oswald'; } .time-inputs input:focus { outline: none; color: #F8C545; }
-    .single-input { width: 100%; font-size: 1.5rem; background: #222; border: 1px solid #333; color: white; text-align: center; font-family: 'Oswald'; border-radius: 10px; }
-    .btn-save-timer { width: 100%; background: #28a745; color: white; border: none; padding: 12px; font-weight: bold; font-family: 'Oswald'; border-radius: 8px; font-size: 1.1rem; cursor: pointer; }
-    .timer-display { font-family: 'Oswald'; font-weight: bold; color: white; line-height: 0.9; font-size: clamp(3rem, 25vh, 8rem); text-shadow: 0 0 20px rgba(255,255,255,0.1); margin: 5px 0; text-align: center; width: 100%; }
+    .input-group label { display: block; color: var(--theme-primary); font-size: 0.8rem; margin-bottom: 5px; text-align: center; font-weight: bold; font-family: 'Oswald'; letter-spacing: 1px; }
+    .time-inputs { display: flex; justify-content: center; align-items: center; gap: 5px; background: var(--theme-bg); padding: 5px 15px; border-radius: 10px; border: 1px solid var(--theme-border); }
+    .time-inputs input { width: 50px; font-size: 1.5rem; background: transparent; border: none; color: var(--theme-text); text-align: center; font-family: 'Oswald'; } .time-inputs input:focus { outline: none; color: var(--theme-primary); }
+    .single-input { width: 100%; font-size: 1.5rem; background: var(--theme-bg); border: 1px solid var(--theme-border); color: var(--theme-text); text-align: center; font-family: 'Oswald'; border-radius: 10px; }
+    .btn-save-timer { width: 100%; background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 12px; font-weight: bold; font-family: 'Oswald'; border-radius: 8px; font-size: 1.1rem; cursor: pointer; }
+    
+    .timer-display { font-family: 'Oswald'; font-weight: bold; color: var(--theme-text); line-height: 0.9; font-size: clamp(3rem, 25vh, 8rem); text-shadow: 0 0 20px rgba(255,255,255,0.1); margin: 5px 0; text-align: center; width: 100%; }
     .timer-display.running { color: #28a745; text-shadow: 0 0 30px rgba(40, 167, 69, 0.4); }
     .timer-display.resting { color: #dc3545; text-shadow: 0 0 30px rgba(220, 53, 69, 0.4); }
+    
     .status-badge { font-family: 'Oswald'; font-size: 1.4rem; padding: 5px 20px; border-radius: 5px; letter-spacing: 2px; text-align: center; margin-bottom: 10px; }
     .status-badge.work { color: #28a745; border: 1px solid #28a745; background: rgba(40,167,69,0.1); } .status-badge.rest { color: #dc3545; border: 1px solid #dc3545; background: rgba(220,53,69,0.1); }
     .prep-display { text-align: center; margin: auto; }
-    .prep-label { font-family: 'Oswald'; font-size: 2rem; color: #888; }
-    .prep-number { font-size: 8rem; color: #F8C545; font-family: 'Oswald'; font-weight: bold; line-height: 1; }
+    .prep-label { font-family: 'Oswald'; font-size: 2rem; color: var(--theme-text-muted); }
+    .prep-number { font-size: 8rem; color: var(--theme-primary); font-family: 'Oswald'; font-weight: bold; line-height: 1; }
+    
     .atletas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 10px; }
-    .atleta-card { background: #222; border: 1px solid #444; border-radius: 8px; padding: 10px 5px; text-align: center; transition: 0.2s; position: relative; overflow: hidden; cursor: pointer; }
-    .avatar { width: 45px; height: 45px; background: #333; color: #F8C545; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; margin: 0 auto 5px auto; border: 2px solid #F8C545; position: relative; }
-    .name { font-size: 0.75rem; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .empty-state { text-align: center; color: #444; margin-top: 50px; } .empty-state i { font-size: 3rem; margin-bottom: 10px; }
+    .atleta-card { background: var(--theme-bg); border: 1px solid var(--theme-border); border-radius: 8px; padding: 10px 5px; text-align: center; transition: 0.2s; position: relative; overflow: hidden; cursor: pointer; }
+    .avatar { width: 45px; height: 45px; background: var(--theme-card); color: var(--theme-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.2rem; margin: 0 auto 5px auto; border: 2px solid var(--theme-primary); position: relative; }
+    .name { font-size: 0.75rem; color: var(--theme-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .empty-state { text-align: center; color: var(--theme-text-muted); margin-top: 50px; } .empty-state i { font-size: 3rem; margin-bottom: 10px; }
+    
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
 
-    .custom-modal {
-        background: #111;
-        width: 90%;
-        max-width: 500px;
-        border-radius: 10px;
-        border: 1px solid #333;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        height: 90vh; /* Aumentado a 95vh para aprovechar toda la pantalla horizontal */
-    }
-    .modal-header { height: auto; padding: 15px; border-bottom: 1px solid #333; }
+    .custom-modal { background: var(--theme-card); width: 90%; max-width: 500px; border-radius: 10px; border: 1px solid var(--theme-border); display: flex; flex-direction: column; overflow: hidden; height: 90vh; }
+    .modal-header { height: auto; padding: 15px; border-bottom: 1px solid var(--theme-border); }
 
-    .modal-body {
-        padding: 15px;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        flex: 1; /* Le pusimos flex para que empuje la lista */
-    }
-    .search-input { padding-left: 10px; background: #222; color: white; border: 1px solid #444; height: 40px; border-radius: 20px; width: 100%; text-indent: 10px; }
-    .atleta-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #222; cursor: pointer; }
-    .avatar-mini { width: 35px; height: 35px; background: #444; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px; background-size: cover; }
-    .atleta-nombre { color: #F8C545; font-weight: bold; font-family: 'Oswald'; font-size: 1rem; line-height: 1; }
+    .modal-body { padding: 15px; display: flex; flex-direction: column; overflow: hidden; flex: 1; }
+    .search-input { padding-left: 10px; background: var(--theme-bg); color: var(--theme-text); border: 1px solid var(--theme-border); height: 40px; border-radius: 20px; width: 100%; text-indent: 10px; }
+    .atleta-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--theme-border); cursor: pointer; }
+    .avatar-mini { width: 35px; height: 35px; background: var(--theme-bg); color: var(--theme-text); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px; background-size: cover; border: 1px solid var(--theme-border); }
+    .atleta-nombre { color: var(--theme-primary); font-weight: bold; font-family: 'Oswald'; font-size: 1rem; line-height: 1; }
 
-    .lista-atletas-scroll {
-        flex: 1;
-        overflow-y: auto;
-        margin-top: 10px;
-        max-height: none;
-        padding-bottom: 40px;
-    }
+    .lista-atletas-scroll { flex: 1; overflow-y: auto; margin-top: 10px; max-height: none; padding-bottom: 40px; }
 
-    .search-box {
-        flex-shrink: 0;
-    }
+    .search-box { flex-shrink: 0; }
     .atleta-info { display: flex; align-items: center; flex: 1; gap: 10px; }
     .switch-juez { position: relative; display: inline-block; width: 40px; height: 20px; margin-right: 10px; } .switch-juez input { opacity: 0; width: 0; height: 0; }
-    .slider-juez { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; } .slider-juez:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; }
-    input:checked + .slider-juez { background-color: #F8C545; } input:checked + .slider-juez:before { transform: translateX(20px); background-color: black; }
+    .slider-juez { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--theme-border); transition: .4s; } .slider-juez:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: var(--theme-bg); transition: .4s; }
+    input:checked + .slider-juez { background-color: var(--theme-primary); } input:checked + .slider-juez:before { transform: translateX(20px); background-color: var(--theme-bg); }
     .slider-juez.round { border-radius: 34px; } .slider-juez.round:before { border-radius: 50%; }
+    
     .card-finished { background: #155724 !important; border-color: #28a745 !important; opacity: 0.8; }
-    .badge-time { margin-top: 5px; background: black; color: #F8C545; font-family: 'Oswald'; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
-    .card-team { border: 2px solid #F8C545 !important; background: rgba(248, 197, 69, 0.05); }
+    .badge-time { margin-top: 5px; background: var(--theme-bg); color: var(--theme-primary); font-family: 'Oswald'; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
+    .card-team { border: 2px solid var(--theme-primary) !important; background: rgba(248, 197, 69, 0.05); }
     .team-avatars { display: flex; justify-content: center; margin-bottom: 5px; }
-    .avatar-mini-team { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #F8C545; background-color: #333; color: white; display: flex; justify-content: center; align-items: center; font-size: 0.8rem; margin: 0 -5px; background-size: cover; }
-    .team-name { color: #F8C545 !important; font-weight: bold; }
+    .avatar-mini-team { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--theme-primary); background-color: var(--theme-bg); color: var(--theme-text); display: flex; justify-content: center; align-items: center; font-size: 0.8rem; margin: 0 -5px; background-size: cover; }
+    .team-name { color: var(--theme-primary) !important; font-weight: bold; }
 
-    .team-builder-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        flex: 1; /* Obliga a la lista a tomar el espacio restante */
-        overflow-y: auto; /* Activa el scroll interno */
-        padding-bottom: 40px; /* Colchón para que no rebote en iOS al final */
-    }
-    .atleta-select-row { padding: 10px; background: #222; border-radius: 5px; display: flex; justify-content: space-between; cursor: pointer; }
-    .selected-yellow { background: #F8C545; color: black; font-weight: bold; }
+    .team-builder-grid { display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; padding-bottom: 40px; }
+    .atleta-select-row { padding: 10px; background: var(--theme-bg); border-radius: 5px; display: flex; justify-content: space-between; cursor: pointer; border: 1px solid var(--theme-border); }
+    .selected-theme { background: var(--theme-primary); color: var(--theme-bg); font-weight: bold; border-color: var(--theme-primary); }
+    
     .fade-in { animation: fadeIn 0.3s ease-in; } .slide-in { animation: slideIn 0.3s ease-out; }
     @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } } @@keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .pulse-animation { animation: pulseBig 1s infinite; } @@keyframes pulseBig { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
     .last-round-alert { color: #dc3545 !important; animation: pulseRed 1s infinite; } @@keyframes pulseRed { 0% { transform: scale(1); } 50% { transform: scale(1.05); text-shadow: 0 0 10px red; } 100% { transform: scale(1); } }
-    .peso-highlight { color: #F8C545; font-weight: 900; font-family: 'Oswald', sans-serif; font-size: 0.95em; margin-left: 5px; }
+    .peso-highlight { color: var(--theme-primary); font-weight: 900; font-family: 'Oswald', sans-serif; font-size: 0.95em; margin-left: 5px; }
     .peso-silver { color: #C0C0C0; font-weight: 800; font-family: 'Oswald', sans-serif; font-size: 0.95em; letter-spacing: 0.5px; margin-left: 6px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+    
     /* ========================================================= */
     /* ESTILOS DARK PARA EL EDITOR DE WOD EN VIVO                */
     /* ========================================================= */
+    .input-dark { background-color: var(--theme-bg) !important; border: 1px solid var(--theme-border) !important; color: var(--theme-text) !important; }
+    .input-dark:focus { background-color: var(--theme-card) !important; border-color: var(--theme-primary) !important; box-shadow: 0 0 5px rgba(0,0,0,0.3) !important; color: var(--theme-text) !important; outline: none; }
+    .input-dark::placeholder { color: var(--theme-text-muted) !important; }
 
-    /* Cajas de texto y Selects */
-    .input-dark {
-        background-color: #1a1a1a !important;
-        border: 1px solid #444 !important;
-        color: #ffffff !important;
-    }
+    .btn-close-custom { background: transparent !important; border: none !important; color: var(--theme-text-muted) !important; font-size: 1.5rem; cursor: pointer; transition: 0.2s ease; padding: 0; display: flex; align-items: center; justify-content: center; }
+    .btn-close-custom:hover { color: #ff4d4d !important; transform: scale(1.1); }
 
-        .input-dark:focus {
-            background-color: #222 !important;
-            border-color: #F8C545 !important;
-            box-shadow: 0 0 5px rgba(248, 197, 69, 0.3) !important;
-            color: #ffffff !important;
-            outline: none;
-        }
+    .delete-btn { background: rgba(220, 53, 69, 0.1) !important; border: 1px solid rgba(220, 53, 69, 0.3) !important; color: #ff4d4d !important; border-radius: 6px; padding: 5px 10px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; }
+    .delete-btn:hover { background: #dc3545 !important; color: white !important; transform: scale(1.05); }
 
-        .input-dark::placeholder {
-            color: #777 !important;
-        }
-
-    /* Botón Cerrar "X" */
-    .btn-close-custom {
-        background: transparent !important;
-        border: none !important;
-        color: #888 !important;
-        font-size: 1.5rem;
-        cursor: pointer;
-        transition: 0.2s ease;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-        .btn-close-custom:hover {
-            color: #ff4d4d !important; /* Se pone rojo al tocarlo */
-            transform: scale(1.1);
-        }
-
-    /* Bote de basura */
-    .delete-btn {
-        background: rgba(220, 53, 69, 0.1) !important; /* Fondo rojo muy transparente */
-        border: 1px solid rgba(220, 53, 69, 0.3) !important;
-        color: #ff4d4d !important;
-        border-radius: 6px;
-        padding: 5px 10px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-        .delete-btn:hover {
-            background: #dc3545 !important; /* Se llena de rojo al pasar el mouse */
-            color: white !important;
-            transform: scale(1.05);
-        }
-
-    /* Para que el scroll del modal también sea oscuro */
-    .modal-wod .modal-body {
-        overflow-y: auto;
-    }
+    .modal-wod .modal-body { overflow-y: auto; }
 </style>
 
 @code {
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9; 
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
     private IAudioPlayer playerBeep;
     private IAudioPlayer playerGo;
     private IAudioPlayer playerMedio;
-
 
     // --- CLASES Y VARIABLES DEL EDITOR WOD ---
     public class EjercicioEditorViewModel
@@ -891,8 +830,7 @@
     private bool mostrarSliderLetra = false;
     private double wodFontSize = 1.0;
 
-    // --- NUEVO: Estado del Candado WOD ---
-    private bool wodBloqueado = true; // Empieza bloqueado (fijo)
+    private bool wodBloqueado = true; 
 
     private bool modoJuez = false;
     private bool mostrarModalEquipos = false;
@@ -940,6 +878,18 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // LEER EL CACHÉ LOCAL AL INSTANTE
+        try 
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache)) 
+            { 
+                EstilosTema = cache; 
+                StateHasChanged(); 
+            }
+        } 
+        catch { }
+
         try
         {
             playerBeep = AudioManager.CreatePlayer(await FileSystem.OpenAppPackageFileAsync("beep.mp3"));
@@ -1050,12 +1000,10 @@
     {
         if (Sesion.Usuario?.TipoLugar != "Crossfit")
         {
-            // Para Funcional, Calistenia, Gym, Running (No usan juez, van al resumen simple)
             Nav.NavigateTo("/resumen-clase-simple");
         }
         else
         {
-            // El original para CrossFit
             LiveState.FueModoJuez = modoJuez;
             LiveState.ResultadosJuez = participantesVisuales;
             Nav.NavigateTo("/resumen-clase");
@@ -1105,7 +1053,7 @@
                 if (response.IsSuccessStatusCode)
                 {
                     wodHoy = await response.Content.ReadFromJsonAsync<ProgramacionWodViewModel>();
-                    bloqueSeleccionadoIndex = -1; // <--- AQUÍ REINICIAMOS EL FILTRO AL CARGAR
+                    bloqueSeleccionadoIndex = -1; 
                 }
             }
             else if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
@@ -1200,7 +1148,6 @@
     { 
         tiempoTrabajoConfig = (inputMinutos * 60) + inputSegundos; 
         
-        // Si es EMOM (3), el descanso es 0
         if(tipoTimer == 3) {
             tiempoDescansoConfig = 0;
         } else {
@@ -1230,10 +1177,9 @@
         {
             tiempoRestanteActual--; tiempoTranscurrido++;
             
-            // Sonido de medio tiempo solo si NO es EMOM (opcional, pero en EMOM suele confundir)
             if (!enDescanso && tipoTimer != 3 && tiempoRestanteActual == (tiempoTotalSegmentoActual / 2)) Sonar("medio");
             
-            if (tiempoRestanteActual <= 3) Sonar("beep"); // Beep 3,2,1
+            if (tiempoRestanteActual <= 3) Sonar("beep");
         }
         else GestionarCambioDeRonda();
         InvokeAsync(StateHasChanged);
@@ -1241,7 +1187,6 @@
 
     private void GestionarCambioDeRonda() 
     { 
-        // LÓGICA EMOM: No hay descanso, reinicia trabajo inmediatamente
         if (tipoTimer == 3) 
         {
             if (rondaActual < totalRondas) 
@@ -1259,7 +1204,6 @@
             return;
         }
 
-        // LÓGICA INTERVALOS NORMAL
         if (!enDescanso) 
         { 
             if (tipoTimer == 2 && tiempoDescansoConfig > 0 && rondaActual < totalRondas) 
@@ -1267,7 +1211,7 @@
                 enDescanso = true; 
                 tiempoRestanteActual = tiempoDescansoConfig; 
                 tiempoTotalSegmentoActual = tiempoDescansoConfig; 
-                Sonar("go"); // O un sonido diferente para descanso
+                Sonar("go");
             } 
             else SiguienteRondaOFin(); 
         } 
@@ -1297,27 +1241,25 @@
     private void CambiarTipoTimer(int t) 
     { 
         tipoTimer = t; 
-        if (t == 2) // Intervalos
+        if (t == 2) 
         { 
             inputMinutos = 0; inputSegundos = 20; inputRondas = 8; inputMinDescanso = 0; inputSegDescanso = 10; 
         } 
-        else if (t == 3) // EMOM
+        else if (t == 3) 
         {
             inputMinutos = 1; inputSegundos = 0; inputRondas = 10; inputMinDescanso = 0; inputSegDescanso = 0;
         }
-        else // Cuenta Atrás
+        else 
         { 
             inputMinutos = 10; inputSegundos = 0; inputRondas = 1; 
         } 
     }
     
-    // --- MÉTODOS PARA ZOOM Y PAN DEL WOD ---
     private async Task ToggleCandadoWod()
     {
         wodBloqueado = !wodBloqueado;
         if(wodBloqueado)
         {
-            // Al bloquear, reseteamos para que quede bien acomodado
             await JS.InvokeVoidAsync("resetWodZoom");
         }
     }
@@ -1327,7 +1269,6 @@
         await JS.InvokeVoidAsync("resetWodZoom");
     }
 
-    // --- MÉTODOS DEL EDITOR DE WOD EN VIVO ---
     private async Task CargarSegmentos()
     {
         try
@@ -1348,11 +1289,9 @@
 
         if (listaSegmentos == null || !listaSegmentos.Any()) await CargarSegmentos();
 
-        // 1. Detectar Formato
         var primerBloque = wodHoy.Bloques.First();
         modoTextoLibre = primerBloque.EsTextoLibre;
 
-        // 2. Poblar Editor
         listaBloquesEditor = new List<BloqueEditorViewModel>();
         foreach (var b in wodHoy.Bloques)
         {
@@ -1394,7 +1333,6 @@
 
     private async Task GuardarWodEditado()
     {
-        // Validación de supervivencia
         if (listaBloquesEditor.Count == 0)
         {
             await App.Current.MainPage.DisplayAlert("Alto", "No puedes dejar el WOD vacío. Debe tener al menos un bloque.", "Entendido");
@@ -1410,7 +1348,7 @@
         var wodPayload = new
         {
             BoxID = Sesion.Usuario.BoxID,
-            FechaProgramacion = wodHoy.FechaProgramacion, // Conservamos la fecha original del WOD
+            FechaProgramacion = wodHoy.FechaProgramacion, 
             Bloques = new List<object>()
         };
 
@@ -1421,7 +1359,7 @@
 
             var bloqueApi = new
             {
-                SegmentoClaseID = bEdit.SegmentoClaseID, // <--- SE MANDA DIRECTO EL GUID
+                SegmentoClaseID = bEdit.SegmentoClaseID,
                 NombreSegmento = nombreSeg,
                 TiempoFormato = bEdit.TiempoFormato ?? "",
                 EsTextoLibre = modoTextoLibre,
@@ -1470,7 +1408,6 @@
             if (r.IsSuccessStatusCode)
             {
                 mostrarModalWodEdicion = false;
-                // MAGIA: Recargamos solo la visualización del WOD. Los atletas siguen intactos.
                 await CargarWodHoy();
                 await App.Current.MainPage.DisplayAlert("Actualizado", "El WOD se actualizó en pantalla.", "OK");
             }
@@ -1546,26 +1483,21 @@
 
     // Eventos táctiles
     document.addEventListener('touchstart', function(e) {
-        // Solo actuar si tocamos dentro del panel del wod y el candado está ABIERTO
-        // Buscamos si el target está dentro de .wod-panel y chequeamos si el botón de bloqueo tiene clase 'unlocked'
         const wodPanel = e.target.closest('.wod-panel');
         if (!wodPanel) return;
 
         const lockBtn = wodPanel.querySelector('.btn-zoom-float.unlocked');
-        if (!lockBtn) return; // Si no encuentra el botón desbloqueado, no hacemos nada (está bloqueado)
+        if (!lockBtn) return; 
 
-        // Evitar scroll del navegador si estamos manipulando el WOD
         if(e.touches.length > 1 || wodScale > 1) {
-             // e.preventDefault(); // Opcional, cuidado con bloquear scroll legítimo
+             // e.preventDefault(); 
         }
 
         if (e.touches.length === 1) {
-            // Inicio de Pan (arrastre)
             wodPanning = true;
             wodStartClientX = e.touches[0].clientX;
             wodStartClientY = e.touches[0].clientY;
         } else if (e.touches.length === 2) {
-            // Inicio de Pinch (Zoom)
             initialPinchDistance = getDistance(e.touches);
             wodStartScale = wodScale;
         }
@@ -1578,7 +1510,7 @@
         if (!lockBtn) return;
 
         if (wodPanning && e.touches.length === 1) {
-            e.preventDefault(); // Evitar scroll de la lista mientras arrastramos
+            e.preventDefault(); 
             const newX = e.touches[0].clientX;
             const newY = e.touches[0].clientY;
             
@@ -1594,7 +1526,6 @@
             const currentDistance = getDistance(e.touches);
             const pinchScale = currentDistance / initialPinchDistance;
             
-            // Limitamos el zoom mínimo a 0.5 y máximo a 3
             const newScale = wodStartScale * pinchScale;
             if(newScale > 0.5 && newScale < 3) {
                 wodScale = newScale;

@@ -3,8 +3,9 @@
 @inject HttpClient Http
 @inject SesionService Sesion
 @inject NavigationManager Nav
-
-<div class="main-layout">
+@inject IJSRuntime JS
+<div style="@EstilosTema">
+<div class="main-layout" >
     @* NAVBAR SEGURO PARA NOTCH *@
     <div class="navbar-container">
         <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
@@ -47,14 +48,14 @@
 
             @if (cargando)
             {
-                <div class="spinner-container"><div class="spinner-border text-warning"></div></div>
+                <div class="spinner-container"><div class="spinner-border" style="color: var(--theme-primary);"></div></div>
             }
             else if (!string.IsNullOrEmpty(mensajeError))
             {
                 <div class="empty-state">
                     <i class="fas fa-exclamation-triangle text-danger"></i>
                     <p>@mensajeError</p>
-                    <button class="btn btn-outline-warning mt-2" @onclick="RecargarTodo">Reintentar</button>
+                    <button class="btn-retry mt-2" @onclick="RecargarTodo">Reintentar</button>
                 </div>
             }
             else
@@ -90,7 +91,7 @@
                             <div class="bar-chart-container scroll-x-custom">
                                 @if (datosGrafica.Count == 0)
                                 {
-                                    <p class="text-muted text-center" style="width: 100%;">Sin datos registrados.</p>
+                                    <p class="text-center" style="width: 100%; color: var(--theme-text-muted);">Sin datos registrados.</p>
                                 }
                                 else
                                 {
@@ -169,7 +170,6 @@
                                                     {
                                                         <span class="badge-method cash"><i class="fas fa-money-bill-wave"></i> Efectivo</span>
                                                     }
-                                                    @* <span class="tx-time">@m.fechaPago.ToString("HH:mm")</span> *@
                                                 </div>
                                             </div>
 
@@ -187,110 +187,126 @@
         </div>
     </div>
 </div>
-
+</div>
 <style>
     /* LAYOUT GENERAL */
-    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: #0d0d0d; display: flex; flex-direction: column; z-index: 1; }
-    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: #1a1a1a; border-bottom: 1px solid #F8C545; color: white; display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-    .nav-left { color: #F8C545; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
-    .nav-title { font-weight: bold; font-size: 1.2rem; color: white; letter-spacing: 1px; }
+    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--theme-bg); display: flex; flex-direction: column; z-index: 1; }
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: var(--theme-bg); border-bottom: 1px solid var(--theme-primary); color: var(--theme-text); display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .nav-left { color: var(--theme-primary); font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+    .nav-title { font-weight: bold; font-size: 1.2rem; color: var(--theme-text); letter-spacing: 1px; }
     .nav-right { width: 60px; }
     
-    /* SCROLL CONTAINER MÁGICO (No se pega) */
-    .scrollable-content { flex-grow: 1; overflow-y: auto; background-color: #0d0d0d; padding: 15px; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; }
+    /* SCROLL CONTAINER MÁGICO */
+    .scrollable-content { flex-grow: 1; overflow-y: auto; background-color: var(--theme-bg); padding: 15px; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; }
     .finance-wrapper { max-width: 700px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; flex-grow: 1; }
 
     /* FILTRO GLOBAL */
-    .global-filter-card { background: #1a1a1a; border: 1px solid #333; padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); flex-shrink: 0; }
-    .filter-header { color: #888; font-family: 'Oswald'; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+    .global-filter-card { background: var(--theme-card); border: 1px solid var(--theme-border); padding: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); flex-shrink: 0; }
+    .filter-header { color: var(--theme-text-muted); font-family: 'Oswald'; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
     
-    /* NUEVOS ESTILOS PARA EL SELECT */
+    /* SELECT */
     .select-wrapper-custom { position: relative; width: 160px; }
-    .input-dark-month { background: #000; border: 1px solid #444; color: #F8C545; padding: 8px 30px 8px 12px; border-radius: 8px; font-family: 'Oswald'; outline: none; font-size: 1.1rem; width: 100%; cursor: pointer; appearance: none; -webkit-appearance: none; }
-    .input-dark-month option { background-color: #1a1a1a; color: white; font-family: 'Roboto'; }
-    .arrow-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: #888; pointer-events: none; font-size: 0.8rem; }
+    .input-dark-month { background: var(--theme-bg); border: 1px solid var(--theme-border); color: var(--theme-primary); padding: 8px 30px 8px 12px; border-radius: 8px; font-family: 'Oswald'; outline: none; font-size: 1.1rem; width: 100%; cursor: pointer; appearance: none; -webkit-appearance: none; }
+    .input-dark-month option { background-color: var(--theme-card); color: var(--theme-text); font-family: 'Roboto'; }
+    .arrow-icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--theme-text-muted); pointer-events: none; font-size: 0.8rem; }
     
     /* TABS */
-    .tabs-header { display: flex; background: #111; border-radius: 10px; padding: 5px; margin-bottom: 20px; border: 1px solid #333; flex-shrink: 0; }
-    .tab-item { flex: 1; text-align: center; padding: 12px; font-family: 'Oswald'; color: #666; cursor: pointer; border-radius: 8px; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; }
-    .tab-item.active { background: #F8C545; color: black; font-weight: bold; box-shadow: 0 2px 10px rgba(248,197,69,0.3); }
+    .tabs-header { display: flex; background: var(--theme-card); border-radius: 10px; padding: 5px; margin-bottom: 20px; border: 1px solid var(--theme-border); flex-shrink: 0; }
+    .tab-item { flex: 1; text-align: center; padding: 12px; font-family: 'Oswald'; color: var(--theme-text-muted); cursor: pointer; border-radius: 8px; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95rem; }
+    .tab-item.active { background: var(--theme-primary); color: var(--theme-bg); font-weight: bold; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
 
     /* --- TAB DASHBOARD (KPIs) --- */
     .dashboard-tab { display: flex; flex-direction: column; gap: 15px; flex-shrink: 0; }
     .kpi-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
-    .kpi-card { background: #1a1a1a; border-radius: 15px; padding: 20px; border: 1px solid #333; position: relative; overflow: hidden; }
-    .kpi-title { color: #888; font-family: 'Oswald'; font-size: 0.85rem; letter-spacing: 1px; display: block; margin-bottom: 5px; }
-    .main-kpi { border-left: 5px solid #F8C545; background: linear-gradient(135deg, #1a1a1a 0%, #222 100%); }
-    .main-kpi .kpi-value { font-size: 2.5rem; color: #F8C545; font-weight: bold; font-family: 'Oswald'; line-height: 1; display: block; margin-bottom: 10px; }
+    .kpi-card { background: var(--theme-card); border-radius: 15px; padding: 20px; border: 1px solid var(--theme-border); position: relative; overflow: hidden; }
+    .kpi-title { color: var(--theme-text-muted); font-family: 'Oswald'; font-size: 0.85rem; letter-spacing: 1px; display: block; margin-bottom: 5px; }
+    .main-kpi { border-left: 5px solid var(--theme-primary); background: linear-gradient(135deg, var(--theme-card) 0%, var(--theme-bg) 100%); }
+    .main-kpi .kpi-value { font-size: 2.5rem; color: var(--theme-primary); font-weight: bold; font-family: 'Oswald'; line-height: 1; display: block; margin-bottom: 10px; }
+    
+    /* Finanzas Universales (Verde/Rojo) */
     .kpi-growth { display: inline-flex; align-items: center; gap: 5px; font-size: 0.85rem; font-weight: bold; padding: 4px 10px; border-radius: 50px; font-family: 'Roboto'; }
     .kpi-growth.positive { background: rgba(40, 167, 69, 0.15); color: #28a745; }
     .kpi-growth.negative { background: rgba(220, 53, 69, 0.15); color: #dc3545; }
+    
     .secondary-kpi { display: flex; align-items: center; gap: 15px; border-left: 5px solid #009EE3; }
     .kpi-icon-box { width: 50px; height: 50px; border-radius: 12px; background: rgba(0, 158, 227, 0.1); color: #009EE3; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
     .kpi-info { flex: 1; }
-    .kpi-value-small { font-size: 1.5rem; color: white; font-weight: bold; font-family: 'Oswald'; }
+    .kpi-value-small { font-size: 1.5rem; color: var(--theme-text); font-weight: bold; font-family: 'Oswald'; }
 
     /* GRÁFICA ANUAL */
-    .chart-section { background: #1a1a1a; padding: 20px 15px; border-radius: 15px; border: 1px solid #333; margin-top: 5px; }
-    .chart-title { color: white; font-family: 'Oswald'; margin-bottom: 20px; font-size: 1rem; border-bottom: 1px solid #333; padding-bottom: 10px; letter-spacing: 1px; }
+    .chart-section { background: var(--theme-card); padding: 20px 15px; border-radius: 15px; border: 1px solid var(--theme-border); margin-top: 5px; }
+    .chart-title { color: var(--theme-text); font-family: 'Oswald'; margin-bottom: 20px; font-size: 1rem; border-bottom: 1px solid var(--theme-border); padding-bottom: 10px; letter-spacing: 1px; }
     .bar-chart-container { height: 220px; width: 100%; display: flex; align-items: flex-end; }
     .scroll-x-custom { overflow-x: auto; overflow-y: hidden; padding-bottom: 10px; }
-    .scroll-x-custom::-webkit-scrollbar { height: 6px; } .scroll-x-custom::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+    .scroll-x-custom::-webkit-scrollbar { height: 6px; } .scroll-x-custom::-webkit-scrollbar-thumb { background: var(--theme-border); border-radius: 10px; }
     .bars-flex { display: flex; align-items: flex-end; width: 100%; height: 100%; gap: 8px; min-width: 400px; }
     .bar-group { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; transition: 0.3s; opacity: 0.5; }
     .bar-group.highlight-bar { opacity: 1; transform: scale(1.05); }
-    .bar-group.highlight-bar .bar-visual { background: linear-gradient(to top, #F8C545, #FFEA00); box-shadow: 0 0 15px rgba(248,197,69,0.4); }
-    .bar-group.highlight-bar .bar-lbl { color: #F8C545; font-weight: bold; }
-    .bar-val { font-size: 0.65rem; color: #fff; margin-bottom: 4px; font-family: 'Oswald'; }
-    .bar-visual { width: 100%; max-width: 25px; background: #444; border-radius: 4px 4px 0 0; transition: height 0.6s ease-out; }
-    .bar-lbl { margin-top: 8px; font-size: 0.65rem; color: #888; font-family: 'Oswald'; text-align: center; }
+    .bar-group.highlight-bar .bar-visual { background: linear-gradient(to top, var(--theme-primary), var(--theme-secondary)); box-shadow: 0 0 15px rgba(0,0,0,0.4); }
+    .bar-group.highlight-bar .bar-lbl { color: var(--theme-primary); font-weight: bold; }
+    .bar-val { font-size: 0.65rem; color: var(--theme-text); margin-bottom: 4px; font-family: 'Oswald'; }
+    .bar-visual { width: 100%; max-width: 25px; background: var(--theme-border); border-radius: 4px 4px 0 0; transition: height 0.6s ease-out; }
+    .bar-lbl { margin-top: 8px; font-size: 0.65rem; color: var(--theme-text-muted); font-family: 'Oswald'; text-align: center; }
 
     /* --- TAB MOVIMIENTOS --- */
     .transactions-tab { display: flex; flex-direction: column; flex-grow: 1; min-height: 0; }
     
     /* RESUMEN EFECTIVO / MP */
     .resume-methods { display: flex; gap: 10px; margin-bottom: 15px; }
-    .method-card { flex: 1; display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 12px; background: #1a1a1a; border: 1px solid #333; }
+    .method-card { flex: 1; display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-radius: 12px; background: var(--theme-card); border: 1px solid var(--theme-border); }
     .method-card.cash i { color: #2ecc71; font-size: 1.6rem; }
     .method-card.mp i { color: #009EE3; font-size: 1.6rem; }
     .m-info { display: flex; flex-direction: column; }
-    .m-info span { font-size: 0.75rem; color: #888; text-transform: uppercase; font-weight: bold; }
-    .m-info strong { color: white; font-size: 1.2rem; font-family: 'Oswald'; line-height: 1.1; margin-top: 2px;}
+    .m-info span { font-size: 0.75rem; color: var(--theme-text-muted); text-transform: uppercase; font-weight: bold; }
+    .m-info strong { color: var(--theme-text); font-size: 1.2rem; font-family: 'Oswald'; line-height: 1.1; margin-top: 2px;}
 
-    .list-header-info { color: #888; font-size: 0.85rem; font-family: 'Roboto'; margin-bottom: 10px; text-align: center; flex-shrink: 0; }
-    .list-header-info b { color: white; }
+    .list-header-info { color: var(--theme-text-muted); font-size: 0.85rem; font-family: 'Roboto'; margin-bottom: 10px; text-align: center; flex-shrink: 0; }
+    .list-header-info b { color: var(--theme-text); }
     
     .transactions-list { flex-grow: 1; overflow-y: auto; padding-right: 5px; }
-    .scroll-custom::-webkit-scrollbar { width: 5px; } .scroll-custom::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+    .scroll-custom::-webkit-scrollbar { width: 5px; } .scroll-custom::-webkit-scrollbar-thumb { background: var(--theme-border); border-radius: 10px; }
     .list-wrapper { display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
     
-    .tx-card { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 12px; transition: transform 0.2s; }
-    .tx-card:hover { transform: translateX(5px); border-color: #555; }
+    .tx-card { background: var(--theme-card); border: 1px solid var(--theme-border); border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 12px; transition: transform 0.2s; }
+    .tx-card:hover { transform: translateX(5px); border-color: var(--theme-primary); }
     
-    .tx-date { background: #222; border: 1px solid #444; border-radius: 8px; min-width: 50px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Oswald'; flex-shrink: 0; }
-    .tx-day { font-size: 1.1rem; color: white; font-weight: bold; line-height: 1; }
-    .tx-month { font-size: 0.65rem; color: #F8C545; line-height: 1; margin-top: 2px; }
+    .tx-date { background: var(--theme-bg); border: 1px solid var(--theme-border); border-radius: 8px; min-width: 50px; height: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Oswald'; flex-shrink: 0; }
+    .tx-day { font-size: 1.1rem; color: var(--theme-text); font-weight: bold; line-height: 1; }
+    .tx-month { font-size: 0.65rem; color: var(--theme-primary); line-height: 1; margin-top: 2px; }
     
     .tx-info { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    .tx-name { color: white; font-weight: 500; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+    .tx-name { color: var(--theme-text); font-weight: 500; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
     .tx-badges { display: flex; align-items: center; gap: 8px; }
     
     .badge-method { font-size: 0.65rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; font-family: 'Oswald'; letter-spacing: 0.5px; }
     .badge-method.mp { background: rgba(0, 158, 227, 0.15); color: #009EE3; border: 1px solid rgba(0, 158, 227, 0.3); }
     .badge-method.cash { background: rgba(46, 204, 113, 0.15); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.3); }
-    .tx-time { color: #666; font-size: 0.7rem; }
 
     .tx-amount { font-family: 'Oswald'; font-size: 1.1rem; font-weight: bold; color: #2ecc71; text-align: right; flex-shrink: 0; }
 
-    .empty-state { text-align: center; color: #444; margin-top: 40px; }
+    .empty-state { text-align: center; color: var(--theme-text-muted); margin-top: 40px; }
     .empty-state i { font-size: 3rem; margin-bottom: 10px; }
     
+    .btn-retry { background: transparent; border: 1px solid var(--theme-primary); color: var(--theme-primary); padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: 0.2s;}
+    .btn-retry:active { background: var(--theme-primary); color: var(--theme-bg); }
+
     .fade-in { animation: fadeIn 0.4s ease-out; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .spinner-container { display: flex; justify-content: center; padding: 50px; flex-grow: 1; }
 </style>
 
 @code {
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9; 
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
     private int tabActiva = 1;
     private bool cargando = false;
     private string mensajeError = "";
@@ -340,6 +356,18 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // LEER EL CACHÉ LOCAL AL INSTANTE
+        try 
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache)) 
+            { 
+                EstilosTema = cache; 
+                StateHasChanged(); 
+            }
+        } 
+        catch { }
+
         if (Sesion.Usuario == null || Sesion.Usuario.TipoUsuarioID != 1)
         {
             Nav.NavigateTo("/home");
@@ -423,6 +451,3 @@
         StateHasChanged();
     }
 }
-
-
-

@@ -4,128 +4,134 @@
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject SesionService Sesion
+@inject IJSRuntime JS
 
-<div class="main-layout">
+@* ENVOLVEMOS LA VISTA EN EL TEMA GLOBAL *@
+<div style="@EstilosTema">
 
-    <div class="navbar-container">
-        <div class="nav-left" @onclick="Volver">
-            <i class="fas fa-arrow-left"></i> VOLVER
+    <div class="main-layout">
+
+        <div class="navbar-container">
+            <div class="nav-left" @onclick="Volver">
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </div>
+            <div class="nav-title">MI PROGRESO</div>
+            <div class="nav-right"></div>
         </div>
-        <div class="nav-title">MI PROGRESO</div>
-        <div class="nav-right"></div>
-    </div>
 
-    <div class="scrollable-content">
-        
-        @if (!cargando && gruposProgreso.Any())
-        {
-            <div class="instruction-banner fade-in">
-                <i class="fas fa-hand-pointer"></i> Toca una marca para ver tu historial
-            </div>
-        }
-
-        @if (cargando)
-        {
-            <div class="text-center mt-5">
-                <div class="spinner-border text-warning" role="status"></div>
-                <p class="mt-2 text-muted">Cargando récords...</p>
-            </div>
-        }
-        else if (!gruposProgreso.Any())
-        {
-            <div class="empty-state fade-in">
-                <i class="fas fa-chart-line"></i>
-                <h3>SIN REGISTROS</h3>
-                <p>Aún no hay datos de progreso disponibles.</p>
-            </div>
-        }
-        else
-        {
-            @foreach (var grupo in gruposProgreso)
+        <div class="scrollable-content">
+            
+            @if (!cargando && gruposProgreso.Any())
             {
-                <div class="category-section fade-in">
-                    <div class="category-header">
-                        @grupo.Key.ToUpper()
-                    </div>
-
-                    <div class="records-list">
-                        @foreach (var item in grupo)
-                        {
-                            <div class="record-item" @onclick="() => VerHistorial(item.TestBoxId, item.NombreTest)">
-                                <span class="record-name">@item.NombreTest</span>
-
-                                <div class="record-value-wrapper">
-                                    <span class="record-num">@item.Valor</span>
-                                    <span class="record-unit">@item.Medida</span>
-                                </div>
-                                <i class="fas fa-chevron-right history-icon"></i>
-                            </div>
-                        }
-                    </div>
+                <div class="instruction-banner fade-in">
+                    <i class="fas fa-hand-pointer"></i> Toca una marca para ver tu historial
                 </div>
             }
-        }
-        
-        <div style="height: 40px;"></div>
-    </div>
-</div>
 
-@if (mostrarHistorial)
-{
-    <div class="modal-overlay" @onclick="CerrarModal">
-        <div class="modal-content custom-modal" @onclick:stopPropagation="true">
-            <div class="modal-header">
-                <h4>@nombreEjercicioSeleccionado</h4>
-                <button class="btn-close-custom" @onclick="CerrarModal"><i class="fas fa-times"></i></button>
-            </div>
-
-            <div class="modal-body history-list">
-                @if (historialCargado == null)
+            @if (cargando)
+            {
+                <div class="text-center mt-5">
+                    <div class="spinner-border" style="color: var(--theme-primary);" role="status"></div>
+                    <p class="mt-2" style="color: var(--theme-text-muted);">Cargando récords...</p>
+                </div>
+            }
+            else if (!gruposProgreso.Any())
+            {
+                <div class="empty-state fade-in">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>SIN REGISTROS</h3>
+                    <p>Aún no hay datos de progreso disponibles.</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var grupo in gruposProgreso)
                 {
-                    <div class="text-center p-4">
-                        <div class="spinner-border text-warning"></div>
-                        <p class="mt-2 text-muted">Cargando...</p>
+                    <div class="category-section fade-in">
+                        <div class="category-header">
+                            @grupo.Key.ToUpper()
+                        </div>
+
+                        <div class="records-list">
+                            @foreach (var item in grupo)
+                            {
+                                <div class="record-item" @onclick="() => VerHistorial(item.TestBoxId, item.NombreTest)">
+                                    <span class="record-name">@item.NombreTest</span>
+
+                                    <div class="record-value-wrapper">
+                                        <span class="record-num">@item.Valor</span>
+                                        <span class="record-unit">@item.Medida</span>
+                                    </div>
+                                    <i class="fas fa-chevron-right history-icon"></i>
+                                </div>
+                            }
+                        </div>
                     </div>
                 }
-                else if (historialCargado.Count == 0)
-                {
-                    <div class="text-center p-4 text-muted">No hay historial previo.</div>
-                }
-                else
-                {
-                    @foreach (var h in historialCargado)
-                    {
-                        <div class="history-item @(h.EsRecordActual ? "current-pr" : "")">
-                            <div class="h-info">
-                                <div class="h-date">
-                                    <i class="far fa-calendar-alt"></i> @h.Fecha.ToString("dd/MM/yyyy")
-                                </div>
-                                @if (h.EsRecordActual)
-                                {
-                                    <span class="badge-pr"><i class="fas fa-trophy"></i> PR ACTUAL</span>
-                                }
-                            </div>
-                            <div class="h-value">
-                                @h.Valor <span class="unit-small">@h.Unidad</span>
-                            </div>
-                        </div>
-                    }
-                }
-            </div>
+            }
             
-            <div class="modal-footer">
-                <button class="btn-confirm" @onclick="CerrarModal">CERRAR</button>
-            </div>
+            <div style="height: 40px;"></div>
         </div>
     </div>
-}
+
+    @if (mostrarHistorial)
+    {
+        <div class="modal-overlay" @onclick="CerrarModal">
+            <div class="modal-content custom-modal" @onclick:stopPropagation="true">
+                <div class="modal-header">
+                    <h4>@nombreEjercicioSeleccionado</h4>
+                    <button class="btn-close-custom" @onclick="CerrarModal"><i class="fas fa-times"></i></button>
+                </div>
+
+                <div class="modal-body history-list">
+                    @if (historialCargado == null)
+                    {
+                        <div class="text-center p-4">
+                            <div class="spinner-border" style="color: var(--theme-primary);"></div>
+                            <p class="mt-2" style="color: var(--theme-text-muted);">Cargando...</p>
+                        </div>
+                    }
+                    else if (historialCargado.Count == 0)
+                    {
+                        <div class="text-center p-4" style="color: var(--theme-text-muted);">No hay historial previo.</div>
+                    }
+                    else
+                    {
+                        @foreach (var h in historialCargado)
+                        {
+                            <div class="history-item @(h.EsRecordActual ? "current-pr" : "")">
+                                <div class="h-info">
+                                    <div class="h-date">
+                                        <i class="far fa-calendar-alt"></i> @h.Fecha.ToString("dd/MM/yyyy")
+                                    </div>
+                                    @if (h.EsRecordActual)
+                                    {
+                                        <span class="badge-pr"><i class="fas fa-trophy"></i> PR ACTUAL</span>
+                                    }
+                                </div>
+                                <div class="h-value">
+                                    @h.Valor <span class="unit-small">@h.Unidad</span>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+                
+                <div class="modal-footer">
+                    <button class="btn-confirm" @onclick="CerrarModal">CERRAR</button>
+                </div>
+            </div>
+        </div>
+    }
+
+</div>
 
 <style>
     /* --- ESTRUCTURA BASE --- */
     .main-layout {
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background-color: #0d0d0d;
+        background-color: var(--theme-bg);
         display: flex;
         flex-direction: column;
         z-index: 1;
@@ -137,9 +143,9 @@
         padding-bottom: 10px;
         padding-left: 20px;
         padding-right: 20px;
-        background-color: #0d0d0d;
-        border-bottom: 1px solid #F8C545;
-        color: white;
+        background-color: var(--theme-bg);
+        border-bottom: 1px solid var(--theme-primary);
+        color: var(--theme-text);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -149,7 +155,7 @@
     }
 
     .nav-left {
-        color: #F8C545;
+        color: var(--theme-primary);
         font-weight: bold;
         cursor: pointer;
         display: flex;
@@ -161,7 +167,7 @@
     .nav-title {
         font-weight: bold;
         font-size: 1.1rem;
-        color: white;
+        color: var(--theme-text);
         letter-spacing: 1px;
     }
 
@@ -181,33 +187,33 @@
     
     .instruction-banner {
         text-align: center;
-        color: #aaa;
+        color: var(--theme-text-muted);
         font-size: 0.85rem;
         margin-bottom: 20px;
         font-family: 'Roboto', sans-serif;
         background: rgba(255, 255, 255, 0.05);
         padding: 8px;
         border-radius: 20px;
-        border: 1px dashed #444;
+        border: 1px dashed var(--theme-border);
     }
-    .instruction-banner i { color: #F8C545; margin-right: 5px; animation: bounce 2s infinite; }
+    .instruction-banner i { color: var(--theme-primary); margin-right: 5px; animation: bounce 2s infinite; }
 
     .category-section { margin-bottom: 30px; width: 100%; max-width: 600px; align-self: center; }
 
     .category-header {
-        color: #F8C545;
+        color: var(--theme-primary);
         font-family: 'Oswald';
         font-size: 1.2rem;
-        border-bottom: 1px solid #F8C545;
+        border-bottom: 1px solid var(--theme-primary);
         padding-bottom: 5px;
         margin-bottom: 10px;
         letter-spacing: 1px;
     }
 
     .records-list {
-        background-color: #1a1a1a;
+        background-color: var(--theme-card);
         border-radius: 12px;
-        border: 1px solid #333;
+        border: 1px solid var(--theme-border);
         overflow: hidden;
     }
 
@@ -216,19 +222,19 @@
         justify-content: space-between;
         align-items: center;
         padding: 15px;
-        border-bottom: 1px solid #333;
+        border-bottom: 1px solid var(--theme-border);
         cursor: pointer;
         position: relative;
-        background-color: #1a1a1a;
+        background-color: var(--theme-card);
         transition: background 0.2s;
     }
     .record-item:last-child { border-bottom: none; }
-    .record-item:active { background-color: #252525; }
+    .record-item:active { background-color: var(--theme-bg); }
 
     .record-name {
         font-family: 'Roboto';
         font-size: 1rem;
-        color: #eee;
+        color: var(--theme-text);
         flex: 1;
     }
 
@@ -242,27 +248,27 @@
     .record-num {
         font-family: 'Oswald';
         font-size: 1.3rem;
-        color: white;
+        color: var(--theme-text);
         font-weight: bold;
     }
 
     .record-unit {
         font-family: 'Oswald';
         font-size: 0.8rem;
-        color: #F8C545;
+        color: var(--theme-primary);
         font-weight: bold;
         text-transform: uppercase;
     }
 
     .history-icon {
-        color: #666;
+        color: var(--theme-text-muted);
         font-size: 0.8rem;
         position: absolute;
         right: 15px;
     }
 
-    .empty-state { text-align: center; margin-top: 60px; color: #666; }
-    .empty-state i { font-size: 3rem; margin-bottom: 15px; color: #333; }
+    .empty-state { text-align: center; margin-top: 60px; color: var(--theme-text-muted); }
+    .empty-state i { font-size: 3rem; margin-bottom: 15px; color: var(--theme-border); }
 
     /* --- MODAL DE HISTORIAL --- */
     .modal-overlay {
@@ -277,36 +283,38 @@
     }
 
     .custom-modal {
-        background: #1a1a1a;
+        background: var(--theme-card);
         width: 90%;
         max-width: 400px;
         max-height: 70vh; /* Altura máxima */
         border-radius: 12px;
-        border: 1px solid #F8C545;
+        border: 1px solid var(--theme-primary);
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     }
 
     .modal-header {
-        background: #222;
+        background: var(--theme-bg);
         padding: 15px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 1px solid #333;
+        border-bottom: 1px solid var(--theme-border);
     }
     .modal-header h4 {
         margin: 0;
         font-size: 1.1rem;
         font-family: 'Oswald';
-        color: #F8C545;
+        color: var(--theme-primary);
         text-transform: uppercase;
     }
 
-    .btn-close-custom { background: none; border: none; color: white; font-size: 1.2rem; }
-    .btn-confirm { background: #F8C545; color: black; border: none; padding: 10px; font-weight: bold; width: 100%; border-radius: 5px; }
+    .btn-close-custom { background: none; border: none; color: var(--theme-text-muted); font-size: 1.2rem; cursor: pointer; transition: 0.2s;}
+    .btn-close-custom:active { color: white; transform: scale(1.1); }
+    
+    .btn-confirm { background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 10px; font-weight: bold; width: 100%; border-radius: 5px; font-family: 'Oswald'; letter-spacing: 1px;}
 
     .history-list {
         padding: 0;
@@ -318,35 +326,35 @@
         justify-content: space-between;
         align-items: center;
         padding: 15px;
-        border-bottom: 1px solid #333;
-        color: #ccc;
-        background: #1a1a1a;
+        border-bottom: 1px solid var(--theme-border);
+        color: var(--theme-text-muted);
+        background: var(--theme-card);
     }
 
     .history-item.current-pr {
-        background: rgba(248, 197, 69, 0.1);
-        border-left: 4px solid #F8C545;
-        color: white;
+        background: rgba(255, 255, 255, 0.05);
+        border-left: 4px solid var(--theme-primary);
+        color: var(--theme-text);
     }
 
     .h-info { display: flex; flex-direction: column; gap: 4px; }
     
     .h-date {
         display: flex; align-items: center; gap: 8px;
-        font-size: 0.85rem; color: #888;
+        font-size: 0.85rem; color: var(--theme-text-muted);
     }
-    .current-pr .h-date { color: #F8C545; }
+    .current-pr .h-date { color: var(--theme-primary); }
 
     .h-value { font-family: 'Oswald'; font-size: 1.3rem; font-weight: bold; }
-    .unit-small { font-size: 0.8rem; color: #888; font-weight: normal; margin-left: 2px; }
+    .unit-small { font-size: 0.8rem; color: var(--theme-text-muted); font-weight: normal; margin-left: 2px; }
 
     .badge-pr {
-        background: #F8C545; color: black; font-size: 0.65rem;
+        background: var(--theme-primary); color: var(--theme-bg); font-size: 0.65rem;
         padding: 2px 6px; border-radius: 4px; font-weight: bold;
         width: fit-content; display: flex; align-items: center; gap: 4px;
     }
 
-    .modal-footer { padding: 15px; background: #222; border-top: 1px solid #333; }
+    .modal-footer { padding: 15px; background: var(--theme-bg); border-top: 1px solid var(--theme-border); }
 
     @@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
     .fade-in { animation: fadeIn 0.5s ease; }
@@ -354,6 +362,17 @@
 </style>
 
 @code {
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9; 
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
     private IEnumerable<IGrouping<string, EvaluacionVisualDto>> gruposProgreso = new List<IGrouping<string, EvaluacionVisualDto>>();
     private bool cargando = true;
 
@@ -364,6 +383,18 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // LEER EL CACHÉ LOCAL AL INSTANTE
+        try 
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache)) 
+            { 
+                EstilosTema = cache; 
+                StateHasChanged(); 
+            }
+        } 
+        catch { }
+
         try
         {
             if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }

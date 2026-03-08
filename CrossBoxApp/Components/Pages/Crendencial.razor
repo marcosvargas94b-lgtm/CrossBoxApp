@@ -3,104 +3,109 @@
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject CrossBoxApp.Models.Services.SesionService Sesion
+@inject IJSRuntime JS
 
-<div class="credential-layout">
+@* ENVOLVEMOS EN EL TEMA GLOBAL *@
+<div style="@EstilosTema">
+    <div class="credential-layout">
 
-    @* --- PANTALLA INSTRUCCIÓN (VERTICAL) --- *@
-    <div class="rotate-instruction">
-        <div class="rotate-content">
-            <div class="phone-animation">
-                <i class="fas fa-mobile-alt"></i>
-            </div>
-            <h3>GIRA TU CELULAR</h3>
-            <p>Ponlo en horizontal para ver tu ID.</p>
-            <button class="btn-back-simple" @onclick="Volver">Cancelar</button>
-        </div>
-    </div>
-
-    @* --- VISOR TARJETA (HORIZONTAL) --- *@
-    <div class="card-viewer">
-        <div class="gold-card-container">
-            <div class="glow-back"></div>
-
-            <div class="gold-card">
-                <div class="hologram-shine"></div>
-
-                <div class="card-header-row">
-                    <div class="box-brand">
-                        @if (!string.IsNullOrEmpty(urlLogoBox))
-                        {
-                            <img src="@urlLogoBox" class="box-logo-img" />
-                        }
-                        <span class="box-name">@nombreBox</span>
-                    </div>
-                    <div class="status-indicator">
-                        <div class="led-light @(esActivo ? "led-green" : "led-red")"></div>
-                        <span class="status-text">@(esActivo ? "ACTIVO" : "INACTIVO")</span>
-                    </div>
+        @* --- PANTALLA INSTRUCCIÓN (VERTICAL) --- *@
+        <div class="rotate-instruction">
+            <div class="rotate-content">
+                <div class="phone-animation">
+                    <i class="fas fa-mobile-alt"></i>
                 </div>
-
-                <div class="card-body-row">
-                    <div class="photo-frame">
-                        @if (!string.IsNullOrEmpty(fotoUsuarioUrl))
-                        {
-                            <img src="@fotoUsuarioUrl" class="user-photo" />
-                        }
-                        else
-                        {
-                            <div class="user-photo-placeholder">
-                                @(Sesion.Usuario?.Nombre?.Substring(0, 1) ?? "A")
-                            </div>
-                        }
-                    </div>
-
-                    <div class="user-details">
-                        <div class="names-block">
-                            <h2 class="user-fullname">@Sesion.Usuario?.Nombre</h2>
-                            <h2 class="user-lastname">@Sesion.Usuario?.Apellidos</h2>
-                        </div>
-                        
-                        <div class="membership-info">
-                            <div class="info-item">
-                                <label>ID ATLETA</label>
-                                <span>#@Sesion.Usuario?.UsuarioID.ToString().Substring(0, 8).ToUpper()</span>
-                            </div>
-                            <div class="info-item">
-                                <label>ESTATUS / VENCIMIENTO</label>
-                                @* Aquí hacemos la letra más grande y roja si está vencido *@
-                                <span class="vencimiento-text" style="@(esActivo ? "" : "color:#8B0000; font-size:1.3rem !important;")">
-                                    @fechaVencimientoTexto
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-footer-row">
-                    <div class="live-clock">@horaActual</div>
-                    <div class="app-watermark">AFTRACK DIGITAL ID</div>
-                </div>
+                <h3>GIRA TU CELULAR</h3>
+                <p>Ponlo en horizontal para ver tu ID.</p>
+                <button class="btn-back-simple" @onclick="Volver">Cancelar</button>
             </div>
         </div>
 
-        <button class="btn-close-floating" @onclick="Volver">
-            <i class="fas fa-times"></i>
-        </button>
+        @* --- VISOR TARJETA (HORIZONTAL) --- *@
+        <div class="card-viewer">
+            <div class="gold-card-container">
+                <div class="glow-back"></div>
+
+                <div class="gold-card">
+                    <div class="hologram-shine"></div>
+
+                    <div class="card-header-row">
+                        <div class="box-brand">
+                            @if (!string.IsNullOrEmpty(urlLogoBox))
+                            {
+                                <img src="@urlLogoBox" class="box-logo-img" />
+                            }
+                            <span class="box-name">@nombreBox</span>
+                        </div>
+                        <div class="status-indicator">
+                            <div class="led-light @(esActivo ? "led-green" : "led-red")"></div>
+                            <span class="status-text">@(esActivo ? "ACTIVO" : "INACTIVO")</span>
+                        </div>
+                    </div>
+
+                    <div class="card-body-row">
+                        <div class="photo-frame">
+                            @* Lógica con Fallback: Si hay URL y NO hay error, intenta pintar la imagen. Si falla, activa el error *@
+                            @if (!string.IsNullOrEmpty(fotoUsuarioUrl) && !fotoError)
+                            {
+                                <img src="@fotoUsuarioUrl" class="user-photo" @onerror="ImagenFallo" />
+                            }
+                            else
+                            {
+                                <div class="user-photo-placeholder">
+                                    @(Sesion.Usuario?.Nombre?.Substring(0, 1).ToUpper() ?? "A")
+                                </div>
+                            }
+                        </div>
+
+                        <div class="user-details">
+                            <div class="names-block">
+                                <h2 class="user-fullname">@Sesion.Usuario?.Nombre</h2>
+                                <h2 class="user-lastname">@Sesion.Usuario?.Apellidos</h2>
+                            </div>
+                            
+                            <div class="membership-info">
+                                <div class="info-item">
+                                    <label>ID ATLETA</label>
+                                    <span>#@Sesion.Usuario?.UsuarioID.ToString().Substring(0, 8).ToUpper()</span>
+                                </div>
+                                <div class="info-item">
+                                    <label>ESTATUS / VENCIMIENTO</label>
+                                    <span class="vencimiento-text" style="@(esActivo ? "" : "color:#8B0000; font-size:1.3rem !important;")">
+                                        @fechaVencimientoTexto
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer-row">
+                        <div class="live-clock">@horaActual</div>
+                        <div class="app-watermark">AFTRACK DIGITAL ID</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-close-floating" @onclick="Volver">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
     </div>
 </div>
 
 <style>
     /* --- LAYOUT PRINCIPAL --- */
-    .credential-layout { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #0d0d0d; z-index: 9999; display: flex; justify-content: center; align-items: center; }
+    .credential-layout { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: var(--theme-bg); z-index: 9999; display: flex; justify-content: center; align-items: center; }
     
     /* --- PANTALLA VERTICAL (INSTRUCCIONES) --- */
-    .rotate-instruction { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; width: 100%; height: 100%; background: #111; }
-    .phone-animation { font-size: 4rem; color: #F8C545; animation: rotatePhone 2s infinite; margin-bottom: 20px; }
-    .rotate-content h3 { font-family: 'Oswald'; color: #F8C545; margin-bottom: 10px; }
-    .btn-back-simple { margin-top: 30px; background: transparent; border: 1px solid #666; color: #aaa; padding: 10px 30px; border-radius: 50px; }
+    .rotate-instruction { display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: var(--theme-text); width: 100%; height: 100%; background: var(--theme-bg); }
+    .phone-animation { font-size: 4rem; color: var(--theme-primary); animation: rotatePhone 2s infinite; margin-bottom: 20px; }
+    .rotate-content h3 { font-family: 'Oswald'; color: var(--theme-primary); margin-bottom: 10px; }
+    .rotate-content p { color: var(--theme-text-muted); }
+    .btn-back-simple { margin-top: 30px; background: transparent; border: 1px solid var(--theme-border); color: var(--theme-text-muted); padding: 10px 30px; border-radius: 50px; }
 
     /* --- PANTALLA HORIZONTAL (VISOR) --- */
-    .card-viewer { display: none; width: 100%; height: 100%; position: relative; justify-content: center; align-items: center; background: radial-gradient(circle, #222 0%, #000 100%); }
+    .card-viewer { display: none; width: 100%; height: 100%; position: relative; justify-content: center; align-items: center; background: radial-gradient(circle, var(--theme-card) 0%, var(--theme-bg) 100%); }
 
     /* MEDIA QUERIES PARA ORIENTACIÓN */
     @@media (orientation: portrait) { .rotate-instruction { display: flex; } .card-viewer { display: none; } }
@@ -109,21 +114,20 @@
     /* --- CONTENEDOR DE LA TARJETA (TAMAÑO AJUSTADO) --- */
     .gold-card-container { 
         position: relative; 
-        /* Hacemos la tarjeta más ancha y alta para que quepa todo */
         width: 85vw; 
         height: 80vh; 
         max-width: 650px; 
         max-height: 380px; 
     }
 
-    .glow-back { position: absolute; top: -15px; left: -15px; right: -15px; bottom: -15px; background: radial-gradient(circle, rgba(248, 197, 69, 0.5) 0%, rgba(0,0,0,0) 70%); z-index: 1; filter: blur(25px); animation: pulseGlow 3s infinite; }
+    .glow-back { position: absolute; top: -15px; left: -15px; right: -15px; bottom: -15px; background: radial-gradient(circle, var(--theme-primary) 0%, rgba(0,0,0,0) 70%); opacity: 0.5; z-index: 1; filter: blur(25px); animation: pulseGlow 3s infinite; }
     
     .gold-card { 
         position: relative; z-index: 2; width: 100%; height: 100%; border-radius: 25px; 
-        /* ORO METÁLICO MÁS INTENSO */
+        /* ORO METÁLICO MÁS INTENSO (Esto se mantiene porque es el concepto "Golden VIP") */
         background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fbf5b7 75%, #aa771c 100%); 
         box-shadow: 0 15px 40px rgba(0,0,0,0.9), inset 0 0 0 2px rgba(255,255,255,0.3); 
-        padding: 25px 30px; /* Más padding interno */
+        padding: 25px 30px; 
         display: flex; flex-direction: column; overflow: hidden; 
     }
 
@@ -137,9 +141,9 @@
     .box-logo-img { 
         height: 50px; width: 50px; 
         border-radius: 50%; 
-        border: 2px solid #F8C545; 
-        background-color: #000; /* Fondo negro */
-        object-fit: contain; /* Para que el logo no se deforme dentro del círculo negro */
+        border: 2px solid var(--theme-primary); 
+        background-color: #000; 
+        object-fit: contain; 
         padding: 2px;
     }
     
@@ -155,12 +159,12 @@
     .card-body-row { display: flex; gap: 25px; flex: 1; align-items: center; }
     
     .photo-frame { 
-        width: 130px; height: 130px; /* Foto más grande */
-        border-radius: 20px; border: 4px solid #111; overflow: hidden; 
-        background: #000; box-shadow: 5px 5px 15px rgba(0,0,0,0.4); flex-shrink: 0; 
+        width: 130px; height: 130px; 
+        border-radius: 20px; border: 4px solid var(--theme-primary); overflow: hidden; 
+        background: var(--theme-card); box-shadow: 5px 5px 15px rgba(0,0,0,0.4); flex-shrink: 0; 
     }
     .user-photo { width: 100%; height: 100%; object-fit: cover; }
-    .user-photo-placeholder { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; color: #F8C545; font-size: 4rem; font-family: 'Oswald'; }
+    .user-photo-placeholder { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background: var(--theme-bg); color: var(--theme-primary); font-size: 4rem; font-family: 'Oswald'; }
     
     .user-details { flex: 1; display: flex; flex-direction: column; justify-content: space-around; height: 100%; }
     
@@ -180,17 +184,29 @@
     .live-clock { font-family: 'Roboto Mono', monospace; font-size: 1rem; color: #222; font-weight: bold; background: rgba(255,255,255,0.3); padding: 2px 8px; border-radius: 5px; }
     .app-watermark { font-family: 'Oswald'; font-size: 0.8rem; color: rgba(0,0,0,0.5); letter-spacing: 3px; font-weight: bold; }
 
-    .btn-close-floating { position: absolute; top: 25px; right: 25px; background: rgba(0, 0, 0, 0.6); border: 1px solid #F8C545; color: #F8C545; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; backdrop-filter: blur(5px); transition: 0.2s; z-index: 20; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
-    .btn-close-floating:active { transform: scale(0.9); background: #F8C545; color: black; }
+    .btn-close-floating { position: absolute; top: 25px; right: 25px; background: rgba(0, 0, 0, 0.6); border: 1px solid var(--theme-primary); color: var(--theme-primary); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; backdrop-filter: blur(5px); transition: 0.2s; z-index: 20; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+    .btn-close-floating:active { transform: scale(0.9); background: var(--theme-primary); color: var(--theme-bg); }
 
     @@keyframes rotatePhone { 0% { transform: rotate(0deg); } 25% { transform: rotate(90deg); } 50% { transform: rotate(90deg); } 75% { transform: rotate(0deg); } 100% { transform: rotate(0deg); } }
-    @@keyframes pulseGlow { 0% { opacity: 0.4; } 50% { opacity: 0.8; } 100% { opacity: 0.4; } }
+    @@keyframes pulseGlow { 0% { opacity: 0.2; } 50% { opacity: 0.8; } 100% { opacity: 0.2; } }
     @@keyframes hologramMove { 0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; } }
     @@keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
     @@keyframes blinkFast { 0% { opacity: 1; } 50% { opacity: 0.1; } 100% { opacity: 1; } }
 </style>
 
 @code {
+
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9;
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
     private string nombreBox = "CARGANDO...";
     private string urlLogoBox = "";
     private string fotoUsuarioUrl = "";
@@ -198,43 +214,77 @@
     private string fechaVencimientoTexto = "--/--/----";
     private string horaActual = DateTime.Now.ToString("HH:mm:ss");
     private System.Threading.Timer timer;
+    private bool fotoError = false; // Flag para manejar si la imagen se rompe
 
-    class BoxNombreDto { public string Nombre { get; set; } public Guid? Logo { get; set; } }
+    // DTO para info del Box (Extraído de Ficha)
+    class CredencialFichaDto
+    {
+        public string BoxNombre { get; set; }
+        public string LogoBoxUrl { get; set; }
+    }
+
+    // DTO para la foto real (Extraído de Comunidad)
+    class MiBannerDto
+    {
+        public string FotoAvatar { get; set; }
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        timer = new System.Threading.Timer((_) => {
+        // LEER EL CACHÉ LOCAL AL INSTANTE
+        try
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache))
+            {
+                EstilosTema = cache;
+                StateHasChanged();
+            }
+        }
+        catch { }
+
+        timer = new System.Threading.Timer((_) =>
+        {
             horaActual = DateTime.Now.ToString("HH:mm:ss");
             InvokeAsync(StateHasChanged);
         }, null, 0, 1000);
 
         if (Sesion.Usuario != null)
         {
-            // 1. Foto
-            if (!string.IsNullOrEmpty(Sesion.Usuario.FotoPerfil)) 
-            {
-                fotoUsuarioUrl = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/Imagenes/Perfiles/{Sesion.Usuario.FotoPerfil}";
-            }
+            string baseUrl = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/";
 
-            // 2. Info Box
+            // 1. INFO DEL BOX (Desde la Ficha)
             try
             {
-                var box = await Http.GetFromJsonAsync<BoxNombreDto>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/configapi/nombre-box/{Sesion.Usuario.BoxID}");
-                if (box != null)
+                var ficha = await Http.GetFromJsonAsync<CredencialFichaDto>($"{baseUrl}api/fichaapi/{Sesion.Usuario.UsuarioID}");
+                if (ficha != null)
                 {
-                    nombreBox = box.Nombre.ToUpper();
-                    if (box.Logo.HasValue)
+                    nombreBox = !string.IsNullOrEmpty(ficha.BoxNombre) ? ficha.BoxNombre.ToUpper() : "CARGANDO...";
+                    if (!string.IsNullOrEmpty(ficha.LogoBoxUrl))
                     {
-                        urlLogoBox = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/Imagenes/Logos/{box.Logo}.jpg";
+                        string urlLimpiaLogo = ficha.LogoBoxUrl.StartsWith("http") ? ficha.LogoBoxUrl : $"{baseUrl}imagenes/logos/{ficha.LogoBoxUrl}";
+                        urlLogoBox = $"{urlLimpiaLogo}?t={DateTime.Now.Ticks}";
                     }
                 }
             }
-            catch {}
+            catch { }
 
-            // 3. Estatus
+            // 2. FOTO DEL ATLETA (Desde Mi Banner en Comunidad - Es mucho más preciso)
             try
             {
-                var dias = await Http.GetFromJsonAsync<int>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/dias-restantes/{Sesion.Usuario.UsuarioID}");
+                var banner = await Http.GetFromJsonAsync<MiBannerDto>($"{baseUrl}api/communityapi/mi-banner/{Sesion.Usuario.BoxID}/{Sesion.Usuario.UsuarioID}");
+                if (banner != null && !string.IsNullOrEmpty(banner.FotoAvatar))
+                {
+                    // La API de comunidad ya devuelve la URL completa y correcta
+                    fotoUsuarioUrl = $"{banner.FotoAvatar}?t={DateTime.Now.Ticks}";
+                }
+            }
+            catch { }
+
+            // 3. Estatus de Pago
+            try
+            {
+                var dias = await Http.GetFromJsonAsync<int>($"{baseUrl}api/pagosapi/dias-restantes/{Sesion.Usuario.UsuarioID}");
                 if (dias >= 0)
                 {
                     esActivo = true;
@@ -249,7 +299,7 @@
             }
             catch
             {
-                // Fallback
+                // Fallback de seguridad
                 if (Sesion.Usuario.ProximoCorte != null && Sesion.Usuario.ProximoCorte.Value.Date >= DateTime.Today)
                 {
                     esActivo = true;
@@ -262,6 +312,13 @@
                 }
             }
         }
+    }
+
+    // MÉTODO QUE SE DISPARA SI LA IMAGEN ESTÁ ROTA (Error 404)
+    private void ImagenFallo()
+    {
+        fotoError = true;
+        StateHasChanged();
     }
 
     private void Volver()

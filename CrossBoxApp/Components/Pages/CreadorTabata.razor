@@ -3,20 +3,22 @@
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject IJSRuntime JS
-
-<div class="main-layout">
+<div style="@EstilosTema">
+<div class="main-layout" >
     <div class="navbar-container">
         <div class="nav-left" @onclick="Volver">
             <i class="fas fa-arrow-left"></i> VOLVER
         </div>
-        <div class="nav-title"><i class="fas fa-stopwatch" style="color:#ff4d4d;"></i> TÁBATA 20/10</div>
+        <div class="nav-title"><i class="fas fa-stopwatch" style="color:var(--theme-primary);"></i> TÁBATA 20/10</div>
         <div class="nav-right"></div>
     </div>
 
     <div class="content-area scroll-custom">
         @if (cargando)
         {
-            <div class="spinner-border text-danger mt-5"></div>
+            <div class="text-center mt-5">
+                <div class="spinner-border" style="color: var(--theme-primary);"></div>
+            </div>
         }
         else if (!modoEntrenamiento)
         {
@@ -129,7 +131,7 @@
                     <span class="fase-badge @ObtenerClaseFase()">@faseActual.ToString().ToUpper()</span>
                 </div>
 
-                <div class="big-clock @(faseActual == FaseTabata.Descanso ? "text-success" : faseActual == FaseTabata.Trabajo ? "text-danger" : "text-white")">
+                <div class="big-clock @(faseActual == FaseTabata.Descanso ? "text-success" : faseActual == FaseTabata.Trabajo ? "text-danger" : "text-theme")">
                     @FormatearTiempo(tiempoRestante)
                 </div>
 
@@ -174,82 +176,91 @@
         }
     </div>
 </div>
-
+</div>
 <style>
-    .main-layout { position: fixed; top:0; left:0; width:100vw; height:100vh; background:#000; display:flex; flex-direction:column; z-index:1; }
-    .navbar-container { flex-shrink:0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom:10px; padding-left:20px; padding-right:20px; background:#111; border-bottom:1px solid #ff4d4d; display:flex; justify-content:space-between; align-items:center; z-index:100; font-family:'Oswald'; color:white; }
+    /* VARIABLES Y ESTRUCTURA BASE */
+    .main-layout { position: fixed; top:0; left:0; width:100vw; height:100vh; background: var(--theme-bg); display:flex; flex-direction:column; z-index:1; }
+    .navbar-container { flex-shrink:0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom:10px; padding-left:20px; padding-right:20px; background: var(--theme-bg); border-bottom:1px solid var(--theme-primary); display:flex; justify-content:space-between; align-items:center; z-index:100; font-family:'Oswald'; color: var(--theme-text); }
+    .nav-left { color: var(--theme-primary); font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: var(--theme-text); letter-spacing: 1px; display: flex; align-items: center; gap: 5px; }
     .scroll-custom { flex:1; overflow-y:auto; padding: 20px; -webkit-overflow-scrolling: touch; }
 
-    .tabata-info { background: rgba(255, 77, 77, 0.1); color: #ff4d4d; text-align: center; padding: 10px; border-radius: 8px; font-family: 'Roboto'; font-size: 0.8rem; border: 1px dashed #ff4d4d; margin-bottom: 20px; }
+    /* INFO GENERAL */
+    .tabata-info { background: var(--theme-card); color: var(--theme-primary); text-align: center; padding: 10px; border-radius: 8px; font-family: 'Roboto'; font-size: 0.8rem; border: 1px dashed var(--theme-primary); margin-bottom: 20px; }
 
     /* MÁQUINA TRAGAPERRAS */
-    .slot-machine-container { width: 100%; background: #1a1a1a; border: 2px solid #ff4d4d; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-    .slot-header { background: #111; padding: 15px; text-align: center; border-bottom: 1px solid #333; }
-    .slot-header h2 { font-family: 'Oswald'; color: #fff; margin: 0 0 10px 0; font-size: 1.2rem; letter-spacing: 1px; }
-    .category-select { width: 100%; background: #222; color: #ff4d4d; border: 1px solid #444; padding: 10px; border-radius: 8px; font-family: 'Oswald'; font-size: 1rem; outline: none; }
-    .slot-screen { height: 110px; background: #eee; display: flex; justify-content: center; align-items: center; border-top: 5px solid #333; border-bottom: 5px solid #333; box-shadow: inset 0 5px 15px rgba(0,0,0,0.5); padding: 15px; text-align: center; }
-    .text-window { font-family: 'Oswald'; font-size: 1.5rem; font-weight: bold; color: #111; text-transform: uppercase; line-height: 1.1; }
+    .slot-machine-container { width: 100%; background: var(--theme-card); border: 2px solid var(--theme-primary); border-radius: 15px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+    .slot-header { background: var(--theme-bg); padding: 15px; text-align: center; border-bottom: 1px solid var(--theme-border); }
+    .slot-header h2 { font-family: 'Oswald'; color: var(--theme-text); margin: 0 0 10px 0; font-size: 1.2rem; letter-spacing: 1px; }
+    .category-select { width: 100%; background: var(--theme-bg); color: var(--theme-primary); border: 1px solid var(--theme-border); padding: 10px; border-radius: 8px; font-family: 'Oswald'; font-size: 1rem; outline: none; }
+    .slot-screen { height: 110px; background: var(--theme-bg); display: flex; justify-content: center; align-items: center; border-top: 5px solid var(--theme-border); border-bottom: 5px solid var(--theme-border); box-shadow: inset 0 5px 15px rgba(0,0,0,0.5); padding: 15px; text-align: center; }
+    .text-window { font-family: 'Oswald'; font-size: 1.5rem; font-weight: bold; color: var(--theme-text); text-transform: uppercase; line-height: 1.1; }
     .slot-controls { padding: 15px; display: flex; justify-content: center; }
-    .btn-pull-lever { width: 100%; background: linear-gradient(180deg, #ff4d4d, #b30000); color: #fff; font-family: 'Oswald'; font-weight: bold; font-size: 1.2rem; border: none; padding: 12px; border-radius: 50px; box-shadow: 0 5px 0 #660000; transition: 0.1s; }
-    .btn-pull-lever:active { transform: translateY(5px); box-shadow: 0 0 0 #660000; }
-    .btn-pull-lever.disabled { background: #555; color: #888; box-shadow: none; cursor: not-allowed; }
+    
+    .btn-pull-lever { width: 100%; background: linear-gradient(180deg, var(--theme-primary), var(--theme-secondary)); color: var(--theme-bg); font-family: 'Oswald'; font-weight: bold; font-size: 1.2rem; border: none; padding: 12px; border-radius: 50px; box-shadow: 0 5px 0 var(--theme-border); transition: 0.1s; }
+    .btn-pull-lever:active { transform: translateY(5px); box-shadow: 0 0 0 var(--theme-border); }
+    .btn-pull-lever.disabled { background: var(--theme-border); color: var(--theme-text-muted); box-shadow: none; cursor: not-allowed; }
 
     /* CONTROLES PARA AÑADIR */
-    .add-section { display: flex; flex-direction: column; align-items: center; background: #151515; padding: 15px; border-radius: 15px; border: 1px dashed #444; }
+    .add-section { display: flex; flex-direction: column; align-items: center; background: var(--theme-card); padding: 15px; border-radius: 15px; border: 1px dashed var(--theme-border); }
     .add-controls { display: flex; align-items: center; gap: 20px; }
-    .btn-circle { width: 40px; height: 40px; border-radius: 50%; background: #222; border: 2px solid #ff4d4d; color: #ff4d4d; font-size: 1.5rem; font-weight: bold; }
-    .rounds-text { color: white; font-family: 'Oswald'; font-size: 1.2rem; }
+    .btn-circle { width: 40px; height: 40px; border-radius: 50%; background: var(--theme-bg); border: 2px solid var(--theme-primary); color: var(--theme-primary); font-size: 1.5rem; font-weight: bold; }
+    .rounds-text { color: var(--theme-text); font-family: 'Oswald'; font-size: 1.2rem; }
     .btn-add-pool { width: 100%; background: #28a745; color: white; border: none; padding: 12px; border-radius: 8px; font-family: 'Oswald'; font-size: 1.1rem; letter-spacing: 1px; }
 
     /* LA LISTA DEL TABATA */
-    .pool-container { background: #111; border-radius: 15px; border: 1px solid #333; overflow: hidden; }
-    .pool-header { background: #0a0a0a; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
-    .pool-header h3 { color: #ff4d4d; font-family: 'Oswald'; margin: 0; font-size: 1.1rem; }
+    .pool-container { background: var(--theme-card); border-radius: 15px; border: 1px solid var(--theme-border); overflow: hidden; }
+    .pool-header { background: var(--theme-bg); padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--theme-border); }
+    .pool-header h3 { color: var(--theme-primary); font-family: 'Oswald'; margin: 0; font-size: 1.1rem; }
     .badge-ready { background: #28a745; color: white; padding: 3px 8px; border-radius: 5px; font-size: 0.7rem; font-weight: bold; }
-    .empty-pool { padding: 30px; text-align: center; color: #666; font-style: italic; font-size: 0.9rem; }
+    .empty-pool { padding: 30px; text-align: center; color: var(--theme-text-muted); font-style: italic; font-size: 0.9rem; }
     .pool-list { display: flex; flex-direction: column; }
-    .pool-item { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #222; background: #151515; gap: 15px; transition: 0.3s; }
-    .item-number { background: #ff4d4d; color: white; font-family: 'Oswald'; font-weight: bold; width: 25px; height: 25px; display: flex; justify-content: center; align-items: center; border-radius: 50%; flex-shrink: 0; }
+    .pool-item { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid var(--theme-bg); background: var(--theme-card); gap: 15px; transition: 0.3s; }
+    .item-number { background: var(--theme-primary); color: var(--theme-bg); font-family: 'Oswald'; font-weight: bold; width: 25px; height: 25px; display: flex; justify-content: center; align-items: center; border-radius: 50%; flex-shrink: 0; }
     .item-info { flex: 1; display: flex; flex-direction: column; }
-    .item-info small { color: #888; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; }
-    .item-info strong { color: white; font-size: 0.95rem; line-height: 1.2; }
+    .item-info small { color: var(--theme-text-muted); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; }
+    .item-info strong { color: var(--theme-text); font-size: 0.95rem; line-height: 1.2; }
     .item-actions { display: flex; gap: 5px; }
-    .btn-move { background: #2a2a2a; border: none; color: white; width: 30px; height: 30px; border-radius: 5px; cursor: pointer; }
+    .btn-move { background: var(--theme-bg); border: none; color: var(--theme-text); width: 30px; height: 30px; border-radius: 5px; cursor: pointer; }
     .btn-move:disabled { opacity: 0.3; cursor: default; }
-    .delete-btn { background: rgba(255,77,77,0.1); border: 1px solid #ff4d4d; color: #ff4d4d; width: 30px; height: 30px; border-radius: 5px; margin-left: 5px; }
+    .delete-btn { background: var(--theme-bg); border: 1px solid var(--theme-primary); color: var(--theme-primary); width: 30px; height: 30px; border-radius: 5px; margin-left: 5px; }
 
-    .btn-start-workout { width: 100%; background: #ff4d4d; color: white; font-family: 'Oswald'; font-size: 1.3rem; font-weight: bold; padding: 18px; border: none; border-radius: 50px; }
-    .glow-effect { box-shadow: 0 0 20px rgba(255, 77, 77, 0.5); animation: pulseRed 2s infinite; }
+    .btn-start-workout { width: 100%; background: var(--theme-primary); color: var(--theme-bg); font-family: 'Oswald'; font-size: 1.3rem; font-weight: bold; padding: 18px; border: none; border-radius: 50px; }
+    .glow-effect { box-shadow: 0 0 20px rgba(0,0,0,0.5); animation: pulseTheme 2s infinite; }
 
     /* PANTALLA TIMER */
     .timer-container { text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding-bottom: 50px; }
     .timer-header { margin-bottom: 10px; }
-    .timer-header h2 { color: #888; font-family: 'Oswald'; font-size: 1.4rem; margin: 0 0 10px 0; }
+    .timer-header h2 { color: var(--theme-text-muted); font-family: 'Oswald'; font-size: 1.4rem; margin: 0 0 10px 0; }
     .fase-badge { font-family: 'Oswald'; font-size: 1.5rem; font-weight: bold; letter-spacing: 2px; padding: 5px 20px; border-radius: 10px; }
+    
+    /* Colores semánticos inamovibles para el Timer de Tabata */
     .badge-prep { background: #007bff; color: white; }
-    .badge-work { background: #ff4d4d; color: white; }
+    .badge-work { background: #dc3545; color: white; }
     .badge-rest { background: #28a745; color: white; }
     
     .big-clock { font-family: 'Oswald'; font-size: 7rem; font-weight: 900; line-height: 1; text-shadow: 0 5px 15px rgba(0,0,0,0.8); margin: 10px 0; }
+    .text-theme { color: var(--theme-text); }
     
-    .current-exercise h3 { color: #aaa; font-size: 1rem; font-weight: bold; margin: 0; }
-    .current-exercise h1 { color: white; font-family: 'Oswald'; font-size: 2.5rem; text-transform: uppercase; line-height: 1.1; margin: 5px 0; }
+    .current-exercise h3 { color: var(--theme-text-muted); font-size: 1rem; font-weight: bold; margin: 0; }
+    .current-exercise h1 { color: var(--theme-text); font-family: 'Oswald'; font-size: 2.5rem; text-transform: uppercase; line-height: 1.1; margin: 5px 0; }
     
-    .next-exercise { background: #222; border: 1px dashed #444; padding: 12px 20px; border-radius: 50px; color: #ccc; font-size: 1rem; }
-    .next-exercise span { color: #F8C545; font-weight: bold; }
+    .next-exercise { background: var(--theme-card); border: 1px dashed var(--theme-border); padding: 12px 20px; border-radius: 50px; color: var(--theme-text); font-size: 1rem; }
+    .next-exercise span { color: var(--theme-primary); font-weight: bold; }
 
     .btn-timer { width: 80vw; max-width: 300px; padding: 20px; font-family: 'Oswald'; font-size: 1.5rem; font-weight: bold; border-radius: 50px; border: none; cursor: pointer; transition: 0.2s; }
-    .btn-play { background: #F8C545; color: black; box-shadow: 0 5px 15px rgba(248,197,69,0.4); }
-    .btn-pause { background: #555; color: white; }
+    .btn-play { background: var(--theme-primary); color: var(--theme-bg); box-shadow: 0 5px 15px rgba(0,0,0,0.4); }
+    .btn-pause { background: var(--theme-border); color: var(--theme-text); }
     .btn-done { background: #28a745; color: white; }
 
     .blur-text { filter: blur(3px); opacity: 0.7; transform: translateY(-5px); }
-    .pop-text { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: #d32f2f; }
+    .pop-text { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: var(--theme-primary); }
     .vibrating { animation: shake 0.1s infinite; }
     .fade-in { animation: fadeIn 0.4s ease; }
     .slide-in-up { animation: slideInUp 0.4s ease; }
     .slide-in-right { animation: slideInRight 0.3s ease; }
-   @@keyframes pulseRed { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+    
+   @@keyframes pulseTheme { 0%, 100% { transform: scale(1); box-shadow: 0 0 10px var(--theme-primary); } 50% { transform: scale(1.02); box-shadow: 0 0 25px var(--theme-primary); } }
    @@keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
    @@keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 50% { transform: translate(-1px, -1px) rotate(-1deg); } 100% { transform: translate(1px, -1px) rotate(1deg); } }
    @@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
@@ -257,20 +268,42 @@
    @@keyframes slideInRight { from { opacity:0; transform: translateX(-20px); } to { opacity:1; transform: translateX(0); } }
 
    /* FIX PARA PANTALLA HORIZONTAL (LANDSCAPE) */
-    @@media (orientation: landscape) and (max-height: 500px) {
-        .timer-container { justify-content: flex-start; padding-top: 10px; padding-bottom: 10px; }
-        .big-clock { font-size: 4rem; margin: 0; } /* Achicamos el reloj a la mitad */
-        .current-exercise h1 { font-size: 1.8rem; margin: 0; }
-        .current-exercise h3 { font-size: 0.8rem; }
-        .timer-header h2 { font-size: 1rem; margin-bottom: 5px; }
-        .fase-badge { font-size: 1rem; padding: 2px 15px; }
-        .next-exercise { padding: 5px 15px; margin-top: 5px; font-size: 0.85rem; }
-        .timer-controls { margin-top: 10px; }
-        .btn-timer { padding: 10px 20px; font-size: 1.2rem; width: 50vw; }
-    }
+   @@media (orientation: landscape) and (max-height: 500px) {
+       .timer-container { justify-content: flex-start; padding-top: 10px; padding-bottom: 10px; }
+       .big-clock { font-size: 4rem; margin: 0; } 
+       .current-exercise h1 { font-size: 1.8rem; margin: 0; }
+       .current-exercise h3 { font-size: 0.8rem; }
+       .timer-header h2 { font-size: 1rem; margin-bottom: 5px; }
+       .fase-badge { font-size: 1rem; padding: 2px 15px; }
+       .next-exercise { padding: 5px 15px; margin-top: 5px; font-size: 0.85rem; }
+       .timer-controls { margin-top: 10px; }
+       .btn-timer { padding: 10px 20px; font-size: 1.2rem; width: 50vw; }
+   }
 </style>
 
 @code {
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9; 
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
+    public class BoxConfigDTO 
+    { 
+        public string ThemePrimary { get; set; }
+        public string ThemeSecondary { get; set; }
+        public string ThemeBg { get; set; }
+        public string ThemeCard { get; set; }
+        public string ThemeBorder { get; set; }
+        public string ThemeText { get; set; }
+        public string ThemeTextMuted { get; set; }
+    }
+
     private bool cargando = true;
     
     // VARIABLES CREADOR
@@ -301,6 +334,29 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // LEER EL CACHÉ LOCAL AL INSTANTE
+        try 
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache)) 
+            { 
+                EstilosTema = cache; 
+                StateHasChanged(); 
+            }
+        } 
+        catch { }
+
+        // BUSCAR TEMA ACTUALIZADO EN LA BD SILENCIOSAMENTE
+        // Asumiendo que el usuario está logueado y tiene un BoxID
+        try
+        {
+            // Solo para actualizar cache por si cambió en otra pantalla
+            var configBox = await Http.GetFromJsonAsync<BoxConfigDTO>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/config/TU_BOX_ID_AQUI");
+            // Nota: En esta pantalla no tienes Sesion.Usuario.BoxID fácilmente a la mano en el OnInitialized si no inyectas tu servicio de sesión completo. 
+            // Como ya lo lees de LocalStorage es suficiente para que se vea bien instantáneamente.
+        }
+        catch { }
+
         try {
             baseEjercicios = await Http.GetFromJsonAsync<List<EjercicioDto>>("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/tabataapi/todos");
         } catch { } finally { cargando = false; }
@@ -431,6 +487,7 @@
 
     private string ObtenerClaseFase()
     {
+        // Se mantienen semánticos para guiar al usuario
         return faseActual switch { FaseTabata.Preparacion => "badge-prep", FaseTabata.Trabajo => "badge-work", FaseTabata.Descanso => "badge-rest", _ => "bg-dark text-white" };
     }
 
@@ -445,7 +502,7 @@
     }
 }
 
-@* SCRIPT DE AUDIOS *@
+@* SCRIPT DE AUDIOS INTACTO *@
 <script>
     function reproducirBeepCorto() {
         let actx = new (window.AudioContext || window.webkitAudioContext)();

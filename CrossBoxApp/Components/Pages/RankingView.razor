@@ -4,95 +4,101 @@
 @inject NavigationManager Nav
 @inject HttpClient Http
 @inject SesionService Sesion
+@inject IJSRuntime JS
 
-<div class="main-layout">
+@* ENVOLVEMOS LA VISTA EN EL TEMA GLOBAL *@
+<div style="@EstilosTema">
 
-    <div class="navbar-container">
-        <div class="nav-left" @onclick="Volver">
-            <i class="fas fa-arrow-left"></i> VOLVER
+    <div class="main-layout">
+
+        <div class="navbar-container">
+            <div class="nav-left" @onclick="Volver">
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </div>
+            <div class="nav-title">TOP LIKES</div>
+            <div class="nav-right"></div>
         </div>
-        <div class="nav-title">TOP LIKES</div>
-        <div class="nav-right"></div>
+
+        <div class="scrollable-content">
+            
+            @if (rankingList == null)
+            {
+                <div class="loading">
+                    <div class="spinner-border" style="color: var(--theme-primary);"></div>
+                    <p style="color: var(--theme-text-muted); margin-top: 10px;">Calculando líderes...</p>
+                </div>
+            }
+            else if (rankingList.Count == 0)
+            {
+                <div class="empty-state">
+                    <i class="fas fa-trophy" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px; color: var(--theme-text-muted);"></i>
+                    <p style="color: var(--theme-text-muted);">Nadie tiene likes aún en este Box.</p>
+                </div>
+            }
+            else
+            {
+                <div class="rank-header fade-in">
+                    <span style="width: 30px; text-align: center;">#</span>
+                    <span style="flex-grow: 1; padding-left: 10px;">ATLETA</span>
+                    <span>LIKES</span>
+                </div>
+
+                <div class="rank-list fade-in">
+                    @foreach (var item in rankingList)
+                    {
+                        <div class="rank-item @(item.EsYo ? "active-user" : "")">
+
+                            <div class="rank-pos">
+                                @if (item.Posicion == 1)
+                                {
+                                    <i class="fas fa-crown gold"></i>
+                                }
+                                else if (item.Posicion == 2)
+                                {
+                                    <i class="fas fa-medal silver"></i>
+                                }
+                                else if (item.Posicion == 3)
+                                {
+                                    <i class="fas fa-medal bronze"></i>
+                                }
+                                else
+                                {
+                                    <span>@item.Posicion</span>
+                                }
+                            </div>
+
+                            <div class="rank-info">
+                                @if (!string.IsNullOrEmpty(item.FotoUrl))
+                                {
+                                    <img src="@item.FotoUrl" class="rank-avatar" />
+                                }
+                                else
+                                {
+                                    <div class="rank-initial">
+                                        @(item.NombreCompleto?.Substring(0, 1).ToUpper() ?? "A")
+                                    </div>
+                                }
+
+                                <span class="rank-name">@item.NombreCompleto</span>
+                                
+                                @if (item.EsYo)
+                                {
+                                    <span class="me-badge">(Tú)</span>
+                                }
+                            </div>
+
+                            <div class="rank-score">
+                                <i class="fas fa-heart" style="color: #ff4757;"></i> @item.Likes
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            
+            <div style="height: 40px;"></div>
+        </div>
     </div>
 
-    <div class="scrollable-content">
-        
-        @if (rankingList == null)
-        {
-            <div class="loading">
-                <div class="spinner-border text-warning"></div>
-                <p>Calculando líderes...</p>
-            </div>
-        }
-        else if (rankingList.Count == 0)
-        {
-            <div class="empty-state">
-                <i class="fas fa-trophy" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px;"></i>
-                <p>Nadie tiene likes aún en este Box.</p>
-            </div>
-        }
-        else
-        {
-            <div class="rank-header fade-in">
-                <span style="width: 30px; text-align: center;">#</span>
-                <span style="flex-grow: 1; padding-left: 10px;">ATLETA</span>
-                <span>LIKES</span>
-            </div>
-
-            <div class="rank-list fade-in">
-                @foreach (var item in rankingList)
-                {
-                    <div class="rank-item @(item.EsYo ? "active-user" : "")">
-
-                        <div class="rank-pos">
-                            @if (item.Posicion == 1)
-                            {
-                                <i class="fas fa-crown gold"></i>
-                            }
-                            else if (item.Posicion == 2)
-                            {
-                                <i class="fas fa-medal silver"></i>
-                            }
-                            else if (item.Posicion == 3)
-                            {
-                                <i class="fas fa-medal bronze"></i>
-                            }
-                            else
-                            {
-                                <span>@item.Posicion</span>
-                            }
-                        </div>
-
-                        <div class="rank-info">
-                            @if (!string.IsNullOrEmpty(item.FotoUrl))
-                            {
-                                <img src="@item.FotoUrl" class="rank-avatar" />
-                            }
-                            else
-                            {
-                                <div class="rank-initial">
-                                    @(item.NombreCompleto?.Substring(0, 1).ToUpper() ?? "A")
-                                </div>
-                            }
-
-                            <span class="rank-name">@item.NombreCompleto</span>
-                            
-                            @if (item.EsYo)
-                            {
-                                <span class="me-badge">(Tú)</span>
-                            }
-                        </div>
-
-                        <div class="rank-score">
-                            <i class="fas fa-heart"></i> @item.Likes
-                        </div>
-                    </div>
-                }
-            </div>
-        }
-        
-        <div style="height: 40px;"></div>
-    </div>
 </div>
 
 <style>
@@ -100,7 +106,7 @@
     .main-layout {
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background-color: #0d0d0d;
+        background-color: var(--theme-bg);
         display: flex;
         flex-direction: column;
         z-index: 1;
@@ -112,9 +118,9 @@
         padding-bottom: 10px;
         padding-left: 20px;
         padding-right: 20px;
-        background-color: #0d0d0d;
-        border-bottom: 1px solid #F8C545;
-        color: white;
+        background-color: var(--theme-bg);
+        border-bottom: 1px solid var(--theme-primary);
+        color: var(--theme-text);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -124,7 +130,7 @@
     }
 
     .nav-left {
-        color: #F8C545;
+        color: var(--theme-primary);
         font-weight: bold;
         cursor: pointer;
         display: flex;
@@ -136,7 +142,7 @@
     .nav-title {
         font-weight: bold;
         font-size: 1.1rem;
-        color: white;
+        color: var(--theme-text);
         letter-spacing: 1px;
     }
 
@@ -159,11 +165,11 @@
         display: flex;
         justify-content: space-between;
         padding: 10px 15px;
-        color: #666;
+        color: var(--theme-text-muted);
         font-size: 0.85rem;
         font-weight: bold;
         letter-spacing: 1px;
-        border-bottom: 1px solid #333;
+        border-bottom: 1px solid var(--theme-border);
         margin-bottom: 10px;
         width: 100%;
         max-width: 600px;
@@ -182,17 +188,17 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: #1a1a1a;
+        background: var(--theme-card);
         padding: 12px;
         border-radius: 12px;
-        border: 1px solid #333;
+        border: 1px solid var(--theme-border);
         transition: transform 0.1s;
     }
 
     /* Estilo para "Mi Usuario" */
     .rank-item.active-user {
-        border: 2px solid #F8C545;
-        background: rgba(248, 197, 69, 0.1);
+        border: 2px solid var(--theme-primary);
+        background: rgba(255, 255, 255, 0.05); /* Efecto cristal para que no choque con el Primary */
     }
 
     .rank-pos {
@@ -203,8 +209,10 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        color: var(--theme-text-muted);
     }
 
+    /* ORO, PLATA Y BRONCE (INTOCABLES) */
     .gold { color: #FFD700; font-size: 1.3rem; }
     .silver { color: #C0C0C0; font-size: 1.3rem; }
     .bronze { color: #CD7F32; font-size: 1.3rem; }
@@ -223,22 +231,22 @@
         height: 45px;
         border-radius: 50%;
         object-fit: cover;
-        border: 2px solid #333;
+        border: 2px solid var(--theme-border);
         flex-shrink: 0;
     }
 
     .rank-initial {
         width: 45px;
         height: 45px;
-        background: #333;
-        color: #F8C545;
+        background: var(--theme-bg);
+        color: var(--theme-primary);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: bold;
         font-family: 'Oswald';
-        border: 2px solid #333;
+        border: 2px solid var(--theme-border);
         font-size: 1.4rem;
         flex-shrink: 0;
     }
@@ -246,18 +254,18 @@
     .rank-name {
         font-family: 'Oswald';
         font-size: 1rem;
-        color: #ddd;
+        color: var(--theme-text);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
-    .active-user .rank-name { color: #F8C545; }
+    .active-user .rank-name { color: var(--theme-primary); font-weight: bold;}
 
     .me-badge {
         font-size: 0.7rem;
-        background: #F8C545;
-        color: black;
+        background: var(--theme-primary);
+        color: var(--theme-bg);
         padding: 2px 6px;
         border-radius: 4px;
         font-weight: bold;
@@ -267,7 +275,7 @@
 
     .rank-score {
         font-weight: bold;
-        color: #F8C545;
+        color: var(--theme-text);
         display: flex;
         align-items: center;
         gap: 6px;
@@ -278,7 +286,7 @@
     .loading, .empty-state {
         text-align: center;
         margin-top: 60px;
-        color: #666;
+        color: var(--theme-text-muted);
         font-family: 'Roboto';
     }
 
@@ -287,10 +295,33 @@
 </style>
 
 @code {
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9; 
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
     private List<RankingDto> rankingList;
 
     protected override async Task OnInitializedAsync()
     {
+        // LEER EL CACHÉ LOCAL AL INSTANTE
+        try 
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache)) 
+            { 
+                EstilosTema = cache; 
+                StateHasChanged(); 
+            }
+        } 
+        catch { }
+
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
         await CargarRanking();
     }
