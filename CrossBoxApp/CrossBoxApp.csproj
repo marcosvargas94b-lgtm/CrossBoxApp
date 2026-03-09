@@ -91,8 +91,7 @@
 		<PackageReference Include="Plugin.Firebase.CloudMessaging" Version="4.0.1" />
 		<PackageReference Include="Plugin.LocalNotification" Version="14.0.0-preview01" />
 		<PackageReference Include="Plugin.Maui.Audio" Version="4.0.0" />
-		<PackageReference Include="System.Security.Cryptography.Pkcs" Version="8.0.0" /> 
-		
+		<PackageReference Include="System.Security.Cryptography.Pkcs" Version="8.0.0" /> 		
 		<!--<PackageReference Include="System.Security.Cryptography.Pkcs" Version="8.0.0" /> -->
 		<PackageReference Include="ZXing.Net.Maui" Version="0.6.0" />
 		<PackageReference Include="ZXing.Net.Maui.Controls" Version="0.6.0" />
