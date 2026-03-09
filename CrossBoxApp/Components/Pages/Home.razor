@@ -9,6 +9,8 @@
 @inject HttpClient Http
 @inject CrossBoxApp.Models.Services.SesionService Sesion
 @inject IJSRuntime JS
+@using Plugin.Firebase.CloudMessaging;
+@using Microsoft.Maui.ApplicationModel; 
 
 <div style="@EstilosTema">
 <div class="main-layout" >
@@ -179,7 +181,7 @@
                     @if (diasRestantes > 0)
                     {
                         <strong>¡ATENCIÓN!</strong>
-                        <span>Tu plan vence en @diasRestantes días.</span>
+                        <span>Tu plan vence en @diasRestantes días. -</span>
                     }
                     else
                     {
@@ -188,16 +190,16 @@
                         {
                             @if (boxTieneMP)
                             {
-                                <span>Toca aquí para pagar en línea o pasar a recepción</span>
+                                <span> Toca aquí para pagar en línea o pasar a recepción</span>
                             }
                             else
                             {
-                                <span>Acude a tu recepción para pagar.</span>
+                                <span> Acude a tu recepción para pagar.</span>
                             }
                         }
                         else
                         {
-                            <span>Toca aquí para pagar en línea.</span>
+                            <span> Toca aquí para pagar en línea.</span>
                         }
                     }
                 </div>
@@ -222,7 +224,16 @@
                 <div class="recovery-section fade-in">
             @if (resumenRecuperacion != null)
             {
-                <div class="card-recuperacion-master" @onclick='() => Nav.NavigateTo("/detalle-recuperacion")'>
+                <div class="card-recuperacion-master @(resumenRecuperacion.RutinaHoyParaRPE.HasValue ? "alerta-rpe-aura" : "")" @onclick='() => Nav.NavigateTo("/detalle-recuperacion")'>
+                    
+                    @* ETIQUETA FLOTANTE SI FALTA RPE *@
+                    @if (resumenRecuperacion.RutinaHoyParaRPE.HasValue)
+                    {
+                        <div class="badge-falta-rpe">
+                            <i class="fas fa-exclamation-circle"></i> FALTA RPE
+                        </div>
+                    }
+
                     <div class="info-content">
                         <span class="label-top">ESTADO DE RECUPERACIÓN</span>
                         <h2 class="display-porcentaje">@resumenRecuperacion.DisponibilidadGlobal<small>%</small></h2>
@@ -297,7 +308,7 @@
                         <h3>AGENDA TU CLASE</h3><p>Elige tu horario...</p>
                     </div>
                 }
-                @if (Sesion.Usuario?.TipoLugar == "Gimnasio")
+                 @if (Sesion.Usuario?.TipoLugar == "Gimnasio")
             { 
                 <div class="menu-card gym-card" @onclick='() => Nav.NavigateTo("/rutina-semanal")'>
                     <div class="sparkle-container">
@@ -308,7 +319,7 @@
                     <h3 class="gym-title">RUTINA SEMANAL</h3>
                     <p style="color:var(--theme-bg);">Planifica y ejecuta tus días</p>
                 </div>
-                }
+                 } 
                 @if (EstaActivo("WOD"))
                 {
                     <div class="menu-card" @onclick="IrAWodView">
@@ -1027,16 +1038,32 @@
     .color-input::-webkit-color-swatch { border: 1px solid var(--theme-border); border-radius: 8px; }
     .btn-save-banner { width: 100%; background: var(--theme-primary); color: var(--theme-bg); font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; padding: 12px; border: none; border-radius: 8px; box-shadow: 0 4px 15px rgba(248,197,69,0.3); }
     
-    /* Modales genéricos */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); padding: 20px; }
-    .custom-modal { background: var(--theme-card); width: 100%; max-width: 400px; border-radius: 12px; border: 1px solid var(--theme-primary); display: flex; flex-direction: column; color: var(--theme-text); max-height: 85vh; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    .modal-header { padding: 15px; background: var(--theme-card); border-bottom: 1px solid var(--theme-border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-    .modal-body { padding: 20px; overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; padding-bottom: 100px; }
-    .modal-footer { padding: 15px; background: var(--theme-card); border-top: 1px solid var(--theme-border); display: flex; gap: 10px; flex-shrink: 0; }
-    .btn-close-custom { background: none; border: none; color: var(--theme-text); font-size: 1.2rem; }
-    .btn-confirm { background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
-    .btn-cancel { background: var(--theme-border); color: var(--theme-text); border: none; padding: 10px; font-weight: bold; flex: 1; border-radius: 5px; }
-
+    /* ========================================= */
+    /* MODALES GENÉRICOS (ESTILO FLOTANTE Y VIP) */
+    /* ========================================= */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 5000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); padding: 20px; }
+    
+    .custom-modal { background: var(--theme-bg); width: 100%; max-width: 420px; border-radius: 20px; border: 1px solid var(--theme-border); border-top: 4px solid var(--theme-primary); display: flex; flex-direction: column; color: var(--theme-text); max-height: 85vh; box-shadow: 0 25px 50px rgba(0,0,0,0.8); overflow: hidden; animation: modalBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    
+    .modal-header { padding: 20px 25px; background: var(--theme-card); border-bottom: 1px solid var(--theme-border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    
+    .modal-body { padding: 25px 20px; overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; }
+    
+    .modal-footer { padding: 15px 20px; background: var(--theme-card); border-top: 1px solid var(--theme-border); display: flex; gap: 10px; flex-shrink: 0; }
+    
+    /* LA CRUZ ROJA ELEGANTE */
+    .btn-close-custom { background: rgba(220, 53, 69, 0.1); border: 1px solid #dc3545; color: #dc3545; width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(220, 53, 69, 0.2); }
+    .btn-close-custom:hover { background: #dc3545; color: white; transform: scale(1.1); }
+    .btn-close-custom:active { transform: scale(0.9); }
+    
+    /* BOTONES DE ACCIÓN DEL MODAL */
+    .btn-confirm { background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; flex: 1; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.2s; }
+    .btn-confirm:active { transform: scale(0.95); }
+    
+    .btn-cancel { background: transparent; color: var(--theme-text-muted); border: 1px solid var(--theme-border); padding: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; flex: 1; border-radius: 10px; transition: 0.2s; }
+    .btn-cancel:active { transform: scale(0.95); background: var(--theme-card); }
+    
+    @@keyframes modalBounce { from { transform: scale(0.8) translateY(30px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
     /* Resto (Notificaciones, Menús, Cards) */
     .right-actions { display: flex; align-items: center; gap: 15px; }
     .welcome-section h1 { font-family: 'Oswald'; color: var(--theme-primary); font-size: 1.8rem; margin-bottom: 20px; text-align: center; margin-top: 10px; }
@@ -1151,6 +1178,175 @@
    @@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
    @@keyframes twinkle { 0% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1.5); } 100% { opacity: 0; transform: scale(0.5); } }
    @@keyframes glareRun { 0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; } }
+
+   .alerta-rpe-aura {
+        border: 2px solid #FF3B30 !important;
+        animation: pulseRpeAura 2s infinite !important;
+    }
+
+    .badge-falta-rpe {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: #FF3B30;
+        color: white;
+        font-family: 'Oswald';
+        font-size: 0.75rem;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-weight: bold;
+        z-index: 50;
+        box-shadow: 0 4px 10px rgba(255, 59, 48, 0.4);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        animation: fadeInOutRpe 1.5s infinite;
+    }
+
+    @@keyframes pulseRpeAura {
+        0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7), 0 15px 35px rgba(0,0,0,0.4); }
+        70% { box-shadow: 0 0 0 15px rgba(255, 59, 48, 0), 0 15px 35px rgba(0,0,0,0.4); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0), 0 15px 35px rgba(0,0,0,0.4); }
+    }
+
+    @@keyframes fadeInOutRpe {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    /* ========================================= */
+    /* SCROLLBAR PREMIUM (Para todos los modales)*/
+    /* ========================================= */
+    .modal-body::-webkit-scrollbar, .scroll-custom::-webkit-scrollbar {
+        width: 6px;
+    }
+    .modal-body::-webkit-scrollbar-track, .scroll-custom::-webkit-scrollbar-track {
+        background: transparent;
+        border-radius: 10px;
+    }
+    .modal-body::-webkit-scrollbar-thumb, .scroll-custom::-webkit-scrollbar-thumb {
+        background: var(--theme-border);
+        border-radius: 10px;
+    }
+    .modal-body::-webkit-scrollbar-thumb:hover, .scroll-custom::-webkit-scrollbar-thumb:hover {
+        background: var(--theme-primary);
+    }
+
+    /* ========================================= */
+    /* INPUTS Y LABELS MODERNOS                  */
+    /* ========================================= */
+    .lbl-input {
+        color: var(--theme-text-muted);
+        font-size: 0.75rem;
+        font-weight: bold;
+        margin-bottom: 8px;
+        display: block;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .input-dark {
+        background: rgba(0, 0, 0, 0.4) !important;
+        border: 1px solid var(--theme-border) !important;
+        color: var(--theme-text) !important;
+        border-radius: 10px !important;
+        padding: 12px 15px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+    }
+    .input-dark:focus {
+        border-color: var(--theme-primary) !important;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.05) !important;
+        outline: none;
+    }
+
+    /* Botón del ojito para contraseñas */
+    .btn-eye {
+        background: rgba(0, 0, 0, 0.4) !important;
+        border: 1px solid var(--theme-border) !important;
+        border-left: none !important;
+        color: var(--theme-text-muted) !important;
+        border-radius: 0 10px 10px 0 !important;
+    }
+    .btn-eye:hover {
+        color: var(--theme-primary) !important;
+    }
+
+    /* ========================================= */
+    /* DISEÑO VIP: LISTA DE HORARIOS             */
+    /* ========================================= */
+    .horarios-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding-right: 5px;
+    }
+    
+    .horario-row {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--theme-border);
+        border-radius: 12px;
+        padding: 12px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
+    
+    .horario-row:hover {
+        border-color: var(--theme-primary);
+        background: rgba(255, 255, 255, 0.05);
+        transform: translateX(4px);
+    }
+    
+    .horario-text {
+        font-family: 'Oswald';
+        font-size: 1.2rem;
+        color: var(--theme-text);
+        letter-spacing: 1px;
+    }
+    
+    /* El nuevo bote de basura */
+    .btn-delete-mini {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border: 1px solid transparent;
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    
+    .btn-delete-mini:hover {
+        background: #dc3545;
+        color: white;
+        border-color: #dc3545;
+        transform: scale(1.1) rotate(5deg);
+        box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
+    }
+    
+    .btn-delete-mini:active {
+        transform: scale(0.9);
+    }
+
+    /* ========================================= */
+    /* DISEÑO VIP: BOTTOM SHEET (Pesos)          */
+    /* ========================================= */
+    .bottom-sheet {
+        box-shadow: 0 -15px 40px rgba(0,0,0,0.9);
+    }
+    .sheet-handle {
+        width: 40px;
+        height: 4px;
+        background: var(--theme-border);
+        border-radius: 10px;
+        margin: 0 auto 25px auto;
+    }
 </style>
 
 @code {
@@ -1331,6 +1527,38 @@
         try { listaPlanes = await Http.GetFromJsonAsync<List<PlanDto>>("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/planes"); } catch { }
 
         await CargarRecuperacion();
+
+        try
+        {
+         if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
+         {
+            // 1. Pedimos permiso al sistema para notificaciones push
+            await CrossFirebaseCloudMessaging.Current.CheckIfValidAsync();
+
+            // 2. Obtenemos el Token único de este celular
+            var miTokenFirebase = await CrossFirebaseCloudMessaging.Current.GetTokenAsync();
+            
+            // 3. Lo imprimimos en consola para verificar que Google nos respondió
+            Console.WriteLine($"=================================================");
+            Console.WriteLine($"🔥 ¡FIREBASE VIVO! MI TOKEN ES: {miTokenFirebase}");
+            Console.WriteLine($"=================================================");
+
+            if (Sesion.Usuario != null && !string.IsNullOrEmpty(miTokenFirebase))
+            {
+            try
+            {
+                var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/guardar-token/{Sesion.Usuario.UsuarioID}";
+                await Http.PostAsJsonAsync(url, new { Token = miTokenFirebase });
+            }
+            catch { /* Ignorar errores de red temporales */ }
+            }
+
+         }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error de Firebase: {ex.Message}");
+    }
 
         cargandoConfiguracion = false;
     }

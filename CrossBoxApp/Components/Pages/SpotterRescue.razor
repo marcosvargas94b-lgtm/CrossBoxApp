@@ -1,0 +1,168 @@
+﻿@page "/spotter-rescue/{Nombre}/{Zona}/{Distintivo}/{Minutos:int}"
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@using System.Timers
+@implements IDisposable
+
+<div style="@EstilosTema">
+    <div class="rescue-layout">
+        <div class="rescue-header">
+            <h1>🚨 MISIÓN DE RESCATE</h1>
+            <p>Alguien necesita tu fuerza.</p>
+        </div>
+
+        <div class="rescue-card slide-up">
+            <div class="target-info">
+                <h2>@Nombre.ToUpper()</h2>
+                <div class="info-row">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <div>
+                        <label>UBICACIÓN</label>
+                        <span>@Zona.ToUpper()</span>
+                    </div>
+                </div>
+                
+                @if (!string.IsNullOrEmpty(Distintivo) && Distintivo != " ")
+                {
+                    <div class="info-row mt-3">
+                        <i class="fas fa-tshirt"></i>
+                        <div>
+                            <label>DISTINTIVO</label>
+                            <span>@Distintivo.ToUpper()</span>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="timer-section @(tiempoAgotado ? "failed" : "")">
+                <label>TIEMPO DE ESPERA RESTANTE</label>
+                <div class="countdown-display pulse-fast">
+                    @tiempoRestante
+                </div>
+                @if (tiempoAgotado)
+                {
+                    <span class="timeout-msg mt-2">EL TIEMPO SE AGOTÓ. PROBABLEMENTE YA RECIBIÓ AYUDA.</span>
+                }
+                else
+                {
+                    <span class="timeout-msg mt-2">¡AYÚDALO ANTES DE QUE SE ENFRÍE!</span>
+                }
+            </div>
+
+            <button class="btn-return" @onclick="VolverAlHome">
+                <i class="fas fa-home"></i> VOLVER AL ENTRENAMIENTO
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .rescue-layout { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: radial-gradient(circle at center, var(--theme-card) 0%, var(--theme-bg) 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
+    .rescue-header { text-align: center; margin-bottom: 30px; animation: fadeIn 0.5s; }
+    .rescue-header h1 { color: #FF3B30; font-family: 'Oswald'; font-size: 2.5rem; margin: 0; text-shadow: 0 0 20px rgba(255, 59, 48, 0.5); letter-spacing: 2px; }
+    .rescue-header p { color: var(--theme-text-muted); font-family: 'Roboto'; font-size: 1.1rem; margin: 0; }
+    
+    .rescue-card { background: var(--theme-bg); border: 2px solid var(--theme-primary); border-radius: 20px; width: 100%; max-width: 400px; padding: 30px 20px; box-shadow: 0 10px 40px rgba(0,0,0, 0.8); display: flex; flex-direction: column; gap: 25px; }
+    
+    .target-info h2 { color: var(--theme-text); font-family: 'Oswald'; text-align: center; font-size: 2rem; margin-bottom: 20px; border-bottom: 1px solid var(--theme-border); padding-bottom: 10px; }
+    .info-row { display: flex; align-items: center; gap: 15px; background: var(--theme-card); padding: 15px; border-radius: 12px; }
+    .info-row i { font-size: 1.8rem; color: var(--theme-primary); width: 30px; text-align: center; }
+    .info-row div { display: flex; flex-direction: column; }
+    .info-row label { color: var(--theme-text-muted); font-size: 0.7rem; font-weight: bold; margin-bottom: 2px; }
+    .info-row span { color: var(--theme-text); font-family: 'Oswald'; font-size: 1.2rem; letter-spacing: 1px; line-height: 1; }
+    
+    .timer-section { text-align: center; background: var(--theme-card); padding: 20px; border-radius: 15px; border: 1px solid var(--theme-border); }
+    .timer-section label { color: #ff8888; font-size: 0.8rem; font-weight: bold; letter-spacing: 1px; }
+    .countdown-display { font-family: 'Oswald'; font-size: 4.5rem; font-weight: bold; color: #FF3B30; line-height: 1; margin: 10px 0; text-shadow: 0 0 15px rgba(255, 59, 48, 0.6); }
+    .timeout-msg { display: block; color: var(--theme-text-muted); font-size: 0.8rem; font-family: 'Roboto'; }
+    
+    .timer-section.failed { background: var(--theme-bg); border-color: var(--theme-border); opacity: 0.7; }
+    .timer-section.failed .countdown-display { color: var(--theme-text-muted); text-shadow: none; animation: none; }
+    
+    .btn-return { background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 15px; border-radius: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; margin-top: 10px; transition: 0.2s; }
+    .btn-return:active { transform: scale(0.95); opacity: 0.8; }
+
+    .slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+    .pulse-fast { animation: pulseHeart 1s infinite; }
+    @@keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @@keyframes pulseHeart { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+</style>
+
+@code {
+    [Parameter] public string Nombre { get; set; }
+    [Parameter] public string Zona { get; set; }
+    [Parameter] public string Distintivo { get; set; }
+    [Parameter] public int Minutos { get; set; }
+
+    private string EstilosTema = @"
+        --theme-primary: #A9A9A9; 
+        --theme-secondary: #808080;
+        --theme-bg: #0d0d0d;
+        --theme-card: #1a1a1a;
+        --theme-border: #333333;
+        --theme-text: #ffffff;
+        --theme-text-muted: #888888;
+    ";
+
+    private Timer _timer;
+    private int segundosRestantes;
+    private string tiempoRestante = "00:00";
+    private bool tiempoAgotado = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Cargar el tema del gimnasio 
+        try 
+        {
+            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
+            if (!string.IsNullOrEmpty(cache)) 
+            { 
+                EstilosTema = cache; 
+            }
+        } 
+        catch { }
+
+        segundosRestantes = Minutos * 60;
+        ActualizarDisplay();
+
+        _timer = new Timer(1000);
+        _timer.Elapsed += OnTimerTick;
+        _timer.AutoReset = true;
+        _timer.Start();
+    }
+
+    private void OnTimerTick(object sender, ElapsedEventArgs e)
+    {
+        if (segundosRestantes > 0)
+        {
+            segundosRestantes--;
+            ActualizarDisplay();
+            InvokeAsync(StateHasChanged);
+        }
+        else
+        {
+            _timer.Stop();
+            tiempoAgotado = true;
+            tiempoRestante = "00:00";
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void ActualizarDisplay()
+    {
+        int min = segundosRestantes / 60;
+        int seg = segundosRestantes % 60;
+        tiempoRestante = $"{min:D2}:{seg:D2}";
+    }
+
+    private void VolverAlHome()
+    {
+        Nav.NavigateTo("/home");
+    }
+
+    public void Dispose()
+    {
+        _timer?.Stop();
+        _timer?.Dispose();
+    }
+}

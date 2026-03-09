@@ -506,10 +506,13 @@
             if (hubConnection is not null && hubConnection.State == HubConnectionState.Connected)
             {
                 string miNombre = Sesion.Usuario.Nombre ?? "Un atleta";
-                await hubConnection.SendAsync("PedirSpotter", miNombre, zonaSpotter, distintivoSpotter, minutosEspera);
+                Guid miId = Sesion.Usuario.UsuarioID; // Obtenemos tu ID
+
+                // Agregamos miId como el primer parámetro
+                await hubConnection.SendAsync("PedirSpotter", miId, miNombre, zonaSpotter, distintivoSpotter, minutosEspera);
 
                 mostrarModalSpotter = false;
-                await JS.InvokeVoidAsync("alert", "¡Alerta enviada a la velocidad de la luz! Alguien irá a apoyarte.");
+                await App.Current.MainPage.DisplayAlert("¡Alerta Enviada! 🚨", "Alguien irá a apoyarte.", "OK");
             }
         }
         catch { }

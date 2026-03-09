@@ -305,43 +305,69 @@
 
     /* LISTA */
     .user-list { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 10px; }
-    .user-card { border-radius: 10px; border: 1px solid; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: relative; }
-    .user-name { font-family: 'Oswald'; font-size: 1rem; }
+    .user-card { border-radius: 10px; border: 1px solid var(--theme-border); padding: 15px; display: flex; justify-content: space-between; align-items: center; position: relative; background: var(--theme-card); }
+    .user-name { font-family: 'Oswald'; font-size: 1rem; color: var(--theme-text); }
     .user-meta { display: flex; gap: 10px; font-size: 0.8rem; align-items: center; flex-wrap: wrap; }
     .badge-status { color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.65rem; text-transform: uppercase; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
     .text-date { font-family: 'Roboto'; font-size: 0.8rem; }
     .text-danger { color: #ff6b6b !important; }
     .text-warning { color: #ffca28 !important; }
 
-    /* ACCIONES */
-    .btn-renovar { background-color: #28a745; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px rgba(40, 167, 69, 0.4); animation: pulse 2s infinite; font-size: 0.9rem; cursor: pointer;}
-    .btn-icon { background: transparent; border: none; font-size: 1.1rem; padding: 5px; cursor: pointer;}
+    /* ACCIONES (CORRECCIÓN FLEXBOX PARA BILLETE Y PUNTITOS) */
+    .action-side { display: flex; align-items: center; gap: 10px; }
+    .btn-renovar { background-color: #28a745; color: white; border: none; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 8px rgba(40, 167, 69, 0.4); animation: pulse 2s infinite; font-size: 0.9rem; cursor: pointer; flex-shrink: 0;}
+    
+    .action-menu-wrapper { position: relative; display: flex; align-items: center; }
+    .btn-icon { background: transparent; border: none; font-size: 1.1rem; padding: 5px 10px; cursor: pointer; color: var(--theme-primary); }
 
     /* DROPDOWN */
-    .user-dropdown { position: absolute; right: 40px; top: 35px; border: 1px solid; border-radius: 8px; min-width: 190px; z-index: 1000; box-shadow: 0 5px 15px rgba(0,0,0,0.9); overflow: hidden; }
-    .dropdown-item { padding: 12px 15px; color: var(--theme-text); border-bottom: 1px solid; cursor: pointer; display: flex; align-items: center; gap: 10px; font-family: 'Roboto'; font-size: 0.9rem; }
+    .user-dropdown { position: absolute; right: 0; top: 35px; border: 1px solid var(--theme-primary); border-radius: 8px; min-width: 190px; z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,0.9); overflow: hidden; background: var(--theme-card); }
+    .dropdown-item { padding: 12px 15px; color: var(--theme-text); border-bottom: 1px solid var(--theme-border); cursor: pointer; display: flex; align-items: center; gap: 10px; font-family: 'Roboto'; font-size: 0.9rem; transition: background 0.2s;}
     .dropdown-item:last-child { border-bottom: none; }
     .dropdown-item:active { background-color: rgba(255,255,255,0.05); }
     .menu-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 999; }
 
-    /* MODALES */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
-    .custom-modal { width: 90%; max-width: 400px; border: 1px solid; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
-    .modal-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid; }
-    .modal-body { padding: 20px; }
-    .modal-footer { padding: 15px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid; }
+    /* ========================================= */
+    /* MODALES GENÉRICOS (ESTILO FLOTANTE VIP)   */
+    /* ========================================= */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 5000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); padding: 20px; }
+    
+    .custom-modal { background: var(--theme-bg); width: 100%; max-width: 420px; border-radius: 20px; border: 1px solid var(--theme-border); border-top: 4px solid var(--theme-primary); display: flex; flex-direction: column; color: var(--theme-text); max-height: 85vh; box-shadow: 0 25px 50px rgba(0,0,0,0.9); overflow: hidden; animation: modalBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    
+    .modal-header { padding: 20px 25px; background: var(--theme-card); border-bottom: 1px solid var(--theme-border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    
+    .modal-body { padding: 25px 20px; overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; }
+    
+    .modal-footer { padding: 15px 20px; background: var(--theme-card); border-top: 1px solid var(--theme-border); display: flex; gap: 10px; flex-shrink: 0; }
+    
+    /* LA CRUZ ROJA ELEGANTE */
+    .btn-close-custom { background: rgba(220, 53, 69, 0.1); border: 1px solid #dc3545; color: #dc3545; width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(220, 53, 69, 0.2); }
+    .btn-close-custom:hover { background: #dc3545; color: white; transform: scale(1.1); }
+    .btn-close-custom:active { transform: scale(0.9); }
+    
+    /* BOTONES DE ACCIÓN DEL MODAL */
+    .btn-confirm { background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; flex: 1; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.2s; text-align: center; }
+    .btn-confirm:active { transform: scale(0.95); }
+    
+    .btn-cancel { background: transparent; color: var(--theme-text-muted); border: 1px solid var(--theme-border); padding: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; flex: 1; border-radius: 10px; transition: 0.2s; text-align: center;}
+    .btn-cancel:active { transform: scale(0.95); background: var(--theme-card); }
 
-    .btn-close-custom { background: none; border: none; color: var(--theme-text); font-size: 1.2rem; cursor: pointer;}
-    .btn-cancel { background: var(--theme-border); color: var(--theme-text); border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer;}
-    .btn-confirm { border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer;}
+    /* ESTADOS DE BOTONES Y FORMULARIOS */
+    .form-label { color: var(--theme-text-muted); font-size: 0.75rem; font-weight: bold; margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 1px; }
 
-    .input-dark { background: var(--theme-bg) !important; color: var(--theme-text) !important; border: 1px solid var(--theme-border); border-radius: 8px; }
-    .input-dark:focus { border-color: var(--theme-primary); box-shadow: none; outline: none; }
-    .form-label { color: var(--theme-primary); font-size: 0.85rem; margin-bottom: 4px; display: block; font-weight: bold; }
+    .input-dark { background: rgba(0, 0, 0, 0.4) !important; border: 1px solid var(--theme-border) !important; color: var(--theme-text) !important; border-radius: 10px !important; padding: 12px 15px; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); }
+    .input-dark:focus { border-color: var(--theme-primary) !important; box-shadow: 0 0 10px rgba(255, 255, 255, 0.05) !important; outline: none; }
 
     .btn-confirm.btn-invalid { background-color: var(--theme-border) !important; color: var(--theme-text-muted) !important; cursor: not-allowed; box-shadow: none; }
     .btn-confirm.btn-valid { background-color: var(--theme-primary) !important; color: var(--theme-bg) !important; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
 
+    /* SCROLLBAR PREMIUM (Para modales)*/
+    .modal-body::-webkit-scrollbar { width: 6px; }
+    .modal-body::-webkit-scrollbar-track { background: transparent; border-radius: 10px; }
+    .modal-body::-webkit-scrollbar-thumb { background: var(--theme-border); border-radius: 10px; }
+    .modal-body::-webkit-scrollbar-thumb:hover { background: var(--theme-primary); }
+
+    /* ANIMACIONES */
     .fade-in { animation: fadeIn 0.5s ease; }
     .slide-up { animation: slideUp 0.3s ease; }
     .slide-down { animation: slideDown 0.2s ease-out; transform-origin: top right; }
@@ -350,7 +376,7 @@
     @@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     @@keyframes slideDown { from { transform: scaleY(0); opacity: 0; } to { transform: scaleY(1); opacity: 1; } }
     @@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
-</style>
+    @@keyframes modalBounce { from { transform: scale(0.8) translateY(30px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }</style>
 
 @code {
     // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---

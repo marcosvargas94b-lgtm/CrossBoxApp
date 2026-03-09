@@ -13,6 +13,19 @@
     protected override void OnInitialized()
     {
         Nav.LocationChanged += AlCambiarDePagina;
+        MauiProgram.InterceptSpotterAction = (url) =>
+        {
+            // Forzamos la navegación en el hilo principal de Blazor
+            InvokeAsync(() => Nav.NavigateTo(url));
+        };
+
+        // 2. CASO COLD START (App cerrada): Revisamos si al abrir la app traíamos una ruta pendiente
+        if (!string.IsNullOrEmpty(MauiProgram.RutaPendienteSpotter))
+        {
+            var rutaDestino = MauiProgram.RutaPendienteSpotter;
+            MauiProgram.RutaPendienteSpotter = null; // La limpiamos para que no se repita
+            Nav.NavigateTo(rutaDestino);
+        }
     }
 
     private async void AlCambiarDePagina(object sender, LocationChangedEventArgs e)
