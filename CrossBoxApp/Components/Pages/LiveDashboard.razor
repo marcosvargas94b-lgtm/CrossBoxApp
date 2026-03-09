@@ -219,7 +219,7 @@
                 }
 
                 @* --- CONTENEDOR DEL WOD CON ZOOM --- *@
-                <div class="panel-content" style="overflow: hidden; position: relative;">
+                <div class="panel-content scroll-custom" style="position: relative; overflow-y: @(wodBloqueado ? "auto" : "hidden");">
                     
                     @* Este div "wod-zoom-target" es el que se moverá y escalará con JS 
                         Y TAMBIÉN aplica el tamaño de letra del Slider *@
@@ -684,12 +684,21 @@
     .dashboard-container.wod-wide .list-panel { flex: 0 0 0 !important; width: 0 !important; padding: 0 !important; border: none !important; margin: 0 !important; }
     .dashboard-container.wod-wide .wod-panel { flex: 2; }
 
+    /* Usamos 'column-width' para que fluya hacia abajo y salte a la derecha al topar pared */
     .dashboard-container.wod-wide .exercises-wrapper {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 5px 20px;
+        column-width: 250px;
+        column-gap: 25px;
         width: 100%;
         padding-top: 5px;
+        display: block;
+    }
+
+    /* Evitamos que un mismo ejercicio se parta a la mitad entre dos columnas */
+    .dashboard-container.wod-wide .ejercicio-row-clean {
+        break-inside: avoid;
+        -webkit-column-break-inside: avoid;
+        page-break-inside: avoid;
+        margin-bottom: 8px;
     }
     .vertical-bar { height: 100%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--theme-text-muted); animation: fadeIn 0.5s; }
     .v-text { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); font-family: 'Oswald'; font-size: 1.2rem; letter-spacing: 3px; white-space: nowrap; margin-bottom: 10px; }

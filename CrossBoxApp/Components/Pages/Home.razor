@@ -348,7 +348,7 @@
                 {
                     <div class="menu-card" @onclick="IrACompaneros">
                         <i class="fas fa-heart card-icon" style="color:darkred;"></i>
-                        <h3>¿ENTRENAMOS JUNTOS?</h3><p>Busca hacer MATCH</p>
+                        <h3>¿ENTRENAMOS?</h3><p>Busca hacer MATCH</p>
                     </div>
                 }
 
@@ -467,7 +467,7 @@
                         </div>
                         <i class="fas fa-medal card-icon trophy-icon"></i>
                         <h3 class="trophy-title">MEDALLERO</h3>
-                        <p style="color:var(--theme-text)">Observa tu esfuerzo</p>
+                        <p>Observa tu esfuerzo</p>
                     </div>
                 }
 
@@ -477,7 +477,7 @@
                         <div class="holo-glare"></div>
                         <i class="fas fa-id-badge card-icon player-icon"></i>
                         <h3 class="player-title">MI FICHA</h3>
-                        <p style="color:var(--theme-text)">Player Card Oficial</p>
+                        <p>Player Card Oficial</p>
                     </div>
                 }
             </div>
@@ -602,25 +602,25 @@
             <div class="modal-body">
                 <label class="lbl-input">Contraseña Actual:</label>
                 <div class="input-group mb-3">
-                    <input type="@tipoInputOld" @bind="passOld" class="form-control input-dark" placeholder="******" />
-                    <button class="btn btn-outline-secondary btn-eye" @onclick="() => ToggleVerPass(1)"><i class="fas fa-eye"></i></button>
+                    <input type="@tipoInputOld" @bind="passOld" class="form-control input-dark" placeholder="******" style="border-radius: 10px 0 0 10px !important;" />
+                    <button class="btn-eye" @onclick="() => ToggleVerPass(1)" style="padding: 0 15px;"><i class="fas fa-eye"></i></button>
                 </div>
 
                 <label class="lbl-input">Nueva Contraseña:</label>
                 <div class="input-group mb-3">
-                    <input type="@tipoInputNew" @bind="passNew" class="form-control input-dark" placeholder="******" />
-                    <button class="btn btn-outline-secondary btn-eye" @onclick="() => ToggleVerPass(2)"><i class="fas fa-eye"></i></button>
+                    <input type="@tipoInputNew" @bind="passNew" class="form-control input-dark" placeholder="******" style="border-radius: 10px 0 0 10px !important;" />
+                    <button class="btn-eye" @onclick="() => ToggleVerPass(2)" style="padding: 0 15px;"><i class="fas fa-eye"></i></button>
                 </div>
 
                 <label class="lbl-input">Confirmar Nueva:</label>
                 <div class="input-group mb-3">
-                    <input type="@tipoInputConfirm" @bind="passConfirm" class="form-control input-dark" placeholder="******" />
-                    <button class="btn btn-outline-secondary btn-eye" @onclick="() => ToggleVerPass(3)"><i class="fas fa-eye"></i></button>
+                    <input type="@tipoInputConfirm" @bind="passConfirm" class="form-control input-dark" placeholder="******" style="border-radius: 10px 0 0 10px !important;" />
+                    <button class="btn-eye" @onclick="() => ToggleVerPass(3)" style="padding: 0 15px;"><i class="fas fa-eye"></i></button>
                 </div>
 
                 @if (!string.IsNullOrEmpty(msgErrorPass))
                 {
-                    <div class="alert alert-danger p-2" style="font-size:0.8rem;">@msgErrorPass</div>
+                    <div class="alert alert-danger p-2 text-center" style="font-size:0.85rem; border-radius: 10px;">@msgErrorPass</div>
                 }
             </div>
             <div class="modal-footer">
@@ -628,21 +628,17 @@
                 <button class="btn-confirm" @onclick="GuardarNuevaPassword" disabled="@procesandoPass">
                     @if (procesandoPass)
                     {
-                        <span><i class="fas fa-spinner fa-spin"></i> Guardando...</span>
+                        <span><i class="fas fa-spinner fa-spin"></i></span>
                     }
                     else
                     {
-
                         <span>GUARDAR</span>
                     }
                 </button>
             </div>
         </div>
     </div>
-}
-
-@* --- MODAL PLANES (ADMIN) --- *@
-@if (mostrarModalPlanesAdmin)
+}@if (mostrarModalPlanesAdmin)
 {
     <div class="modal-overlay">
         <div class="modal-content custom-modal">
@@ -788,7 +784,7 @@
                                 {
                                     <input type="text" @bind="bloque.TiempoFormato" class="form-control input-dark mb-3" placeholder="Tiempo / Formato (Ej: AMRAP 15 MIN, 8x1min)" style="border-color: #555;" />                               
                                     @* MODO TEXTO LIBRE *@
-                                    <textarea @bind="bloque.TextoLibre" class="form-control input-dark" style="height: auto !important; min-height: 150px; resize: vertical; border-color: var(--theme-primary);" placeholder="Escribe aquí los ejercicios libremente... (Los saltos de línea se respetarán)"></textarea>
+                                    <textarea @bind="bloque.TextoLibre" class="form-control input-dark textarea-avisos" style="height: auto !important; min-height: 150px; resize: vertical; border-color: var(--theme-primary);" placeholder="Escribe aquí los ejercicios libremente... (Los saltos de línea se respetarán)"></textarea>
                                 }
                                 else
                                 {
@@ -894,10 +890,11 @@
                 <button class="btn-close-custom" @onclick="() => mostrarModalCrearAviso = false"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body">
-                <label style="color: var(--theme-text) !important; font-weight: bold; margin-bottom: 5px; display: block;">Título:</label>
-                <input type="text" @bind="nuevoAviso.Titulo" class="form-control input-dark mb-3" placeholder="Ej: Horario Festivo" style="color: var(--theme-text);" />
-                <label style="color: var(--theme-text) !important; font-weight: bold; margin-bottom: 5px; display: block;">Mensaje:</label>
-                <textarea @bind="nuevoAviso.Mensaje" class="form-control input-dark mb-3" rows="5" placeholder="Escribe aquí la información..." style="color: var(--theme-text);"></textarea>
+                <label class="lbl-input">Título:</label>
+                <input type="text" @bind="nuevoAviso.Titulo" class="form-control input-dark mb-3" placeholder="Ej: Horario Festivo" />
+                
+                <label class="lbl-input">Mensaje:</label>
+                <textarea @bind="nuevoAviso.Mensaje" class="form-control input-dark textarea-avisos mb-3" placeholder="Escribe aquí la información detallada..."></textarea>
             </div>
             <div class="modal-footer">
                 <button class="btn-cancel" @onclick="() => mostrarModalCrearAviso = false">Cancelar</button>
@@ -925,27 +922,25 @@
     <div class="modal-overlay">
         <div class="modal-content custom-modal">
             <div class="modal-header">
-                <h5 style="margin:0; color:var(--theme-primary); font-weight:bold;">
+                <h5 style="margin:0; color:var(--theme-primary); font-weight:bold; font-family:'Oswald';">
                     <i class="fas fa-clock"></i> HORARIOS DEL BOX
                 </h5>
                 <button class="btn-close-custom" @onclick="() => mostrarModalHorarios = false"><i class="fas fa-times"></i></button>
             </div>
 
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-
                 <div class="add-section mb-4">
                     <label class="lbl-input">Nuevo Horario (Ej: 7:00 AM)</label>
                     <div class="input-group">
-                        <input type="text" @bind="nuevoHorarioTexto" class="form-control input-dark" placeholder="Escribe el horario..." />
-                        <button class="btn" @onclick="AgregarHorario" style="background-color:var(--theme-primary); color:var(--theme-bg); font-weight:bold;">
+                        <input type="text" @bind="nuevoHorarioTexto" class="form-control input-dark" placeholder="Escribe el horario..." style="border-radius: 10px 0 0 10px !important;" />
+                        <button class="btn-confirm" @onclick="AgregarHorario" style="border-radius: 0 10px 10px 0 !important; flex: 0 0 60px;">
                             <i class="fas fa-plus"></i>
                         </button>
                     </div>
                 </div>
 
                 <hr style="border-color:var(--theme-border);" />
-
-                <h6 style="color:var(--theme-text); margin-bottom:15px;">Horarios Activos:</h6>
+                <label class="lbl-input mb-3">Horarios Activos:</label>
 
                 @if (listaHorariosAdmin == null)
                 {
@@ -970,12 +965,17 @@
                     </div>
                 }
             </div>
+            <div class="modal-footer">
+                 <button class="btn-cancel" @onclick="() => mostrarModalHorarios = false">Cerrar</button>
+            </div>
         </div>
     </div>
 }
 </div>
 <style>
-    /* Estilos base con Variables CSS inyectadas */
+    /* ========================================= */
+    /* ESTILOS BASE Y ESTRUCTURA                 */
+    /* ========================================= */
     .main-layout { position: fixed; top:0; left:0; width:100vw; height:100vh; background:var(--theme-bg); display:flex; flex-direction:column; z-index:1; }
     .navbar-container { position: relative; flex-shrink:0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom:10px; padding-left:20px; padding-right:20px; background-color: var(--theme-bg); border-bottom:1px solid var(--theme-primary); display:flex; justify-content:space-between; align-items:center; z-index:100; font-family:'Oswald'; color:var(--theme-text); min-height: 60px; }
     .nav-left { color:var(--theme-primary); font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:0.9rem; }
@@ -983,88 +983,15 @@
     .nav-right { width:60px; display:flex; justify-content:flex-end; }
     .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; padding-bottom: 40px; z-index: 10; position: relative; }
 
-    /* Marca de agua y Z-index */
+    /* Marca de agua y Menús Superpuestos */
     .menu-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 90; background: transparent; }
     .watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70%; max-width: 500px; aspect-ratio: 1/1; background-repeat: no-repeat; background-position: center; background-size: contain; opacity: 0.35; z-index: 0; pointer-events: none; }
     .nav-logo { height: 40px; width: 40px; border-radius: 50%; object-fit: cover; margin-right: 10px; border: 1px solid var(--theme-primary); }
     .brand { display: flex; align-items: center; font-size: 1.3rem; font-weight: bold; color: var(--theme-text); }
 
-    /* --- ENTRADA A COMUNIDAD (HOME) --- */
-    .community-entry-card { 
-        width: 100%; 
-        max-width: 600px; 
-        min-height: 110px; 
-        flex-shrink: 0; 
-        margin: 0 auto; 
-        border-radius: 15px; 
-        position: relative; 
-        overflow: hidden; 
-        background-size: cover; 
-        background-position: center; 
-        cursor: pointer; 
-        display: flex; 
-        align-items: center; 
-        transition: transform 0.2s; 
-        border: 2px solid var(--b-color, var(--theme-primary)); 
-        box-shadow: 0 10px 20px rgba(0,0,0,0.5); 
-    }
-    .community-entry-card:active { transform: scale(0.97); }
-    .card-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
-    
-    /* --- BOTÓN LATERAL VERTICAL --- */
-    .btn-edit-corner { 
-        position: absolute; top: 0; right: 0; height: 100%; 
-        background: rgba(0,0,0,0.75); color: var(--theme-primary); border: none;
-        border-left: 2px solid var(--b-color, var(--theme-primary)); 
-        font-family: 'Oswald'; font-size: 0.85rem; padding: 0 10px; 
-        border-radius: 0 13px 13px 0; z-index: 50; font-weight: bold; 
-        backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center;
-        gap: 8px; writing-mode: vertical-rl; cursor: pointer; transition: background 0.2s;
-    }
-    .btn-edit-corner i { transform: rotate(90deg); }
-    
-    .entry-content { position: relative; z-index: 10; display: flex; align-items: center; gap: 15px; padding: 0 45px 0 20px; width: 100%; }
-    .entry-avatar { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid var(--b-color, var(--theme-primary)); box-shadow: 0 4px 10px rgba(0,0,0,0.6); background: var(--theme-card); flex-shrink: 0; }
-    .entry-text { display: flex; flex-direction: column; }
-    .entry-text h4 { font-family: 'Oswald'; font-size: 1.4rem; font-weight: 900; color: var(--theme-text) !important; text-transform: uppercase; margin: 0; text-shadow: 1px 1px 3px black; line-height: 1.1; }
-    .entry-text span { font-family: 'Roboto'; font-size: 0.8rem; color: var(--theme-primary); font-weight: bold; margin-top: 4px; text-shadow: 1px 1px 2px black; display: flex; align-items: center; gap: 5px; }
-
-    /* MODAL ESTILOS BANNER (Mantenemos hardcoded porque es un editor de temas en sí mismo) */
-    .edit-group { background: var(--theme-card); border: 1px solid var(--theme-border); padding: 15px; border-radius: 10px; }
-    .edit-group label { color: var(--theme-primary); font-family: 'Oswald'; font-size: 0.85rem; display: block; margin-bottom: 8px; }
-    .btn-upload-action { width: 100%; background: var(--theme-border); color: var(--theme-text); text-align: center; padding: 10px; border-radius: 8px; font-family: 'Oswald'; cursor: pointer; transition: 0.2s; display: block; }
-    .btn-upload-action.secondary { background: var(--theme-card); border: 1px dashed var(--theme-primary); color: var(--theme-primary); }
-    .color-input { width: 100%; height: 40px; border: none; border-radius: 8px; cursor: pointer; padding: 0; background: none; }
-    .color-input::-webkit-color-swatch { border: 1px solid var(--theme-border); border-radius: 8px; }
-    .btn-save-banner { width: 100%; background: var(--theme-primary); color: var(--theme-bg); font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; padding: 12px; border: none; border-radius: 8px; box-shadow: 0 4px 15px rgba(248,197,69,0.3); }
-    
     /* ========================================= */
-    /* MODALES GENÉRICOS (ESTILO FLOTANTE Y VIP) */
+    /* HOME CARDS Y MENÚS PRINCIPALES            */
     /* ========================================= */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 5000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); padding: 20px; }
-    
-    .custom-modal { background: var(--theme-bg); width: 100%; max-width: 420px; border-radius: 20px; border: 1px solid var(--theme-border); border-top: 4px solid var(--theme-primary); display: flex; flex-direction: column; color: var(--theme-text); max-height: 85vh; box-shadow: 0 25px 50px rgba(0,0,0,0.8); overflow: hidden; animation: modalBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-    
-    .modal-header { padding: 20px 25px; background: var(--theme-card); border-bottom: 1px solid var(--theme-border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-    
-    .modal-body { padding: 25px 20px; overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; }
-    
-    .modal-footer { padding: 15px 20px; background: var(--theme-card); border-top: 1px solid var(--theme-border); display: flex; gap: 10px; flex-shrink: 0; }
-    
-    /* LA CRUZ ROJA ELEGANTE */
-    .btn-close-custom { background: rgba(220, 53, 69, 0.1); border: 1px solid #dc3545; color: #dc3545; width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(220, 53, 69, 0.2); }
-    .btn-close-custom:hover { background: #dc3545; color: white; transform: scale(1.1); }
-    .btn-close-custom:active { transform: scale(0.9); }
-    
-    /* BOTONES DE ACCIÓN DEL MODAL */
-    .btn-confirm { background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; flex: 1; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.2s; }
-    .btn-confirm:active { transform: scale(0.95); }
-    
-    .btn-cancel { background: transparent; color: var(--theme-text-muted); border: 1px solid var(--theme-border); padding: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; flex: 1; border-radius: 10px; transition: 0.2s; }
-    .btn-cancel:active { transform: scale(0.95); background: var(--theme-card); }
-    
-    @@keyframes modalBounce { from { transform: scale(0.8) translateY(30px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
-    /* Resto (Notificaciones, Menús, Cards) */
     .right-actions { display: flex; align-items: center; gap: 15px; }
     .welcome-section h1 { font-family: 'Oswald'; color: var(--theme-primary); font-size: 1.8rem; margin-bottom: 20px; text-align: center; margin-top: 10px; }
     .cards-grid { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 15px; width: 100%; max-width: 600px; margin: 0 auto; }
@@ -1095,6 +1022,7 @@
     .dropdown-divider { height: 1px; background: var(--theme-border); margin: 5px 0; }
     .main-dropdown { position: absolute; top: 45px; right: 0; width: 260px; background: var(--theme-card); border: 1px solid var(--theme-primary); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); overflow-y: auto; -webkit-overflow-scrolling: touch; max-height: 70vh; padding-bottom: 30px; z-index: 2000; animation: slideDown 0.2s ease-out; }
     
+    /* Notificaciones */
     .noti-icon { font-size: 1.3rem; color: var(--theme-text); }
     .noti-dot { position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; background: red; border-radius: 50%; border: 2px solid var(--theme-bg); }
     .bell-ring { animation: ring 4s .7s ease-in-out infinite; color: var(--theme-primary); }
@@ -1102,24 +1030,7 @@
     .noti-item { padding: 12px; border-bottom: 1px solid var(--theme-border); font-size: 0.8rem; display: flex; align-items: center; gap: 10px; color: var(--theme-text); }
     .noti-item.unread { background: rgba(255,255,255,0.05); border-left: 3px solid var(--theme-primary); }
 
-    /* WOD y Editor de Pesos */
-    .sheet-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 4000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease; }
-    .sheet-backdrop.visible { opacity: 1; visibility: visible; }
-    .bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--theme-card); border-top-left-radius: 25px; border-top-right-radius: 25px; border-top: 3px solid var(--theme-primary); padding: 25px 20px 40px 20px; z-index: 4001; box-shadow: 0 -5px 25px rgba(0,0,0,0.8); }
-    .sheet-handle { width: 50px; height: 5px; background: var(--theme-border); border-radius: 10px; margin: 0 auto 20px auto; }
-    
-    .ejercicio-row { display: flex; align-items: center; background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--theme-border); padding: 8px 4px; gap: 6px; }
-    .input-dark { background: rgba(0,0,0,0.2) !important; border: 1px solid var(--theme-border); color: var(--theme-text) !important; font-size: 0.9rem; height: 38px; }
-    .input-dark:focus { border-color: var(--theme-primary); box-shadow: 0 0 5px rgba(0, 0, 0, 0.3); }
-    
-    .btn-icon { width: 38px; height: 38px; border: none; border-radius: 6px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s; position: relative; }
-    .weight-btn { background: var(--theme-border); color: var(--theme-text-muted); }
-    .weight-btn.active { color: var(--theme-primary); border: 1px solid var(--theme-primary); background: rgba(255, 255, 255, 0.05); }
-    .dot-indicator { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: var(--theme-primary); border-radius: 50%; }
-    .delete-btn { background: transparent; color: var(--theme-text-muted); }
-    .delete-btn:hover { background: rgba(220, 53, 69, 0.2); color: #dc3545; }
-
-    /* Switch Component */
+    /* Switch Component (Módulos) */
     .module-row { display: flex; justify-content: space-between; align-items: center; background-color: var(--theme-card); padding: 12px 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--theme-border); cursor: pointer; transition: background-color 0.2s; }
     .mod-name { color: var(--theme-text); font-family: 'Roboto', sans-serif; font-weight: bold; font-size: 0.9rem; }
     .switch-track { width: 50px; height: 26px; background-color: var(--theme-border); border-radius: 20px; position: relative; transition: background-color 0.3s ease; border: 1px solid var(--theme-border); }
@@ -1127,22 +1038,11 @@
     .switch-thumb { width: 22px; height: 22px; background-color: white; border-radius: 50%; position: absolute; top: 1px; left: 2px; transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1); }
     .switch-track.on .switch-thumb { transform: translateX(24px); }
 
-    /* Tarjeta de Recuperación */
+    /* ========================================= */
+    /* TARJETA DE RECUPERACIÓN Y BANNER          */
+    /* ========================================= */
     .recovery-section { width: 100%; max-width: 600px; margin: 0 auto 20px auto; padding: 0; }
-    .card-recuperacion-master {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(15px);
-        -webkit-backdrop-filter: blur(15px);
-        border: 1px solid var(--theme-border);
-        border-radius: 28px;
-        display: flex;
-        padding: 20px 15px; 
-        height: 240px; 
-        position: relative;
-        overflow: hidden; 
-        box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-        cursor: pointer;
-    }
+    .card-recuperacion-master { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border: 1px solid var(--theme-border); border-radius: 28px; display: flex; padding: 20px 15px; height: 240px; position: relative; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.4); cursor: pointer; }
     .info-content { flex: 1; display: flex; flex-direction: column; justify-content: center; z-index: 5; }
     .label-top { font-family: 'Oswald'; color: var(--theme-primary); font-size: 0.75rem; letter-spacing: 2px; font-weight: bold; line-height: 1.1; }
     .display-porcentaje { font-family: 'Oswald'; font-size: 3.5rem; color: var(--theme-text); margin: 5px 0; font-weight: 900; line-height: 1; }
@@ -1151,202 +1051,134 @@
     .visual-content { flex: 1.8; height: 120%; display: flex; justify-content: flex-end; align-items: center; z-index: 5; transform: translateY(-15%); }
     .bg-blur-glow { position: absolute; top: -20%; right: -10%; width: 180px; height: 180px; background: radial-gradient(circle, var(--theme-primary) 0%, transparent 70%); opacity: 0.15; z-index: 1; }
 
-    /* Misceláneos Modales Admin */
+    .alerta-rpe-aura { border: 2px solid #FF3B30 !important; animation: pulseRpeAura 2s infinite !important; }
+    .badge-falta-rpe { position: absolute; top: 15px; right: 15px; background: #FF3B30; color: white; font-family: 'Oswald'; font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; font-weight: bold; z-index: 50; box-shadow: 0 4px 10px rgba(255, 59, 48, 0.4); display: flex; align-items: center; gap: 5px; animation: fadeInOutRpe 1.5s infinite; }
+
+    /* Community Banner */
+    .community-entry-card { width: 100%; max-width: 600px; min-height: 110px; flex-shrink: 0; margin: 0 auto; border-radius: 15px; position: relative; overflow: hidden; background-size: cover; background-position: center; cursor: pointer; display: flex; align-items: center; transition: transform 0.2s; border: 2px solid var(--b-color, var(--theme-primary)); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+    .community-entry-card:active { transform: scale(0.97); }
+    .card-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+    
+    .btn-edit-corner { position: absolute; top: 0; right: 0; height: 100%; background: rgba(0,0,0,0.75); color: var(--theme-primary); border: none; border-left: 2px solid var(--b-color, var(--theme-primary)); font-family: 'Oswald'; font-size: 0.85rem; padding: 0 10px; border-radius: 0 13px 13px 0; z-index: 50; font-weight: bold; backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; gap: 8px; writing-mode: vertical-rl; cursor: pointer; transition: background 0.2s; }
+    .btn-edit-corner i { transform: rotate(90deg); }
+    
+    .entry-content { position: relative; z-index: 10; display: flex; align-items: center; gap: 15px; padding: 0 45px 0 20px; width: 100%; }
+    .entry-avatar { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid var(--b-color, var(--theme-primary)); box-shadow: 0 4px 10px rgba(0,0,0,0.6); background: var(--theme-card); flex-shrink: 0; }
+    .entry-text { display: flex; flex-direction: column; }
+    .entry-text h4 { font-family: 'Oswald'; font-size: 1.4rem; font-weight: 900; color: var(--theme-text) !important; text-transform: uppercase; margin: 0; text-shadow: 1px 1px 3px black; line-height: 1.1; }
+    .entry-text span { font-family: 'Roboto'; font-size: 0.8rem; color: var(--theme-primary); font-weight: bold; margin-top: 4px; text-shadow: 1px 1px 2px black; display: flex; align-items: center; gap: 5px; }
+
+    /* ========================================= */
+    /* MODALES GENÉRICOS VIP                     */
+    /* ========================================= */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 5000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); padding: 20px; }
+    
+    .custom-modal { background: var(--theme-bg); width: 100%; max-width: 420px; border-radius: 20px; border: 1px solid var(--theme-border); border-top: 4px solid var(--theme-primary); display: flex; flex-direction: column; color: var(--theme-text); max-height: 85vh; box-shadow: 0 25px 50px rgba(0,0,0,0.9); overflow: hidden; animation: modalBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    
+    .modal-header { padding: 20px 25px; background: var(--theme-card); border-bottom: 1px solid var(--theme-border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    
+    .modal-body { padding: 25px 20px; overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; }
+    
+    .modal-footer { padding: 15px 20px; background: var(--theme-card); border-top: 1px solid var(--theme-border); display: flex; gap: 10px; flex-shrink: 0; }
+
+    /* LA CRUZ ROJA ELEGANTE */
+    .btn-close-custom { background: rgba(220, 53, 69, 0.1); border: 1px solid #dc3545; color: #dc3545; width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(220, 53, 69, 0.2); }
+    .btn-close-custom:hover { background: #dc3545; color: white; transform: scale(1.1); }
+    .btn-close-custom:active { transform: scale(0.9); }
+    
+    /* BOTONES DE ACCIÓN DEL MODAL */
+    .btn-confirm { background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; flex: 1; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.2s; text-align: center; }
+    .btn-confirm:active { transform: scale(0.95); }
+    
+    /* EL BOTÓN CANCELAR UNIVERSAL Y NEUTRAL */
+    .btn-cancel { background: #333333 !important; color: #ffffff !important; border: 1px solid #555555 !important; padding: 12px; font-family: 'Oswald', sans-serif; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; flex: 1; border-radius: 10px; transition: 0.2s; text-align: center; cursor: pointer; }
+    .btn-cancel:active { transform: scale(0.95); background: #222222 !important; }
+
+    /* CAMPOS DE TEXTO ENCAPSULADOS */
+    .lbl-input { color: var(--theme-text-muted); font-size: 0.75rem; font-weight: bold; margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 1px; }
+    
+    .input-dark { background: rgba(0, 0, 0, 0.4) !important; border: 1px solid var(--theme-border) !important; color: var(--theme-text) !important; border-radius: 10px !important; padding: 12px 15px; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); width: 100%; box-sizing: border-box; }
+    .input-dark:focus { border-color: var(--theme-primary) !important; box-shadow: 0 0 10px rgba(255, 255, 255, 0.05) !important; outline: none; }
+    .input-dark::placeholder { color: var(--theme-text-muted) !important; opacity: 0.7; }
+
+    /* CAJA DE TEXTO MÁS GRANDE PARA AVISOS */
+    .textarea-avisos { min-height: 150px !important; resize: vertical; }
+
+    /* BOTÓN DEL OJITO (Para contraseñas) */
+    .btn-eye { background: rgba(0, 0, 0, 0.4) !important; border: 1px solid var(--theme-border) !important; border-left: none !important; color: var(--theme-text-muted) !important; border-radius: 0 10px 10px 0 !important; cursor: pointer; transition: 0.2s; }
+    .btn-eye:hover { color: var(--theme-primary) !important; }
+
+    /* SCROLLBAR PREMIUM (Para todos los modales)*/
+    .modal-body::-webkit-scrollbar, .scroll-custom::-webkit-scrollbar { width: 6px; }
+    .modal-body::-webkit-scrollbar-track, .scroll-custom::-webkit-scrollbar-track { background: transparent; border-radius: 10px; }
+    .modal-body::-webkit-scrollbar-thumb, .scroll-custom::-webkit-scrollbar-thumb { background: var(--theme-border); border-radius: 10px; }
+    .modal-body::-webkit-scrollbar-thumb:hover, .scroll-custom::-webkit-scrollbar-thumb:hover { background: var(--theme-primary); }
+
+
+    /* ========================================= */
+    /* DISEÑO DE ELEMENTOS INTERNOS DE MODALES   */
+    /* ========================================= */
+    /* Editor de Banner */
+    .edit-group { background: var(--theme-card); border: 1px solid var(--theme-border); padding: 15px; border-radius: 10px; }
+    .edit-group label { color: var(--theme-primary); font-family: 'Oswald'; font-size: 0.85rem; display: block; margin-bottom: 8px; }
+    .btn-upload-action { width: 100%; background: var(--theme-border); color: var(--theme-text); text-align: center; padding: 10px; border-radius: 8px; font-family: 'Oswald'; cursor: pointer; transition: 0.2s; display: block; }
+    .btn-upload-action.secondary { background: var(--theme-card); border: 1px dashed var(--theme-primary); color: var(--theme-primary); }
+    .color-input { width: 100%; height: 40px; border: none; border-radius: 8px; cursor: pointer; padding: 0; background: none; }
+    .color-input::-webkit-color-swatch { border: 1px solid var(--theme-border); border-radius: 8px; }
+    .btn-save-banner { width: 100%; background: var(--theme-primary); color: var(--theme-bg); font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; padding: 12px; border: none; border-radius: 8px; box-shadow: 0 4px 15px rgba(248,197,69,0.3); }
+
+    /* WOD y Editor de Pesos */
+    .sheet-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 4000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease; }
+    .sheet-backdrop.visible { opacity: 1; visibility: visible; }
+    .bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--theme-card); border-top-left-radius: 25px; border-top-right-radius: 25px; border-top: 3px solid var(--theme-primary); padding: 25px 20px 40px 20px; z-index: 4001; box-shadow: 0 -15px 40px rgba(0,0,0,0.9); }
+    .sheet-handle { width: 40px; height: 4px; background: var(--theme-border); border-radius: 10px; margin: 0 auto 25px auto; }
+    
+    .ejercicio-row { display: flex; align-items: center; background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--theme-border); padding: 8px 4px; gap: 6px; }
+    .btn-icon { width: 38px; height: 38px; border: none; border-radius: 6px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s; position: relative; }
+    .weight-btn { background: var(--theme-border); color: var(--theme-text-muted); }
+    .weight-btn.active { color: var(--theme-primary); border: 1px solid var(--theme-primary); background: rgba(255, 255, 255, 0.05); }
+    .dot-indicator { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; background: var(--theme-primary); border-radius: 50%; }
+    .delete-btn { background: transparent; color: var(--theme-text-muted); }
+    .delete-btn:hover { background: rgba(220, 53, 69, 0.2); color: #dc3545; }
+
+    /* Lista de Horarios VIP */
+    .horarios-list { display: flex; flex-direction: column; gap: 12px; padding-right: 5px; }
+    .horario-row { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--theme-border); border-radius: 12px; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s ease; }
+    .horario-row:hover { border-color: var(--theme-primary); background: rgba(255, 255, 255, 0.05); transform: translateX(4px); }
+    .horario-text { font-family: 'Oswald'; font-size: 1.2rem; color: var(--theme-text); letter-spacing: 1px; }
+    .btn-delete-mini { background: rgba(220, 53, 69, 0.1); color: #dc3545; border: 1px solid transparent; width: 38px; height: 38px; border-radius: 10px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .btn-delete-mini:hover { background: #dc3545; color: white; border-color: #dc3545; transform: scale(1.1) rotate(5deg); box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3); }
+    .btn-delete-mini:active { transform: scale(0.9); }
+
+    /* Modales de Planes / Admin */
     .plan-option-card { background: var(--theme-card); border: 1px solid var(--theme-border); border-radius: 12px; padding: 20px; flex: 1; cursor: pointer; transition: all 0.2s ease; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; }
     .plan-option-card:hover { border-color: var(--theme-primary); transform: translateY(-3px); }
     .plan-option-card.recommended { border: 2px solid var(--theme-primary); background: rgba(255, 255, 255, 0.05); }
     .badge-save { position: absolute; top: -10px; background: var(--theme-primary); color: var(--theme-bg); font-size: 0.65rem; font-weight: bold; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; font-family: 'Oswald'; }
     .plan-title { font-family: 'Oswald'; font-size: 1.1rem; color: var(--theme-text); margin-bottom: 5px; }
     .plan-price { font-family: 'Oswald'; font-size: 1.8rem; color: var(--theme-text); font-weight: bold; margin-bottom: 5px; }
-    
     .alert-conflict { background: var(--theme-card); border: 2px solid #dc3545; border-radius: 10px; padding: 30px 20px; text-align: center; }
     .alert-conflict h4 { color: var(--theme-text); font-family: 'Oswald'; letter-spacing: 1px; margin-bottom: 10px; }
-    
-    .aviso-content { width: 90%; max-width: 400px; background: var(--theme-card); border-radius: 12px; text-align: center; border: 2px solid var(--theme-primary); padding-bottom: 20px; box-shadow: 0 0 20px rgba(0, 0, 0, 0.3); animation: bounceIn 0.6s; overflow: hidden; }
+
+    /* Modal de Aviso Pop Up */
+    .aviso-content { width: 90%; max-width: 400px; background: var(--theme-card); border-radius: 12px; text-align: center; border: 2px solid var(--theme-primary); padding-bottom: 20px; box-shadow: 0 0 20px rgba(0, 0, 0, 0.3); animation: bounceIn 0.6s; overflow: hidden; margin: auto; }
     .aviso-icon { font-size: 3rem; color: var(--theme-primary); margin-top: 20px; animation: pulse 2s infinite; }
     .aviso-title { font-family: 'Oswald'; color: var(--theme-text); font-size: 1.5rem; margin: 10px 20px; text-transform: uppercase; }
-    .btn-ok { width: 80%; margin: 0 auto 25px auto; background: var(--theme-primary); border: none; padding: 12px; font-weight: bold; border-radius: 30px; color: var(--theme-bg); }
+    .btn-ok { width: 80%; margin: 0 auto 25px auto; background: var(--theme-primary); border: none; padding: 12px; font-weight: bold; border-radius: 30px; color: var(--theme-bg); cursor: pointer; transition: 0.2s;}
+    .btn-ok:active { transform: scale(0.95); }
 
-    /* Animaciones */
+    /* ========================================= */
+    /* ANIMACIONES CLAVE                         */
+    /* ========================================= */
     .fade-in { animation: fadeIn 0.3s ease-in; }
-   @@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-   @@keyframes slideInBottom { from { bottom: -100%; } to { bottom: 0; } }
-   @@keyframes ring { 0% { transform: rotate(0); } 5% { transform: rotate(30deg); } 10% { transform: rotate(-28deg); } 15% { transform: rotate(34deg); } 20% { transform: rotate(-32deg); } 25% { transform: rotate(30deg); } 30% { transform: rotate(-28deg); } 35% { transform: rotate(26deg); } 40% { transform: rotate(-24deg); } 45% { transform: rotate(22deg); } 50% { transform: rotate(-20deg); } 100% { transform: rotate(0); } }
-   @@keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
-   @@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-   @@keyframes holoSweep { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-   @@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-   @@keyframes twinkle { 0% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1.5); } 100% { opacity: 0; transform: scale(0.5); } }
-   @@keyframes glareRun { 0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; } }
-
-   .alerta-rpe-aura {
-        border: 2px solid #FF3B30 !important;
-        animation: pulseRpeAura 2s infinite !important;
-    }
-
-    .badge-falta-rpe {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        background: #FF3B30;
-        color: white;
-        font-family: 'Oswald';
-        font-size: 0.75rem;
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-weight: bold;
-        z-index: 50;
-        box-shadow: 0 4px 10px rgba(255, 59, 48, 0.4);
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        animation: fadeInOutRpe 1.5s infinite;
-    }
-
-    @@keyframes pulseRpeAura {
-        0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7), 0 15px 35px rgba(0,0,0,0.4); }
-        70% { box-shadow: 0 0 0 15px rgba(255, 59, 48, 0), 0 15px 35px rgba(0,0,0,0.4); }
-        100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0), 0 15px 35px rgba(0,0,0,0.4); }
-    }
-
-    @@keyframes fadeInOutRpe {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-    }
-
-    /* ========================================= */
-    /* SCROLLBAR PREMIUM (Para todos los modales)*/
-    /* ========================================= */
-    .modal-body::-webkit-scrollbar, .scroll-custom::-webkit-scrollbar {
-        width: 6px;
-    }
-    .modal-body::-webkit-scrollbar-track, .scroll-custom::-webkit-scrollbar-track {
-        background: transparent;
-        border-radius: 10px;
-    }
-    .modal-body::-webkit-scrollbar-thumb, .scroll-custom::-webkit-scrollbar-thumb {
-        background: var(--theme-border);
-        border-radius: 10px;
-    }
-    .modal-body::-webkit-scrollbar-thumb:hover, .scroll-custom::-webkit-scrollbar-thumb:hover {
-        background: var(--theme-primary);
-    }
-
-    /* ========================================= */
-    /* INPUTS Y LABELS MODERNOS                  */
-    /* ========================================= */
-    .lbl-input {
-        color: var(--theme-text-muted);
-        font-size: 0.75rem;
-        font-weight: bold;
-        margin-bottom: 8px;
-        display: block;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    
-    .input-dark {
-        background: rgba(0, 0, 0, 0.4) !important;
-        border: 1px solid var(--theme-border) !important;
-        color: var(--theme-text) !important;
-        border-radius: 10px !important;
-        padding: 12px 15px;
-        font-size: 0.95rem;
-        transition: all 0.3s ease;
-        box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
-    }
-    .input-dark:focus {
-        border-color: var(--theme-primary) !important;
-        box-shadow: 0 0 10px rgba(255, 255, 255, 0.05) !important;
-        outline: none;
-    }
-
-    /* Botón del ojito para contraseñas */
-    .btn-eye {
-        background: rgba(0, 0, 0, 0.4) !important;
-        border: 1px solid var(--theme-border) !important;
-        border-left: none !important;
-        color: var(--theme-text-muted) !important;
-        border-radius: 0 10px 10px 0 !important;
-    }
-    .btn-eye:hover {
-        color: var(--theme-primary) !important;
-    }
-
-    /* ========================================= */
-    /* DISEÑO VIP: LISTA DE HORARIOS             */
-    /* ========================================= */
-    .horarios-list {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        padding-right: 5px;
-    }
-    
-    .horario-row {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid var(--theme-border);
-        border-radius: 12px;
-        padding: 12px 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: all 0.3s ease;
-    }
-    
-    .horario-row:hover {
-        border-color: var(--theme-primary);
-        background: rgba(255, 255, 255, 0.05);
-        transform: translateX(4px);
-    }
-    
-    .horario-text {
-        font-family: 'Oswald';
-        font-size: 1.2rem;
-        color: var(--theme-text);
-        letter-spacing: 1px;
-    }
-    
-    /* El nuevo bote de basura */
-    .btn-delete-mini {
-        background: rgba(220, 53, 69, 0.1);
-        color: #dc3545;
-        border: 1px solid transparent;
-        width: 38px;
-        height: 38px;
-        border-radius: 10px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-    
-    .btn-delete-mini:hover {
-        background: #dc3545;
-        color: white;
-        border-color: #dc3545;
-        transform: scale(1.1) rotate(5deg);
-        box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
-    }
-    
-    .btn-delete-mini:active {
-        transform: scale(0.9);
-    }
-
-    /* ========================================= */
-    /* DISEÑO VIP: BOTTOM SHEET (Pesos)          */
-    /* ========================================= */
-    .bottom-sheet {
-        box-shadow: 0 -15px 40px rgba(0,0,0,0.9);
-    }
-    .sheet-handle {
-        width: 40px;
-        height: 4px;
-        background: var(--theme-border);
-        border-radius: 10px;
-        margin: 0 auto 25px auto;
-    }
+    @@keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    @@keyframes slideInBottom { from { bottom: -100%; } to { bottom: 0; } }
+    @@keyframes ring { 0% { transform: rotate(0); } 5% { transform: rotate(30deg); } 10% { transform: rotate(-28deg); } 15% { transform: rotate(34deg); } 20% { transform: rotate(-32deg); } 25% { transform: rotate(30deg); } 30% { transform: rotate(-28deg); } 35% { transform: rotate(26deg); } 40% { transform: rotate(-24deg); } 45% { transform: rotate(22deg); } 50% { transform: rotate(-20deg); } 100% { transform: rotate(0); } }
+    @@keyframes bounceIn { 0% { transform: scale(0.3); opacity: 0; } 50% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+    @@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+    @@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    @@keyframes pulseRpeAura { 0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7), 0 15px 35px rgba(0,0,0,0.4); } 70% { box-shadow: 0 0 0 15px rgba(255, 59, 48, 0), 0 15px 35px rgba(0,0,0,0.4); } 100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0), 0 15px 35px rgba(0,0,0,0.4); } }
+    @@keyframes fadeInOutRpe { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 </style>
 
 @code {
