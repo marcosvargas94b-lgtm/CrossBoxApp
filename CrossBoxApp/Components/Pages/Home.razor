@@ -557,7 +557,7 @@
                     <input type="color" @bind="miBannerEdit.ColorBorde" class="color-input" />
                 </div>
 
-                <div class="edit-group mt-3">
+           <div class="edit-group mt-3">
                     <label><i class="fas fa-magic"></i> ESTILO VISUAL</label>
                     <div class="styles-grid">
                         <div class="style-item @(miBannerEdit.EstiloVisual == "Glass" ? "selected" : "")" @onclick='() => miBannerEdit.EstiloVisual = "Glass"'>
@@ -571,6 +571,12 @@
                         </div>
                         <div class="style-item @(miBannerEdit.EstiloVisual == "Gold" ? "selected" : "")" @onclick='() => miBannerEdit.EstiloVisual = "Gold"'>
                             <div class="style-preview gold-preview"></div> <span>ORO</span>
+                        </div>
+                        <div class="style-item @(miBannerEdit.EstiloVisual == "Holo" ? "selected" : "")" @onclick='() => miBannerEdit.EstiloVisual = "Holo"'>
+                            <div class="style-preview holo-preview"></div> <span>HOLO</span>
+                        </div>
+                        <div class="style-item @(miBannerEdit.EstiloVisual == "Toxic" ? "selected" : "")" @onclick='() => miBannerEdit.EstiloVisual = "Toxic"'>
+                            <div class="style-preview toxic-preview"></div> <span>TOXIC</span>
                         </div>
                         <div class="style-item @(miBannerEdit.EstiloVisual == "Flat" ? "selected" : "")" @onclick='() => miBannerEdit.EstiloVisual = "Flat"'>
                             <div class="style-preview flat-preview"></div> <span>FLAT</span>
@@ -1065,7 +1071,16 @@
     .community-entry-card:active { transform: scale(0.97); }
     .card-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
     
-    .btn-edit-corner { position: absolute; top: 0; right: 0; height: 100%; background: rgba(0,0,0,0.75); color: var(--theme-primary); border: none; border-left: 2px solid var(--b-color, var(--theme-primary)); font-family: 'Oswald'; font-size: 0.85rem; padding: 0 10px; border-radius: 0 13px 13px 0; z-index: 50; font-weight: bold; backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; gap: 8px; writing-mode: vertical-rl; cursor: pointer; transition: background 0.2s; }
+    .btn-edit-corner { 
+        position: absolute; top: 0; right: 0; height: 100%; 
+        background: rgba(0,0,0,0.6); color: var(--theme-text); border: none;
+        font-family: 'Oswald'; font-size: 0.85rem; padding: 0 10px; 
+        border-radius: 0 13px 13px 0; z-index: 50; font-weight: bold; 
+        backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center;
+        gap: 8px; writing-mode: vertical-rl; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-edit-corner:hover { background: rgba(0,0,0,0.9); color: var(--theme-primary); }
+    .btn-edit-corner i { transform: rotate(90deg); }
     .btn-edit-corner i { transform: rotate(90deg); }
     
     .entry-content { position: relative; z-index: 10; display: flex; align-items: center; gap: 15px; padding: 0 45px 0 20px; width: 100%; }
@@ -1211,61 +1226,130 @@
     .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: var(--theme-text); transition: .4s; border-radius: 50%; }
     input:checked + .slider { background-color: var(--theme-primary); }
     input:checked + .slider:before { transform: translateX(20px); background-color: var(--theme-bg); }
-    /* ========================================= */
+/* ========================================= */
     /* ESTILOS APLICADOS AL BANNER (COMUNIDAD)   */
     /* ========================================= */
 
-    /* 1. GLASS */
+    /* 1. GLASS (Cristal Premium: Deja ver el fondo perfectamente) */
     .community-entry-card.glass {
-        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border: 1px solid rgba(255, 255, 255, 0.4) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.8) !important; 
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
     }
     .community-entry-card.glass .card-overlay {
-        background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        background: linear-gradient(135deg, rgba(0,0,0,0.1), rgba(0,0,0,0.4));
+        backdrop-filter: blur(1px); /* Blur ligero para no manchar la foto */
+        -webkit-backdrop-filter: blur(4px);
     }
 
-    /* 2. NEÓN */
+    /* 2. NEÓN (Brillo agresivo exterior e interior. Afecta al texto) */
     .community-entry-card.neon {
         border: 2px solid var(--b-color) !important;
-        box-shadow: 0 0 12px var(--b-color), inset 0 0 12px var(--b-color) !important;
+        box-shadow: 0 0 8px var(--b-color), 0 0 20px var(--b-color), inset 0 0 15px var(--b-color) !important;
     }
-    .community-entry-card.neon .card-overlay {
-        background: rgba(0,0,0,0.6);
+    .community-entry-card.neon .card-overlay { background: rgba(0,0,0,0.4); }
+    .community-entry-card.neon .entry-text h4 { 
+        color: #fff !important; 
+        text-shadow: 0 0 10px var(--b-color), 0 0 20px var(--b-color), 2px 2px 2px black !important; 
     }
 
-    /* 3. CYBERPUNK (Bordes laterales y cortes futuristas) */
+    /* 3. CYBERPUNK (Solo marco recortado, CERO rayas en la foto) */
     .community-entry-card.cyberpunk {
         border: none !important;
         border-left: 6px solid var(--b-color) !important;
-        border-right: 6px solid var(--b-color) !important;
+        border-right: 4px solid var(--theme-text) !important;
         border-radius: 0 !important;
-        clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+        clip-path: polygon(25px 0, 100% 0, 100% calc(100% - 25px), calc(100% - 25px) 100%, 0 100%, 0 25px);
         box-shadow: none !important;
     }
     .community-entry-card.cyberpunk .card-overlay {
-        background: rgba(0, 0, 0, 0.6);
+        /* Gradiente suave a los lados para leer el texto, el centro 100% visible */
+        background: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.8) 100%);
     }
 
-    /* 4. GOLD */
+    /* 4. GOLD (Destello metálico cruzando la tarjeta) */
     .community-entry-card.gold {
         border: 2px solid #FFD700 !important;
-        box-shadow: 0 0 15px rgba(255, 215, 0, 0.3) !important;
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), inset 0 0 15px rgba(255, 215, 0, 0.2) !important;
+        position: relative;
     }
-    .community-entry-card.gold .card-overlay {
-        background: linear-gradient(45deg, rgba(255,215,0,0.15), rgba(0,0,0,0.7));
+    .community-entry-card.gold .card-overlay { background: linear-gradient(45deg, rgba(0,0,0,0.7) 0%, rgba(255,215,0,0.1) 50%, rgba(0,0,0,0.7) 100%); }
+    .community-entry-card.gold::before {
+        content: ""; position: absolute; top: 0; left: -150%; width: 50%; height: 100%;
+        background: linear-gradient(to right, transparent, rgba(255,255,255,0.4), transparent);
+        transform: skewX(-25deg); animation: goldShine 4s infinite; z-index: 5; pointer-events: none;
     }
 
-    /* 5. FLAT */
+    /* 5. HOLO (Carta Coleccionable Tornasol) */
+    .community-entry-card.holo {
+        border: 2px solid rgba(255,255,255,0.5) !important;
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.4) !important;
+    }
+    .community-entry-card.holo .card-overlay {
+        /* Mezcla un fondo oscuro base con un holograma animado encima */
+        background: linear-gradient(120deg, rgba(255,0,150,0.35), rgba(0,204,255,0.35), rgba(204,0,255,0.35), rgba(255,0,150,0.35)), rgba(0,0,0,0.4);
+        background-size: 300% 300%, 100% 100%;
+        animation: holoFlow 4s linear infinite;
+    }
+
+    /* 6. TOXIC (Peligro Biológico / Brutalista Industrial) */
+    .community-entry-card.toxic {
+        border: 3px solid var(--b-color) !important;
+        border-radius: 0 !important; /* Cuadrado puro */
+        box-shadow: 6px 6px 0px rgba(0,0,0,0.9) !important; /* Sombra sólida dura tipo cómic */
+    }
+ .community-entry-card.toxic .card-overlay {
+        background: repeating-linear-gradient(45deg, rgba(0,0,0,0.4) 0px, rgba(0,0,0,0.4) 10px, rgba(0,0,0,0.7) 10px, rgba(0,0,0,0.7) 20px);
+    }
+    .community-entry-card.toxic .entry-text h4 {
+        color: var(--b-color) !important; /* El título adopta el color tóxico */
+        text-shadow: 2px 2px 0px #000 !important;
+        font-style: italic;
+        letter-spacing: 2px;
+    }
+
+    /* 7. FLAT (Minimalista, limpio) */
     .community-entry-card.flat {
-        border: 1px solid var(--theme-border) !important;
-        box-shadow: none !important;
+        border: 2px solid var(--theme-text) !important;
         border-radius: 8px !important;
+        box-shadow: 6px 6px 0px var(--b-color) !important;
     }
-    .community-entry-card.flat .card-overlay {
-        background: rgba(0,0,0,0.8);
-    }
+    .community-entry-card.flat .card-overlay { background: rgba(0,0,0,0.5); }
+
+    /* Animaciones extra para el Banner */
+    @@keyframes goldShine { 0% { left: -150%; } 20% { left: 200%; } 100% { left: 200%; } }
+    @@keyframes holoFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+    /* ========================================= */
+    /* CUADRITOS DE PREVISUALIZACIÓN EN EL MODAL */
+    /* ========================================= */
+    .styles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; margin-top: 10px; }
+    .style-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: rgba(0,0,0,0.4); border: 2px solid var(--theme-border); padding: 15px 10px; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+    .style-item:hover { transform: translateY(-3px); border-color: var(--theme-text-muted); }
+    .style-item.selected { border-color: var(--theme-primary); background: rgba(255,255,255,0.05); box-shadow: 0 0 10px rgba(248,197,69,0.2); }
+    .style-item span { font-family: 'Oswald'; font-size: 0.75rem; font-weight: bold; letter-spacing: 1px; color: var(--theme-text); }
+    
+    .style-preview { width: 35px; height: 35px; border-radius: 50%; border: 2px solid transparent; }
+    .glass-preview { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
+    .neon-preview { background: black; border-color: #0ff; box-shadow: 0 0 8px #0ff; }
+    .cyber-preview { background: #fcee0a; border-radius: 0; border-color: #000; }
+    .gold-preview { background: linear-gradient(45deg, #FFD700, #F8C545); border-color: #FFF; }
+    
+    /* PREVIEWS FALTANTES CORREGIDOS */
+    .holo-preview { background: linear-gradient(120deg, #ff0099, #00ccff, #00ffcc); border-color: #fff; background-size: 200% 200%; animation: holoFlow 3s ease infinite; }
+    .toxic-preview { background: repeating-linear-gradient(45deg, #0f0 0px, #0f0 5px, #000 5px, #000 10px); border-radius: 0; border-color: #000; }
+    .flat-preview { background: #222; border-color: #555; }
+
+    .btn-quitar-bg { width: 100%; background: transparent; border: 1px dashed #dc3545; color: #dc3545; padding: 8px; border-radius: 8px; font-family: 'Oswald'; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn-quitar-bg:hover { background: rgba(220,53,69,0.1); }
+    
+    /* Toggle switch nativo para el modal */
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; margin: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--theme-border); transition: .4s; border-radius: 34px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: var(--theme-text); transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--theme-primary); }
+    input:checked + .slider:before { transform: translateX(20px); background-color: var(--theme-bg); }
 
 </style>
 

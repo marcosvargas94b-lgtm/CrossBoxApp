@@ -118,26 +118,105 @@
     .fade-in { animation: fadeIn 0.4s ease-out; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+   /* ========================================== */
+    /* LOS 7 ESTILOS VISUALES VIP DE LA COMUNIDAD */
     /* ========================================== */
-    /* LOS 5 ESTILOS VISUALES (Se mantienen intactos porque son customizables por el atleta) */
-    /* ========================================== */
-    .calling-card.glass .card-overlay { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
     
-    .calling-card.neon { border: 2px solid var(--b-color); box-shadow: 0 0 12px var(--b-color), inset 0 0 10px var(--b-color); }
-    .calling-card.neon .card-overlay { background: rgba(0, 0, 0, 0.6); }
-    .calling-card.neon .card-name { color: var(--b-color); text-shadow: 0 0 8px var(--b-color); }
+    /* 1. GLASS */
+    .calling-card.glass {
+        border: 1px solid rgba(255, 255, 255, 0.4) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.8) !important; 
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+    }
+    .calling-card.glass .card-overlay { 
+        background: linear-gradient(135deg, rgba(0,0,0,0.1), rgba(0,0,0,0.4));
+        backdrop-filter: blur(4px); 
+        -webkit-backdrop-filter: blur(4px); 
+    }
 
-    .calling-card.cyberpunk { border: none; border-left: 6px solid var(--b-color); border-radius: 0; clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px); }
-    .calling-card.cyberpunk .card-overlay { background: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 100%); }
-    .calling-card.cyberpunk .card-avatar { border-radius: 0; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
+    /* 2. NEÓN */
+    .calling-card.neon { 
+        border: 2px solid var(--b-color) !important; 
+        box-shadow: 0 0 8px var(--b-color), 0 0 20px var(--b-color), inset 0 0 15px var(--b-color) !important; 
+    }
+    .calling-card.neon .card-overlay { background: rgba(0, 0, 0, 0.4); }
+    .calling-card.neon .card-name { 
+        color: #fff !important; 
+        text-shadow: 0 0 10px var(--b-color), 0 0 20px var(--b-color), 2px 2px 2px black !important; 
+    }
 
-    .calling-card.gold { border: 2px solid #FFD700; box-shadow: 0 5px 15px rgba(255, 215, 0, 0.2); }
-    .calling-card.gold .card-overlay { background: linear-gradient(145deg, rgba(0,0,0,0.9) 0%, rgba(50,40,0,0.7) 100%); }
-    .calling-card.gold .card-name { background: linear-gradient(to right, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: none; }
-    
-    .calling-card.flat { border: 3px solid var(--b-color); border-radius: 4px; box-shadow: none; }
-    .calling-card.flat .card-overlay { background: rgba(15, 15, 15, 0.85); }
+    /* 3. CYBERPUNK */
+    .calling-card.cyberpunk { 
+        border: none !important; 
+        border-left: 6px solid var(--b-color) !important; 
+        border-right: 4px solid var(--theme-text) !important;
+        border-radius: 0 !important; 
+        clip-path: polygon(25px 0, 100% 0, 100% calc(100% - 25px), calc(100% - 25px) 100%, 0 100%, 0 25px); 
+        box-shadow: none !important;
+    }
+    .calling-card.cyberpunk .card-overlay { 
+        background: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.8) 100%);
+    }
+    .calling-card.cyberpunk .card-avatar { 
+        border-radius: 0; 
+        clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); 
+    }
+
+    /* 4. GOLD */
+    .calling-card.gold { 
+        border: 2px solid #FFD700 !important; 
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), inset 0 0 15px rgba(255, 215, 0, 0.2) !important;
+        position: relative;
+    }
+    .calling-card.gold .card-overlay { background: linear-gradient(45deg, rgba(0,0,0,0.7) 0%, rgba(255,215,0,0.1) 50%, rgba(0,0,0,0.7) 100%); }
+    .calling-card.gold::before {
+        content: ""; position: absolute; top: 0; left: -150%; width: 50%; height: 100%;
+        background: linear-gradient(to right, transparent, rgba(255,255,255,0.4), transparent);
+        transform: skewX(-25deg); animation: goldShine 4s infinite; z-index: 5; pointer-events: none;
+    }
+
+    /* 5. HOLO */
+    .calling-card.holo {
+        border: 2px solid rgba(255,255,255,0.5) !important;
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.4) !important;
+    }
+    .calling-card.holo .card-overlay {
+        background: linear-gradient(120deg, rgba(255,0,150,0.35), rgba(0,204,255,0.35), rgba(204,0,255,0.35), rgba(255,0,150,0.35)), rgba(0,0,0,0.4);
+        background-size: 300% 300%, 100% 100%;
+        animation: holoFlow 4s linear infinite;
+    }
+
+    /* 6. TOXIC */
+    .calling-card.toxic {
+        border: 3px solid var(--b-color) !important;
+        border-radius: 0 !important; 
+        box-shadow: 6px 6px 0px rgba(0,0,0,0.9) !important; 
+    }
+    .calling-card.toxic .card-overlay {
+        background: repeating-linear-gradient(45deg, rgba(0,0,0,0.7) 0px, rgba(0,0,0,0.7) 10px, rgba(0,0,0,0.95) 10px, rgba(0,0,0,0.95) 20px);
+    }
+    .calling-card.toxic .card-name {
+        color: var(--b-color) !important; 
+        text-shadow: 2px 2px 0px #000 !important;
+        font-style: italic;
+        letter-spacing: 2px;
+    }
+    .calling-card.toxic .card-avatar {
+        border-radius: 0 !important;
+    }
+
+    /* 7. FLAT */
+    .calling-card.flat { 
+        border: 2px solid var(--theme-text) !important; 
+        border-radius: 8px !important; 
+        box-shadow: 6px 6px 0px var(--b-color) !important; 
+    }
+    .calling-card.flat .card-overlay { background: rgba(0,0,0,0.5); }
     .calling-card.flat .card-avatar { border: 3px solid var(--b-color); border-radius: 4px; }
+
+    /* Animaciones extra para el Banner */
+    @@keyframes goldShine { 0% { left: -150%; } 20% { left: 200%; } 100% { left: 200%; } }
+    @@keyframes holoFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 </style>
 
 @code {
