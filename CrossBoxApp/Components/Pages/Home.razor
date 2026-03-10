@@ -491,13 +491,18 @@
 @* ========================================== *@
 @* MODAL DE EDICIÓN DE BANNER                 *@
 @* ========================================== *@
+@* ========================================== *@
+@* MODAL DE EDICIÓN DE BANNER                 *@
+@* ========================================== *@
 @if (mostrarModalBanner)
 {
     <div class="modal-overlay fade-in" @onclick="CerrarModalBanner">
         <div class="modal-content custom-modal slide-up" @onclick:stopPropagation="true">
             <div class="modal-header">
-                <h5>EDITAR CALLING CARD</h5>
-                <button class="btn-icon-header" @onclick="CerrarModalBanner"><i class="fas fa-times"></i></button>
+                <h5 style="margin:0; color:var(--theme-primary); font-weight:bold; font-family:'Oswald';">
+                    <i class="fas fa-pen" style="margin-right:8px;"></i> CALLING CARD
+                </h5>
+                <button class="btn-close-custom" @onclick="CerrarModalBanner"><i class="fas fa-times"></i></button>
             </div>
             <div class="modal-body scroll-custom">
 
@@ -562,33 +567,34 @@
                             <div class="style-preview neon-preview"></div> <span>NEÓN</span>
                         </div>
                         <div class="style-item @(miBannerEdit.EstiloVisual == "Cyberpunk" ? "selected" : "")" @onclick='() => miBannerEdit.EstiloVisual = "Cyberpunk"'>
-                            <div class="style-preview cyber-preview"></div> <span>CYBERPUNK</span>
+                            <div class="style-preview cyber-preview"></div> <span>CYBER</span>
                         </div>
                         <div class="style-item @(miBannerEdit.EstiloVisual == "Gold" ? "selected" : "")" @onclick='() => miBannerEdit.EstiloVisual = "Gold"'>
                             <div class="style-preview gold-preview"></div> <span>ORO</span>
                         </div>
                         <div class="style-item @(miBannerEdit.EstiloVisual == "Flat" ? "selected" : "")" @onclick='() => miBannerEdit.EstiloVisual = "Flat"'>
-                            <div class="style-preview flat-preview"></div> <span>FLAT DARK</span>
+                            <div class="style-preview flat-preview"></div> <span>FLAT</span>
                         </div>
                     </div>
                 </div>
-
-                <button class="btn-save-banner mt-4" @onclick="GuardarConfiguracionBanner" disabled="@guardandoBanner">
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-cancel" @onclick="CerrarModalBanner">Cancelar</button>
+                <button class="btn-confirm" @onclick="GuardarConfiguracionBanner" disabled="@guardandoBanner">
                     @if (guardandoBanner)
                     {
                         <i class="fas fa-spinner fa-spin"></i>
                     }
                     else
                     {
-                        <span>GUARDAR CAMBIOS</span>
+                        <span>GUARDAR</span>
                     }
                 </button>
             </div>
         </div>
     </div>
 }
-
-@* --- MODAL CAMBIAR PASSWORD --- *@
 @if (mostrarModalPassword)
 {
     <div class="modal-overlay">
@@ -1179,6 +1185,88 @@
     @@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
     @@keyframes pulseRpeAura { 0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7), 0 15px 35px rgba(0,0,0,0.4); } 70% { box-shadow: 0 0 0 15px rgba(255, 59, 48, 0), 0 15px 35px rgba(0,0,0,0.4); } 100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0), 0 15px 35px rgba(0,0,0,0.4); } }
     @@keyframes fadeInOutRpe { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        /* ========================================= */
+    /* ELEMENTOS FALTANTES: MODAL BANNER         */
+    /* ========================================= */
+    .styles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 10px; margin-top: 10px; }
+    .style-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: rgba(0,0,0,0.4); border: 2px solid var(--theme-border); padding: 15px 10px; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+    .style-item:hover { transform: translateY(-3px); border-color: var(--theme-text-muted); }
+    .style-item.selected { border-color: var(--theme-primary); background: rgba(255,255,255,0.05); box-shadow: 0 0 10px rgba(248,197,69,0.2); }
+    .style-item span { font-family: 'Oswald'; font-size: 0.75rem; font-weight: bold; letter-spacing: 1px; color: var(--theme-text); }
+    
+    .style-preview { width: 35px; height: 35px; border-radius: 50%; border: 2px solid transparent; }
+    .glass-preview { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
+    .neon-preview { background: black; border-color: #0ff; box-shadow: 0 0 8px #0ff; }
+    .cyber-preview { background: #fcee0a; border-radius: 0; border-color: #000; }
+    .gold-preview { background: linear-gradient(45deg, #FFD700, #F8C545); border-color: #FFF; }
+    .flat-preview { background: #222; border-color: #555; }
+
+    .btn-quitar-bg { width: 100%; background: transparent; border: 1px dashed #dc3545; color: #dc3545; padding: 8px; border-radius: 8px; font-family: 'Oswald'; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn-quitar-bg:hover { background: rgba(220,53,69,0.1); }
+    
+    /* Toggle switch nativo para el modal */
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; margin: 0; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--theme-border); transition: .4s; border-radius: 34px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: var(--theme-text); transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--theme-primary); }
+    input:checked + .slider:before { transform: translateX(20px); background-color: var(--theme-bg); }
+    /* ========================================= */
+    /* ESTILOS APLICADOS AL BANNER (COMUNIDAD)   */
+    /* ========================================= */
+
+    /* 1. GLASS */
+    .community-entry-card.glass {
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+    }
+    .community-entry-card.glass .card-overlay {
+        background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+
+    /* 2. NEÓN */
+    .community-entry-card.neon {
+        border: 2px solid var(--b-color) !important;
+        box-shadow: 0 0 12px var(--b-color), inset 0 0 12px var(--b-color) !important;
+    }
+    .community-entry-card.neon .card-overlay {
+        background: rgba(0,0,0,0.6);
+    }
+
+    /* 3. CYBERPUNK (Bordes laterales y cortes futuristas) */
+    .community-entry-card.cyberpunk {
+        border: none !important;
+        border-left: 6px solid var(--b-color) !important;
+        border-right: 6px solid var(--b-color) !important;
+        border-radius: 0 !important;
+        clip-path: polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px);
+        box-shadow: none !important;
+    }
+    .community-entry-card.cyberpunk .card-overlay {
+        background: rgba(0, 0, 0, 0.6);
+    }
+
+    /* 4. GOLD */
+    .community-entry-card.gold {
+        border: 2px solid #FFD700 !important;
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.3) !important;
+    }
+    .community-entry-card.gold .card-overlay {
+        background: linear-gradient(45deg, rgba(255,215,0,0.15), rgba(0,0,0,0.7));
+    }
+
+    /* 5. FLAT */
+    .community-entry-card.flat {
+        border: 1px solid var(--theme-border) !important;
+        box-shadow: none !important;
+        border-radius: 8px !important;
+    }
+    .community-entry-card.flat .card-overlay {
+        background: rgba(0,0,0,0.8);
+    }
+
 </style>
 
 @code {
