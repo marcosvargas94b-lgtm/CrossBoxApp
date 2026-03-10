@@ -467,7 +467,7 @@
                         </div>
                         <i class="fas fa-medal card-icon trophy-icon"></i>
                         <h3 class="trophy-title">MEDALLERO</h3>
-                        <p>Observa tu esfuerzo</p>
+                        <p class="trophy-title">Observa tu esfuerzo</p>
                     </div>
                 }
 
@@ -480,6 +480,21 @@
                         <p>Player Card Oficial</p>
                     </div>
                 }
+
+                @if (boxTieneMedallas)
+                {
+                    <div class="menu-card medallero-card" @onclick='() => Nav.NavigateTo("/logrodesbloqueado")'>
+                        <div class="sparkle-container">
+                            <div class="sparkle s1"></div>
+                            <div class="sparkle s2"></div>
+                            <div class="sparkle s3"></div>
+                        </div>
+                        <i class="fa-brands fa-phoenix-framework card-icon trophy-icon"></i>
+                        <h3 class="trophy-title">ACHIEVEMENTS</h3>
+                        <p class="trophy-title">Coleccionalas</p>
+                    </div>
+                }
+
             </div>
         }
 
@@ -1351,6 +1366,24 @@
     input:checked + .slider { background-color: var(--theme-primary); }
     input:checked + .slider:before { transform: translateX(20px); background-color: var(--theme-bg); }
 
+    .medallero-card {
+    border: 1px solid #F8C545 !important;
+    background: linear-gradient(135deg, rgba(26,26,26,1) 0%, rgba(50,40,10,1) 100%) !important;
+    position: relative;
+    overflow: hidden;
+}
+.trophy-icon { color: #FFD700 !important; text-shadow: 0 0 10px rgba(255,215,0,0.5); }
+.trophy-title { color: #F8C545 !important; }
+
+/* Animación de destellos */
+.sparkle-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+.sparkle { position: absolute; background: white; border-radius: 50%; box-shadow: 0 0 5px 2px rgba(255, 255, 255, 0.4); opacity: 0; animation: blink 3s infinite; }
+.s1 { top: 20%; left: 20%; width: 3px; height: 3px; animation-delay: 0s; }
+.s2 { top: 70%; left: 80%; width: 4px; height: 4px; animation-delay: 1s; }
+.s3 { top: 40%; left: 60%; width: 2px; height: 2px; animation-delay: 2s; }
+
+@@keyframes blink { 0%, 100% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1.5); } }
+
 </style>
 
 @code {
@@ -1366,6 +1399,7 @@
         --theme-text-muted: #888888;
     ";
 
+    private bool boxTieneMedallas = false;
     private bool modoTextoLibre = false;
     private bool editandoWod = false;
     private bool cargandoConfiguracion = true;
@@ -1394,7 +1428,7 @@
     private bool procesandoLectura = false;
     private bool mostrarMenuPrincipal = false;
     private bool EsAdmin = false;
-    private string NombreBox = "MVAPP";
+    private string NombreBox = "AFTRACK";
     private Guid? LogoBoxId; 
     private string UrlLogo => LogoBoxId.HasValue ? $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/Imagenes/Logos/{LogoBoxId}.jpg" : "";
 
@@ -1477,6 +1511,15 @@
             }
         } 
         catch { }
+
+        try 
+        { 
+            boxTieneMedallas = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/tiene-medallas/{Sesion.Usuario.BoxID}"); 
+        } 
+        catch 
+        { 
+            boxTieneMedallas = false; 
+        }
 
         EsAdmin = Sesion.Usuario.TipoUsuarioID == 1;
         await CargarNombreBox();
