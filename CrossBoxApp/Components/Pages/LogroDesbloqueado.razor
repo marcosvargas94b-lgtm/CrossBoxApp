@@ -60,7 +60,6 @@
             </div>
             
             <div class="nav-right">
-                @* Solo mostramos el engrane si es Staff/Admin Y está viendo su PROPIO medallero *@
                 @if (EsAdminOStaff && EsMiMedallero)
                 {
                     <button class="btn-admin-top" @onclick="AbrirModalAsignar">
@@ -104,8 +103,13 @@
                 @* GENERACIÓN DINÁMICA DE SECCIONES *@
                 @foreach (var grupo in misMedallas.GroupBy(m => m.Diseno).OrderBy(g => g.Key))
                 {
-                    string iconClass = grupo.Key.ToLower() == "neon" ? "fa-bolt" : (grupo.Key.ToLower() == "sticker" ? "fa-shield-alt" : "fa-star");
-                    string tituloSeccion = grupo.Key.ToLower() == "neon" ? "COLECCIÓN NEÓN" : (grupo.Key.ToLower() == "sticker" ? "STICKERS TÁCTICOS" : $"COLECCIÓN {grupo.Key.ToUpper()}");
+                    // LÓGICA DE NOMBRES E ICONOS (Incluye ARCADE)
+                    string iconClass = "fa-star";
+                    string tituloSeccion = $"COLECCIÓN {grupo.Key.ToUpper()}";
+
+                    if (grupo.Key.ToLower() == "neon") { iconClass = "fa-bolt"; tituloSeccion = "COLECCIÓN NEÓN"; }
+                    if (grupo.Key.ToLower() == "sticker") { iconClass = "fa-shield-alt"; tituloSeccion = "STICKERS TÁCTICOS"; }
+                    if (grupo.Key.ToLower() == "arcade") { iconClass = "fa-gamepad"; tituloSeccion = "ARCADE RETRO"; }
 
                     <h3 class="section-title fade-in mt-4">
                         <i class="fas @iconClass" style="color: var(--theme-primary);"></i> @tituloSeccion
@@ -158,7 +162,7 @@
     </div>
 
     @* ========================================== *@
-    @* MODAL ADMIN: ASIGNAR MEDALLAS MANUALES     *@
+    @* MODAL ADMIN: ASIGNACIÓN MANUAL Y MASIVA    *@
     @* ========================================== *@
     @if (mostrarModalAdmin)
     {
@@ -168,51 +172,112 @@
                     <h5 style="margin:0; color:var(--theme-primary); font-family:'Oswald'"><i class="fas fa-award"></i> ASIGNAR LOGROS</h5>
                     <button class="btn-close-custom" @onclick="CerrarModalAsignar"><i class="fas fa-times"></i></button>
                 </div>
-                <div class="modal-body" style="overflow-y:auto;">
+                
+                @* TABS DEL MODAL ADMIN *@
+                <div class="modal-tabs">
+                    <div class="tab-btn @(tabAdmin == "Individual" ? "active" : "")" @onclick='() => tabAdmin = "Individual"'>POR ATLETA</div>
+                    <div class="tab-btn @(tabAdmin == "Masivo" ? "active" : "")" @onclick='() => CargarTabMasivo()'>MASIVO</div>
+                </div>
+
+                <div class="modal-body" style="overflow-y:auto; padding-top: 10px;">
                     
-                    <label class="lbl-input">Selecciona Atleta:</label>
-                    <select class="form-control input-dark mb-4" @onchange="AlSeleccionarUsuario">
-                        <option value="">-- Buscar Atleta --</option>
-                        @if (listaUsuariosBox != null)
-                        {
-                            @foreach (var u in listaUsuariosBox)
+                    @* ------------------ TAB: INDIVIDUAL ------------------ *@
+                    @if (tabAdmin == "Individual")
+                    {
+                        <label class="lbl-input mt-2">Selecciona Atleta:</label>
+                        <select class="form-control input-dark mb-4" @onchange="AlSeleccionarUsuario">
+                            <option value="">-- Buscar Atleta --</option>
+                            @if (listaUsuariosBox != null)
                             {
-                                <option value="@u.UsuarioId">@u.NombreCompleto</option>
+                                @foreach (var u in listaUsuariosBox)
+                                {
+                                    <option value="@u.UsuarioId">@u.NombreCompleto</option>
+                                }
+                            }
+                        </select>
+
+                        @if (usuarioSeleccionadoId != Guid.Empty)
+                        {
+                            @if (cargandoCatalogoManual)
+                            {
+                                <div class="text-center text-muted">Cargando catálogo...</div>
+                            }
+                            else if (catalogoManual != null && catalogoManual.Any())
+                            {
+                                <h6 style="color:var(--theme-text); font-family:'Oswald'; margin-bottom:15px; text-transform:uppercase;">Stickers / Logros Especiales:</h6>
+                                <div class="toggles-list">
+                                    @foreach (var item in catalogoManual)
+                                    {
+                                        <div class="module-row" @onclick="() => ToggleMedallaManual(item)">
+                                            <div style="display:flex; align-items:center; gap:10px;">
+                                                <i class="@(item.Diseno == "Sticker" ? "fas fa-shield-alt" : "fas fa-bolt")" style="color:var(--theme-text-muted);"></i>
+                                                <span class="mod-name">@item.Nombre</span>
+                                            </div>
+                                            <div class="switch-track @(item.LaTiene ? "on" : "off")">
+                                                <div class="switch-thumb"></div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
                             }
                         }
-                    </select>
+                    }
 
-                    @if (usuarioSeleccionadoId != Guid.Empty)
+                    @* ------------------ TAB: MASIVO ------------------ *@
+                    @if (tabAdmin == "Masivo")
                     {
-                        @if (cargandoCatalogoManual)
-                        {
-                            <div class="text-center text-muted">Cargando catálogo...</div>
-                        }
-                        else if (catalogoManual != null && catalogoManual.Any())
-                        {
-                            <h6 style="color:var(--theme-text); font-family:'Oswald'; margin-bottom:15px; text-transform:uppercase;">Stickers / Logros Especiales:</h6>
-                            <div class="toggles-list">
-                                @foreach (var item in catalogoManual)
+                        <label class="lbl-input mt-2">1. Selecciona el Logro a repartir:</label>
+                        <select class="form-control input-dark mb-4" @onchange="AlSeleccionarMedallaMasiva">
+                            <option value="">-- Elegir Medalla --</option>
+                            @if (catalogoCompletoManual != null)
+                            {
+                                @foreach (var m in catalogoCompletoManual)
                                 {
-                                    <div class="module-row" @onclick="() => ToggleMedallaManual(item)">
-                                        <div style="display:flex; align-items:center; gap:10px;">
-                                            <i class="@(item.Diseno == "Sticker" ? "fas fa-shield-alt" : "fas fa-bolt")" style="color:var(--theme-text-muted);"></i>
-                                            <span class="mod-name">@item.Nombre</span>
-                                        </div>
-                                        <div class="switch-track @(item.LaTiene ? "on" : "off")">
-                                            <div class="switch-thumb"></div>
-                                        </div>
-                                    </div>
+                                    <option value="@m.Id">@m.Nombre (@m.Diseno)</option>
                                 }
-                            </div>
+                            }
+                        </select>
+
+                        @if (medallaMasivaSeleccionada != Guid.Empty)
+                        {
+                            @if (cargandoAtletasMasivo)
+                            {
+                                <div class="text-center text-muted">Cargando atletas...</div>
+                            }
+                            else if (listaUsuariosMasivo != null)
+                            {
+                                <h6 style="color:var(--theme-text); font-family:'Oswald'; margin-bottom:15px; text-transform:uppercase;">Asignar a los siguientes atletas:</h6>
+                                <div class="toggles-list">
+                                    @foreach (var u in listaUsuariosMasivo)
+                                    {
+                                        <div class="module-row" @onclick="() => ToggleUsuarioMasivo(u)">
+                                            <span class="mod-name">@u.NombreCompleto</span>
+                                            <div class="switch-track @(u.TieneLaMedalla ? "on" : "off")">
+                                                <div class="switch-thumb"></div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
                         }
                     }
+
                 </div>
+                
                 <div class="modal-footer">
                     <button class="btn-cancel" @onclick="CerrarModalAsignar">Cancelar</button>
-                    <button class="btn-confirm" @onclick="GuardarMedallasManuales" disabled="@guardandoManuales">
-                        @if (guardandoManuales) { <i class="fas fa-spinner fa-spin"></i> } else { <span>GUARDAR</span> }
-                    </button>
+                    @if (tabAdmin == "Individual")
+                    {
+                        <button class="btn-confirm" @onclick="GuardarMedallasManuales" disabled="@guardandoManuales">
+                            @if (guardandoManuales) { <i class="fas fa-spinner fa-spin"></i> } else { <span>GUARDAR</span> }
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="btn-confirm" @onclick="GuardarAsignacionMasiva" disabled="@guardandoManuales">
+                            @if (guardandoManuales) { <i class="fas fa-spinner fa-spin"></i> } else { <span>REPARTIR</span> }
+                        </button>
+                    }
                 </div>
             </div>
         </div>
@@ -246,14 +311,41 @@
     .medalla-img { width: 100%; max-width: 90px; aspect-ratio: 1/1; object-fit: contain; margin-bottom: 10px; transition: all 0.3s ease; z-index: 2; }
     .medalla-nombre { font-family: 'Oswald'; font-size: 0.95rem; font-weight: bold; color: var(--theme-text); margin: 0; line-height: 1.2; z-index: 2; }
 
-    /* Estados visuales */
+    /* ==================================================== */
+    /* ESTADOS VISUALES (Neón, Sticker, Holo y ARCADE)      */
+    /* ==================================================== */
     .locked { background: rgba(0,0,0,0.3); border: 1px dashed var(--theme-border); }
     .img-bw { filter: grayscale(100%) opacity(40%); }
     .lock-icon { position: absolute; bottom: 15px; color: var(--theme-text-muted); opacity: 0.5; font-size: 0.8rem; }
+    
     .unlocked-neon { border-color: var(--theme-primary); box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 5px 15px rgba(0,0,0,0.4); }
     .unlocked-neon .medalla-img { filter: drop-shadow(0 0 8px var(--theme-primary)); }
+    
     .unlocked-sticker { border-color: var(--theme-text-muted); }
     .drop-shadow-sticker { filter: drop-shadow(4px 4px 6px rgba(0,0,0,0.8)); }
+    
+    .unlocked-holo { 
+        border: 2px solid transparent;
+        background: linear-gradient(var(--theme-card), var(--theme-card)) padding-box, 
+                    linear-gradient(120deg, #ff0099, #00ccff, #00ffcc) border-box;
+        box-shadow: 0 5px 15px rgba(0,204,255,0.3), inset 0 0 15px rgba(255,0,153,0.2);
+    }
+    .unlocked-holo .medalla-img { filter: drop-shadow(0 0 12px rgba(255,255,255,0.8)); }
+
+    /* NUEVO ESTILO ARCADE */
+    .unlocked-arcade {
+        border: 3px solid #ff00ff;
+        background-color: #111;
+        box-shadow: 
+            4px 4px 0px #00ffff, 
+            -4px -4px 0px #ffff00;
+        border-radius: 0px !important; /* Cuadrado retro */
+    }
+    .unlocked-arcade .medalla-img {
+        filter: drop-shadow(4px 4px 0px #000);
+    }
+    /* ==================================================== */
+
     .date-badge { position: absolute; top: 8px; right: 8px; background: var(--theme-primary); color: var(--theme-bg); font-size: 0.6rem; font-weight: bold; padding: 2px 6px; border-radius: 6px; font-family: 'Oswald'; z-index: 2; }
 
     /* Botón Info y Tooltip */
@@ -275,6 +367,11 @@
     
     .lbl-input { color: var(--theme-text-muted); font-size: 0.75rem; font-weight: bold; margin-bottom: 8px; display: block; text-transform: uppercase; }
     .input-dark { background: rgba(0,0,0,0.4); border: 1px solid var(--theme-border); color: var(--theme-text); border-radius: 10px; padding: 12px; width: 100%; }
+
+    /* TABS ADMIN */
+    .modal-tabs { display:flex; border-bottom:1px solid var(--theme-border); background: var(--theme-card); }
+    .tab-btn { flex:1; text-align:center; padding:15px; color: var(--theme-text-muted); font-family:'Oswald'; font-size:0.9rem; cursor:pointer; border-bottom: 3px solid transparent; transition:0.3s;}
+    .tab-btn.active { color: var(--theme-primary); border-bottom: 3px solid var(--theme-primary); font-weight:bold; background:rgba(255,255,255,0.02);}
 
     /* Switch Component */
     .module-row { display: flex; justify-content: space-between; align-items: center; background-color: var(--theme-card); padding: 12px 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--theme-border); cursor: pointer; }
@@ -302,16 +399,6 @@
     .slide-up { animation: slideUp 0.3s ease; }
     .slide-in-bottom { animation: slideInBottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     .bounce-in { animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
-
-    .unlocked-holo { 
-        border: 2px solid transparent;
-        background: linear-gradient(var(--theme-card), var(--theme-card)) padding-box, 
-                    linear-gradient(120deg, #ff0099, #00ccff, #00ffcc) border-box;
-        box-shadow: 0 5px 15px rgba(0,204,255,0.3), inset 0 0 15px rgba(255,0,153,0.2);
-    }
-    .unlocked-holo .medalla-img { 
-        filter: drop-shadow(0 0 12px rgba(255,255,255,0.8)); 
-    }
     
    @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
    @@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -336,20 +423,15 @@
     private Guid? medallaInfoVisible = null;
     private bool EsAdminOStaff = false;
 
-    // --- CLASES DTO ---
-    public class MedallaUsuarioDto
-    {
-        public Guid Id { get; set; }
-        public string Nombre { get; set; }
-        public string Leyenda { get; set; }
-        public string Diseno { get; set; }
-        public bool EsAuto { get; set; }
-        public DateTime? FechaObtencion { get; set; }
-        public bool EsNueva { get; set; }
-    }
-
+    // --- CLASES DTO PRINCIPALES ---
+    public class MedallaUsuarioDto { public Guid Id { get; set; } public string Nombre { get; set; } public string Leyenda { get; set; } public string Diseno { get; set; } public bool EsAuto { get; set; } public DateTime? FechaObtencion { get; set; } public bool EsNueva { get; set; } }
     public class UsuarioSelectDto { public Guid UsuarioId { get; set; } public string NombreCompleto { get; set; } }
+    
+    // --- DTO PARA LA TAB INDIVIDUAL ---
     public class CatalogoManualDto { public Guid Id { get; set; } public string Nombre { get; set; } public string Diseno { get; set; } public bool LaTiene { get; set; } }
+    
+    // --- DTO PARA LA TAB MASIVA ---
+    public class UsuarioMasivoDto { public Guid UsuarioId { get; set; } public string NombreCompleto { get; set; } public bool TieneLaMedalla { get; set; } }
 
     private List<MedallaUsuarioDto> misMedallas = new List<MedallaUsuarioDto>();
     
@@ -357,23 +439,31 @@
     private bool mostrarAnimacionNuevas = false;
     private List<MedallaUsuarioDto> medallasNuevasAnimacion = new List<MedallaUsuarioDto>();
 
-    // --- MODAL ADMIN ---
+    // --- MODAL ADMIN ESTADOS ---
     private bool mostrarModalAdmin = false;
+    private string tabAdmin = "Individual"; // Puede ser "Individual" o "Masivo"
+    private bool guardandoManuales = false;
+
+    // VARIABLES TAB INDIVIDUAL
     private List<UsuarioSelectDto> listaUsuariosBox = new List<UsuarioSelectDto>();
     private Guid usuarioSeleccionadoId = Guid.Empty;
     private List<CatalogoManualDto> catalogoManual = new List<CatalogoManualDto>();
     private bool cargandoCatalogoManual = false;
-    private bool guardandoManuales = false;
+
+    // VARIABLES TAB MASIVO
+    private List<CatalogoManualDto> catalogoCompletoManual = new List<CatalogoManualDto>(); // Solo para pintar el select
+    private Guid medallaMasivaSeleccionada = Guid.Empty;
+    private List<UsuarioMasivoDto> listaUsuariosMasivo = new List<UsuarioMasivoDto>();
+    private bool cargandoAtletasMasivo = false;
+
 
     protected override async Task OnInitializedAsync()
     {
         try { var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box"); if (!string.IsNullOrEmpty(cache)) { EstilosTema = cache; StateHasChanged(); } } catch { }
 
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
-        
         EsAdminOStaff = Sesion.Usuario.TipoUsuarioID == 1 || Sesion.Usuario.TipoUsuarioID == 3;
 
-        // Si estoy visitando, traigo el nombre rápido para la barra superior
         if (!EsMiMedallero)
         {
             try { 
@@ -392,11 +482,9 @@
             cargando = true;
             Guid idConsulta = TargetUserId ?? Sesion.Usuario.UsuarioID;
             
-            // Le pasamos a la API quién es el dueño de la sesión actual, y a quién estamos consultando
             misMedallas = await Http.GetFromJsonAsync<List<MedallaUsuarioDto>>(
-    $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/mis-medallas/{Sesion.Usuario.BoxID}/{idConsulta}?visitanteId={Sesion.Usuario.UsuarioID}");
+                $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/mis-medallas/{Sesion.Usuario.BoxID}/{idConsulta}?visitanteId={Sesion.Usuario.UsuarioID}");
             
-            // Solo disparamos la animación si somos los dueños (EsMiMedallero)
             if (EsMiMedallero && misMedallas != null && misMedallas.Any(m => m.EsNueva))
             {
                 medallasNuevasAnimacion = misMedallas.Where(m => m.EsNueva).ToList();
@@ -410,27 +498,21 @@
     private void ToggleInfo(Guid medallaId) => medallaInfoVisible = medallaInfoVisible == medallaId ? null : medallaId;
     private void CerrarTooltips() { if (medallaInfoVisible != null) medallaInfoVisible = null; }
     private void CerrarCelebracion() => mostrarAnimacionNuevas = false;
-    private void Volver()
-    {
-        if (!EsMiMedallero)
-        {
-            Nav.NavigateTo($"/ficha-atleta/{TargetUserId}");
-        }
-        else
-        {
-            Nav.NavigateTo("/home");
-        }
-    }
+    private void Volver() { if (!EsMiMedallero) Nav.NavigateTo($"/ficha-atleta/{TargetUserId}"); else Nav.NavigateTo("/home"); }
 
     // ==========================================
-    // LÓGICA ADMIN (ASIGNAR MANUAL)
+    // LÓGICA ADMIN
     // ==========================================
     private async Task AbrirModalAsignar()
     {
         CerrarTooltips();
         mostrarModalAdmin = true;
+        tabAdmin = "Individual";
         usuarioSeleccionadoId = Guid.Empty;
         catalogoManual.Clear();
+        medallaMasivaSeleccionada = Guid.Empty;
+        listaUsuariosMasivo.Clear();
+
         if (listaUsuariosBox.Count == 0)
         {
             try { listaUsuariosBox = await Http.GetFromJsonAsync<List<UsuarioSelectDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/usuarios-box/{Sesion.Usuario.BoxID}"); }
@@ -438,6 +520,9 @@
         }
     }
 
+    private void CerrarModalAsignar() => mostrarModalAdmin = false;
+
+    // --- TAB 1: INDIVIDUAL ---
     private async Task AlSeleccionarUsuario(ChangeEventArgs e)
     {
         if (Guid.TryParse(e.Value?.ToString(), out Guid uId))
@@ -470,8 +555,6 @@
             {
                 await App.Current.MainPage.DisplayAlert("Éxito", "Medallas guardadas correctamente.", "OK");
                 CerrarModalAsignar();
-
-                // Recargar medallas para que el admin vea el cambio instantáneo
                 await CargarMedallasDelUsuario();
             }
             else { await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar.", "OK"); }
@@ -480,5 +563,55 @@
         finally { guardandoManuales = false; StateHasChanged(); }
     }
 
-    private void CerrarModalAsignar() => mostrarModalAdmin = false;
+    // --- TAB 2: MASIVO ---
+    private async Task CargarTabMasivo()
+    {
+        tabAdmin = "Masivo";
+        if (catalogoCompletoManual.Count == 0)
+        {
+            // Usamos tu ID para no crear otro endpoint, igual traerá todo el catálogo del box (con tus estados, pero solo usaremos los IDs)
+            try { catalogoCompletoManual = await Http.GetFromJsonAsync<List<CatalogoManualDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/catalogo-manual/{Sesion.Usuario.BoxID}/{Sesion.Usuario.UsuarioID}"); }
+            catch { }
+        }
+    }
+
+    private async Task AlSeleccionarMedallaMasiva(ChangeEventArgs e)
+    {
+        if (Guid.TryParse(e.Value?.ToString(), out Guid mId))
+        {
+            medallaMasivaSeleccionada = mId;
+            cargandoAtletasMasivo = true; StateHasChanged();
+            try { listaUsuariosMasivo = await Http.GetFromJsonAsync<List<UsuarioMasivoDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/atletas-por-medalla/{Sesion.Usuario.BoxID}/{medallaMasivaSeleccionada}"); }
+            catch { }
+            finally { cargandoAtletasMasivo = false; StateHasChanged(); }
+        }
+        else { medallaMasivaSeleccionada = Guid.Empty; listaUsuariosMasivo.Clear(); }
+    }
+
+    private void ToggleUsuarioMasivo(UsuarioMasivoDto item) => item.TieneLaMedalla = !item.TieneLaMedalla;
+
+    private async Task GuardarAsignacionMasiva()
+    {
+        if (medallaMasivaSeleccionada == Guid.Empty) return;
+        guardandoManuales = true; StateHasChanged();
+        
+        try
+        {
+            var payload = new {
+                MedallaId = medallaMasivaSeleccionada,
+                UsuariosActivosIds = listaUsuariosMasivo.Where(u => u.TieneLaMedalla).Select(u => u.UsuarioId).ToList()
+            };
+            var res = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/asignar-masivo", payload);
+            
+            if (res.IsSuccessStatusCode)
+            {
+                await App.Current.MainPage.DisplayAlert("Éxito", "Logro repartido a los atletas seleccionados.", "OK");
+                CerrarModalAsignar();
+                await CargarMedallasDelUsuario();
+            }
+            else { await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar la asignación.", "OK"); }
+        }
+        catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }
+        finally { guardandoManuales = false; StateHasChanged(); }
+    }
 }
