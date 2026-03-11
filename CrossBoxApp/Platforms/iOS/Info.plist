@@ -40,12 +40,23 @@
 	</array>
 	<key>XSAppIconAssets</key>
 	<string>Assets.xcassets/appicon.appiconset</string>
+
 	<key>NSCameraUsageDescription</key>
 	<string>Esta app necesita usar la cámara para escanear el código QR de acceso.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Necesitamos acceder a tu galería para que puedas seleccionar tu foto de perfil.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Necesitamos acceso para guardar la imagen de tu progreso en tu carrete.</string>
+
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Necesitamos tu ubicación para validar que te encuentras físicamente dentro del Box para utilizar la función de spotter.</string>
+	
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Necesitamos tu ubicación para validar que te encuentras físicamente dentro del Box para utilizar la función de spotter.</string>
+	
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Necesitamos tu ubicación para asegurarnos de que estés en el gimnasio al hacer check-in.</string>
+
 	<key>CFBundleIdentifier</key>
 	<string></string>
 </dict>
