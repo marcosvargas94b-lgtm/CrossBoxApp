@@ -14,7 +14,14 @@
             <i class="fas fa-arrow-left"></i> VOLVER
         </div>
         <div class="nav-title">AGENDA TU CLASE</div>
-        <div class="nav-right"></div>
+        <div class="nav-right">
+            @if (esAdminOCoach)
+            {
+                <button class="btn-icon-nav" @onclick="AbrirModalLimite">
+                    <i class="fas fa-cog"></i>
+                </button>
+            }
+        </div>
     </div>
 
     <div class="scrollable-content">
@@ -39,11 +46,15 @@
             {
                 <label class="lbl-input">Selecciona tu horario:</label>
                 <div class="input-group">
-                    <select @bind="horarioSeleccionado" class="form-control input-dark">
+                   <select @bind="horarioSeleccionado" class="form-control input-dark">
                         <option value="">-- Elige Hora --</option>
                         @foreach (var item in agendaData)
                         {
-                            <option value="@item.HorarioId">@item.HorarioNombre</option>
+                            bool estaLleno = item.UsuariosInscritos.Count >= limiteBoxActual;
+                            
+                            <option value="@item.HorarioId" disabled="@estaLleno">
+                                @item.HorarioNombre @(estaLleno ? " (LLENO)" : "")
+                            </option>
                         }
                     </select>
                     <button class="btn-reservar" @onclick="ReservarClase">RESERVAR</button>
@@ -87,7 +98,20 @@
                     <div class="schedule-card fade-in">
                         <div class="card-header">
                             <span class="time-text">@horario.HorarioNombre</span>
-                            <span class="badge-count">@horario.UsuariosInscritos.Count Atletas</span>
+                            
+                            @* LÓGICA VISUAL DE AFORO *@
+                            @if (horario.UsuariosInscritos.Count >= limiteBoxActual)
+                            {
+                                <span class="badge-count" style="background-color: #dc3545 !important; color: white !important;">
+                                    LLENO (@horario.UsuariosInscritos.Count/@limiteBoxActual)
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge-count">
+                                    @horario.UsuariosInscritos.Count / @limiteBoxActual Atletas
+                                </span>
+                            }
                         </div>
                         <div class="card-body">
                             @if (horario.UsuariosInscritos.Count == 0)
@@ -116,7 +140,39 @@
     </div>
 </div>
 </div>
+@* --- MODAL CONFIGURAR LÍMITE (SOLO ADMIN/COACH) --- *@
+    @if (mostrarModalLimite)
+    {
+        <div class="modal-overlay fade-in">
+            <div class="modal-content custom-modal slide-up">
+                <div class="modal-header">
+                    <h5 style="color:var(--theme-primary); margin:0; font-family:'Oswald'">
+                        <i class="fas fa-users-cog" style="margin-right:8px;"></i> AFORO MÁXIMO
+                    </h5>
+                    <button class="btn-close-custom" @onclick="() => mostrarModalLimite = false"><i class="fas fa-times"></i></button>
+                </div>
+                
+                <div class="modal-body text-center">
+                    <p style="color: var(--theme-text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+                        Establece el número máximo de atletas permitidos por clase.
+                    </p>
+                    
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 15px;">
+                        <button class="btn-circle" @onclick="DisminuirLimite"><i class="fas fa-minus"></i></button>
+                        <input type="number" @bind="limiteAtletasInput" class="form-control input-dark" style="width: 80px; text-align: center; font-size: 1.5rem; font-weight: bold; font-family: 'Oswald';" readonly />
+                        <button class="btn-circle" @onclick="AumentarLimite"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
 
+                <div class="modal-footer">
+                    <button class="btn-cancel" @onclick="() => mostrarModalLimite = false">Cancelar</button>
+                    <button class="btn-confirm" @onclick="GuardarLimite" disabled="@guardandoLimite">
+                        @if (guardandoLimite) { <i class="fas fa-spinner fa-spin"></i> } else { <span>GUARDAR</span> }
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
 <style>
     /* --- ESTRUCTURA BASE (PROTECCIÓN NOTCH) --- */
     .main-layout {
@@ -208,6 +264,16 @@
         transform: scale(1.02);
     }
 
+    /* Estilos del botón Navbar y Modal Límite */
+    .btn-icon-nav { background: transparent; border: none; color: var(--theme-primary); font-size: 1.4rem; cursor: pointer; transition: 0.2s; display: flex; justify-content: flex-end; width: 100%; }
+    .btn-icon-nav:active { transform: rotate(45deg) scale(0.9); }
+    
+    .btn-circle { background: var(--theme-card); border: 2px solid var(--theme-primary); color: var(--theme-primary); width: 45px; height: 45px; border-radius: 50%; font-size: 1.2rem; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .btn-circle:active { background: var(--theme-primary); color: var(--theme-bg); transform: scale(0.9); }
+    
+    /* Para que el modal no sea tan alto */
+    .custom-modal { width: 90%; max-width: 400px; max-height: auto; }
+
     /* --- RESTO DE ESTILOS --- */
     .date-header { font-family: 'Oswald'; text-align: center; color: var(--theme-primary) !important; font-size: 1.5rem; margin-top: 5px; margin-bottom: 20px; letter-spacing: 1px; }
     .booking-section { background: var(--theme-card) !important; padding: 20px; border-radius: 15px; border: 1px solid var(--theme-border) !important; margin-bottom: 20px; width: 100%; max-width: 600px; align-self: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
@@ -261,6 +327,11 @@
         public string ThemeText { get; set; }
         public string ThemeTextMuted { get; set; }
     }
+    private bool esAdminOCoach = false;
+    private bool mostrarModalLimite = false;
+    private bool guardandoLimite = false;
+    private int limiteAtletasInput = 15; // Valor por defecto
+    private int limiteBoxActual = 15; // Lo que viene de la BD
 
     private List<AgendaVisualDto> agendaData = new List<AgendaVisualDto>();
     private Guid horarioSeleccionado;
@@ -285,9 +356,13 @@
         } 
         catch { }
 
+       
+
         // 2. BUSCAMOS TEMA ACTUALIZADO EN LA BD
         if (Sesion.Usuario != null)
         {
+
+             esAdminOCoach = (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.Usuario.TipoUsuarioID == 3);
             try
             {
                 var configBox = await Http.GetFromJsonAsync<BoxConfigDTO>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
@@ -333,6 +408,53 @@
         if (!EsHoy) return;
         fechaSeleccionada = DateTime.Today.AddDays(1);
         await CargarDatos();
+    }
+
+    private void AbrirModalLimite()
+    {
+        limiteAtletasInput = limiteBoxActual; // Mostramos el que está guardado
+        mostrarModalLimite = true;
+    }
+
+    private void AumentarLimite() { limiteAtletasInput++; }
+    private void DisminuirLimite() { if (limiteAtletasInput > 1) limiteAtletasInput--; }
+
+    private async Task GuardarLimite()
+    {
+        guardandoLimite = true;
+        StateHasChanged();
+
+        try
+        {
+            var req = new { 
+                BoxID = Sesion.Usuario.BoxID, 
+                NuevoLimite = limiteAtletasInput 
+            };
+
+            // Llama a tu API para actualizar la tabla Boxes
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/actualizar-limite", req);
+
+            if (response.IsSuccessStatusCode)
+            {
+                limiteBoxActual = limiteAtletasInput;
+                mostrarModalLimite = false;
+                await App.Current.MainPage.DisplayAlert("Éxito", $"Límite actualizado a {limiteBoxActual} atletas por clase.", "OK");
+                await CargarDatos(); // Recargamos para que se refleje si ya estaban llenas
+            }
+            else
+            {
+                await App.Current.MainPage.DisplayAlert("Error", "No se pudo actualizar el límite.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
+        finally
+        {
+            guardandoLimite = false;
+            StateHasChanged();
+        }
     }
 
     private async Task CargarDatos()
