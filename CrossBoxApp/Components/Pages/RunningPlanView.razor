@@ -166,11 +166,12 @@
     }
 
     @* --- MODAL FEEDBACK NORMAL --- *@
+    @* --- MODAL ASIGNAR PLAN / VER FEEDBACK (COACH) --- *@
     @if (mostrarModal && logEditando != null)
     {
         <div class="modal-overlay fade-in">
             <div class="modal-content custom-modal slide-up">
-                
+
                 <div class="modal-header" style="background: @ObtenerColor(logEditando.Tipo)">
                     <div class="header-info">
                         <span class="header-date">@fechaSeleccionada.ToString("dd MMMM").ToUpper()</span>
@@ -178,99 +179,43 @@
                     </div>
                     <button class="btn-close-custom" @onclick="CerrarModal"><i class="fas fa-times" style="color:black;"></i></button>
                 </div>
-
                 <div class="modal-body">
-                    
-                    <div class="coach-card">
-                        <div class="card-label"><i class="fas fa-clipboard-list"></i> PLAN DEL COACH</div>
-                        <h4 class="plan-title">@logEditando.Titulo</h4>
-                        <p class="plan-desc">@logEditando.Descripcion</p>
-                    </div>
 
-                    <div class="action-divider"></div>
+                    @* --- SECCIÓN 1: FEEDBACK DEL ATLETA Y VALIDACIÓN (SOLO VISIBLE SI YA LO HIZO) --- *@
+                    @if (logEditando.Realizado == true)
+                    {
+                        <div class="coach-card mb-4" style="border-left-color: #28a745;">
+                            <div class="card-label" style="color: #28a745;"><i class="fas fa-check-circle"></i> FEEDBACK DEL ATLETA</div>
 
-                    <div class="feedback-section">
-                        
-                        <div class="status-toggle-row">
-                            <label class="section-label">ESTADO:</label>
-                            <div class="status-pill @(logEditando.Realizado == true ? "done" : "pending")" @onclick="ToggleRealizado">
-                                @if (logEditando.Realizado == true)
-                                {
-                                    <i class="fas fa-check-circle"></i> <span>REALIZADO</span>
-                                }
-                                else
-                                {
-                                    <i class="far fa-circle"></i> <span>MARCA AL REALIZAR</span>
-                                }
+                            <div class="mt-2">
+                                <span style="font-weight: bold; color: var(--theme-text);">Intensidad (RPE): </span>
+                                <span style="color: @ObtenerColorRPE(logEditando.RPE ?? 0); font-weight: bold; font-size: 1.2rem;">@(logEditando.RPE ?? 0)/10</span>
                             </div>
+
+                            @if (!string.IsNullOrWhiteSpace(logEditando.ComentariosAtleta))
+                            {
+                                <div class="mt-2 p-2" style="background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid var(--theme-border);">
+                                    <p style="color: var(--theme-text); font-style: italic; margin: 0; font-size: 0.9rem;">"@logEditando.ComentariosAtleta"</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <p style="color: var(--theme-text-muted); font-size: 0.8rem; margin-top: 5px;">Sin comentarios adicionales.</p>
+                            }
+
+                            @if (!string.IsNullOrEmpty(logEditando.EvidenciaUrl))
+                            {
+                                <div class="mt-3">
+                                    <span style="font-weight: bold; font-size: 0.85rem; color: var(--theme-text-muted);"><i class="fas fa-camera"></i> EVIDENCIA:</span>
+                                    <div class="evidence-box mt-2" @onclick='() => VerImagenExpandida($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/imagenes/running/{logEditando.EvidenciaUrl}")'>
+                                        <img src="https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/imagenes/running/@logEditando.EvidenciaUrl" />
+                                    </div>
+                                </div>
+                            }
                         </div>
 
-                        @if (logEditando.Realizado == true)
-                        {
-                            <div class="fade-in mt-3">
-                                <label class="section-label">INTENSIDAD (RPE 1-10):</label>
-                                <div class="rpe-container">
-                                    @for (int i = 1; i <= 10; i++)
-                                    {
-                                        int val = i;
-                                        <div class="rpe-btn @(logEditando.RPE == val ? "active" : "")"
-                                             style="--rpe-color: @ObtenerColorRPE(val)"
-                                             @onclick="() => SeleccionarRPE(val)">
-                                            @val
-                                        </div>
-                                    }
-                                </div>
-                                <div class="rpe-legend">
-                                    <span>Suave</span>
-                                    <span>Máximo</span>
-                                </div>
-
-                                <label class="section-label mt-3">TUS SENSACIONES:</label>
-                                <textarea @bind="logEditando.ComentariosAtleta" 
-                                          class="feedback-textarea" 
-                                          placeholder="Ej: Me sentí fuerte en las subidas..."></textarea>
-
-                                <label class="section-label mt-4" style="color:var(--theme-primary);">
-                                    <i class="fas fa-camera"></i> EVIDENCIA DE PARCIALES <span class="text-danger">*</span>
-                                </label>
-                                <p style="font-size: 0.75rem; color: var(--theme-text-muted); margin-top:-5px; margin-bottom: 15px;">
-                                    Sube captura de tu reloj o app. Es obligatorio para verificar tu entrenamiento.
-                                </p>
-
-                                @* ZONA DE SUBIDA DE FOTOS SIEMPRE VISIBLE *@
-                                <div class="evidence-container">
-                                    @for (int i = 0; i < previewsEvidencia.Count; i++)
-                                    {
-                                        int index = i;
-                                        <div class="evidence-box fade-in">
-                                            <img src="@previewsEvidencia[index]" />
-                                            <button class="btn-remove-ev" @onclick="() => QuitarFoto(index)">
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </div>
-                                    }
-
-                                    <div class="evidence-add" @onclick="AgregarFotoEvidencia">
-                                        <i class="fas fa-plus"></i>
-                                    </div>
-                                </div>
-
-                                @* CUADRO VERDE SI YA TIENE EVIDENCIA EN BD *@
-                                @if (!string.IsNullOrEmpty(logEditando.EvidenciaUrl))
-                                {
-                                    <div class="mt-3 fade-in" style="border: 1px solid #28a745; padding: 12px 15px; border-radius: 8px; background: rgba(40,167,69,0.1); display:flex; align-items:center; gap:10px;">
-                                        <i class="fas fa-check-circle" style="color:#28a745; font-size: 1.5rem;"></i>
-                                        <div style="display:flex; flex-direction:column;">
-                                            <span style="color:#28a745; font-family:'Oswald'; font-weight:bold; font-size:0.9rem;">EVIDENCIA ENVIADA PREVIAMENTE</span>
-                                            <span style="color:var(--theme-text-muted); font-size:0.75rem;">El coach ya tiene un registro guardado.</span>
-                                        </div>
-                                    </div>
-                                }
-                            </div>
-                        }
-                        
-                        @* --- BOTÓN SWITCH VERIFICACIÓN COACH (BLOQUEABLE) --- *@
-                        <div class="coach-verification-box mt-3 fade-in @(yaEstabaVerificado ? "verified-locked" : "")">
+                        @* EL SWITCH DE VALIDAR ASISTENCIA AHORA ESTÁ AQUÍ ADENTRO *@
+                        <div class="coach-verification-box fade-in @(yaEstabaVerificado ? "verified-locked" : "")" style="margin-bottom: 20px;">
                             <div style="flex:1; padding-right:10px;">
                                 <label style="color: var(--theme-primary); font-family:'Oswald'; font-size:1rem; margin-bottom:2px; display:block;">
                                     <i class="fas fa-check-double"></i> VALIDAR ASISTENCIA
@@ -294,29 +239,28 @@
                             </label>
                         </div>
 
+                        <div class="action-divider"></div>
+                    }
+
+                    @* --- SECCIÓN 2: ASIGNACIÓN DEL PLAN (SIEMPRE VISIBLE) --- *@
+                    <label class="lbl-input">Tipo de Sesión:</label>
+                    <div class="type-grid mb-3">
+                        @foreach (var tipo in TiposEntreno)
+                        {
+                            <div class="type-btn @(logEditando.Tipo == tipo.Nombre ? "selected" : "")"
+                                 style="border-color: @(string.IsNullOrEmpty(tipo.Color) ? "var(--theme-primary)" : tipo.Color); color: @(logEditando.Tipo == tipo.Nombre ? "black" : "var(--theme-text)"); background: @(logEditando.Tipo == tipo.Nombre ? (string.IsNullOrEmpty(tipo.Color) ? "var(--theme-primary)" : tipo.Color) : "transparent")"
+                                 @onclick="() => SeleccionarTipo(tipo.Nombre)">
+                                @tipo.Nombre
+                            </div>
+                        }
                     </div>
 
-                    <div class="feedback-divider"></div>
-                
+                    <label class="lbl-input">Instrucciones Breves (Título):</label>
+                    <input @bind="logEditando.Titulo" class="form-control input-dark mb-3" placeholder="Ej: 12k Ritmo Carrera" />
 
-                <label class="lbl-input">Tipo de Sesión:</label>
-                <div class="type-grid mb-3">
-                    @foreach (var tipo in TiposEntreno)
-                    {
-                        <div class="type-btn @(logEditando.Tipo == tipo.Nombre ? "selected" : "")"
-                             style="border-color: @(string.IsNullOrEmpty(tipo.Color) ? "var(--theme-primary)" : tipo.Color); color: @(logEditando.Tipo == tipo.Nombre ? "black" : "white"); background: @(logEditando.Tipo == tipo.Nombre ? (string.IsNullOrEmpty(tipo.Color) ? "var(--theme-primary)" : tipo.Color) : "transparent")"
-                             @onclick="() => SeleccionarTipo(tipo.Nombre)">
-                            @tipo.Nombre
-                        </div>
-                    }
+                    <label class="lbl-input">Detalles / Instrucciones Completas:</label>
+                    <textarea @bind="logEditando.Descripcion" class="form-control input-dark" rows="4" placeholder="Desglosa el calentamiento, bloques principales..."></textarea>
                 </div>
-
-                <label class="lbl-input">Instrucciones Breves (Título):</label>
-                <input @bind="logEditando.Titulo" class="form-control input-dark mb-3" placeholder="Ej: 12k Ritmo Carrera" />
-
-                <label class="lbl-input">Detalles / Instrucciones Completas:</label>
-                <textarea @bind="logEditando.Descripcion" class="form-control input-dark" rows="4" placeholder="Desglosa el calentamiento, bloques principales..."></textarea>
-            </div>
 
                 <div class="modal-footer">
                     @if (logEditando.RunningLogID != Guid.Empty)
@@ -324,15 +268,22 @@
                         <button class="btn-delete" @onclick="EliminarLog" disabled="@guardando"><i class="fas fa-trash"></i></button>
                     }
                     <button class="btn-confirm" @onclick="GuardarLog" disabled="@guardando">
-                        @if (guardando) { <i class="fas fa-spinner fa-spin"></i> } else { <span>GUARDAR CAMBIOS</span> }
+                        @if (guardando)
+                        {
+                            <i class="fas fa-spinner fa-spin"></i>
+                        }
+                        else
+                        {
+
+                            <span>GUARDAR CAMBIOS</span>
+                        }
                     </button>
                 </div>
             </div>
         </div>
     }
 
-    @* --- MODAL GENERADOR DE HISTORIA IA --- *@
-    @if (mostrarModalHistoria)
+  @if (mostrarModalHistoria)
     {
         <div class="modal-overlay fade-in">
             <div class="modal-content custom-modal slide-up" style="background-color: var(--theme-bg);">
@@ -933,39 +884,17 @@
 
         guardando = true;
         StateHasChanged();
-        
+
         try
         {
-            using var form = new MultipartFormDataContent();
-            form.Add(new StringContent(logEditando.RunningLogID.ToString()), "RunningLogID");
-            
-            // Los agregamos desde cero o actualizamos (Mantenemos la lógica de la API)
-            // (La API sabe diferenciar si es uno nuevo o uno existente gracias al RunningLogID y el Tipo)
-            form.Add(new StringContent(logEditando.UsuarioID.ToString()), "UsuarioID");
-            form.Add(new StringContent(logEditando.Fecha.ToString("yyyy-MM-dd")), "Fecha");
-            form.Add(new StringContent(logEditando.Titulo), "Titulo");
-            form.Add(new StringContent(logEditando.Descripcion), "Descripcion");
-            form.Add(new StringContent(logEditando.Tipo), "Tipo");
-            form.Add(new StringContent((logEditando.Realizado ?? false).ToString().ToLower()), "Realizado");
-            form.Add(new StringContent((logEditando.RPE ?? 0).ToString()), "RPE");
-            form.Add(new StringContent(logEditando.ComentariosAtleta ?? ""), "ComentariosAtleta");
-            form.Add(new StringContent((logEditando.CoachVerificado ?? false).ToString().ToLower()), "CoachVerificado");
+            // El Coach manda el JSON limpio al endpoint correcto de Guardado general
+            var resp = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/guardar", logEditando);
 
-            foreach (var archivo in archivosEvidencia)
-            {
-                var s = await archivo.OpenReadAsync();
-                var content = new StreamContent(s);
-                content.Headers.ContentType = new MediaTypeHeaderValue(archivo.ContentType);
-                form.Add(content, "fotos", archivo.FileName);
-            }
-
-            var resp = await Http.PostAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/guardar-con-fotos", form);
-            
             if (resp.IsSuccessStatusCode)
             {
                 mostrarModal = false;
                 await CargarCalendario();
-                
+
                 // MUESTRA LA ANIMACIÓN EN LUGAR DEL ALERT
                 mensajeExitoAnimacion = "Rutina guardada correctamente.";
                 mostrarExitoAnimacion = true;
@@ -978,11 +907,14 @@
             {
                 var error = await resp.Content.ReadAsStringAsync();
                 if (string.IsNullOrWhiteSpace(error)) error = resp.StatusCode.ToString();
-                
+
                 await App.Current.MainPage.DisplayAlert("Error", $"API: {error}", "OK");
             }
         }
-        catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
         finally
         {
             guardando = false;

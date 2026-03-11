@@ -129,13 +129,7 @@
                                                 <div class="dropdown-item" style="border-bottom-color: var(--theme-border);" @onclick="() => AbrirModalRenovacion(usuario)">
                                                     <i class="fas fa-calendar-check text-success"></i> Registrar Pago
                                                 </div>
-                                            }
-                                            @if (PermisoEvaluacion)
-                                            {
-                                                <div class="dropdown-item" style="border-bottom-color: var(--theme-border);" @onclick="() => VerEvaluaciones(usuario)">
-                                                    <i class="fas fa-clipboard-check text-info"></i> Evaluaciones
-                                                </div>
-                                            }
+                                            }                                           
                                             @if (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.Usuario.TipoUsuarioID == 3)
                                             {
                                                 <div class="dropdown-item" style="border-bottom-color: var(--theme-border);" @onclick="() => IrAGestionPropositos(usuario)">

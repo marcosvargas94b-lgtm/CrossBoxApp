@@ -83,6 +83,16 @@
                 }
             </div>
 
+            <div class="legend-scroll fade-in">
+                @foreach (var t in TiposEntreno)
+                {
+                    <div class="legend-item">
+                        <span class="dot" style="background:@(string.IsNullOrEmpty(t.Color) ? "var(--theme-primary)" : t.Color)"></span> 
+                        @t.Nombre
+                    </div>
+                }
+            </div>
+
             @* --- SECCIÓN: GENERADOR DE HISTORIAS CON IA --- *@
             @if (logDeHoy != null && logDeHoy.Realizado == true)
             {
@@ -541,7 +551,26 @@
     .modal-footer { padding: 15px 20px; display: flex; gap: 15px; background: var(--theme-card); border-top: 1px solid var(--theme-border); }
     .btn-save { background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 12px; font-weight: bold; flex: 2; border-radius: 8px; font-family: 'Oswald'; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 4px 15px rgba(0,0,0, 0.2); display: flex; justify-content: center; align-items: center; gap: 8px; }
     .btn-save:disabled { background: var(--theme-border); color: var(--theme-text-muted); box-shadow: none; cursor: not-allowed; }
-    .btn-cancel { background: transparent; color: var(--theme-text-muted); border: 1px solid var(--theme-border); padding: 12px; font-weight: bold; flex: 1; border-radius: 8px; font-family: 'Oswald'; }
+    /* EL BOTÓN CANCELAR UNIVERSAL Y NEUTRAL */
+    .btn-cancel { 
+        background: #333333 !important; 
+        color: #ffffff !important; 
+        border: 1px solid #555555 !important; 
+        padding: 12px; 
+        font-family: 'Oswald', sans-serif; 
+        font-weight: bold; 
+        font-size: 1.1rem; 
+        letter-spacing: 1px; 
+        flex: 1; 
+        border-radius: 10px; 
+        transition: 0.2s; 
+        text-align: center; 
+        cursor: pointer; 
+    }
+    .btn-cancel:active { 
+        transform: scale(0.95); 
+        background: #222222 !important; 
+    }
 
     .text-danger { color: #ff4d4d; }
     .fade-in { animation: fadeIn 0.4s ease; }
@@ -570,6 +599,11 @@
         box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
         border: 2px solid var(--theme-border); 
     }
+
+    /* --- LEYENDA DE COLORES --- */
+    .legend-scroll { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; justify-content: center; width: 100%; max-width: 500px; }
+    .legend-item { font-size: 0.7rem; color: var(--theme-text-muted); display: flex; align-items: center; gap: 5px; font-family: 'Roboto'; font-weight: bold; text-transform: uppercase; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; box-shadow: 0 0 5px rgba(255,255,255,0.2); }
 </style>
 
 @code {
@@ -702,8 +736,21 @@
         var log = ObtenerLog(dia);
         if (log != null)
         {
-            logSeleccionado = log;
-            if (logSeleccionado.Realizado == null) logSeleccionado.Realizado = false;
+            // CREAMOS UN CLON PARA NO AFECTAR LA UI DE ATRÁS HASTA QUE SE GUARDE
+            logSeleccionado = new RunningLogs
+            {
+                RunningLogID = log.RunningLogID,
+                UsuarioID = log.UsuarioID,
+                Fecha = log.Fecha,
+                Titulo = log.Titulo,
+                Descripcion = log.Descripcion,
+                Tipo = log.Tipo,
+                Realizado = log.Realizado ?? false,
+                RPE = log.RPE,
+                ComentariosAtleta = log.ComentariosAtleta,
+                EvidenciaUrl = log.EvidenciaUrl
+            };
+            
             fechaSeleccionada = new DateTime(fechaActual.Year, fechaActual.Month, dia);
             
             archivosEvidencia.Clear();

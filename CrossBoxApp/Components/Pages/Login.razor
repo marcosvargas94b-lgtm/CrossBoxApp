@@ -50,7 +50,7 @@
             }
 
             <div class="actions-row">
-                <a class="forgot-pass" @onclick="AbrirModalRecuperar">¿Olvidaste tu contraseña?</a>
+                <a class="forgot-pass" @onclick='() => Nav.NavigateTo("/recuperar-password")'>¿Olvidaste tu contraseña?</a>
             </div>
 
             <button class="btn-login glow-effect" @onclick="IniciarSesion">
@@ -75,51 +75,6 @@
     </div>
 </div>
 
-@* --- MODAL RECUPERAR CONTRASEÑA --- *@
-@if (mostrarModalRecuperar)
-{
-    <div class="modal-overlay fade-in">
-        <div class="modal-content custom-modal slide-in-up" style="max-height: 450px;">
-            <div class="modal-header">
-                <h5 class="modal-title-custom">RECUPERAR ACCESO</h5>
-                <button class="btn-close-custom" @onclick="() => mostrarModalRecuperar = false"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body">
-                <div class="text-center mb-4">
-                    <i class="fas fa-comment-dots fa-3x" style="color: #25D366;"></i>
-                    <p style="color: #ccc; margin-top: 10px; font-size: 0.9rem;">
-                        Ingresa tu número de celular registrado. Te enviaremos tu contraseña por WhatsApp.
-                    </p>
-                </div>
-
-                <div class="input-group-animated">
-                    <input type="tel"
-                           @bind="telefonoRecuperar"
-                           class="input-dark"
-                           placeholder="Número (10 dígitos)"
-                           maxlength="10"
-                           oninput="this.value = this.value.replace(/[^0-9]/g, '');" />
-                </div>
-
-                @if (!string.IsNullOrEmpty(mensajeRecuperacion))
-                {
-                    <div class="alert-error mt-3" style="@(esExitoRecuperacion ? "border-color: #25D366; background-color: rgba(37, 211, 102, 0.1); color: #25D366;" : "")">
-                        @if(esExitoRecuperacion) { <i class="fas fa-check-circle mr-2"></i> } else { <i class="fas fa-times-circle mr-2"></i> }
-                        @mensajeRecuperacion
-                    </div>
-                }
-            </div>
-            <div class="modal-footer">
-                <button class="btn-cancel" @onclick="() => mostrarModalRecuperar = false">Cancelar</button>
-                <button class="btn-confirm" @onclick="EnviarRecuperacion" disabled="@enviandoRecuperacion">
-                    @if(enviandoRecuperacion){ <span><i class="fas fa-spinner fa-spin"></i> ENVIANDO...</span> } else { <span>ENVIAR MENSAJE</span> }
-                </button>
-            </div>
-        </div>
-    </div>
-}
-
-@* --- MODAL REGISTRO DE BOX (DUEÑO) --- *@
 @if (mostrarModalBox)
 {
     <div class="modal-overlay fade-in">
@@ -463,60 +418,6 @@
         }
     }
 
-    // ---------------- LOGIC: RECUPERAR PASSWORD ----------------
-    private bool mostrarModalRecuperar = false;
-    private string telefonoRecuperar;
-    private string mensajeRecuperacion;
-    private bool enviandoRecuperacion = false;
-    private bool esExitoRecuperacion = false;
-
-    private void AbrirModalRecuperar()
-    {
-        telefonoRecuperar = "";
-        mensajeRecuperacion = "";
-        esExitoRecuperacion = false;
-        mostrarModalRecuperar = true;
-    }
-
-    private async Task EnviarRecuperacion()
-    {
-        if (string.IsNullOrEmpty(telefonoRecuperar) || telefonoRecuperar.Length != 10 || !long.TryParse(telefonoRecuperar, out _))
-        {
-            mensajeRecuperacion = "El número debe ser de 10 dígitos exactos.";
-            esExitoRecuperacion = false;
-            return;
-        }
-
-        enviandoRecuperacion = true;
-        mensajeRecuperacion = "";
-
-        try
-        {
-            var data = new { Telefono = telefonoRecuperar };
-            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/authapi/recuperar-password", data);
-
-            if (response.IsSuccessStatusCode)
-            {
-                mensajeRecuperacion = "¡Listo! Te hemos enviado tu contraseña por WhatsApp.";
-                esExitoRecuperacion = true;
-            }
-            else
-            {
-                var errorMsg = await response.Content.ReadAsStringAsync();
-                mensajeRecuperacion = !string.IsNullOrEmpty(errorMsg) ? errorMsg.Replace("\"", "") : "No pudimos enviar el mensaje.";
-                esExitoRecuperacion = false;
-            }
-        }
-        catch (Exception)
-        {
-            mensajeRecuperacion = "Error de conexión.";
-            esExitoRecuperacion = false;
-        }
-        finally
-        {
-            enviandoRecuperacion = false;
-        }
-    }
 
     // ---------------- LOGIC: REGISTRO ATLETA ----------------
     private bool mostrarModalRegistro = false;
