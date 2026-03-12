@@ -42,35 +42,40 @@
             @* --- TÍTULO DE LA FECHA SELECCIONADA --- *@
             <h2 class="date-header">@fechaSeleccionada.ToString("dddd, dd MMMM").ToUpper()</h2>
 
-            <div class="booking-section fade-in">
+            <div class="booking-section fade-in" style="border: none !important; background: transparent !important; padding: 0 !important; box-shadow: none;">
                 @if (miReservaActualId == Guid.Empty)
                 {
-                    <label class="lbl-input">Selecciona tu horario:</label>
-                    <div class="input-group">
-                        <select @bind="horarioSeleccionado" class="form-control input-dark">
-                            <option value="">-- Elige Hora --</option>
-                            @foreach (var item in agendaData)
-                            {
-                                bool estaLleno = item.UsuariosInscritos.Count >= limiteBoxActual;
-                                <option value="@item.HorarioId" disabled="@estaLleno">
-                                    @item.HorarioNombre @(estaLleno ? " (LLENO)" : "")
-                                </option>
-                            }
-                        </select>
-                        <button class="btn-reservar" @onclick="ReservarClase">RESERVAR</button>
+                    <div style="background: var(--theme-card); padding: 20px; border-radius: 15px; border: 1px solid var(--theme-border); box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                        <label class="lbl-input">Selecciona tu horario:</label>
+                        <div class="input-group">
+                            <select @bind="horarioSeleccionado" class="form-control input-dark">
+                                <option value="">-- Elige Hora --</option>
+                                @foreach (var item in agendaData)
+                                {
+                                    bool estaLleno = item.UsuariosInscritos.Count >= limiteBoxActual;
+                                    <option value="@item.HorarioId" disabled="@estaLleno">
+                                        @item.HorarioNombre @(estaLleno ? " (LLENO)" : "")
+                                    </option>
+                                }
+                            </select>
+                            <button class="btn-reservar" @onclick="ReservarClase" disabled="@cargando">
+                                @if (cargando) { <i class="fas fa-spinner fa-spin"></i> } else { <span>RESERVAR</span> }
+                            </button>
+                        </div>
                     </div>
                 }
                 else
                 {
                     <div class="reservation-info text-center fade-in">
-                        <div class="success-icon">
+                        <div class="success-icon pulse-tap">
                             <i class="fas fa-check-circle"></i>
                         </div>
+                        <h4 class="success-title">¡RESERVACIÓN CONFIRMADA!</h4>
                         <p class="success-text">
-                            Ya tienes clase reservada para @(EsHoy ? "HOY" : "MAÑANA").
+                            Tu lugar para @(EsHoy ? "HOY" : "MAÑANA") está asegurado.
                         </p>
-                        <button class="btn-cancelar w-100" @onclick="CancelarReserva">
-                            CANCELAR MI RESERVACIÓN
+                        <button class="btn-cancelar w-100" @onclick="CancelarReserva" disabled="@cargando">
+                            @if (cargando) { <i class="fas fa-spinner fa-spin"></i> } else { <span><i class="fas fa-times-circle" style="margin-right: 8px;"></i> CANCELAR MI RESERVACIÓN</span> }
                         </button>
                     </div>
                 }
@@ -82,7 +87,7 @@
             {
                 <div class="text-center mt-4">
                     <div class="spinner-border" style="color: var(--theme-primary) !important;"></div>
-                    <p class="mt-2" style="color: var(--theme-text-muted) !important;">Cargando horarios...</p>
+                    <p class="mt-2" style="color: var(--theme-text-muted) !important; font-family: 'Oswald'; letter-spacing: 1px;">CARGANDO HORARIOS...</p>
                 </div>
             }
             else
@@ -90,30 +95,39 @@
                 <div class="cards-grid">
                     @if(agendaData.Count == 0)
                     {
-                         <div class="text-center mt-4" style="color: var(--theme-text-muted) !important;">No hay horarios disponibles para este día.</div>
+                         <div class="text-center mt-4" style="color: var(--theme-text-muted) !important; font-size: 1.1rem;">
+                             <i class="fas fa-bed mb-2" style="font-size: 2rem; opacity: 0.5;"></i><br/>
+                             No hay horarios disponibles para este día.
+                         </div>
                     }
 
                     @foreach (var horario in agendaData)
                     {
-                        <div class="schedule-card fade-in">
+                        bool estaLleno = horario.UsuariosInscritos.Count >= limiteBoxActual;
+                        string indicatorColor = estaLleno ? "#dc3545" : "var(--theme-primary)";
+                        string statusText = estaLleno ? "LLENO" : "DISPONIBLE";
+
+                        <div class="schedule-card fade-in" style="border-left: 5px solid @indicatorColor !important;">
+                            
                             <div class="card-header">
-                                <span class="time-text">@horario.HorarioNombre</span>
+                                <span class="time-text">
+                                    <i class="fas fa-clock" style="color: @indicatorColor; margin-right: 8px;"></i> @horario.HorarioNombre
+                                </span>
                                 
-                                @if (horario.UsuariosInscritos.Count >= limiteBoxActual)
-                                {
-                                    <span class="badge-count" style="background-color: #dc3545 !important; color: white !important;">
-                                        LLENO (@horario.UsuariosInscritos.Count / @limiteBoxActual)
+                                <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                                    <span style="color: @indicatorColor; font-size: 0.65rem; font-weight: bold; letter-spacing: 1px; margin-bottom: 2px;">@statusText</span>
+                                    <span class="badge-count" style="background-color: @indicatorColor !important; color: @(estaLleno ? "white" : "var(--theme-bg)") !important;">
+                                        <i class="fas fa-users" style="margin-right: 4px;"></i> @horario.UsuariosInscritos.Count / @limiteBoxActual
                                     </span>
-                                }
-                                else
-                                {
-                                    <span class="badge-count">@horario.UsuariosInscritos.Count / @limiteBoxActual Atletas</span>
-                                }
+                                </div>
                             </div>
+
                             <div class="card-body">
                                 @if (horario.UsuariosInscritos.Count == 0)
                                 {
-                                    <p class="small mb-0" style="color: var(--theme-text-muted) !important;">Sin atletas registrados aún.</p>
+                                    <div class="empty-roster">
+                                        <p class="small mb-0">Sin atletas registrados aún.</p>
+                                    </div>
                                 }
                                 else
                                 {
@@ -121,13 +135,20 @@
                                         @foreach (var usuario in horario.UsuariosInscritos)
                                         {
                                             <div class="user-item">
-                                                <i class="fas fa-user-check"></i> 
-                                                <span>@usuario</span>
+                                                <div class="user-avatar-mini">
+                                                    <i class="fas fa-user"></i>
+                                                </div>
+                                                <span class="user-name-list">@usuario</span>
                                             </div>
                                         }
                                     </div>
                                 }
                             </div>
+
+                            @if (horario.EsMiReserva)
+                            {
+                                <div class="my-reservation-banner">ESTA ES TU CLASE</div>
+                            }
                         </div>
                     }
                 </div>
@@ -192,17 +213,49 @@
     .btn-circle { background: var(--theme-card); border: 2px solid var(--theme-primary); color: var(--theme-primary); width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; }
     .custom-modal { background: var(--theme-card); width: 90%; max-width: 400px; border-radius: 15px; border: 1px solid var(--theme-border); overflow: hidden; }
 
-    /* CARTAS */
+    /* TÍTULO Y SELECT */
     .date-header { font-family: 'Oswald'; text-align: center; color: var(--theme-primary) !important; font-size: 1.5rem; margin-bottom: 20px; }
-    .booking-section { background: var(--theme-card) !important; padding: 20px; border-radius: 15px; border: 1px solid var(--theme-border) !important; margin-bottom: 20px; }
-    .input-dark { background: var(--theme-bg) !important; color: var(--theme-text) !important; border: 1px solid var(--theme-border) !important; padding: 10px; border-radius: 8px; }
-    .btn-reservar { background-color: var(--theme-primary) !important; color: var(--theme-bg) !important; font-weight: bold; border: none; padding: 0 20px; border-radius: 8px; font-family: 'Oswald'; }
-    .btn-cancelar { background: transparent; border: 1px solid #dc3545; color: #dc3545; padding: 10px; border-radius: 50px; font-weight: bold; margin-top: 10px; }
+    .lbl-input { color: var(--theme-text-muted) !important; font-size: 0.9rem; margin-bottom: 8px; display: block; font-weight: bold; }
+    .input-group { display: flex; gap: 10px; }
+    .input-dark { background: var(--theme-bg) !important; color: var(--theme-text) !important; border: 1px solid var(--theme-border) !important; padding: 10px; border-radius: 8px; flex: 1; font-size: 1rem; }
+    .btn-reservar { background-color: var(--theme-primary) !important; color: var(--theme-bg) !important; font-weight: bold; border: none; padding: 0 20px; border-radius: 8px; font-family: 'Oswald'; transition: transform 0.2s; }
+    .btn-reservar:active { transform: scale(0.95); }
 
-    .schedule-card { background: var(--theme-card) !important; border: 1px solid var(--theme-border) !important; border-radius: 12px; margin-bottom: 15px; }
-    .badge-count { background: var(--theme-primary) !important; color: var(--theme-bg) !important; padding: 3px 10px; border-radius: 10px; font-size: 0.8rem; font-weight: bold; }
-    .user-item { border-bottom: 1px solid var(--theme-border) !important; padding: 5px 0; color: var(--theme-text) !important; }
+    /* --- MENSAJE DE ÉXITO (VERDE BRILLANTE Y CLARO) --- */
+    .reservation-info { background: rgba(40, 167, 69, 0.1); border: 1px solid #28a745; border-radius: 15px; padding: 25px 20px; width: 100%; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    .success-icon i { font-size: 3.5rem; color: #28a745; filter: drop-shadow(0 0 10px rgba(40, 167, 69, 0.5)); }
+    .success-title { color: white; font-family: 'Oswald'; font-weight: bold; margin-top: 15px; margin-bottom: 5px; letter-spacing: 1px; font-size: 1.3rem; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+    .success-text { color: rgba(255,255,255,0.8) !important; font-size: 0.95rem; margin-bottom: 20px; font-family: 'Roboto'; }
+    
+    .btn-cancelar { background: rgba(220, 53, 69, 0.1); border: 1px solid #dc3545; color: #dc3545; padding: 12px; border-radius: 10px; font-weight: bold; font-family: 'Oswald'; letter-spacing: 1px; transition: all 0.2s; cursor: pointer; }
+    .btn-cancelar:active { background: #dc3545; color: white; transform: scale(0.95); }
 
+    /* --- NUEVO DISEÑO DE TARJETAS (MÁS LIMPIO Y MODERNO) --- */
+    .cards-grid { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 600px; align-self: center; }
+    .schedule-card { background: var(--theme-card) !important; border: 1px solid var(--theme-border) !important; border-radius: 12px; margin-bottom: 15px; overflow: hidden; position: relative; transition: transform 0.2s; }
+    .schedule-card:active { transform: scale(0.98); }
+    
+    .card-header { background: rgba(255, 255, 255, 0.03) !important; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--theme-border) !important; flex-wrap: wrap; gap: 10px; }
+    .time-text { font-family: 'Oswald'; font-size: 1.4rem; color: var(--theme-text) !important; font-weight: bold; letter-spacing: 1px; display: flex; align-items: center; }
+    .badge-count { padding: 4px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: bold; font-family: 'Roboto'; display: flex; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
+    
+    .card-body { padding: 0 !important; }
+    .empty-roster { padding: 20px; text-align: center; font-style: italic; color: var(--theme-text-muted); opacity: 0.7; font-size: 0.9rem; }
+    
+    .user-list { display: flex; flex-direction: column; }
+    .user-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.03); transition: background 0.2s; }
+    .user-item:last-child { border-bottom: none; }
+    .user-item:hover { background: rgba(255, 255, 255, 0.02); }
+    
+    .user-avatar-mini { width: 32px; height: 32px; border-radius: 50%; background: rgba(255, 255, 255, 0.08); display: flex; justify-content: center; align-items: center; color: var(--theme-text-muted); font-size: 0.8rem; flex-shrink: 0; }
+    .user-name-list { color: var(--theme-text) !important; font-size: 0.95rem; font-family: 'Roboto'; font-weight: 500; }
+    
+    /* Etiqueta inferior si es la clase del usuario */
+    .my-reservation-banner { background: var(--theme-primary); color: var(--theme-bg); text-align: center; font-family: 'Oswald'; font-weight: bold; font-size: 0.75rem; letter-spacing: 2px; padding: 4px 0; width: 100%; }
+    /* Separador entre el selector y las tarjetas */
+    .divider { width: 100%; height: 1px; background: var(--theme-border); margin: 25px 0; opacity: 0.5; }
+    
+    .booking-section { margin-bottom: 30px; }
     /* MODALES GENÉRICOS */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 5000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
     .modal-header { padding: 20px; border-bottom: 1px solid var(--theme-border); display: flex; justify-content: space-between; }
@@ -211,6 +264,8 @@
     .btn-cancel { flex: 1; background: #333; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; }
     .btn-close-custom { background: none; border: none; color: #888; font-size: 1.5rem; }
 
+    .pulse-tap { animation: pulseAnim 2s infinite; }
+    @@keyframes pulseAnim { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
     .fade-in { animation: fadeIn 0.5s ease; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
@@ -254,7 +309,6 @@
                 var configBox = await Http.GetFromJsonAsync<BoxConfigDTO>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
                 if (configBox != null) {
                     limiteBoxActual = configBox.LimitePorClase > 0 ? configBox.LimitePorClase : 15;
-                    // (Aquí pones el mapeo de colores que ya tenías si lo necesitas)
                 }
             } catch { }
         }
@@ -277,7 +331,7 @@
                     horarioSeleccionado = miReservaActualId;
                 }
             }
-        } catch { } finally { cargando = false; }
+        } catch { } finally { cargando = false; StateHasChanged(); }
     }
 
     private void AbrirModalLimite() { limiteAtletasInput = limiteBoxActual; mostrarModalLimite = true; }
@@ -301,13 +355,95 @@
 
     private async Task SeleccionarHoy() { if (EsHoy) return; fechaSeleccionada = DateTime.Today; await CargarDatos(); }
     private async Task SeleccionarManana() { if (!EsHoy) return; fechaSeleccionada = DateTime.Today.AddDays(1); await CargarDatos(); }
-    private async Task ReservarClase() { /* Tu lógica de reservar */ }
-    private async Task CancelarReserva() { /* Tu lógica de cancelar */ }
+    
+    private async Task ReservarClase()
+    {
+        if (horarioSeleccionado == Guid.Empty)
+        {
+            await App.Current.MainPage.DisplayAlert("Atención", "Selecciona un horario.", "OK");
+            return;
+        }
+
+        cargando = true;
+        StateHasChanged();
+
+        try
+        {
+            var reserva = new ReservaDto
+            {
+                UsuarioId = Sesion.Usuario.UsuarioID,
+                BoxId = Sesion.Usuario.BoxID,
+                HorarioId = horarioSeleccionado,
+                Fecha = fechaSeleccionada 
+            };
+
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/agendaapi/reservar", reserva);
+
+            if (response.IsSuccessStatusCode)
+            {
+                string dia = EsHoy ? "hoy" : "mañana";
+                await App.Current.MainPage.DisplayAlert("¡Listo!", $"Clase reservada para {dia}.", "OK");
+                await CargarDatos();
+            }
+            else
+            {
+                var errorMsg = await response.Content.ReadFromJsonAsync<dynamic>();
+                string mensaje = errorMsg.ToString();
+                try { mensaje = errorMsg.GetProperty("mensaje").GetString(); } catch { }
+                await App.Current.MainPage.DisplayAlert("Aviso", mensaje, "OK");
+            }
+        }
+        catch (Exception)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", "Fallo al reservar. Revisa tu conexión.", "OK");
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CancelarReserva()
+    {
+        bool confirmar = await App.Current.MainPage.DisplayAlert("Cancelar", "¿Seguro que quieres cancelar tu clase?", "Sí, Cancelar", "No");
+        if (!confirmar) return;
+
+        cargando = true;
+        StateHasChanged();
+
+        try
+        {
+            var reserva = new ReservaDto
+            {
+                UsuarioId = Sesion.Usuario.UsuarioID,
+                BoxId = Sesion.Usuario.BoxID,
+                Fecha = fechaSeleccionada 
+            };
+
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/agendaapi/cancelar", reserva);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await App.Current.MainPage.DisplayAlert("Listo", "Reserva cancelada.", "OK");
+                await CargarDatos();
+            }
+        }
+        catch (Exception)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", "No se pudo cancelar.", "OK");
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+    
     private void Volver() => Nav.NavigateTo("/home");
 
     public class BoxConfigDTO { 
         public string ThemePrimary { get; set; }
         public int LimitePorClase { get; set; }
-        // Agrega los demás campos si los usas para el color
     }
 }
