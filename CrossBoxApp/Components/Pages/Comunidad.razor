@@ -5,222 +5,163 @@
 @inject HttpClient Http
 @inject SesionService Sesion
 @inject IJSRuntime JS
+
 <div style="@EstilosTema">
-<div class="main-layout" >
-    @* NAVBAR SEGURO PARA NOTCH *@
-    <div class="navbar-container">
-        <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
-            <i class="fas fa-arrow-left"></i> VOLVER
+    <div class="main-layout">
+        @* NAVBAR SEGURO PARA NOTCH (Igual al Home) *@
+        <div class="navbar-container">
+            <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </div>
+            <div class="nav-title">COMMUNITY STATS</div>
+            <div class="nav-right"></div>
         </div>
-        <div class="nav-title">COMMUNITY STATS</div>
-        <div class="nav-right"></div>
-    </div>
 
-    <div class="scrollable-content">
-        <div class="community-wrapper">
-            <p class="text-center small mb-4 mt-2" style="color: var(--theme-text-muted);">Descubre los rangos y récords de tus compañeros de entrenamiento.</p>
+        <div class="scrollable-content">
+            <div class="community-wrapper">
+                <p class="text-center small mb-4 mt-2" style="color: var(--theme-text-muted);">Descubre los rangos y récords de tus compañeros de entrenamiento.</p>
 
-            @if (cargando)
-            {
-                <div class="text-center mt-5"><div class="spinner-border" style="color: var(--theme-primary);"></div></div>
-            }
-            else if (listaBanners == null || listaBanners.Count == 0)
-            {
-                <div class="text-center mt-5" style="color: var(--theme-text-muted);">
-                    <i class="fas fa-users mb-3" style="font-size: 3rem; opacity: 0.3;"></i>
-                    <p>Aún no hay atletas en la comunidad.</p>
-                </div>
-            }
-            else
-            {
-                <div class="banners-list">
-                    @foreach (var b in listaBanners)
-                    {
-                        <div class="calling-card @b.EstiloVisual.ToLower() fade-in"
-                             style="--b-color: @b.ColorBorde; background-image: @(!string.IsNullOrEmpty(b.FondoUrl) ? $"url('{b.FondoUrl}')" : "none");"
-                             @onclick="() => VerPlayerCard(b.UsuarioID)">
-                             
-                            <div class="card-overlay"></div>
-                            
-                            @if (b.EsMiBanner)
-                            {
-                                <div class="my-badge">TÚ</div>
-                            }
-
-                            <div class="card-content">
-                                @* --- LÓGICA DE FOTO O INICIAL --- *@
-                                @if (!string.IsNullOrEmpty(b.FotoAvatar))
-                                {
-                                    <img src="@b.FotoAvatar" class="card-avatar" />
-                                }
-                                else
-                                {
-                                    <div class="card-avatar placeholder-avatar" style="color: @b.ColorBorde; border-color: @b.ColorBorde;">
-                                        @(b.NombreMostrar?.Substring(0, 1).ToUpper() ?? "A")
-                                    </div>
-                                }
+                @if (cargando)
+                {
+                    <div class="loading-state">
+                        <div class="spinner-border" style="color: var(--theme-primary);"></div>
+                    </div>
+                }
+                else if (listaBanners == null || listaBanners.Count == 0)
+                {
+                    <div class="empty-state fade-in">
+                        <i class="fas fa-users mb-3" style="font-size: 3rem; opacity: 0.3; color: var(--theme-text-muted);"></i>
+                        <p style="color: var(--theme-text-muted);">Aún no hay atletas en la comunidad.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="banners-list">
+                        @foreach (var b in listaBanners)
+                        {
+                            @* --- ESTRUCTURA UNIFICADA CON EL HOME --- *@
+                            <div class="calling-card @b.EstiloVisual.ToLower() fade-in"
+                                 style="--b-color: @b.ColorBorde; background-image: @(!string.IsNullOrEmpty(b.FondoUrl) ? $"url('{b.FondoUrl}')" : "none");"
+                                 @onclick="() => VerPlayerCard(b.UsuarioID)">
+                                 
+                                <div class="card-overlay"></div>
                                 
-                                <div class="card-info">
-                                    <span class="card-name">@b.NombreMostrar</span>
-                                    <span class="card-tap"><i class="fas fa-hand-pointer pulse-tap"></i> VER CARD</span>
+                                @if (b.EsMiBanner)
+                                {
+                                    <div class="my-badge">TÚ</div>
+                                }
+
+                                <div class="card-content">
+                                    @* AVATAR *@
+                                    @if (!string.IsNullOrEmpty(b.FotoAvatar))
+                                    {
+                                        <img src="@b.FotoAvatar" class="card-avatar" />
+                                    }
+                                    else
+                                    {
+                                        <div class="card-avatar placeholder-avatar" style="color: @b.ColorBorde; border-color: @b.ColorBorde;">
+                                            @(b.NombreMostrar?.Substring(0, 1).ToUpper() ?? "A")
+                                        </div>
+                                    }
+                                    
+                                    @* INFO DEL ATLETA *@
+                                    <div class="card-info">
+                                        <span class="card-name">@b.NombreMostrar</span>
+                                        <span class="card-tap"><i class="fas fa-hand-pointer pulse-tap"></i> VER STATS</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    }
-                </div>
-            }
-            <div style="height: 60px;"></div>
+                        }
+                    </div>
+                }
+                <div style="height: 60px;"></div>
+            </div>
         </div>
     </div>
-</div>
 </div>
 
 <style>
-    /* LAYOUT Y NOTCH CON VARIABLES INYECTADAS */
+    /* --- ESTRUCTURA BASE UNIFICADA --- */
     .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--theme-bg); display: flex; flex-direction: column; z-index: 1; }
     .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: var(--theme-bg); border-bottom: 1px solid var(--theme-primary); color: var(--theme-text); display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
     .nav-left { color: var(--theme-primary); font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
     .nav-title { font-weight: bold; font-size: 1.2rem; color: var(--theme-text); letter-spacing: 1px; }
     .nav-right { width: 60px; }
-    
     .scrollable-content { flex-grow: 1; overflow-y: auto; background-color: var(--theme-bg); padding: 15px; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; align-items: center;}
     .community-wrapper { width: 100%; max-width: 600px; display: flex; flex-direction: column; }
 
-    /* LISTA DE BANNERS */
+    /* --- BANNERS LIST --- */
     .banners-list { display: flex; flex-direction: column; gap: 15px; width: 100%; }
 
-    /* ESTRUCTURA BASE DE LA CALLING CARD */
-    /* NOTA: Las tarjetas individuales mantienen el CSS de --b-color porque es configuración por usuario, no del gimnasio */
     .calling-card { 
-        width: 100%; height: 100px; border-radius: 12px; position: relative; overflow: hidden; 
+        width: 100%; height: 110px; border-radius: 15px; position: relative; overflow: hidden; 
         background-size: cover; background-position: center; cursor: pointer;
         display: flex; align-items: center; transition: transform 0.2s;
-        border: 2px solid var(--b-color); 
+        border: 2px solid var(--b-color, var(--theme-primary)); 
+        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
     }
     .calling-card:active { transform: scale(0.97); }
 
-    .card-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+    /* Overlay de oscuridad idéntico al Home */
+    .card-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; background: rgba(0, 0, 0, 0.5); }
     
-    .card-content { position: relative; z-index: 2; display: flex; align-items: center; gap: 15px; padding: 0 15px; width: 100%; }
+    .card-content { position: relative; z-index: 10; display: flex; align-items: center; gap: 15px; padding: 0 20px; width: 100%; }
     
-    /* AVATAR Y PLACEHOLDER */
-    .card-avatar { width: 65px; height: 65px; border-radius: 50%; object-fit: cover; border: 2px solid var(--b-color); box-shadow: 0 4px 10px rgba(0,0,0,0.6); background: var(--theme-card); flex-shrink: 0;}
+    .card-avatar { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid var(--b-color, var(--theme-primary)); box-shadow: 0 4px 10px rgba(0,0,0,0.6); background: var(--theme-card); flex-shrink: 0;}
     .placeholder-avatar { display: flex; justify-content: center; align-items: center; font-family: 'Oswald'; font-size: 2rem; font-weight: bold; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
     
     .card-info { display: flex; flex-direction: column; overflow: hidden; }
-    .card-name { font-family: 'Oswald'; font-size: 1.2rem; font-weight: bold; color: white; text-transform: uppercase; text-shadow: 1px 1px 3px black, 0 0 5px rgba(0,0,0,0.8); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .card-tap { font-family: 'Roboto'; font-size: 0.75rem; color: var(--theme-primary); font-weight: bold; margin-top: 4px; text-shadow: 1px 1px 2px black; display: flex; align-items: center; gap: 5px;}
+    .card-name { font-family: 'Oswald'; font-size: 1.4rem; font-weight: 900; color: white; text-transform: uppercase; text-shadow: 2px 2px 4px rgba(0,0,0,0.9); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-tap { font-family: 'Roboto'; font-size: 0.8rem; color: var(--theme-primary); font-weight: bold; margin-top: 4px; text-shadow: 1px 1px 2px black; display: flex; align-items: center; gap: 5px;}
     
-    .my-badge { position: absolute; top: 5px; right: 10px; background: var(--theme-primary); color: var(--theme-bg); font-family: 'Oswald'; font-size: 0.65rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; z-index: 3; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+    .my-badge { position: absolute; top: 8px; right: 12px; background: var(--theme-primary); color: var(--theme-bg); font-family: 'Oswald'; font-size: 0.65rem; font-weight: bold; padding: 2px 8px; border-radius: 4px; z-index: 30; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
 
+    /* ========================================== */
+    /* LOS 7 ESTILOS VISUALES VIP (RE-ESTILIZADOS) */
+    /* ========================================== */
+    
+    /* 1. GLASS */
+    .calling-card.glass { border: 1px solid rgba(255, 255, 255, 0.4) !important; border-top: 1px solid rgba(255, 255, 255, 0.8) !important; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important; }
+    .calling-card.glass .card-overlay { background: linear-gradient(135deg, rgba(0,0,0,0.1), rgba(0,0,0,0.4)); backdrop-filter: blur(1px); -webkit-backdrop-filter: blur(4px); }
+
+    /* 2. NEÓN */
+    .calling-card.neon { border: 2px solid var(--b-color) !important; box-shadow: 0 0 8px var(--b-color), 0 0 20px var(--b-color), inset 0 0 15px var(--b-color) !important; }
+    .calling-card.neon .card-overlay { background: rgba(0, 0, 0, 0.4); }
+    .calling-card.neon .card-name { color: #fff !important; text-shadow: 0 0 10px var(--b-color), 0 0 20px var(--b-color), 2px 2px 2px black !important; }
+
+    /* 3. CYBERPUNK */
+    .calling-card.cyberpunk { border: none !important; border-left: 6px solid var(--b-color) !important; border-right: 4px solid var(--theme-text) !important; border-radius: 0 !important; clip-path: polygon(25px 0, 100% 0, 100% calc(100% - 25px), calc(100% - 25px) 100%, 0 100%, 0 25px); box-shadow: none !important; }
+    .calling-card.cyberpunk .card-overlay { background: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.8) 100%); }
+
+    /* 4. GOLD */
+    .calling-card.gold { border: 2px solid #FFD700 !important; box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), inset 0 0 15px rgba(255, 215, 0, 0.2) !important; position: relative; }
+    .calling-card.gold .card-overlay { background: linear-gradient(45deg, rgba(0,0,0,0.7) 0%, rgba(255,215,0,0.1) 50%, rgba(0,0,0,0.7) 100%); }
+    .calling-card.gold::before { content: ""; position: absolute; top: 0; left: -150%; width: 50%; height: 100%; background: linear-gradient(to right, transparent, rgba(255,255,255,0.4), transparent); transform: skewX(-25deg); animation: goldShine 4s infinite; z-index: 5; pointer-events: none; }
+
+    /* 5. HOLO */
+    .calling-card.holo { border: 2px solid rgba(255,255,255,0.5) !important; box-shadow: 0 0 15px rgba(255, 255, 255, 0.4) !important; }
+    .calling-card.holo .card-overlay { background: linear-gradient(120deg, rgba(255,0,150,0.35), rgba(0,204,255,0.35), rgba(204,0,255,0.35), rgba(255,0,150,0.35)), rgba(0,0,0,0.4); background-size: 300% 300%, 100% 100%; animation: holoFlow 4s linear infinite; }
+
+    /* 6. TOXIC */
+    .calling-card.toxic { border: 3px solid var(--b-color) !important; border-radius: 0 !important; box-shadow: 6px 6px 0px rgba(0,0,0,0.9) !important; }
+    .calling-card.toxic .card-overlay { background: repeating-linear-gradient(45deg, rgba(0,0,0,0.4) 0px, rgba(0,0,0,0.4) 10px, rgba(0,0,0,0.7) 10px, rgba(0,0,0,0.7) 20px); }
+    .calling-card.toxic .card-name { color: var(--b-color) !important; text-shadow: 2px 2px 0px #000 !important; font-style: italic; letter-spacing: 2px; }
+
+    /* 7. FLAT */
+    .calling-card.flat { border: 2px solid var(--theme-text) !important; border-radius: 8px !important; box-shadow: 6px 6px 0px var(--b-color) !important; }
+    .calling-card.flat .card-overlay { background: rgba(0,0,0,0.5); }
+
+    /* ANIMACIONES */
+    @@keyframes goldShine { 0% { left: -150%; } 20% { left: 200%; } 100% { left: 200%; } }
+    @@keyframes holoFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
     .pulse-tap { animation: pulseAnim 1.5s infinite; }
     @@keyframes pulseAnim { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
     .fade-in { animation: fadeIn 0.4s ease-out; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-   /* ========================================== */
-    /* LOS 7 ESTILOS VISUALES VIP DE LA COMUNIDAD */
-    /* ========================================== */
-    
-    /* 1. GLASS */
-    .calling-card.glass {
-        border: 1px solid rgba(255, 255, 255, 0.4) !important;
-        border-top: 1px solid rgba(255, 255, 255, 0.8) !important; 
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
-    }
-    .calling-card.glass .card-overlay { 
-        background: linear-gradient(135deg, rgba(0,0,0,0.1), rgba(0,0,0,0.4));
-        backdrop-filter: blur(4px); 
-        -webkit-backdrop-filter: blur(4px); 
-    }
-
-    /* 2. NEÓN */
-    .calling-card.neon { 
-        border: 2px solid var(--b-color) !important; 
-        box-shadow: 0 0 8px var(--b-color), 0 0 20px var(--b-color), inset 0 0 15px var(--b-color) !important; 
-    }
-    .calling-card.neon .card-overlay { background: rgba(0, 0, 0, 0.4); }
-    .calling-card.neon .card-name { 
-        color: #fff !important; 
-        text-shadow: 0 0 10px var(--b-color), 0 0 20px var(--b-color), 2px 2px 2px black !important; 
-    }
-
-    /* 3. CYBERPUNK */
-    .calling-card.cyberpunk { 
-        border: none !important; 
-        border-left: 6px solid var(--b-color) !important; 
-        border-right: 4px solid var(--theme-text) !important;
-        border-radius: 0 !important; 
-        clip-path: polygon(25px 0, 100% 0, 100% calc(100% - 25px), calc(100% - 25px) 100%, 0 100%, 0 25px); 
-        box-shadow: none !important;
-    }
-    .calling-card.cyberpunk .card-overlay { 
-        background: linear-gradient(90deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.8) 100%);
-    }
-    .calling-card.cyberpunk .card-avatar { 
-        border-radius: 0; 
-        clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); 
-    }
-
-    /* 4. GOLD */
-    .calling-card.gold { 
-        border: 2px solid #FFD700 !important; 
-        box-shadow: 0 0 20px rgba(255, 215, 0, 0.3), inset 0 0 15px rgba(255, 215, 0, 0.2) !important;
-        position: relative;
-    }
-    .calling-card.gold .card-overlay { background: linear-gradient(45deg, rgba(0,0,0,0.7) 0%, rgba(255,215,0,0.1) 50%, rgba(0,0,0,0.7) 100%); }
-    .calling-card.gold::before {
-        content: ""; position: absolute; top: 0; left: -150%; width: 50%; height: 100%;
-        background: linear-gradient(to right, transparent, rgba(255,255,255,0.4), transparent);
-        transform: skewX(-25deg); animation: goldShine 4s infinite; z-index: 5; pointer-events: none;
-    }
-
-    /* 5. HOLO */
-    .calling-card.holo {
-        border: 2px solid rgba(255,255,255,0.5) !important;
-        box-shadow: 0 0 15px rgba(255, 255, 255, 0.4) !important;
-    }
-    .calling-card.holo .card-overlay {
-        background: linear-gradient(120deg, rgba(255,0,150,0.35), rgba(0,204,255,0.35), rgba(204,0,255,0.35), rgba(255,0,150,0.35)), rgba(0,0,0,0.4);
-        background-size: 300% 300%, 100% 100%;
-        animation: holoFlow 4s linear infinite;
-    }
-
-    /* 6. TOXIC */
-    .calling-card.toxic {
-        border: 3px solid var(--b-color) !important;
-        border-radius: 0 !important; 
-        box-shadow: 6px 6px 0px rgba(0,0,0,0.9) !important; 
-    }
-    .calling-card.toxic .card-overlay {
-        background: repeating-linear-gradient(45deg, rgba(0,0,0,0.7) 0px, rgba(0,0,0,0.7) 10px, rgba(0,0,0,0.95) 10px, rgba(0,0,0,0.95) 20px);
-    }
-    .calling-card.toxic .card-name {
-        color: var(--b-color) !important; 
-        text-shadow: 2px 2px 0px #000 !important;
-        font-style: italic;
-        letter-spacing: 2px;
-    }
-    .calling-card.toxic .card-avatar {
-        border-radius: 0 !important;
-    }
-
-    /* 7. FLAT */
-    .calling-card.flat { 
-        border: 2px solid var(--theme-text) !important; 
-        border-radius: 8px !important; 
-        box-shadow: 6px 6px 0px var(--b-color) !important; 
-    }
-    .calling-card.flat .card-overlay { background: rgba(0,0,0,0.5); }
-    .calling-card.flat .card-avatar { border: 3px solid var(--b-color); border-radius: 4px; }
-
-    /* Animaciones extra para el Banner */
-    @@keyframes goldShine { 0% { left: -150%; } 20% { left: 200%; } 100% { left: 200%; } }
-    @@keyframes holoFlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    .loading-state { text-align: center; margin-top: 60px; }
 </style>
 
 @code {
-    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
     private string EstilosTema = @"
         --theme-primary: #A9A9A9; 
         --theme-secondary: #808080;
@@ -247,44 +188,24 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // LEER EL CACHÉ LOCAL AL INSTANTE
-        try 
-        {
+        try {
             var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
-            if (!string.IsNullOrEmpty(cache)) 
-            { 
-                EstilosTema = cache; 
-                StateHasChanged(); 
-            }
-        } 
-        catch { }
+            if (!string.IsNullOrEmpty(cache)) { EstilosTema = cache; StateHasChanged(); }
+        } catch { }
 
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
-        try
-        {
+        
+        try {
             listaBanners = await Http.GetFromJsonAsync<List<BannerDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/communityapi/lista/{Sesion.Usuario.BoxID}/{Sesion.Usuario.UsuarioID}");
-        }
-        catch { }
+        } catch { }
         finally { cargando = false; }
     }
 
     private void VerPlayerCard(Guid targetId)
     {
-        // Dependiendo del tipo de lugar del Box, lo mandamos a la Ficha correcta pero pasándole el ID de su amigo.
         string tipoLugar = Sesion.Usuario?.TipoLugar ?? "";
-
-        if (tipoLugar == "Running")
-        {
-            Nav.NavigateTo($"/ficha-running/{targetId}");
-        }
-        else if (tipoLugar == "Funcional" || tipoLugar == "Calistenia")
-        {
-            Nav.NavigateTo($"/ficha-funcional/{targetId}");
-        }
-        else
-        {
-            // Para Crossfit, Gimnasio, o por defecto
-            Nav.NavigateTo($"/ficha-atleta/{targetId}");
-        }
+        if (tipoLugar == "Running") Nav.NavigateTo($"/ficha-running/{targetId}");
+        else if (tipoLugar == "Funcional" || tipoLugar == "Calistenia") Nav.NavigateTo($"/ficha-funcional/{targetId}");
+        else Nav.NavigateTo($"/ficha-atleta/{targetId}");
     }
 }

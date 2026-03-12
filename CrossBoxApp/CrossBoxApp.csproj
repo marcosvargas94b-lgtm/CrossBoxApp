@@ -4,8 +4,8 @@
 		
 		<TargetFrameworks>net9.0-android;net9.0-ios;net9.0-maccatalyst</TargetFrameworks>
 		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows10.0.19041.0</TargetFrameworks>
-		
 		<!--		
+		
 		<TargetFrameworks>net9.0-android</TargetFrameworks>
 		<TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows10.0.19041.0</TargetFrameworks>
 		-->
@@ -25,7 +25,7 @@
 		<ApplicationId>com.alfafit.aftrack</ApplicationId>
 		-->
 		<ApplicationDisplayVersion>1.1</ApplicationDisplayVersion>
-		<ApplicationVersion>21</ApplicationVersion>
+		<ApplicationVersion>23</ApplicationVersion>
 
 		<WindowsPackageType>None</WindowsPackageType>
 

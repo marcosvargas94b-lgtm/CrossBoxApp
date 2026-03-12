@@ -6,11 +6,8 @@
 @inject SesionService Sesion
 @inject IJSRuntime JS
 
-@* ENVOLVEMOS TODA LA VISTA EN EL TEMA GLOBAL *@
 <div style="@EstilosTema">
-
     <div class="main-layout">
-
         <div class="navbar-container">
             <div class="nav-left" @onclick="Volver">
                 <i class="fas fa-arrow-left"></i> VOLVER
@@ -20,22 +17,32 @@
         </div>
 
         <div class="scrollable-content">
-
-            <h2 class="date-header">@DateTime.Now.ToString("dddd, dd MMMM").ToUpper()</h2>
+            @* --- NAVEGACIÓN DE FECHAS (ESTILO PREMIUM) --- *@
+            <div class="date-navigator fade-in">
+                <button class="btn-date-nav" @onclick='() => CambiarFecha(-1)'>
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="date-display">
+                    <h2 class="date-header">@fechaSeleccionada.ToString("dddd, dd MMMM").ToUpper()</h2>
+                </div>
+                <button class="btn-date-nav" @onclick='() => CambiarFecha(1)'>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
 
             @if (cargando)
             {
                 <div class="loading-state">
                     <div class="spinner-border" style="color: var(--theme-primary);" role="status"></div>
-                    <p style="color: var(--theme-text-muted); margin-top: 10px;">Cargando entrenamiento...</p>
+                    <p style="color: var(--theme-text-muted); margin-top: 10px; font-family:'Oswald';">CARGANDO...</p>
                 </div>
             }
             else if (wodData == null || wodData.Segmentos.Count == 0)
             {
                 <div class="empty-state fade-in">
                     <i class="fas fa-bed" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px; color: var(--theme-text-muted);"></i>
-                    <h3 style="color: var(--theme-text-muted);">DÍA DE DESCANSO</h3>
-                    <p style="color: var(--theme-text-muted);">No hay programación cargada para hoy en @(Sesion.Usuario?.BoxNombre ?? "tu Box").</p>
+                    <h3 style="color: var(--theme-text-muted); font-family:'Oswald';">DÍA DE DESCANSO</h3>
+                    <p style="color: var(--theme-text-muted);">No hay programación para esta fecha.</p>
                 </div>
             }
             else
@@ -44,23 +51,15 @@
                     @foreach (var segmento in wodData.Segmentos)
                     {
                         <div class="segment-card">
-                            <div class="segment-header">
-                                @segmento.Titulo.ToUpper()
-                            </div>
-
+                            <div class="segment-header">@segmento.Titulo.ToUpper()</div>
                             <div class="segment-body">
                                 @foreach (var ejercicio in segmento.Ejercicios)
                                 {
                                     <div class="exercise-row-unified">
-                                        <span class="text-desc">
-                                            @ejercicio.Descripcion
-                                        </span>
-
+                                        <span class="text-desc">@ejercicio.Descripcion</span>
                                         @if (!string.IsNullOrEmpty(ejercicio.PesoRepeticiones))
                                         {
-                                            <span class="text-reps">
-                                                - @ejercicio.PesoRepeticiones
-                                            </span>
+                                            <span class="text-reps"> - @ejercicio.PesoRepeticiones</span>
                                         }
                                     </div>
                                 }
@@ -68,199 +67,45 @@
                         </div>
                     }
                 </div>
-
-                @* @if (Sesion.Usuario != null && (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.Usuario.TipoUsuarioID == 3))
-                {
-                    <div class="admin-actions mt-4 mb-4">
-                        <button class="btn btn-danger w-100" style="font-family: 'Oswald'; font-weight: bold; letter-spacing: 1px; padding: 12px;" @onclick="EliminarWodActual">
-                            <i class="fas fa-trash-alt"></i> ELIMINAR WOD DEL DÍA
-                        </button>
-                    </div>
-                } *@
             }
-
             <div style="height: 40px;"></div>
         </div>
     </div>
 </div>
 
 <style>
-    /* --- ESTRUCTURA BASE (IDÉNTICA A HOME) --- */
-    .main-layout {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: var(--theme-bg);
-        display: flex;
-        flex-direction: column;
-        z-index: 1;
-    }
+    /* Estructura Base unificada con el Home */
+    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--theme-bg); display: flex; flex-direction: column; z-index: 1; }
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: var(--theme-bg); border-bottom: 1px solid var(--theme-primary); color: var(--theme-text); display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
+    .nav-left { color: var(--theme-primary); font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .nav-title { font-weight: bold; font-size: 1.1rem; color: var(--theme-text); letter-spacing: 1px; }
+    .nav-right { width: 60px; }
+    .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
 
-    .navbar-container {
-        flex-shrink: 0;
-        padding-top: calc(env(safe-area-inset-top) + 5px);
-        padding-bottom: 10px;
-        padding-left: 20px;
-        padding-right: 20px;
-        background-color: var(--theme-bg);
-        border-bottom: 1px solid var(--theme-primary);
-        color: var(--theme-text);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 100;
-        font-family: 'Oswald';
-        min-height: 60px;
-    }
+    /* Estilos del Navegador de Fechas */
+    .date-navigator { display: flex; align-items: center; justify-content: center; gap: 15px; width: 100%; max-width: 500px; margin-bottom: 25px; align-self: center; }
+    .btn-date-nav { background: var(--theme-card); border: 1px solid var(--theme-border); color: var(--theme-primary); width: 45px; height: 45px; border-radius: 50%; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .btn-date-nav:active { transform: scale(0.9); background: var(--theme-primary); color: var(--theme-bg); }
+    .date-display { flex: 1; }
+    .date-header { font-family: 'Oswald'; font-size: 1.3rem; text-align: center; color: var(--theme-text); margin: 0; letter-spacing: 1px; border-bottom: 1px solid var(--theme-border); padding-bottom: 5px; }
 
-    .nav-left {
-        color: var(--theme-primary);
-        font-weight: bold;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.9rem;
-    }
+    /* Tarjetas del WOD */
+    .wod-segments { width: 100%; max-width: 600px; align-self: center; }
+    .segment-card { background-color: var(--theme-card); border: 1px solid var(--theme-border); border-radius: 12px; margin-bottom: 25px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .segment-header { background-color: var(--theme-primary); color: var(--theme-bg); font-family: 'Oswald'; font-size: 1.1rem; font-weight: bold; padding: 10px 15px; letter-spacing: 1px; }
+    .segment-body { padding: 10px 20px; }
+    .exercise-row-unified { padding: 12px 0; border-bottom: 1px solid var(--theme-border); color: var(--theme-text); line-height: 1.4; }
+    .exercise-row-unified:last-child { border-bottom: none; }
+    .text-reps { font-family: 'Oswald'; color: var(--theme-primary); font-weight: bold; margin-left: 6px; }
 
-    .nav-title {
-        font-weight: bold;
-        font-size: 1.1rem;
-        color: var(--theme-text);
-        letter-spacing: 1px;
-    }
-
-    .nav-right {
-        width: 60px;
-    }
-
-    .scrollable-content {
-        flex-grow: 1;
-        overflow-y: auto;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 40px;
-    }
-
-    /* --- ESTILOS WOD --- */
-
-    .date-header {
-        font-family: 'Oswald';
-        font-size: 1.5rem;
-        text-align: center;
-        color: var(--theme-text);
-        margin-top: 10px;
-        margin-bottom: 25px;
-        border-bottom: 1px solid var(--theme-border);
-        padding-bottom: 10px;
-        letter-spacing: 1px;
-    }
-
-    .wod-segments {
-        width: 100%;
-        max-width: 600px;
-        align-self: center;
-    }
-
-    /* Tarjeta de Segmento */
-    .segment-card {
-        background-color: var(--theme-card);
-        border: 1px solid var(--theme-border);
-        border-radius: 12px;
-        margin-bottom: 25px;
-        overflow: hidden;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    }
-
-    .segment-header {
-        background-color: var(--theme-primary);
-        color: var(--theme-bg);
-        font-family: 'Oswald';
-        font-size: 1.1rem;
-        font-weight: bold;
-        padding: 10px 15px;
-        letter-spacing: 1px;
-    }
-
-    .segment-body {
-        padding: 10px 20px;
-    }
-
-    /* Filas de Ejercicios */
-    .exercise-row-unified {
-        padding: 12px 0;
-        border-bottom: 1px solid var(--theme-border);
-        white-space: normal;
-        word-wrap: break-word;
-        line-height: 1.4;
-    }
-
-        .exercise-row-unified:last-child {
-            border-bottom: none;
-        }
-
-    .text-desc {
-        font-family: 'Roboto', sans-serif;
-        font-size: 1rem;
-        color: var(--theme-text);
-        white-space: pre-wrap;
-    }
-
-    .text-reps {
-        font-family: 'Oswald', sans-serif;
-        font-size: 1.05rem;
-        color: var(--theme-primary);
-        font-weight: bold;
-        margin-left: 6px;
-    }
-
-    /* Estados de Carga/Vacío */
-    .loading-state, .empty-state {
-        text-align: center;
-        margin-top: 50px;
-        font-family: 'Roboto';
-    }
-
-        .empty-state h3 {
-            font-family: 'Oswald';
-            margin-bottom: 5px;
-        }
-
-    .fade-in {
-        animation: fadeIn 0.5s ease;
-    }
-
-    @@keyframes fadeIn {
-        from
-
-    {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    }
-
-    .admin-actions {
-        width: 100%;
-        max-width: 600px;
-        align-self: center;
-    }
+    .loading-state, .empty-state { text-align: center; margin-top: 50px; }
+    .fade-in { animation: fadeIn 0.5s ease; }
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 
 @code {
-    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
     private string EstilosTema = @"
         --theme-primary: #A9A9A9;
-        --theme-secondary: #808080;
         --theme-bg: #0d0d0d;
         --theme-card: #1a1a1a;
         --theme-border: #333333;
@@ -270,86 +115,81 @@
 
     private WodDiaDto wodData;
     private bool cargando = true;
+    private DateTime fechaSeleccionada = DateTime.Today;
 
     protected override async Task OnInitializedAsync()
     {
-        // LEER EL CACHÉ LOCAL AL INSTANTE
-        try
-        {
+        try {
             var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
-            if (!string.IsNullOrEmpty(cache))
-            {
-                EstilosTema = cache;
-                StateHasChanged();
-            }
-        }
-        catch { }
+            if (!string.IsNullOrEmpty(cache)) { EstilosTema = cache; StateHasChanged(); }
+        } catch { }
 
-        try
-        {
-            if (Sesion.Usuario == null)
-            {
-                Nav.NavigateTo("/");
-                return;
-            }
-
-            var boxId = Sesion.Usuario.BoxID;
-            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/obtener-hoy/{boxId}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                wodData = await response.Content.ReadFromJsonAsync<WodDiaDto>();
-            }
-            else
-            {
-                wodData = null;
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error obteniendo WOD: {ex.Message}");
-            // await App.Current.MainPage.DisplayAlert("Error", "No se pudo cargar el WOD.", "OK");
-        }
-        finally
-        {
-            cargando = false;
-        }
+        await CargarWod();
     }
 
-    private async Task EliminarWodActual()
+   private async Task CargarWod()
     {
-        bool confirmar = await App.Current.MainPage.DisplayAlert("PELIGRO",
-            "¿Estás seguro de eliminar TODA la programación de hoy? Esto no se puede deshacer.",
-            "Sí, Eliminar", "Cancelar");
+        if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+        
+        cargando = true;
+        wodData = null; // Limpiamos para mostrar el spinner
+        StateHasChanged();
 
-        if (!confirmar) return;
-
-        try
-        {
+        try {
             var boxId = Sesion.Usuario.BoxID;
-            var fechaStr = DateTime.Now.ToString("yyyy-MM-dd");
+            var fechaStr = fechaSeleccionada.ToString("yyyy-MM-dd");
+            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/obtener/{boxId}/{fechaStr}");
 
-            var response = await Http.DeleteAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/eliminar-dia/{boxId}/{fechaStr}");
+            if (response.IsSuccessStatusCode) {
+                var data = await response.Content.ReadFromJsonAsync<ProgramacionWodViewModel>();
+                if (data != null) {
+                    wodData = new WodDiaDto {
+                        Fecha = data.FechaProgramacion,
+                        Segmentos = data.Bloques.Select(b => {
+                            // MAGIA: Evaluar si es Texto Libre o Normal
+                            var listaEjerciciosVisuales = new List<EjercicioVisualDto>();
 
-            if (response.IsSuccessStatusCode)
-            {
-                await App.Current.MainPage.DisplayAlert("Éxito", "WOD Eliminado.", "OK");
-                wodData = null;
-                await OnInitializedAsync();
+                            if (b.EsTextoLibre)
+                            {
+                                // Si es libre, el primer ejercicio trae todo el párrafo. 
+                                // Lo partimos por saltos de línea (\n).
+                                var textoCompleto = b.Ejercicios.FirstOrDefault()?.Descripcion ?? "";
+                                var lineas = textoCompleto.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+                                foreach (var linea in lineas)
+                                {
+                                    listaEjerciciosVisuales.Add(new EjercicioVisualDto {
+                                        Descripcion = linea,
+                                        PesoRepeticiones = "" // En texto libre el peso ya viene escrito en la línea
+                                    });
+                                }
+                            }
+                            else
+                            {
+                                // Si es por bloques (normal), lo pasamos tal cual
+                                listaEjerciciosVisuales = b.Ejercicios.Select(e => new EjercicioVisualDto {
+                                    Descripcion = e.Descripcion,
+                                    PesoRepeticiones = e.PesoRepeticiones
+                                }).ToList();
+                            }
+
+                            return new SegmentoVisualDto {
+                                Titulo = b.EsTextoLibre ? b.TiempoFormato : b.NombreSegmento,
+                                Ejercicios = listaEjerciciosVisuales
+                            };
+                        }).ToList()
+                    };
+                }
             }
-            else
-            {
-                await App.Current.MainPage.DisplayAlert("Error", "No se pudo eliminar.", "OK");
-            }
-        }
-        catch (Exception ex)
-        {
-            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
-        }
+        } catch { } 
+        finally { cargando = false; StateHasChanged(); }
     }
 
-    private void Volver()
+    private async Task CambiarFecha(int dias)
     {
-        Nav.NavigateTo("/home");
+        fechaSeleccionada = fechaSeleccionada.AddDays(dias);
+        await CargarWod();
     }
+
+    private void Volver() => Nav.NavigateTo("/home");
 }
