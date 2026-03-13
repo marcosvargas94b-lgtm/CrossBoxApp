@@ -165,7 +165,10 @@
                                     {
                                         <div class="score-input-wrapper">
                                             <input type="number" @bind="atleta.Rondas" class="input-reps" placeholder="0" min="0" />
-                                            <small style="color: var(--theme-text-muted);">RONDAS</small>
+                                            <small style="color: var(--theme-text-muted);">RND</small>
+                                            <span style="color: var(--theme-border); font-weight: bold; margin: 0 2px;">+</span>
+                                            <input type="number" @bind="atleta.Reps" class="input-reps" placeholder="0" min="0" />
+                                            <small style="color: var(--theme-text-muted);">REP</small>
                                         </div>
                                     }
                                     else
@@ -239,7 +242,12 @@
                                             <div class="winner-info">
                                                 @if(top3[1].EsEquipo && top3[1].NombresMiembros.Any()) { <div class="team-stack-podium">@foreach(var name in top3[1].NombresMiembros.Take(2)){ <span class="winner-name">@name</span> }</div> }
                                                 else { <span class="winner-name">@top3[1].NombrePrincipal</span> }
-                                                <span class="winner-score">@top3[1].ScoreTexto</span>
+                                                
+                                                <div class="winner-score-box">
+                                                    <span class="w-val">@top3[1].ScoreVal</span>
+                                                    <span class="w-lbl">@top3[1].ScoreLabel</span>
+                                                    @if(!string.IsNullOrEmpty(top3[1].ScoreSub)) { <span class="w-sub">@top3[1].ScoreSub</span> }
+                                                </div>
                                             </div>
                                         }
                                     </div>
@@ -261,7 +269,12 @@
                                             <div class="winner-info main-winner">
                                                 @if(top3[0].EsEquipo && top3[0].NombresMiembros.Any()) { <div class="team-stack-podium">@foreach(var name in top3[0].NombresMiembros.Take(2)){ <span class="winner-name">@name</span> }</div> }
                                                 else { <span class="winner-name">@top3[0].NombrePrincipal</span> }
-                                                <span class="winner-score main-score">@top3[0].ScoreTexto</span>
+                                                
+                                                <div class="winner-score-box main-score-box">
+                                                    <span class="w-val">@top3[0].ScoreVal</span>
+                                                    <span class="w-lbl">@top3[0].ScoreLabel</span>
+                                                    @if(!string.IsNullOrEmpty(top3[0].ScoreSub)) { <span class="w-sub">@top3[0].ScoreSub</span> }
+                                                </div>
                                             </div>
                                         }
                                     </div>
@@ -282,7 +295,12 @@
                                             <div class="winner-info">
                                                 @if(top3[2].EsEquipo && top3[2].NombresMiembros.Any()) { <div class="team-stack-podium">@foreach(var name in top3[2].NombresMiembros.Take(2)){ <span class="winner-name">@name</span> }</div> }
                                                 else { <span class="winner-name">@top3[2].NombrePrincipal</span> }
-                                                <span class="winner-score">@top3[2].ScoreTexto</span>
+                                                
+                                                <div class="winner-score-box">
+                                                    <span class="w-val">@top3[2].ScoreVal</span>
+                                                    <span class="w-lbl">@top3[2].ScoreLabel</span>
+                                                    @if(!string.IsNullOrEmpty(top3[2].ScoreSub)) { <span class="w-sub">@top3[2].ScoreSub</span> }
+                                                </div>
                                             </div>
                                         }
                                     </div>
@@ -305,7 +323,10 @@
                                              @if(item.EsEquipo && item.NombresMiembros.Any()) { <div class="rest-stack-names">@foreach(var name in item.NombresMiembros) { <span class="rest-name">@name</span> }</div> }
                                              else { <span class="rest-name">@item.NombrePrincipal</span> }
                                         </div>
-                                        <span class="rest-score">@item.ScoreTexto</span>
+                                        <div class="rest-score-box">
+                                            <span class="r-val">@item.ScoreVal <small>@item.ScoreLabel</small></span>
+                                            @if(!string.IsNullOrEmpty(item.ScoreSub)) { <span class="r-sub">@item.ScoreSub</span> }
+                                        </div>
                                     </div>
                                 }
                             </div>
@@ -331,11 +352,11 @@
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid var(--theme-primary);
         color: var(--theme-primary);
-        padding: 8px 15px; /* Más compacto */
+        padding: 8px 15px; 
         border-radius: 50px;
         font-family: 'Oswald';
         font-weight: bold;
-        font-size: 0.85rem; /* Letra más discreta */
+        font-size: 0.85rem; 
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -349,16 +370,29 @@
         color: var(--theme-bg);
     }
 
-    /* --- REGLA EXCLUSIVA PARA MODO VERTICAL (PORTRAIT) --- */
+    /* --- REGLAS EXCLUSIVAS PARA MODO VERTICAL (PORTRAIT) --- */
     @@media (orientation: portrait) {
         .btn-back-dashboard {
-            /* Empuja el botón hacia abajo usando la variable nativa de iOS/Android para el notch */
             top: calc(env(safe-area-inset-top) + 15px) !important;
             left: 15px;
         }
+        
+        .btn-close-overlay {
+            top: calc(env(safe-area-inset-top) + 20px) !important;
+            right: 20px !important;
+        }
+        
+        .victory-container {
+            padding-bottom: 20px !important;
+            padding-top: calc(env(safe-area-inset-top) + 60px) !important;
+            justify-content: center !important; 
+        }
+        
+        .victory-layout-main {
+            justify-content: center !important; 
+        }
     }
 
-    /* Regla para pantallas muy pequeñas (reloj / mini celulares) */
     @@media (max-width: 600px) {
         .btn-back-dashboard {
             padding: 6px 12px;
@@ -370,9 +404,7 @@
     .resumen-card { background: var(--theme-card); width: 90%; max-width: 500px; border-radius: 15px; padding: 15px 20px; text-align: center; border: 2px solid var(--theme-primary); box-shadow: 0 0 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; max-height: 85vh; height: auto; position: relative; z-index: 5; }
     
     .header-resumen { flex-shrink: 0; }
-    .header-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; } /* Menos margen inferior */
-    
-    /* Título más pequeño para ahorrar espacio */
+    .header-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; } 
     .header-top-row h2 { font-family: 'Oswald'; color: var(--theme-text); font-size: 1.2rem; margin: 0; }
     
     .attendance-list { flex-grow: 1; overflow-y: auto; min-height: 0; margin-bottom: 10px; padding-right: 5px; border-top: 1px solid var(--theme-border); border-bottom: 1px solid var(--theme-border); }
@@ -401,13 +433,18 @@
     .cat-badge-empty, .cat-text-empty { color: var(--theme-text-muted); font-size: 0.75rem; font-style: italic; border: 1px dashed var(--theme-border); padding: 2px 8px; border-radius: 4px; font-family: 'Roboto'; }
     .cat-badge-filled, .cat-text-filled { background: var(--theme-primary); color: var(--theme-bg); font-weight: bold; font-family: 'Oswald'; font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; letter-spacing: 1px; }
 
-    .user-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 5px; }
-    .user-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+    /* EL ARREGLO PARA QUE LOS NOMBRES NO CHOQUEN CON LOS INPUTS */
+    .user-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 5px; gap: 15px; }
+    .user-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; padding-right: 5px;}
+    
     .avatar-list-img, .avatar-list-letter, .avatar-tiny, .avatar-tiny-letter, .avatar-small, .avatar-small-letter { border-radius: 50% !important; object-fit: cover; display: flex; justify-content: center; align-items: center; font-weight: bold; font-family: 'Oswald'; flex-shrink: 0; aspect-ratio: 1/1; }
     .avatar-list-img { width: 32px; height: 32px; border: 2px solid var(--theme-primary); }
     .avatar-list-letter { width: 32px; height: 32px; background: var(--theme-bg); color: var(--theme-primary); border: 2px solid var(--theme-primary); font-size: 1rem; }
-    .text-truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; font-size: 0.85rem; }
-    .score-input-wrapper { display: flex; align-items: center; gap: 5px; animation: fadeIn 0.3s; }
+    
+    /* ACÁ ES DONDE SE CORTAN LOS NOMBRES LARGOS AUTOMÁTICAMENTE */
+    .text-truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; font-size: 0.85rem; }
+    
+    .score-input-wrapper { display: flex; align-items: center; gap: 5px; animation: fadeIn 0.3s; flex-shrink: 0;}
     .input-reps { width: 50px; background: var(--theme-bg); border: 1px solid var(--theme-primary); color: var(--theme-text); text-align: center; padding: 3px; border-radius: 5px; font-weight: bold; font-size: 0.9rem; }
 
     .mode-badge { background: var(--theme-primary); color: var(--theme-bg); padding: 6px; border-radius: 6px; font-weight: bold; font-family: 'Oswald'; font-size: 0.85rem; margin-bottom: 10px; text-align: center; letter-spacing: 1px; width: 100%; }
@@ -438,10 +475,11 @@
     .btn-icon-header { background: none; border: none; color: var(--theme-text-muted); font-size: 1.2rem; cursor: pointer; }
 
     .victory-bg-effect { position: absolute; width: 100%; height: 100%; opacity: 0.05; background-image: repeating-linear-gradient(45deg, var(--theme-text) 0, var(--theme-text) 1px, transparent 0, transparent 50%); z-index: -1; }
-    .btn-close-overlay { position: absolute; top: 25px; right: 25px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); color: white; font-size: 1.5rem; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; z-index: 5001; display: flex; justify-content: center; align-items: center; transition: 0.3s; }
+    
+    .btn-close-overlay { position: absolute; top: 35px; right: 25px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); color: white; font-size: 1.5rem; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; z-index: 5001; display: flex; justify-content: center; align-items: center; transition: 0.3s; }
     .btn-close-overlay:hover { background: var(--theme-primary); color: var(--theme-bg); transform: rotate(90deg); border-color: var(--theme-primary); }
     
-    .victory-container { width: 100%; max-width: 1200px; display: flex; flex-direction: column; align-items: center; z-index: 1; height: 100vh; justify-content: flex-end; padding-bottom: 50px; padding-top: 60px; }
+    .victory-container { width: 100%; max-width: 1200px; display: flex; flex-direction: column; align-items: center; z-index: 1; height: 100vh; justify-content: center; padding-bottom: 20px; padding-top: 40px; }
     .victory-layout-main { display: flex; flex-direction: row; gap: 40px; width: 100%; height: 100%; align-items: flex-end; justify-content: center; }
     .podium-area { display: flex; justify-content: center; align-items: flex-end; height: 100%; }
     .podium-stage { display: flex; align-items: flex-end; gap: 15px; }
@@ -463,8 +501,17 @@
     .winner-info { z-index: 50; text-align: center; width: 100%; padding: 0 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
     .winner-name { display: block; font-family: 'Oswald'; font-size: 0.85rem; font-weight: 800; color: white; text-transform: uppercase; line-height: 1; margin-bottom: 2px; text-shadow: 0 0 3px #000, 0 0 3px #000; }
     .main-winner .winner-name { font-size: 1rem; }
-    .winner-score { display: block; font-family: 'Oswald'; font-size: 1.2rem; font-weight: 900; color: white; text-shadow: 0 0 3px #000, 0 0 3px #000; margin-top: 5px; }
-    .main-score { font-size: 1.5rem; }
+    
+    /* REEMPLAZO DE SCORE PARA DIVIDIR RONDAS Y REPES */
+    .winner-score-box { display: flex; flex-direction: column; align-items: center; line-height: 1; margin-top: 2px; text-shadow: 0 0 3px #000; }
+    .w-val { font-family: 'Oswald'; font-size: 1.4rem; font-weight: 900; color: white; }
+    .w-lbl { font-family: 'Oswald'; font-size: 0.7rem; font-weight: bold; color: var(--theme-primary); letter-spacing: 1px; margin-top: 2px; }
+    .w-sub { font-family: 'Oswald'; font-size: 0.75rem; font-weight: bold; color: white; margin-top: 4px; background: rgba(0,0,0,0.4); padding: 2px 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); }
+
+    .main-score-box .w-val { font-size: 1.8rem; }
+    .main-score-box .w-lbl { font-size: 0.85rem; }
+    .main-score-box .w-sub { font-size: 0.85rem; padding: 3px 10px; }
+
     .team-stack-podium { display: flex; flex-direction: column; align-items: center; }
     .crown-floating { position: absolute; top: -50px; font-size: 2.5rem; color: #FFD700; animation: float 3s infinite ease-in-out; filter: drop-shadow(0 0 10px gold); z-index: 50; }
     
@@ -476,7 +523,12 @@
     .rest-info { flex: 1; overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
     .rest-stack-names { display: flex; flex-direction: column; line-height: 1.1; }
     .rest-name { color: var(--theme-text); font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Roboto'; font-weight: 500; }
-    .rest-score { font-family: 'Oswald'; font-weight: bold; color: var(--theme-primary); font-size: 0.95rem; }
+    
+    /* REEMPLAZO SCORE DEL THE PACK */
+    .rest-score-box { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; }
+    .r-val { font-family: 'Oswald'; font-weight: bold; color: var(--theme-primary); font-size: 1rem; }
+    .r-val small { font-size: 0.65rem; color: var(--theme-text-muted); margin-left: 3px; }
+    .r-sub { font-family: 'Oswald'; font-size: 0.75rem; color: var(--theme-text); font-weight: bold; background: rgba(255,255,255,0.1); padding: 1px 6px; border-radius: 6px; margin-top: 2px;}
 
     .fade-in { animation: fadeIn 0.6s forwards; }
     .slide-up-delay-1 { animation: slideUpAvatar 0.8s 0.5s forwards; opacity: 0; transform: translateY(100px); }
@@ -494,7 +546,7 @@
     @@keyframes float { 0% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-15px) rotate(2deg); } 100% { transform: translateY(0) rotate(0deg); } }
     
     @@media (max-width: 850px) {
-        .victory-layout-main { flex-direction: column; align-items: center; justify-content: flex-start; height: 100%; overflow-y: auto; padding-bottom: 80px; }
+        .victory-layout-main { flex-direction: column; align-items: center; justify-content: flex-start; height: 100%; overflow-y: auto; padding-bottom: 20px; }
         .podium-area { width: 100%; flex: none; height: auto; margin-top: 40px; margin-bottom: 20px; }
         .the-rest-area { width: 90%; height: 250px; flex: none; margin-top: auto; margin-bottom: 0; }
     }
@@ -519,7 +571,19 @@
         public string Categoria; 
     }
     
-    class PodiumItem { public string NombrePrincipal; public List<string> NombresMiembros = new(); public bool EsEquipo; public string FotoUrl; public string ScoreTexto; public int Posicion; public double ValorOrdenamiento; }
+    // --- ACTUALIZADO PARA SEPARAR EL TEXTO EN PARTES ---
+    class PodiumItem { 
+        public string NombrePrincipal; 
+        public List<string> NombresMiembros = new(); 
+        public bool EsEquipo; 
+        public string FotoUrl; 
+        public string ScoreTexto; 
+        public string ScoreVal; 
+        public string ScoreLabel; 
+        public string ScoreSub; 
+        public int Posicion; 
+        public double ValorOrdenamiento; 
+    }
     
     public class GuardarResultadosDto
     {
@@ -538,6 +602,9 @@
         public int Rondas { get; set; } 
         public string NombreEquipo { get; set; }
         public string Categoria { get; set; } 
+        
+        // --- NUEVO: LE DECIMOS AL BACKEND EXACTAMENTE QUÉ MODO FUE ---
+        public string ModoCaptura { get; set; } 
     }
 
     private List<AtletaResumen> listaLocal = new();
@@ -553,7 +620,6 @@
     private Guid idAtletaEditandoCategoria = Guid.Empty; 
     private bool esModoJuezEditando = false;
 
-    // Cambiado de OnInitialized a OnInitializedAsync para inyectar el caché
     protected override async Task OnInitializedAsync()
     {
         // LEER EL CACHÉ LOCAL AL INSTANTE
@@ -575,11 +641,8 @@
         }
     }
 
-    // --- NUEVO: FUNCIÓN PARA REGRESAR AL DASHBOARD ---
     private void RegresarAlDashboard()
     {
-        // Al navegar de regreso al dashboard, no tocamos el LiveState.
-        // Como LiveState es Singleton/Scoped, los atletas seguirán ahí.
         Nav.NavigateTo("/live-dashboard");
     }
 
@@ -634,7 +697,8 @@
                     Reps = 0,
                     Rondas = 0, 
                     NombreEquipo = item.NombreEquipo ?? "Equipo",
-                    Categoria = cat
+                    Categoria = cat,
+                    ModoCaptura = "TIEMPO" // Le decimos al backend que fue por tiempo
                 });
             }
         }
@@ -650,11 +714,12 @@
                 {
                     UsuarioUnoId = item.UsuarioId,
                     EsEquipo = false,
-                    Reps = modoCaptura == "REPS" ? item.Reps : 0,
+                    Reps = (modoCaptura == "REPS" || modoCaptura == "RONDAS") ? item.Reps : 0,
                     Rondas = modoCaptura == "RONDAS" ? item.Rondas : 0,
                     TiempoFinal = null, 
                     NombreEquipo = "Individual",
-                    Categoria = cat
+                    Categoria = cat,
+                    ModoCaptura = modoCaptura // <--- AQUI LE DECIMOS EXACTAMENTE QUÉ MODO ESTABA ACTIVO (NADA, REPS, RONDAS)
                 });
             }
         }
@@ -698,7 +763,18 @@
              foreach(var r in terminados) {
                  double segundos = 99999;
                  if(!string.IsNullOrEmpty(r.TiempoFinal)) { var parts = r.TiempoFinal.Split(':'); if(parts.Length == 2) segundos = (int.Parse(parts[0])*60) + int.Parse(parts[1]); }
-                 var item = new PodiumItem { EsEquipo = r.Atletas.Count > 1, FotoUrl = r.Atletas[0].FotoUrl, ScoreTexto = r.TiempoFinal, ValorOrdenamiento = segundos };
+                 
+                 // ASIGNAMOS LAS VARIABLES DEL DISEÑO
+                 var item = new PodiumItem { 
+                     EsEquipo = r.Atletas.Count > 1, 
+                     FotoUrl = r.Atletas[0].FotoUrl, 
+                     ScoreTexto = r.TiempoFinal, 
+                     ScoreVal = r.TiempoFinal,
+                     ScoreLabel = "TIME",
+                     ScoreSub = "",
+                     ValorOrdenamiento = segundos 
+                 };
+                 
                  if (item.EsEquipo) item.NombresMiembros = r.Atletas.Select(a => a.NombreCompleto.Split(' ')[0]).ToList();
                  else item.NombrePrincipal = r.Atletas[0].NombreCompleto.Split(' ')[0];
                  candidatos.Add(item);
@@ -710,9 +786,42 @@
              if(!origen.Any() && listaLocal.Any()) origen = listaLocal.Take(5).ToList(); 
              
              foreach(var a in origen) {
-                 int valor = esRondas ? a.Rondas : a.Reps;
-                 string texto = esRondas ? $"{valor} RONDAS" : $"{valor} REPS";
-                 candidatos.Add(new PodiumItem { EsEquipo = false, NombrePrincipal = a.NombreCompleto.Split(' ')[0], FotoUrl = a.FotoUrl, ScoreTexto = texto, ValorOrdenamiento = valor });
+                 int valorRondas = esRondas ? a.Rondas : 0;
+                 int valorReps = a.Reps;
+                 
+                 string texto = "";
+                 string sVal = "";
+                 string sLbl = "";
+                 string sSub = "";
+                 double orden = 0;
+                 
+                 if (esRondas) {
+                     texto = $"{valorRondas} RONDAS";
+                     sVal = valorRondas.ToString();
+                     sLbl = "RONDAS";
+                     
+                     if (valorReps > 0) {
+                         texto += $" + {valorReps}"; 
+                         sSub = $"+ {valorReps} REPS";
+                     }
+                     orden = (valorRondas * 10000) + valorReps; // LAS RONDAS VALEN MÁS, LAS REPS DESEMPATAN
+                 } else {
+                     texto = $"{valorReps} REPS";
+                     sVal = valorReps.ToString();
+                     sLbl = "REPS";
+                     orden = valorReps;
+                 }
+                 
+                 candidatos.Add(new PodiumItem { 
+                     EsEquipo = false, 
+                     NombrePrincipal = a.NombreCompleto.Split(' ')[0], 
+                     FotoUrl = a.FotoUrl, 
+                     ScoreTexto = texto, 
+                     ScoreVal = sVal,
+                     ScoreLabel = sLbl,
+                     ScoreSub = sSub,
+                     ValorOrdenamiento = orden 
+                 });
              }
              candidatos = candidatos.OrderByDescending(x => x.ValorOrdenamiento).ToList();
        }

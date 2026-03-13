@@ -52,18 +52,33 @@
                     {
                         <div class="segment-card">
                             <div class="segment-header">@segmento.Titulo.ToUpper()</div>
-                            <div class="segment-body">
-                                @foreach (var ejercicio in segmento.Ejercicios)
-                                {
-                                    <div class="exercise-row-unified">
-                                        <span class="text-desc">@ejercicio.Descripcion</span>
-                                        @if (!string.IsNullOrEmpty(ejercicio.PesoRepeticiones))
-                                        {
-                                            <span class="text-reps"> - @ejercicio.PesoRepeticiones</span>
-                                        }
-                                    </div>
-                                }
-                            </div>
+                            
+                            @if (segmento.EsTextoLibre)
+                            {
+                                <div class="segment-body-free">
+                                    @foreach (var ejercicio in segmento.Ejercicios)
+                                    {
+                                        <div class="exercise-row-free">
+                                            <span class="text-desc">@ejercicio.Descripcion</span>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="segment-body">
+                                    @foreach (var ejercicio in segmento.Ejercicios)
+                                    {
+                                        <div class="exercise-row-unified">
+                                            <span class="text-desc">@ejercicio.Descripcion</span>
+                                            @if (!string.IsNullOrEmpty(ejercicio.PesoRepeticiones))
+                                            {
+                                                <span class="text-reps"> - @ejercicio.PesoRepeticiones</span>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
                         </div>
                     }
                 </div>
@@ -93,10 +108,16 @@
     .wod-segments { width: 100%; max-width: 600px; align-self: center; }
     .segment-card { background-color: var(--theme-card); border: 1px solid var(--theme-border); border-radius: 12px; margin-bottom: 25px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .segment-header { background-color: var(--theme-primary); color: var(--theme-bg); font-family: 'Oswald'; font-size: 1.1rem; font-weight: bold; padding: 10px 15px; letter-spacing: 1px; }
+    
+    /* MODO NORMAL */
     .segment-body { padding: 10px 20px; }
     .exercise-row-unified { padding: 12px 0; border-bottom: 1px solid var(--theme-border); color: var(--theme-text); line-height: 1.4; }
     .exercise-row-unified:last-child { border-bottom: none; }
     .text-reps { font-family: 'Oswald'; color: var(--theme-primary); font-weight: bold; margin-left: 6px; }
+
+    /* MODO TEXTO LIBRE (TIPO BLOC DE NOTAS) */
+    .segment-body-free { padding: 15px 20px; background: rgba(0, 0, 0, 0.2); }
+    .exercise-row-free { padding: 2px 0; color: var(--theme-text); line-height: 1.5; font-family: 'Roboto', sans-serif;}
 
     .loading-state, .empty-state { text-align: center; margin-top: 50px; }
     .fade-in { animation: fadeIn 0.5s ease; }
@@ -112,6 +133,26 @@
         --theme-text: #ffffff;
         --theme-text-muted: #888888;
     ";
+
+    public class WodDiaDto
+    {
+        public DateTime Fecha { get; set; }
+        public List<SegmentoVisualDto> Segmentos { get; set; } = new List<SegmentoVisualDto>();
+    }
+
+    public class SegmentoVisualDto
+    {
+        public string Titulo { get; set; }
+        public bool EsTextoLibre { get; set; } // <--- NUEVO: BANDERA PARA EL CSS
+        public List<EjercicioVisualDto> Ejercicios { get; set; } = new List<EjercicioVisualDto>();
+    }
+
+    public class EjercicioVisualDto
+    {
+        public string Descripcion { get; set; }
+        public string PesoRepeticiones { get; set; }
+    }
+
 
     private WodDiaDto wodData;
     private bool cargando = true;
@@ -175,6 +216,7 @@
 
                             return new SegmentoVisualDto {
                                 Titulo = b.EsTextoLibre ? b.TiempoFormato : b.NombreSegmento,
+                                EsTextoLibre = b.EsTextoLibre, // <--- ASIGNAMOS LA BANDERA
                                 Ejercicios = listaEjerciciosVisuales
                             };
                         }).ToList()
