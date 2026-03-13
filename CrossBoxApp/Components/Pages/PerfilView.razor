@@ -43,9 +43,9 @@
                                 <div class="loading-overlay"><div class="spinner-border" style="color: var(--theme-primary);"></div></div>
                             }
 
-                            @if (!string.IsNullOrEmpty(previewAvatar))
+                            @if (!string.IsNullOrWhiteSpace(previewAvatar))
                             {
-                                <img src="@previewAvatar" class="profile-img" />
+                                <img src="@previewAvatar" class="profile-img" @onerror="OnAvatarError" />
                             }
                             else
                             {
@@ -133,9 +133,9 @@
                                         <div class="loading-overlay-square"><div class="spinner-border spinner-sm" style="color: var(--theme-primary);"></div></div>
                                     }
 
-                                    @if (!string.IsNullOrEmpty(previewCert1))
+                                    @if (!string.IsNullOrWhiteSpace(previewCert1))
                                     {
-                                        <img src="@previewCert1" class="cert-img-full" />
+                                        <img src="@previewCert1" class="cert-img-full" @onerror="OnCert1Error" />
                                         if (!cargandoCert1)
                                         {
                                             <button class="btn-delete-img" @onclick:stopPropagation="true" @onclick='() => EliminarFoto("Cert1")'>
@@ -160,9 +160,9 @@
                                         <div class="loading-overlay-square"><div class="spinner-border spinner-sm" style="color: var(--theme-primary);"></div></div>
                                     }
 
-                                    @if (!string.IsNullOrEmpty(previewCert2))
+                                    @if (!string.IsNullOrWhiteSpace(previewCert2))
                                     {
-                                        <img src="@previewCert2" class="cert-img-full" />
+                                        <img src="@previewCert2" class="cert-img-full" @onerror="OnCert2Error" />
                                         if (!cargandoCert2)
                                         {
                                             <button class="btn-delete-img" @onclick:stopPropagation="true" @onclick='() => EliminarFoto("Cert2")'>
@@ -707,16 +707,18 @@
             {
                 miPerfil = await response.Content.ReadFromJsonAsync<PerfilEdicionDto>();
 
-                // LIMPIEZA VISUAL: Si la BD manda 521961... lo mostramos limpio en la pantalla
+                // LIMPIEZA VISUAL: Whatsapp
                 if (!string.IsNullOrEmpty(miPerfil.Whatsapp) && miPerfil.Whatsapp.StartsWith("521") && miPerfil.Whatsapp.Length == 13)
                 {
                     miPerfil.Whatsapp = miPerfil.Whatsapp.Substring(3);
                 }
 
-                // Asegurar burla de caché para las fotos
-                previewAvatar = !string.IsNullOrEmpty(miPerfil.FotoPerfilUrl) ? $"{miPerfil.FotoPerfilUrl}?t={DateTime.Now.Ticks}" : "";
-                previewCert1 = !string.IsNullOrEmpty(miPerfil.FotoCertificado1Url) ? $"{miPerfil.FotoCertificado1Url}?t={DateTime.Now.Ticks}" : "";
-                previewCert2 = !string.IsNullOrEmpty(miPerfil.FotoCertificado2Url) ? $"{miPerfil.FotoCertificado2Url}?t={DateTime.Now.Ticks}" : "";
+                // Tomamos la URL DIRECTA que manda el Backend
+                previewAvatar = !string.IsNullOrWhiteSpace(miPerfil.FotoPerfilUrl) ? miPerfil.FotoPerfilUrl : "";
+                
+                // Mantenemos la burla de caché para los certificados (ya que ahí sí los ocupas refrescar si subes uno nuevo con el mismo nombre)
+                previewCert1 = !string.IsNullOrWhiteSpace(miPerfil.FotoCertificado1Url) ? $"{miPerfil.FotoCertificado1Url}?t={DateTime.Now.Ticks}" : "";
+                previewCert2 = !string.IsNullOrWhiteSpace(miPerfil.FotoCertificado2Url) ? $"{miPerfil.FotoCertificado2Url}?t={DateTime.Now.Ticks}" : "";
             }
         }
         catch (Exception ex)
@@ -729,6 +731,11 @@
             StateHasChanged();
         }
     }
+
+    // --- FUNCIONES PARA ATRAPAR ERRORES 404 DE IMÁGENES ---
+    private void OnAvatarError() { previewAvatar = ""; }
+    private void OnCert1Error() { previewCert1 = ""; }
+    private void OnCert2Error() { previewCert2 = ""; }
 
     private async Task SeleccionarFoto(string tipo)
     {
@@ -783,7 +790,6 @@
             return;
         }
 
-        // --- VALIDACIÓN DE TELÉFONO OPCIONAL ---
         if (!string.IsNullOrWhiteSpace(miPerfil.Whatsapp))
         {
             if (miPerfil.Whatsapp.Length != 10)
@@ -805,7 +811,6 @@
             contenido.Add(new StringContent(miPerfil.Apellidos ?? ""), "Apellidos");
             contenido.Add(new StringContent(miPerfil.Descripcion ?? ""), "Descripcion");
             
-            // Enviamos el número (la API en backend se encargará de ponerle el +521)
             contenido.Add(new StringContent(miPerfil.Whatsapp ?? ""), "Whatsapp");
             
             contenido.Add(new StringContent(miPerfil.Apodo ?? ""), "Apodo");

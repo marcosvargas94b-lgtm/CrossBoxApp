@@ -25,7 +25,7 @@
 		<ApplicationId>com.alfafit.aftrack</ApplicationId>
 		
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-		<ApplicationVersion>35</ApplicationVersion>
+		<ApplicationVersion>37</ApplicationVersion>
 
 		<WindowsPackageType>None</WindowsPackageType>
 

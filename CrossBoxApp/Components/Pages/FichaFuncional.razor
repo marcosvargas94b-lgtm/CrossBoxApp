@@ -7,481 +7,483 @@
 @inject HttpClient Http
 @inject SesionService Sesion
 @inject IJSRuntime JS
-<div style="@EstilosTema">
-<div class="main-layout">
-    @* NAVBAR *@
-    <div class="navbar-container">
-        <div class="nav-left" @onclick='() => Nav.NavigateTo("/comunidad")'>
-            <i class="fas fa-arrow-left"></i> VOLVER
-        </div>
-        <div class="nav-title">CARD</div>
-        <div class="nav-right text-end">
-            @if (ficha != null && !string.IsNullOrEmpty(ficha.FotoUrl) && EsMiFicha)
-            {
-                <div class="menu-config-wrapper" @onclick="ToggleMenuConfig">
-                    <i class="fas fa-ellipsis-v nav-icon"></i>
 
-                    @if (mostrarMenuConfig)
+@* ENVOLVEMOS TODA LA PÁGINA EN EL TEMA *@
+<div style="@EstilosTema">
+    <div class="main-layout">
+        @* NAVBAR *@
+        <div class="navbar-container">
+            <div class="nav-left" @onclick='() => Nav.NavigateTo("/comunidad")'>
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </div>
+            <div class="nav-title">CARD</div>
+            <div class="nav-right text-end">
+                @if (ficha != null && !string.IsNullOrEmpty(ficha.FotoUrl) && EsMiFicha)
+                {
+                    <div class="menu-config-wrapper" @onclick="ToggleMenuConfig">
+                        <i class="fas fa-ellipsis-v nav-icon"></i>
+
+                        @if (mostrarMenuConfig)
+                        {
+                            <div class="config-dropdown fade-in" @onclick:stopPropagation="true">
+                                <div class="config-item" @onclick="AbrirModalColores">
+                                    <i class="fas fa-palette" style="color: var(--theme-primary);"></i> <span>Diseño</span>
+                                </div>
+                                <div class="config-item" @onclick="AbrirModalSubtitulos">
+                                    <i class="fas fa-tags" style="color: #00C3A5;"></i> <span>Frases</span>
+                                </div>
+                                <div class="config-item" @onclick="ActivarCambioFoto">
+                                    <i class="fas fa-camera" style="color: #ff4d4d;"></i> <span>Foto</span>
+                                </div>
+                                <div class="config-item" @onclick="AbrirModalPRs">
+                                    <i class="fas fa-trophy" style="color: #FFD700;"></i> <span>Récords</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="content-area">
+            @if (cargando)
+            {
+                <div class="spinner-border mt-5" style="color: var(--theme-primary);"></div>
+            }
+            else if (string.IsNullOrEmpty(ficha?.FotoUrl) || solicitandoFoto)
+            {
+                <div class="upload-photo-section slide-in">
+                    <i class="fas fa-user-astronaut empty-avatar-icon"></i>
+
+                    @if (EsMiFicha)
                     {
-                        <div class="config-dropdown fade-in" @onclick:stopPropagation="true">
-                            <div class="config-item" @onclick="AbrirModalColores">
-                                <i class="fas fa-palette" style="color: var(--theme-primary);"></i> <span>Diseño</span>
+                        <h2>¡PREPARA TU CARTA!</h2>
+                        <p style="color: var(--theme-text-muted);">Sube tu foto principal.</p>
+                        <div class="upload-box">
+                            <i class="fas fa-upload mb-2" style="font-size:2rem; color:var(--theme-primary);"></i>
+                            <button class="btn-subir mt-2" @onclick="IrAPerfil">IR A MI PERFIL</button>
+                        </div>
+                        @if (solicitandoFoto && !string.IsNullOrEmpty(ficha?.FotoUrl))
+                        {
+                            <button class="btn-cancelar mt-3" @onclick="() => solicitandoFoto = false">CANCELAR</button>
+                        }
+                    }
+                    else
+                    {
+                        <h2>TARJETA OCULTA</h2>
+                        <p style="color:var(--theme-text-muted);">Este atleta aún no ha subido su foto de perfil para activar su Player Card.</p>
+                    }
+                </div>
+            }
+            else
+            {
+                @* CARTA ESTÁTICA FUNCIONAL (Mantiene sus propias variables CSS) *@
+                <div class="card-scene fade-in"
+                     style="--c-main: @(ficha.ColorPrimario); --c-accent: @(ficha.ColorTexto); --c-nums: @(ficha.ColorNumeros); --c-detalles: @(ficha.ColorDetalles); --c-bg1: @(ficha.ColorFondo1); --c-bg2: @(ficha.ColorFondo2); --bg-custom: url('@(ficha.FondoCustomUrl)'); --m-opacity: @(ficha.OpacidadMedallas.ToString(System.Globalization.CultureInfo.InvariantCulture));">
+
+                    <div class="esports-card @(ficha.Textura ?? "")">
+
+                        @if (!string.IsNullOrEmpty(ficha.FondoCustomUrl))
+                        {
+                            <div class="custom-bg-layer"
+                                 style="background-image: url('@(ficha.FondoCustomUrl)');
+                                            filter: @ficha.FiltroFondo;
+                                            opacity: @(ficha.OpacidadFondo.ToString(System.Globalization.CultureInfo.InvariantCulture));">
                             </div>
-                            <div class="config-item" @onclick="AbrirModalSubtitulos">
-                                <i class="fas fa-tags" style="color: #00C3A5;"></i> <span>Frases</span>
+                        }
+                        <div class="holo-overlay"></div>
+
+                        @* CABECERA *@
+                        <div class="card-top">
+                            <div class="stats-left">
+                                @* MATEMÁTICA DE OVR FUNCIONAL: Base 65 + Puntos (Max 99) *@
+                                @{
+                                    int ovr = 65 + (ficha.PuntosFuncional / 2);
+                                    if (ovr > 99) ovr = 99;
+                                }
+
+                                <span class="rating">@ovr</span>
+                                <span class="position">OVR <i class="fas fa-info-circle info-btn" @onclick="AbrirModalInfo"></i></span>
+
+                                <div class="level-badge @ObtenerClaseMedalla(ficha.PuntosFuncional)">
+                                    @if (ficha.PuntosFuncional >= 150)
+                                    {
+                                        <span><i class="fas fa-fire"></i> LEYENDA</span>
+                                    }
+                                    else if (ficha.PuntosFuncional >= 80)
+                                    {
+
+                                        <span><i class="fas fa-medal"></i> ÉLITE</span>
+                                    }
+                                    else if (ficha.PuntosFuncional >= 40)
+                                    {
+
+                                        <span><i class="fas fa-star"></i> AVANZADO</span>
+                                    }
+                                    else if (ficha.PuntosFuncional >= 10)
+                                    {
+
+                                        <span><i class="fas fa-shield-alt"></i> INTERMEDIO</span>
+                                    }
+                                    else
+                                    {
+
+                                        <span><i class="fas fa-seedling"></i> NOVATO</span>
+                                    }
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(ficha.LogoBoxUrl))
+                                {
+                                    <img src="@ficha.LogoBoxUrl" class="card-box-logo mt-3" />
+                                }
                             </div>
-                            <div class="config-item" @onclick="ActivarCambioFoto">
-                                <i class="fas fa-camera" style="color: #ff4d4d;"></i> <span>Foto</span>
-                            </div>
-                            <div class="config-item" @onclick="AbrirModalPRs">
-                                <i class="fas fa-trophy" style="color: #FFD700;"></i> <span>Récords</span>
+                            <div class="photo-right">
+                                <div class="card-photo-wrapper">
+                                    @* AGREGAMOS EL ONERROR AQUI *@
+                                    <img src="@ficha.FotoUrl" class="player-photo" style="filter: @ficha.FiltroFoto;" @onerror="OnAvatarError" />
+                                </div>
                             </div>
                         </div>
-                    }
+
+                        @* NOMBRE Y STATS *@
+                        <div class="card-name-plate">
+                            <h1>@ficha.Nombre</h1>
+                            <span class="card-quote">"@ficha.Subtitulo"</span>
+                            <div class="divider-line"></div>
+                        </div>
+
+                        @* SECCIÓN CENTRAL DE MEDALLAS *@
+                        <div class="middle-stats-container">
+                            <div class="stat-column" style="flex: 0.8;">
+                                <span class="stat-value">@ficha.DiasEntrenadosAnio</span>
+                                <span class="stat-title">DÍAS TOTALES</span>
+                            </div>
+                            <div class="middle-divider"></div>
+                            <div class="stat-column" style="flex: 1.8; justify-content: center;">
+                                <span class="stat-title mb-1">CONDECORACIONES</span>
+                                <div class="badges-row justify-content-center">
+                                    @if (ficha.MesCompleto > 0)
+                                    {
+                                        <span class="badge-cat mc" title="Mes Completo">MES @ficha.MesCompleto</span>
+                                    }
+                                    @if (ficha.SemanaCompleta > 0)
+                                    {
+                                        <span class="badge-cat sc" title="Semana Completa">SEM @ficha.SemanaCompleta</span>
+                                    }
+                                    @if (ficha.MejorClase > 0)
+                                    {
+                                        <span class="badge-cat mvp" title="Mejor de la Clase">MVP @ficha.MejorClase</span>
+                                    }
+                                    @if (ficha.AtletaDestacado > 0)
+                                    {
+                                        <span class="badge-cat ad" title="Atleta Destacado">DEST @ficha.AtletaDestacado</span>
+                                    }
+                                    @if (ficha.UnDiaMas > 0)
+                                    {
+                                        <span class="badge-cat udm" title="Un Día Más">+1D @ficha.UnDiaMas</span>
+                                    }
+
+                                    @if (ficha.MesCompleto == 0 && ficha.SemanaCompleta == 0 && ficha.MejorClase == 0 && ficha.AtletaDestacado == 0 && ficha.UnDiaMas == 0)
+                                    {
+                                        <span style="font-size:0.75rem; color:rgba(255,255,255,0.5); font-style:italic;">Aún no hay medallas</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="divider-line mb-2 mt-1"></div>
+
+                        @* PRS (RÉCORDS) *@
+                        <div class="prs-grid">
+                            @foreach (var pr in ficha.PRs.Where(p => p.Seleccionado).Take(6))
+                            {
+                                <div class="pr-item">
+                                    <div class="pr-val">@pr.Marca <span class="pr-unit">@pr.Unidad</span></div>
+                                    <span class="pr-lbl">@pr.Ejercicio</span>
+                                </div>
+                            }
+                            @if (!ficha.PRs.Any(p => p.Seleccionado))
+                            {
+                                <div style="grid-column: span 3; text-align: center; color: rgba(255,255,255,0.5); font-size: 0.8rem;">
+                                    @if (EsMiFicha)
+                                    {
+                                        <span>Toca el menú superior para destacar tus récords.</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Récords ocultos o no registrados.</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
                 </div>
             }
         </div>
     </div>
 
-    <div class="content-area">
-        @if (cargando)
-        {
-            <div class="spinner-border mt-5" style="color: var(--theme-primary);"></div>
-        }
-        else if (string.IsNullOrEmpty(ficha?.FotoUrl) || solicitandoFoto)
-        {
-            <div class="upload-photo-section slide-in">
-                <i class="fas fa-user-astronaut empty-avatar-icon"></i>
+    @* --- MODAL INFO RANGOS FUNCIONAL --- *@
+    @if (mostrarModalInfo)
+    {
+        <div class="modal-overlay fade-in" @onclick="() => mostrarModalInfo = false">
+            <div class="modal-content custom-modal" style="height: auto; max-height: 80vh;" @onclick:stopPropagation="true">
+                <div class="modal-header">
+                    <h5>RANGOS FUNCIONAL</h5>
+                    <button class="btn-icon-header" @onclick="() => mostrarModalInfo = false"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body scroll-custom">
+                    <p style="color:var(--theme-text-muted); font-size:0.85rem; text-align:center; margin-bottom: 20px; line-height: 1.4;">
+                        Empiezas con <strong style="color:var(--theme-text);">65 Puntos (OVR)</strong>.<br>
+                        Gana condecoraciones en tus clases para sumar puntos y subir de rango:<br>
+                        <strong style="color:#FFD700;">MES COMPLETO: +5 pts</strong><br>
+                        <strong style="color:#E0E0E0;">SEMANA PERFECTA: +3 pts</strong><br>
+                        <strong style="color:#ff4d4d;">MVP DEL DÍA: +2 pts</strong><br>
+                        <strong style="color:#F8C545;">DESTACADO: +1 pt</strong><br>
+                        <strong style="color:#9CA3AF;">ASISTENCIA (+1D): +1 pt</strong>
+                    </p>
 
-                @if (EsMiFicha)
-                {
-                    <h2>¡PREPARA TU CARTA!</h2>
-                    <p style="color: var(--theme-text-muted);">Sube tu foto principal.</p>
-                    <div class="upload-box">
-                        <i class="fas fa-upload mb-2" style="font-size:2rem; color:var(--theme-primary);"></i>
-                        <button class="btn-subir mt-2" @onclick="IrAPerfil">IR A MI PERFIL</button>
-                    </div>
-                    @if (solicitandoFoto && !string.IsNullOrEmpty(ficha?.FotoUrl))
-                    {
-                        <button class="btn-cancelar mt-3" @onclick="() => solicitandoFoto = false">CANCELAR</button>
-                    }
-                }
-                else
-                {
-                    <h2>TARJETA OCULTA</h2>
-                    <p style="color:var(--theme-text-muted);">Este atleta aún no ha subido su foto de perfil para activar su Player Card.</p>
-                }
-            </div>
-        }
-        else
-        {
-            @* CARTA ESTÁTICA FUNCIONAL (Mantiene sus propias variables CSS) *@
-            <div class="card-scene fade-in"
-                 style="--c-main: @(ficha.ColorPrimario); --c-accent: @(ficha.ColorTexto); --c-nums: @(ficha.ColorNumeros); --c-detalles: @(ficha.ColorDetalles); --c-bg1: @(ficha.ColorFondo1); --c-bg2: @(ficha.ColorFondo2); --bg-custom: url('@(ficha.FondoCustomUrl)'); --m-opacity: @(ficha.OpacidadMedallas.ToString(System.Globalization.CultureInfo.InvariantCulture));">
-
-                <div class="esports-card @(ficha.Textura ?? "")">
-
-                    @if (!string.IsNullOrEmpty(ficha.FondoCustomUrl))
-                    {
-                        <div class="custom-bg-layer"
-                             style="background-image: url('@(ficha.FondoCustomUrl)');
-                                            filter: @ficha.FiltroFondo;
-                                            opacity: @(ficha.OpacidadFondo.ToString(System.Globalization.CultureInfo.InvariantCulture));">
+                    <div class="rank-list">
+                        <div class="rank-item">
+                            <div class="level-badge badge-elite" style="font-size: 0.9rem; padding: 5px 15px;"><span><i class="fas fa-fire"></i> LEYENDA</span></div>
+                            <span class="rank-pts">150+ PTS</span>
                         </div>
-                    }
-                    <div class="holo-overlay"></div>
+                        <div class="rank-item">
+                            <div class="level-badge badge-pro" style="font-size: 0.9rem; padding: 5px 15px;"><span><i class="fas fa-medal"></i> ÉLITE</span></div>
+                            <span class="rank-pts">80 - 149 PTS</span>
+                        </div>
+                        <div class="rank-item">
+                            <div class="level-badge badge-avanzado" style="font-size: 0.9rem; padding: 5px 15px;"><span><i class="fas fa-star"></i> AVANZADO</span></div>
+                            <span class="rank-pts">40 - 79 PTS</span>
+                        </div>
+                        <div class="rank-item">
+                            <div class="level-badge badge-intermedio" style="font-size: 0.9rem; padding: 5px 15px;"><span><i class="fas fa-shield-alt"></i> INTERMEDIO</span></div>
+                            <span class="rank-pts">10 - 39 PTS</span>
+                        </div>
+                        <div class="rank-item">
+                            <div class="level-badge badge-novato" style="font-size: 0.9rem; padding: 5px 15px;"><span><i class="fas fa-seedling"></i> NOVATO</span></div>
+                            <span class="rank-pts">0 - 9 PTS</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
-                    @* CABECERA *@
-                    <div class="card-top">
-                        <div class="stats-left">
-                            @* MATEMÁTICA DE OVR FUNCIONAL: Base 65 + Puntos (Max 99) *@
-                            @{
-                                int ovr = 65 + (ficha.PuntosFuncional / 2);
-                                if (ovr > 99) ovr = 99;
-                            }
+    @* --- MODAL DE SUBTÍTULOS --- *@
+    @if (mostrarModalSubtitulos)
+    {
+        <div class="modal-overlay fade-in" @onclick="CerrarModalSubtitulos">
+            <div class="modal-content custom-modal" @onclick:stopPropagation="true">
+                <div class="modal-header">
+                    <h5>ELIGE TU LEMA</h5>
+                    <button class="btn-icon-header" @onclick="CerrarModalSubtitulos"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-tabs">
+                    <div class="tab-btn @(tabActiva == "Comedia" ? "active" : "")" @onclick='() => tabActiva = "Comedia"'>Divertidos</div>
+                    <div class="tab-btn @(tabActiva == "Motivacional" ? "active" : "")" @onclick='() => tabActiva = "Motivacional"'>Motivacionales</div>
+                </div>
+                <div class="modal-body scroll-custom">
+                    <div class="frases-grid">
+                        @foreach (var frase in listaSubtitulos.Where(f => f.Categoria == tabActiva))
+                        {
+                            <div class="frase-item @(ficha?.Subtitulo == frase.Texto ? "selected" : "")" @onclick="() => SeleccionarFrase(frase.Texto)">
+                                <i class="fas fa-quote-left quote-mark"></i> <span>@frase.Texto</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
-                            <span class="rating">@ovr</span>
-                            <span class="position">OVR <i class="fas fa-info-circle info-btn" @onclick="AbrirModalInfo"></i></span>
+    @* --- MODAL DE DISEÑO --- *@
+    @if (mostrarModalColores)
+    {
+        <div class="modal-overlay fade-in" @onclick="IntentoCerrarModalColores">
+            <div class="modal-content custom-modal" style="height: auto; max-height: 90vh;" @onclick:stopPropagation="true">
+                <div class="modal-header">
+                    <h5>PERSONALIZAR</h5>
+                    <button class="btn-icon-header" @onclick="CerrarModalColores"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body scroll-custom">
 
-                            <div class="level-badge @ObtenerClaseMedalla(ficha.PuntosFuncional)">
-                                @if (ficha.PuntosFuncional >= 150)
+                    @* 1. FOTO DE PERFIL *@
+                    <div class="color-picker-group">
+                        <label><i class="fas fa-user-circle"></i> FILTRO FOTO PERFIL</label>
+                        <div class="filters-row">
+                            <button class="btn-filter @(ficha.FiltroFoto == "none" ? "active" : "")" @onclick='() => ficha.FiltroFoto = "none"'>Normal</button>
+                            <button class="btn-filter @(ficha.FiltroFoto == "grayscale(100%)" ? "active" : "")" @onclick='() => ficha.FiltroFoto = "grayscale(100%)"'>B&N</button>
+                            <button class="btn-filter @(ficha.FiltroFoto == "sepia(80%)" ? "active" : "")" @onclick='() => ficha.FiltroFoto = "sepia(80%)"'>Sepia</button>
+                            <button class="btn-filter @(ficha.FiltroFoto == "contrast(120%) saturate(150%)" ? "active" : "")" @onclick='() => ficha.FiltroFoto = "contrast(120%) saturate(150%)"'>Épico</button>
+                        </div>
+                    </div>
+
+                    @* 2. IMAGEN DE FONDO CUSTOM *@
+                    <div class="color-picker-group mt-3">
+                        <label><i class="fas fa-image"></i> IMAGEN DE FONDO</label>
+
+                        <div class="upload-bg-box">
+                            <InputFile OnChange="SubirFondoCustom" accept="image/*" id="bg-upload" style="display:none;" />
+                            <label for="bg-upload" class="btn-upload-bg">
+                                @if (subiendoFondo)
                                 {
-                                    <span><i class="fas fa-fire"></i> LEYENDA</span>
-                                }
-                                else if (ficha.PuntosFuncional >= 80)
-                                {
-
-                                    <span><i class="fas fa-medal"></i> ÉLITE</span>
-                                }
-                                else if (ficha.PuntosFuncional >= 40)
-                                {
-
-                                    <span><i class="fas fa-star"></i> AVANZADO</span>
-                                }
-                                else if (ficha.PuntosFuncional >= 10)
-                                {
-
-                                    <span><i class="fas fa-shield-alt"></i> INTERMEDIO</span>
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <span>SUBIENDO...</span>
                                 }
                                 else
                                 {
-
-                                    <span><i class="fas fa-seedling"></i> NOVATO</span>
+                                    <i class="fas fa-upload"></i>
+                                    <span>CARGAR FONDO PROPIO</span>
                                 }
-                            </div>
-
-                            @if (!string.IsNullOrEmpty(ficha.LogoBoxUrl))
+                            </label>
+                            @if (!string.IsNullOrEmpty(ficha.FondoCustomUrl))
                             {
-                                <img src="@ficha.LogoBoxUrl" class="card-box-logo mt-3" />
+                                <button class="btn-quitar-bg mt-2" @onclick="QuitarFondoCustom"><i class="fas fa-trash"></i> QUITAR FONDO</button>
+
+                                <div class="bg-controls fade-in mt-3">
+                                    <label style="font-size: 0.8rem;"><i class="fas fa-adjust"></i> FILTRO DEL FONDO</label>
+                                    <div class="filters-row mt-1 mb-3">
+                                        <button class="btn-filter @(ficha.FiltroFondo == "none" ? "active" : "")" @onclick='() => ficha.FiltroFondo = "none"'>Normal</button>
+                                        <button class="btn-filter @(ficha.FiltroFondo == "grayscale(100%)" ? "active" : "")" @onclick='() => ficha.FiltroFondo = "grayscale(100%)"'>B&N</button>
+                                        <button class="btn-filter @(ficha.FiltroFondo == "sepia(80%)" ? "active" : "")" @onclick='() => ficha.FiltroFondo = "sepia(80%)"'>Sepia</button>
+                                        <button class="btn-filter @(ficha.FiltroFondo == "blur(3px)" ? "active" : "")" @onclick='() => ficha.FiltroFondo = "blur(3px)"'>Borrosito</button>
+                                    </div>
+
+                                    <label style="font-size: 0.8rem;"><i class="fas fa-eye"></i> OPACIDAD (TRANSPARENCIA)</label>
+                                    <div class="range-container">
+                                        <span style="color:var(--theme-text-muted); font-size: 0.8rem;">Suave</span>
+                                        <input type="range" class="custom-range" min="0.1" max="1" step="0.05" @bind="ficha.OpacidadFondo" @bind:event="oninput" />
+                                        <span style="color:var(--theme-text-muted); font-size: 0.8rem;">Sólido</span>
+                                    </div>
+                                </div>
                             }
                         </div>
-                        <div class="photo-right">
-                            <div class="card-photo-wrapper">
-                                <img src="@ficha.FotoUrl" class="player-photo" style="filter: @ficha.FiltroFoto;" />
-                            </div>
+                    </div>
+
+                    @* 3. COLORES DE TEXTO *@
+                    <div class="color-picker-group mt-3">
+                        <label><i class="fas fa-font"></i> COLOR DE TEXTO (Nombres y Títulos)</label>
+                        <input type="color" @bind="ficha.ColorTexto" class="color-input" />
+                    </div>
+
+                    <div class="color-picker-group mt-3">
+                        <label><i class="fas fa-sort-numeric-up-alt"></i> COLOR DE NÚMEROS (Stats y PRs)</label>
+                        <input type="color" @bind="ficha.ColorNumeros" class="color-input" />
+                    </div>
+                    <div class="color-picker-group mt-3">
+                        <label><i class="fas fa-paint-brush"></i> COLOR DE DETALLES (Frase y Unidades)</label>
+                        <input type="color" @bind="ficha.ColorDetalles" class="color-input" />
+                    </div>
+
+                    @* 4. COLORES BASE *@
+                    <div class="color-picker-group mt-3">
+                        <label><i class="fas fa-bolt"></i> COLOR PRINCIPAL (Bordes)</label>
+                        <input type="color" @bind="ficha.ColorPrimario" class="color-input" />
+                    </div>
+
+                    <div class="color-picker-group mt-3">
+                        <label><i class="fas fa-fill-drip"></i> COLOR DE FONDO 1</label>
+                        <input type="color" @bind="ficha.ColorFondo1" class="color-input" />
+                    </div>
+                    <div class="color-picker-group mt-3">
+                        <label><i class="fas fa-fill"></i> COLOR DE FONDO 2</label>
+                        <input type="color" @bind="ficha.ColorFondo2" class="color-input" />
+                    </div>
+                    <div class="color-picker-group mt-3">
+                        <label style="font-size: 0.9rem;"><i class="fas fa-medal"></i> OPACIDAD FONDO MEDALLAS</label>
+                        <div class="range-container">
+                            <span style="color:var(--theme-text-muted); font-size: 0.8rem;">0%</span>
+                            <input type="range" class="custom-range" min="0" max="1" step="0.05" @bind="ficha.OpacidadMedallas" @bind:event="oninput" />
+                            <span style="color:var(--theme-text-muted); font-size: 0.8rem;">100%</span>
                         </div>
                     </div>
 
-                    @* NOMBRE Y STATS *@
-                    <div class="card-name-plate">
-                        <h1>@ficha.Nombre</h1>
-                        <span class="card-quote">"@ficha.Subtitulo"</span>
-                        <div class="divider-line"></div>
-                    </div>
-
-                    @* SECCIÓN CENTRAL DE MEDALLAS *@
-                    <div class="middle-stats-container">
-                        <div class="stat-column" style="flex: 0.8;">
-                            <span class="stat-value">@ficha.DiasEntrenadosAnio</span>
-                            <span class="stat-title">DÍAS TOTALES</span>
-                        </div>
-                        <div class="middle-divider"></div>
-                        <div class="stat-column" style="flex: 1.8; justify-content: center;">
-                            <span class="stat-title mb-1">CONDECORACIONES</span>
-                            <div class="badges-row justify-content-center">
-                                @if (ficha.MesCompleto > 0)
-                                {
-                                    <span class="badge-cat mc" title="Mes Completo">MES @ficha.MesCompleto</span>
-                                }
-                                @if (ficha.SemanaCompleta > 0)
-                                {
-                                    <span class="badge-cat sc" title="Semana Completa">SEM @ficha.SemanaCompleta</span>
-                                }
-                                @if (ficha.MejorClase > 0)
-                                {
-                                    <span class="badge-cat mvp" title="Mejor de la Clase">MVP @ficha.MejorClase</span>
-                                }
-                                @if (ficha.AtletaDestacado > 0)
-                                {
-                                    <span class="badge-cat ad" title="Atleta Destacado">DEST @ficha.AtletaDestacado</span>
-                                }
-                                @if (ficha.UnDiaMas > 0)
-                                {
-                                    <span class="badge-cat udm" title="Un Día Más">+1D @ficha.UnDiaMas</span>
-                                }
-
-                                @if (ficha.MesCompleto == 0 && ficha.SemanaCompleta == 0 && ficha.MejorClase == 0 && ficha.AtletaDestacado == 0 && ficha.UnDiaMas == 0)
-                                {
-                                    <span style="font-size:0.75rem; color:rgba(255,255,255,0.5); font-style:italic;">Aún no hay medallas</span>
-                                }
-                            </div>
+                    @* 5. TEXTURAS *@
+                    <div class="color-picker-group mt-3">
+                        <label><i class="fas fa-layer-group"></i> TEXTURA BASE</label>
+                        <div class="texture-grid">
+                            <div class="texture-item @(ficha.Textura == "" ? "selected" : "")" @onclick='() => ficha.Textura = ""'><span>LISA</span></div>
+                            <div class="texture-item carbon @(ficha.Textura == "carbon" ? "selected" : "")" @onclick='() => ficha.Textura = "carbon"'><span>CARBONO</span></div>
+                            <div class="texture-item metal @(ficha.Textura == "metal" ? "selected" : "")" @onclick='() => ficha.Textura = "metal"'><span>METAL</span></div>
+                            <div class="texture-item geo @(ficha.Textura == "geo" ? "selected" : "")" @onclick='() => ficha.Textura = "geo"'><span>PUNTOS</span></div>
                         </div>
                     </div>
 
-                    <div class="divider-line mb-2 mt-1"></div>
-
-                    @* PRS (RÉCORDS) *@
-                    <div class="prs-grid">
-                        @foreach (var pr in ficha.PRs.Where(p => p.Seleccionado).Take(6))
-                        {
-                            <div class="pr-item">
-                                <div class="pr-val">@pr.Marca <span class="pr-unit">@pr.Unidad</span></div>
-                                <span class="pr-lbl">@pr.Ejercicio</span>
-                            </div>
-                        }
-                        @if (!ficha.PRs.Any(p => p.Seleccionado))
-                        {
-                            <div style="grid-column: span 3; text-align: center; color: rgba(255,255,255,0.5); font-size: 0.8rem;">
-                                @if (EsMiFicha)
-                                {
-                                    <span>Toca el menú superior para destacar tus récords.</span>
-                                }
-                                else
-                                {
-                                    <span>Récords ocultos o no registrados.</span>
-                                }
-                            </div>
-                        }
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
-</div>
-
-@* --- MODAL INFO RANGOS FUNCIONAL --- *@
-@if (mostrarModalInfo)
-{
-    <div class="modal-overlay fade-in" @onclick="() => mostrarModalInfo = false">
-        <div class="modal-content custom-modal" style="height: auto; max-height: 80vh;" @onclick:stopPropagation="true">
-            <div class="modal-header">
-                <h5>RANGOS FUNCIONAL</h5>
-                <button class="btn-icon-header" @onclick="() => mostrarModalInfo = false"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body scroll-custom">
-                <p style="color:var(--theme-text-muted); font-size:0.85rem; text-align:center; margin-bottom: 20px; line-height: 1.4;">
-                    Empiezas con <strong style="color:var(--theme-text);">65 Puntos (OVR)</strong>.<br>
-                    Gana condecoraciones en tus clases para sumar puntos y subir de rango:<br>
-                    <strong style="color:#FFD700;">MES COMPLETO: +5 pts</strong><br>
-                    <strong style="color:#E0E0E0;">SEMANA PERFECTA: +3 pts</strong><br>
-                    <strong style="color:#ff4d4d;">MVP DEL DÍA: +2 pts</strong><br>
-                    <strong style="color:#F8C545;">DESTACADO: +1 pt</strong><br>
-                    <strong style="color:#9CA3AF;">ASISTENCIA (+1D): +1 pt</strong>
-                </p>
-
-                <div class="rank-list">
-                    <div class="rank-item">
-                        <div class="level-badge badge-elite" style="font-size: 0.9rem; padding: 5px 15px;"><span><i class="fas fa-fire"></i> LEYENDA</span></div>
-                        <span class="rank-pts">150+ PTS</span>
-                    </div>
-                    <div class="rank-item">
-                        <div class="level-badge badge-pro" style="font-size: 0.9rem; padding: 5px 15px;"><span><i class="fas fa-medal"></i> ÉLITE</span></div>
-                        <span class="rank-pts">80 - 149 PTS</span>
-                    </div>
-                    <div class="rank-item">
-                        <div class="level-badge badge-avanzado" style="font-size: 0.9rem; padding: 5px 15px;"><span><i class="fas fa-star"></i> AVANZADO</span></div>
-                        <span class="rank-pts">40 - 79 PTS</span>
-                    </div>
-                    <div class="rank-item">
-                        <div class="level-badge badge-intermedio" style="font-size: 0.9rem; padding: 5px 15px;"><span><i class="fas fa-shield-alt"></i> INTERMEDIO</span></div>
-                        <span class="rank-pts">10 - 39 PTS</span>
-                    </div>
-                    <div class="rank-item">
-                        <div class="level-badge badge-novato" style="font-size: 0.9rem; padding: 5px 15px;"><span><i class="fas fa-seedling"></i> NOVATO</span></div>
-                        <span class="rank-pts">0 - 9 PTS</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
-@* --- MODAL DE SUBTÍTULOS --- *@
-@if (mostrarModalSubtitulos)
-{
-    <div class="modal-overlay fade-in" @onclick="CerrarModalSubtitulos">
-        <div class="modal-content custom-modal" @onclick:stopPropagation="true">
-            <div class="modal-header">
-                <h5>ELIGE TU LEMA</h5>
-                <button class="btn-icon-header" @onclick="CerrarModalSubtitulos"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-tabs">
-                <div class="tab-btn @(tabActiva == "Comedia" ? "active" : "")" @onclick='() => tabActiva = "Comedia"'>Divertidos</div>
-                <div class="tab-btn @(tabActiva == "Motivacional" ? "active" : "")" @onclick='() => tabActiva = "Motivacional"'>Motivacionales</div>
-            </div>
-            <div class="modal-body scroll-custom">
-                <div class="frases-grid">
-                    @foreach (var frase in listaSubtitulos.Where(f => f.Categoria == tabActiva))
-                    {
-                        <div class="frase-item @(ficha?.Subtitulo == frase.Texto ? "selected" : "")" @onclick="() => SeleccionarFrase(frase.Texto)">
-                            <i class="fas fa-quote-left quote-mark"></i> <span>@frase.Texto</span>
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
-@* --- MODAL DE DISEÑO --- *@
-@if (mostrarModalColores)
-{
-    <div class="modal-overlay fade-in" @onclick="IntentoCerrarModalColores">
-        <div class="modal-content custom-modal" style="height: auto; max-height: 90vh;" @onclick:stopPropagation="true">
-            <div class="modal-header">
-                <h5>PERSONALIZAR</h5>
-                <button class="btn-icon-header" @onclick="CerrarModalColores"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="modal-body scroll-custom">
-
-                @* 1. FOTO DE PERFIL *@
-                <div class="color-picker-group">
-                    <label><i class="fas fa-user-circle"></i> FILTRO FOTO PERFIL</label>
-                    <div class="filters-row">
-                        <button class="btn-filter @(ficha.FiltroFoto == "none" ? "active" : "")" @onclick='() => ficha.FiltroFoto = "none"'>Normal</button>
-                        <button class="btn-filter @(ficha.FiltroFoto == "grayscale(100%)" ? "active" : "")" @onclick='() => ficha.FiltroFoto = "grayscale(100%)"'>B&N</button>
-                        <button class="btn-filter @(ficha.FiltroFoto == "sepia(80%)" ? "active" : "")" @onclick='() => ficha.FiltroFoto = "sepia(80%)"'>Sepia</button>
-                        <button class="btn-filter @(ficha.FiltroFoto == "contrast(120%) saturate(150%)" ? "active" : "")" @onclick='() => ficha.FiltroFoto = "contrast(120%) saturate(150%)"'>Épico</button>
-                    </div>
-                </div>
-
-                @* 2. IMAGEN DE FONDO CUSTOM *@
-                <div class="color-picker-group mt-3">
-                    <label><i class="fas fa-image"></i> IMAGEN DE FONDO</label>
-
-                    <div class="upload-bg-box">
-                        <InputFile OnChange="SubirFondoCustom" accept="image/*" id="bg-upload" style="display:none;" />
-                        <label for="bg-upload" class="btn-upload-bg">
-                            @if (subiendoFondo)
+                    <div class="botones-colores mt-4 mb-3">
+                        <button class="btn-restaurar" @onclick="RestaurarColores">
+                            <i class="fas fa-undo"></i> ORIGINAL
+                        </button>
+                        <button class="btn-guardar-colores" @onclick="GuardarColores">
+                            @if (guardandoColores)
                             {
                                 <i class="fas fa-spinner fa-spin"></i>
-                                <span>SUBIENDO...</span>
                             }
                             else
                             {
-                                <i class="fas fa-upload"></i>
-                                <span>CARGAR FONDO PROPIO</span>
+                                <span>GUARDAR</span>
                             }
-                        </label>
-                        @if (!string.IsNullOrEmpty(ficha.FondoCustomUrl))
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* --- MODAL DE SELECCIÓN DE PRS --- *@
+    @if (mostrarModalPRs)
+    {
+        <div class="modal-overlay fade-in" @onclick="CerrarModalPRs">
+            <div class="modal-content custom-modal" style="height: auto; max-height: 80vh;" @onclick:stopPropagation="true">
+                <div class="modal-header">
+                    <h5><i class="fas fa-trophy" style="color: var(--theme-primary); margin-right: 8px;"></i> TUS RÉCORDS</h5>
+                    <button class="btn-icon-header" @onclick="CerrarModalPRs"><i class="fas fa-times"></i></button>
+                </div>
+
+                <div class="modal-body scroll-custom">
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <span style="color: var(--theme-text-muted); font-size: 0.85rem;">Elige hasta 6 para mostrar en tu tarjeta.</span><br />
+                        <strong style="color: var(--theme-primary); font-size: 1.1rem; font-family: 'Oswald';">
+                            SELECCIONADOS: @ficha.PRs.Count(p => p.Seleccionado) / 6
+                        </strong>
+                    </div>
+
+                    <div class="pr-list-container">
+                        @foreach (var pr in ficha.PRs)
                         {
-                            <button class="btn-quitar-bg mt-2" @onclick="QuitarFondoCustom"><i class="fas fa-trash"></i> QUITAR FONDO</button>
-
-                            <div class="bg-controls fade-in mt-3">
-                                <label style="font-size: 0.8rem;"><i class="fas fa-adjust"></i> FILTRO DEL FONDO</label>
-                                <div class="filters-row mt-1 mb-3">
-                                    <button class="btn-filter @(ficha.FiltroFondo == "none" ? "active" : "")" @onclick='() => ficha.FiltroFondo = "none"'>Normal</button>
-                                    <button class="btn-filter @(ficha.FiltroFondo == "grayscale(100%)" ? "active" : "")" @onclick='() => ficha.FiltroFondo = "grayscale(100%)"'>B&N</button>
-                                    <button class="btn-filter @(ficha.FiltroFondo == "sepia(80%)" ? "active" : "")" @onclick='() => ficha.FiltroFondo = "sepia(80%)"'>Sepia</button>
-                                    <button class="btn-filter @(ficha.FiltroFondo == "blur(3px)" ? "active" : "")" @onclick='() => ficha.FiltroFondo = "blur(3px)"'>Borrosito</button>
+                            <div class="module-row" @onclick="() => TogglePR(pr)">
+                                <div style="display: flex; flex-direction: column;">
+                                    <span class="mod-name" style="color: @(pr.Seleccionado ? "var(--theme-primary)" : "var(--theme-text)");">@pr.Ejercicio</span>
+                                    <span style="font-size: 0.75rem; color: var(--theme-text-muted);">Marca: @pr.Marca @pr.Unidad</span>
                                 </div>
-
-                                <label style="font-size: 0.8rem;"><i class="fas fa-eye"></i> OPACIDAD (TRANSPARENCIA)</label>
-                                <div class="range-container">
-                                    <span style="color:var(--theme-text-muted); font-size: 0.8rem;">Suave</span>
-                                    <input type="range" class="custom-range" min="0.1" max="1" step="0.05" @bind="ficha.OpacidadFondo" @bind:event="oninput" />
-                                    <span style="color:var(--theme-text-muted); font-size: 0.8rem;">Sólido</span>
+                                <div class="switch-track @(pr.Seleccionado ? "on" : "off")">
+                                    <div class="switch-thumb"></div>
                                 </div>
                             </div>
+                        }
+                        @if (ficha.PRs.Count == 0)
+                        {
+                            <p class="text-center" style="color: var(--theme-text-muted);">Aún no tienes marcas registradas con tu coach.</p>
                         }
                     </div>
                 </div>
 
-                @* 3. COLORES DE TEXTO *@
-                <div class="color-picker-group mt-3">
-                    <label><i class="fas fa-font"></i> COLOR DE TEXTO (Nombres y Títulos)</label>
-                    <input type="color" @bind="ficha.ColorTexto" class="color-input" />
-                </div>
-
-                <div class="color-picker-group mt-3">
-                    <label><i class="fas fa-sort-numeric-up-alt"></i> COLOR DE NÚMEROS (Stats y PRs)</label>
-                    <input type="color" @bind="ficha.ColorNumeros" class="color-input" />
-                </div>
-                <div class="color-picker-group mt-3">
-                    <label><i class="fas fa-paint-brush"></i> COLOR DE DETALLES (Frase y Unidades)</label>
-                    <input type="color" @bind="ficha.ColorDetalles" class="color-input" />
-                </div>
-
-                @* 4. COLORES BASE *@
-                <div class="color-picker-group mt-3">
-                    <label><i class="fas fa-bolt"></i> COLOR PRINCIPAL (Bordes)</label>
-                    <input type="color" @bind="ficha.ColorPrimario" class="color-input" />
-                </div>
-
-                <div class="color-picker-group mt-3">
-                    <label><i class="fas fa-fill-drip"></i> COLOR DE FONDO 1</label>
-                    <input type="color" @bind="ficha.ColorFondo1" class="color-input" />
-                </div>
-                <div class="color-picker-group mt-3">
-                    <label><i class="fas fa-fill"></i> COLOR DE FONDO 2</label>
-                    <input type="color" @bind="ficha.ColorFondo2" class="color-input" />
-                </div>
-                <div class="color-picker-group mt-3">
-                    <label style="font-size: 0.9rem;"><i class="fas fa-medal"></i> OPACIDAD FONDO MEDALLAS</label>
-                    <div class="range-container">
-                        <span style="color:var(--theme-text-muted); font-size: 0.8rem;">0%</span>
-                        <input type="range" class="custom-range" min="0" max="1" step="0.05" @bind="ficha.OpacidadMedallas" @bind:event="oninput" />
-                        <span style="color:var(--theme-text-muted); font-size: 0.8rem;">100%</span>
-                    </div>
-                </div>
-
-                @* 5. TEXTURAS *@
-                <div class="color-picker-group mt-3">
-                    <label><i class="fas fa-layer-group"></i> TEXTURA BASE</label>
-                    <div class="texture-grid">
-                        <div class="texture-item @(ficha.Textura == "" ? "selected" : "")" @onclick='() => ficha.Textura = ""'><span>LISA</span></div>
-                        <div class="texture-item carbon @(ficha.Textura == "carbon" ? "selected" : "")" @onclick='() => ficha.Textura = "carbon"'><span>CARBONO</span></div>
-                        <div class="texture-item metal @(ficha.Textura == "metal" ? "selected" : "")" @onclick='() => ficha.Textura = "metal"'><span>METAL</span></div>
-                        <div class="texture-item geo @(ficha.Textura == "geo" ? "selected" : "")" @onclick='() => ficha.Textura = "geo"'><span>PUNTOS</span></div>
-                    </div>
-                </div>
-
-                <div class="botones-colores mt-4 mb-3">
-                    <button class="btn-restaurar" @onclick="RestaurarColores">
-                        <i class="fas fa-undo"></i> ORIGINAL
-                    </button>
-                    <button class="btn-guardar-colores" @onclick="GuardarColores">
-                        @if (guardandoColores)
+                <div class="modal-footer">
+                    <button class="btn w-100" style="background:var(--theme-primary); color:var(--theme-bg); font-weight:bold; border-radius:50px; padding: 12px;" @onclick="GuardarPRs" disabled="@guardandoPRs">
+                        @if (guardandoPRs)
                         {
                             <i class="fas fa-spinner fa-spin"></i>
                         }
                         else
                         {
-
-                            <span>GUARDAR</span>
+                            <span>GUARDAR SELECCIÓN</span>
                         }
                     </button>
                 </div>
             </div>
         </div>
-    </div>
-}
-
-@* --- MODAL DE SELECCIÓN DE PRS --- *@
-@if (mostrarModalPRs)
-{
-    <div class="modal-overlay fade-in" @onclick="CerrarModalPRs">
-        <div class="modal-content custom-modal" style="height: auto; max-height: 80vh;" @onclick:stopPropagation="true">
-            <div class="modal-header">
-                <h5><i class="fas fa-trophy" style="color: var(--theme-primary); margin-right: 8px;"></i> TUS RÉCORDS</h5>
-                <button class="btn-icon-header" @onclick="CerrarModalPRs"><i class="fas fa-times"></i></button>
-            </div>
-
-            <div class="modal-body scroll-custom">
-                <div style="text-align: center; margin-bottom: 15px;">
-                    <span style="color: var(--theme-text-muted); font-size: 0.85rem;">Elige hasta 6 para mostrar en tu tarjeta.</span><br />
-                    <strong style="color: var(--theme-primary); font-size: 1.1rem; font-family: 'Oswald';">
-                        SELECCIONADOS: @ficha.PRs.Count(p => p.Seleccionado) / 6
-                    </strong>
-                </div>
-
-                <div class="pr-list-container">
-                    @foreach (var pr in ficha.PRs)
-                    {
-                        <div class="module-row" @onclick="() => TogglePR(pr)">
-                            <div style="display: flex; flex-direction: column;">
-                                <span class="mod-name" style="color: @(pr.Seleccionado ? "var(--theme-primary)" : "var(--theme-text)");">@pr.Ejercicio</span>
-                                <span style="font-size: 0.75rem; color: var(--theme-text-muted);">Marca: @pr.Marca @pr.Unidad</span>
-                            </div>
-                            <div class="switch-track @(pr.Seleccionado ? "on" : "off")">
-                                <div class="switch-thumb"></div>
-                            </div>
-                        </div>
-                    }
-                    @if (ficha.PRs.Count == 0)
-                    {
-                        <p class="text-center" style="color: var(--theme-text-muted);">Aún no tienes marcas registradas con tu coach.</p>
-                    }
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn w-100" style="background:var(--theme-primary); color:var(--theme-bg); font-weight:bold; border-radius:50px; padding: 12px;" @onclick="GuardarPRs" disabled="@guardandoPRs">
-                    @if (guardandoPRs)
-                    {
-                        <i class="fas fa-spinner fa-spin"></i>
-                    }
-                    else
-                    {
-
-                        <span>GUARDAR SELECCIÓN</span>
-                    }
-                </button>
-            </div>
-        </div>
-    </div>
-}
+    }
 </div>
+
 <style>
     /* Estilos base */
     .main-layout { position: fixed; top:0; left:0; width:100vw; height:100vh; background:var(--theme-bg); display:flex; flex-direction:column; z-index:1; }
@@ -525,7 +527,7 @@
     .esports-card { width: 88vw; max-width: 420px; height: 72vh; max-height: 650px; background: linear-gradient(145deg, var(--c-bg1) 0%, var(--c-bg2) 100%); border: 3px solid var(--c-main); box-shadow: 0 20px 40px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.5); border-radius: 20px; position: relative; overflow: hidden; }
     .custom-bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; background-repeat: no-repeat; z-index: 1; pointer-events: none; }
     .esports-card.carbon::before { content:''; position:absolute; top:0; left:0; width:100%; height:100%; background: repeating-linear-gradient(45deg, rgba(255,255,255,0.06) 0px, rgba(255,255,255,0.06) 3px, transparent 3px, transparent 6px); z-index: 2; pointer-events: none; }
-    .esports-card.metal::before { content:''; position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 20%, rgba(255,255,255,0.1) 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.1) 80%); z-index: 2; pointer-events: none; }
+    .esports-card.metal::before { content:''; position:absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(90deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.2) 100%); z-index: 2; pointer-events: none; }
     .esports-card.geo::before { content:''; position:absolute; top:0; left:0; width:100%; height:100%; background-image: radial-gradient(rgba(255,255,255,0.15) 1.5px, transparent 1.5px); background-size: 12px 12px; z-index: 2; pointer-events: none; }
     .holo-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: linear-gradient(105deg, transparent 20%, var(--c-main) 25%, transparent 30%); background-size: 200% 200%; mix-blend-mode: color-dodge; opacity: 0.5; pointer-events: none; z-index: 10; animation: holoSweep 4s infinite linear; }
 
@@ -744,11 +746,21 @@
             var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/funcional/{idConsulta}";
             ficha = await Http.GetFromJsonAsync<FichaAtletaDto>(url);
 
-            // CORRECCIÓN DE LA FOTO DE PERFIL (Evitar caché)
-            if (!string.IsNullOrEmpty(ficha?.FotoUrl))
-            {
-                ficha.FotoUrl = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/Imagenes/Perfiles/{idConsulta}.jpg?t={DateTime.Now.Ticks}";
-            }
+            // ==============================================================
+            // CORRECCIÓN DE LA FOTO DE PERFIL
+            // ==============================================================
+            string baseUrlPerfiles = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/imagenes/perfiles/";
+            
+            // if (!string.IsNullOrWhiteSpace(ficha?.FotoUrl))
+            // {
+            //     // Validamos si ya trae HTTP o si solo es el nombre del archivo
+            //     string urlReal = ficha.FotoUrl.StartsWith("http") 
+            //         ? ficha.FotoUrl 
+            //         : baseUrlPerfiles + ficha.FotoUrl;
+                    
+            //     ficha.FotoUrl = $"{urlReal}?t={DateTime.Now.Ticks}";
+            // }
+            // ==============================================================
 
             if (string.IsNullOrEmpty(ficha.ColorDetalles)) ficha.ColorDetalles = "#aaaaaa";
             if (string.IsNullOrEmpty(ficha.ColorTexto)) ficha.ColorTexto = "#FFFFFF";
@@ -761,6 +773,9 @@
         catch { }
         finally { cargando = false; }
     }
+    
+    // MÉTODO PARA ATRAPAR EL ERROR 404 DE LA IMAGEN
+    private void OnAvatarError() { if(ficha != null) ficha.FotoUrl = ""; }
 
     private void ActivarCambioFoto() => solicitandoFoto = true;
     private void IrAPerfil() => Nav.NavigateTo("/mi-perfil");

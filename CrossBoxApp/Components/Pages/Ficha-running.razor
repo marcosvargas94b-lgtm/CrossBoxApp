@@ -678,11 +678,21 @@
             var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/running/{idConsulta}";
             ficha = await Http.GetFromJsonAsync<FichaAtletaDto>(url);
 
-            // CORRECCIÓN DE LA FOTO DE PERFIL (Evitar caché)
-            if (!string.IsNullOrEmpty(ficha?.FotoUrl))
-            {
-                ficha.FotoUrl = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/Imagenes/Perfiles/{idConsulta}.jpg?t={DateTime.Now.Ticks}";
-            }
+            // ==============================================================
+            // CORRECCIÓN DE LA FOTO DE PERFIL (Igual a ficha-atleta y mi-perfil)
+            // ==============================================================
+            string baseUrlPerfiles = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/imagenes/perfiles/";
+            
+            // if (!string.IsNullOrWhiteSpace(ficha?.FotoUrl))
+            // {
+            //     // Validamos si ya trae HTTP o si solo es el nombre del archivo
+            //     string urlReal = ficha.FotoUrl.StartsWith("http") 
+            //         ? ficha.FotoUrl 
+            //         : baseUrlPerfiles + ficha.FotoUrl;
+                    
+            //     ficha.FotoUrl = $"{urlReal}?t={DateTime.Now.Ticks}";
+            // }
+            // // ==============================================================
 
             if (string.IsNullOrEmpty(ficha.ColorDetalles)) ficha.ColorDetalles = "#aaaaaa";
             if (string.IsNullOrEmpty(ficha.ColorTexto)) ficha.ColorTexto = "#FFFFFF";
