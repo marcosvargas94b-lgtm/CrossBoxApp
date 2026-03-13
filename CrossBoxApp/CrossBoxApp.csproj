@@ -25,7 +25,7 @@
 		<ApplicationId>aftrack.aftrack</ApplicationId>
 		
 		<ApplicationDisplayVersion>1.1</ApplicationDisplayVersion>
-		<ApplicationVersion>28</ApplicationVersion>
+		<ApplicationVersion>35</ApplicationVersion>
 
 		<WindowsPackageType>None</WindowsPackageType>
 

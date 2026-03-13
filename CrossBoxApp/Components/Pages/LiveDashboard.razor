@@ -465,7 +465,7 @@
                     <button class="btn-icon-header" @onclick="CerrarModalEquipos"><i class="fas fa-times"></i></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-theme-muted text-center mb-3">Selecciona 2 atletas para unirlos.</p>
+                    <p class="text-theme-muted text-center mb-3" style='color:var(--theme-primary);'>Selecciona 2 atletas para unirlos.</p>
                     <div class="team-builder-grid">
                         @foreach (var p in participantesVisuales.Where(x => x.Atletas.Count == 1).ToList())
                         {

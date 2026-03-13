@@ -197,9 +197,17 @@
     .modal-body { padding: 20px; color: var(--theme-text); }
     .modal-footer { padding: 15px; background: var(--theme-bg); display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid var(--theme-border); }
     
-    .btn-close-custom { background: none; border: none; color: var(--theme-text); font-size: 1.2rem; }
-    .btn-confirm { background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 8px 20px; font-weight: bold; border-radius: 5px; }
-    .btn-cancel { background: var(--theme-border); color: var(--theme-text); border: none; padding: 8px 20px; border-radius: 5px; }
+    /* --- BOTONES DEL MODAL VIP (Estilo Home) --- */
+    .btn-close-custom { background: rgba(220, 53, 69, 0.1); border: 1px solid #dc3545; color: #dc3545; width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(220, 53, 69, 0.2); }
+    .btn-close-custom:hover { background: #dc3545; color: white; transform: scale(1.1); }
+    .btn-close-custom:active { transform: scale(0.9); }
+
+    .btn-confirm { background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; flex: 1; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.2s; text-align: center; cursor: pointer;}
+    .btn-confirm:active { transform: scale(0.95); }
+
+    /* BOTÓN CANCELAR NEUTRAL Y FIJO */
+    .btn-cancel { background: #333333 !important; color: #ffffff !important; border: 1px solid #555555 !important; padding: 12px; font-family: 'Oswald', sans-serif; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; flex: 1; border-radius: 10px; transition: 0.2s; text-align: center; cursor: pointer; }
+    .btn-cancel:active { transform: scale(0.95); background: #222222 !important; }
     
     .input-dark { background: var(--theme-bg) !important; color: var(--theme-text) !important; border: 1px solid var(--theme-border); }
     .input-dark:focus { border-color: var(--theme-primary); box-shadow: none; }

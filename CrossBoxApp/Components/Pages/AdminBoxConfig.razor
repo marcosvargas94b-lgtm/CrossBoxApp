@@ -6,247 +6,248 @@
 @inject CrossBoxApp.Models.Services.SesionService Sesion
 @inject IJSRuntime JS
 @implements IDisposable
+
 <div style="@EstilosTema">
-<div class="main-layout" >
+    <div class="main-layout">
 
-    <div class="navbar-container">
-        <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
-            <i class="fas fa-arrow-left"></i> VOLVER
-        </div>
-        <div class="nav-title">TU NEGOCIO</div>
-        <div class="nav-right"></div>
-    </div>
-
-    <div class="scrollable-content">
-        
-        <div class="header-section text-center fade-in">
-            @* Muestra el Logo si existe, sino el icono por defecto *@
-            @if (datosBox.Logo != null && datosBox.Logo != Guid.Empty && string.IsNullOrEmpty(previewImagen))
-            {
-                <img src="@ObtenerUrlLogo(datosBox.Logo.Value)" class="profile-logo-img pulse-animation" />
-            }
-            else if (!string.IsNullOrEmpty(previewImagen))
-            {
-                <img src="@previewImagen" class="profile-logo-img pulse-animation" />
-            }
-            else
-            {
-                <div class="brand-icon-circle">
-                    <i class="fas fa-dumbbell"></i>
-                </div>
-            }
-
-            <h2>GESTIÓN</h2>
-            <p>Configura cobros, precios y apariencia.</p>
+        <div class="navbar-container">
+            <div class="nav-left" @onclick='() => Nav.NavigateTo("/home")'>
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </div>
+            <div class="nav-title">TU NEGOCIO</div>
+            <div class="nav-right"></div>
         </div>
 
-        <div class="tabs-container fade-in">
-            <button class="tab-btn @(tabActiva == 1 ? "active" : "")" @onclick="() => tabActiva = 1">
-                <i class="fas fa-hand-holding-usd"></i> COBROS
-            </button>
-            <button class="tab-btn @(tabActiva == 2 ? "active" : "")" @onclick="() => tabActiva = 2">
-                <i class="fas fa-tag"></i> PRECIOS
-            </button>
-            <button class="tab-btn @(tabActiva == 3 ? "active" : "")" @onclick="() => tabActiva = 3">
-                <i class="fas fa-image"></i> LOGO
-            </button>
-            <button class="tab-btn @(tabActiva == 4 ? "active" : "")" @onclick="() => tabActiva = 4">
-                <i class="fas fa-palette"></i> COLORES
-            </button>
-        </div>
-
-        <div class="cards-wrapper">
-
-            @* TAB 1: MERCADO PAGO *@
-            @if (tabActiva == 1)
-            {
-                <div class="mp-card text-center fade-in">
-                    <img src="https://http2.mlstatic.com/frontend-assets/ui-navigation/5.19.1/mercadopago/logo__small.png" alt="Mercado Pago" width="100" class="mb-3" />
-
-                    @if (datosBox.EstaVinculadoMP)
-                    {
-                        <div class="status-connected fade-in">
-                            <i class="fas fa-check-circle fa-3x mb-2"></i>
-                            <h4>¡CUENTA VINCULADA!</h4>
-                            <p>Tu gimnasio ya está listo para recibir pagos.</p>
-                        </div>
-
-                        <button class="btn-mp-connect outline mt-3" @onclick="VincularMercadoPago">
-                            Cambiar cuenta vinculada
-                        </button>
-
-                        <button class="btn-unlink mt-3" @onclick="DesvincularCuenta">
-                            <i class="fas fa-trash-alt"></i> Desconectar Cuenta
-                        </button>
-                    }
-                    else
-                    {
-                        <h5 class="section-title">RECIBIR PAGOS</h5>
-                        <p class="text-muted small mb-4">
-                            Para que los atletas te paguen directo a ti, conecta tu cuenta.
-                        </p>
-
-                        <div class="mp-status-box">
-                            <i class="fas fa-exclamation-circle"></i>
-                            <span>Estado: <strong>Sin conexión</strong></span>
-                        </div>
-
-                        <button class="btn-mp-connect mt-4" @onclick="VincularMercadoPago">
-                            <b>CONECTAR CUENTA AHORA</b>
-                        </button>
-
-                        <p class="text-muted x-small mt-3">
-                            Al hacer clic, serás redirigido a Mercado Pago.
-                        </p>
-                    }
-                </div>
-            }
-
-            @* TAB 2: PRECIOS *@
-            @if (tabActiva == 2)
-            {
-                <div class="prices-card text-center fade-in">
-                    <h5 class="section-title">PRECIOS DE TU BOX</h5>
-                    <p class="text-muted small">Define cuánto cobrará la App a tus atletas.</p>
-
-                    <div class="form-group mt-3 text-start">
-                        <label class="lbl-input">Mensualidad ($)</label>
-                        <input type="number" @bind="datosBox.PrecioMensualidad" class="form-control input-dark" />
+        <div class="scrollable-content">
+            
+            <div class="header-section text-center fade-in">
+                @if (datosBox.Logo != null && datosBox.Logo != Guid.Empty && string.IsNullOrEmpty(previewImagen))
+                {
+                    <img src="@ObtenerUrlLogo(datosBox.Logo.Value)" class="profile-logo-img pulse-animation" />
+                }
+                else if (!string.IsNullOrEmpty(previewImagen))
+                {
+                    <img src="@previewImagen" class="profile-logo-img pulse-animation" />
+                }
+                else
+                {
+                    <div class="brand-icon-circle">
+                        <i class="fas fa-dumbbell"></i>
                     </div>
+                }
 
-                    <div class="form-group mt-3 text-start">
-                        <label class="lbl-input">Inscripción ($)</label>
-                        <input type="number" @bind="datosBox.PrecioInscripcion" class="form-control input-dark" />
-                        <small class="text-muted" style="font-size: 0.75rem;">Pon 0 si no cobras inscripción.</small>
-                    </div>
+                <h2>GESTIÓN</h2>
+                <p>Configura cobros, precios y apariencia.</p>
+            </div>
 
-                    <button class="btn-save mt-4 glow-effect" @onclick="GuardarPrecios" disabled="@guardando">
-                        @if (guardando)
+            <div class="tabs-container fade-in">
+                <button class="tab-btn @(tabActiva == 1 ? "active" : "")" @onclick="() => tabActiva = 1">
+                    <i class="fas fa-hand-holding-usd"></i> COBROS
+                </button>
+                <button class="tab-btn @(tabActiva == 2 ? "active" : "")" @onclick="() => tabActiva = 2">
+                    <i class="fas fa-tag"></i> PRECIOS
+                </button>
+                <button class="tab-btn @(tabActiva == 3 ? "active" : "")" @onclick="() => tabActiva = 3">
+                    <i class="fas fa-image"></i> LOGO
+                </button>
+                <button class="tab-btn @(tabActiva == 4 ? "active" : "")" @onclick="() => tabActiva = 4">
+                    <i class="fas fa-palette"></i> COLORES
+                </button>
+            </div>
+
+            <div class="cards-wrapper">
+
+                @* TAB 1: MERCADO PAGO *@
+                @if (tabActiva == 1)
+                {
+                    <div class="mp-card text-center fade-in">
+                        <img src="https://http2.mlstatic.com/frontend-assets/ui-navigation/5.19.1/mercadopago/logo__small.png" alt="Mercado Pago" width="100" class="mb-3" />
+
+                        @if (datosBox.EstaVinculadoMP)
                         {
-                            <span><i class="fas fa-spinner fa-spin"></i> GUARDANDO...</span>
+                            <div class="status-connected fade-in">
+                                <i class="fas fa-check-circle fa-3x mb-2"></i>
+                                <h4>¡CUENTA VINCULADA!</h4>
+                                <p>Tu gimnasio ya está listo para recibir pagos.</p>
+                            </div>
+
+                            <button class="btn-mp-connect outline mt-3" @onclick="VincularMercadoPago">
+                                Cambiar cuenta vinculada
+                            </button>
+
+                            <button class="btn-unlink mt-3" @onclick="DesvincularCuenta">
+                                <i class="fas fa-trash-alt"></i> Desconectar Cuenta
+                            </button>
                         }
                         else
                         {
-                            <span><i class="fas fa-save"></i> GUARDAR CAMBIOS</span>
-                        }
-                    </button>
-                </div>
-            }
+                            <h5 class="section-title">RECIBIR PAGOS</h5>
+                            <p class="text-muted small mb-4">
+                                Para que los atletas te paguen directo a ti, conecta tu cuenta.
+                            </p>
 
-            @* TAB 3: PERFIL (LOGO) *@
-            @if (tabActiva == 3)
-            {
-                <div class="prices-card text-center fade-in">
-                    <h5 class="section-title">LOGO DEL BOX</h5>
-                    <p class="text-muted small">Este logo aparecerá en el perfil de tus atletas.</p>
-
-                    <div class="upload-area mt-4">
-                        @if (archivoSeleccionado == null && string.IsNullOrEmpty(previewImagen) && datosBox.Logo == null)
-                        {
-                            <div class="upload-placeholder">
-                                <i class="fas fa-cloud-upload-alt fa-3x"></i>
-                                <p>Toca para subir imagen</p>
+                            <div class="mp-status-box">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>Estado: <strong>Sin conexión</strong></span>
                             </div>
-                        }
-                        else
-                        {
-                            <div class="image-preview-container">
-                                @if (!string.IsNullOrEmpty(previewImagen))
-                                {
-                                    <img src="@previewImagen" class="img-fluid rounded" />
-                                }
-                                else if (datosBox.Logo != null)
-                                {
-                                    <img src="@ObtenerUrlLogo(datosBox.Logo.Value)" class="img-fluid rounded" />
-                                }
-                            </div>
-                        }
 
-                        <InputFile OnChange="ProcesarSeleccionImagen" class="file-input-hidden" accept="image/*" />
+                            <button class="btn-mp-connect mt-4" @onclick="VincularMercadoPago">
+                                <b>CONECTAR CUENTA AHORA</b>
+                            </button>
+
+                            <p class="text-muted x-small mt-3">
+                                Al hacer clic, serás redirigido a Mercado Pago.
+                            </p>
+                        }
                     </div>
+                }
 
-                    @if (archivoSeleccionado != null)
-                    {
-                        <div class="mt-3 p-2" style="font-size: 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--theme-primary); border: 1px solid var(--theme-primary);">
-                            Imagen seleccionada: @archivoSeleccionado.Name
+                @* TAB 2: PRECIOS *@
+                @if (tabActiva == 2)
+                {
+                    <div class="prices-card text-center fade-in">
+                        <h5 class="section-title">PRECIOS DE TU BOX</h5>
+                        <p class="text-muted small">Define cuánto cobrará la App a tus atletas.</p>
+
+                        <div class="form-group mt-3 text-start">
+                            <label class="lbl-input">Mensualidad ($)</label>
+                            <input type="number" @bind="datosBox.PrecioMensualidad" class="form-control input-dark" />
                         </div>
 
-                        <button class="btn-save mt-3 glow-effect" @onclick="SubirImagenAlServidor" disabled="@subiendoImagen">
-                            @if (subiendoImagen)
+                        <div class="form-group mt-3 text-start">
+                            <label class="lbl-input">Inscripción ($)</label>
+                            <input type="number" @bind="datosBox.PrecioInscripcion" class="form-control input-dark" />
+                            <small class="text-muted" style="font-size: 0.75rem;">Pon 0 si no cobras inscripción.</small>
+                        </div>
+
+                        <button class="btn-save mt-4 glow-effect" @onclick="GuardarPrecios" disabled="@guardando">
+                            @if (guardando)
                             {
-                                <span><i class="fas fa-spinner fa-spin"></i> SUBIENDO...</span>
+                                <span><i class="fas fa-spinner fa-spin"></i> GUARDANDO...</span>
                             }
                             else
                             {
-                                <span><i class="fas fa-upload"></i> ACTUALIZAR LOGO</span>
+                                <span><i class="fas fa-save"></i> GUARDAR CAMBIOS</span>
                             }
                         </button>
-                    }
-                    else
-                    {
-                        <div class="mt-3 text-muted" style="font-size:0.7rem">
-                            Recomendado: Imagen cuadrada (500x500px)<br>Formatos: JPG, PNG
-                        </div>
-                    }
-                </div>
-            }
+                    </div>
+                }
 
-            @* TAB 4: COLORES (TEMA DE LA APP) *@
-            @if (tabActiva == 4)
-            {
-                <div class="prices-card text-center fade-in">
-                    <h5 class="section-title"><i class="fas fa-paint-brush"></i> COLORES DE TU APP</h5>
-                    <p class="text-muted small mb-4">Personaliza los colores. Verás el cambio en vivo aquí mismo.</p>
+                @* TAB 3: PERFIL (LOGO) *@
+                @if (tabActiva == 3)
+                {
+                    <div class="prices-card text-center fade-in">
+                        <h5 class="section-title">LOGO DEL BOX</h5>
+                        <p class="text-muted small">Este logo aparecerá en el perfil de tus atletas.</p>
 
-                    <div class="color-grid">
-                        <div class="color-item">
-                            <label>Principal (Botones/Íconos)</label>
-                            <input type="color" @bind="datosBox.ThemePrimary" @bind:event="oninput" @onchange="ActualizarVistaPrevia" class="color-input" />
+                        <div class="upload-area mt-4">
+                            @if (archivoSeleccionado == null && string.IsNullOrEmpty(previewImagen) && datosBox.Logo == null)
+                            {
+                                <div class="upload-placeholder">
+                                    <i class="fas fa-cloud-upload-alt fa-3x"></i>
+                                    <p>Toca para subir imagen</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="image-preview-container">
+                                    @if (!string.IsNullOrEmpty(previewImagen))
+                                    {
+                                        <img src="@previewImagen" class="img-fluid rounded" />
+                                    }
+                                    else if (datosBox.Logo != null)
+                                    {
+                                        <img src="@ObtenerUrlLogo(datosBox.Logo.Value)" class="img-fluid rounded" />
+                                    }
+                                </div>
+                            }
+
+                            <InputFile OnChange="ProcesarSeleccionImagen" class="file-input-hidden" accept="image/*" />
                         </div>
-                        <div class="color-item">
-                            <label>Secundario (Degradados)</label>
-                            <input type="color" @bind="datosBox.ThemeSecondary" @bind:event="oninput" @onchange="ActualizarVistaPrevia" class="color-input" />
+
+                        @if (archivoSeleccionado != null)
+                        {
+                            <div class="mt-3 p-2" style="font-size: 0.8rem; border-radius: 8px; background: rgba(255,255,255,0.05); color: var(--theme-primary); border: 1px solid var(--theme-primary);">
+                                Imagen seleccionada: @archivoSeleccionado.Name
+                            </div>
+
+                            <button class="btn-save mt-3 glow-effect" @onclick="SubirImagenAlServidor" disabled="@subiendoImagen">
+                                @if (subiendoImagen)
+                                {
+                                    <span><i class="fas fa-spinner fa-spin"></i> SUBIENDO...</span>
+                                }
+                                else
+                                {
+                                    <span><i class="fas fa-upload"></i> ACTUALIZAR LOGO</span>
+                                }
+                            </button>
+                        }
+                        else
+                        {
+                            <div class="mt-3 text-muted" style="font-size:0.7rem">
+                                Recomendado: Imagen cuadrada (500x500px)<br>Formatos: JPG, PNG
+                            </div>
+                        }
+                    </div>
+                }
+
+                @* TAB 4: COLORES (TEMA DE LA APP) *@
+                @if (tabActiva == 4)
+                {
+                    <div class="prices-card text-center fade-in">
+                        <h5 class="section-title"><i class="fas fa-paint-brush"></i> COLORES DE TU APP</h5>
+                        <p class="text-muted small mb-4">Personaliza la app con los colores de tu marca. Verás el cambio en vivo aquí mismo.</p>
+
+                        <div class="color-grid">
+                            <div class="color-item">
+                                <label>Color de la Marca (Botones, Íconos, Títulos)</label>
+                                <input type="color" @bind="datosBox.ThemePrimary" @bind:event="oninput" @onchange="ActualizarVistaPrevia" class="color-input" />
+                            </div>
+                            <div class="color-item">
+                                <label>Brillo de Botones (Degradado 3D)</label>
+                                <input type="color" @bind="datosBox.ThemeSecondary" @bind:event="oninput" @onchange="ActualizarVistaPrevia" class="color-input" />
+                            </div>
+                            <div class="color-item">
+                                <label>Fondo General (Pantalla completa)</label>
+                                <input type="color" @bind="datosBox.ThemeBg" @bind:event="oninput" @onchange="ActualizarVistaPrevia" class="color-input" />
+                            </div>
+                            <div class="color-item">
+                                <label>Fondo de Recuadros (Tarjetas y Menús)</label>
+                                <input type="color" @bind="datosBox.ThemeCard" @bind:event="oninput" @onchange="ActualizarVistaPrevia" class="color-input" />
+                            </div>
+                            <div class="color-item">
+                                <label>Líneas Divisorias (Bordes de recuadros)</label>
+                                <input type="color" @bind="datosBox.ThemeBorder" @bind:event="oninput" @onchange="ActualizarVistaPrevia" class="color-input" />
+                            </div>
+                            <div class="color-item">
+                                <label>Color de Letra Principal (Textos grandes)</label>
+                                <input type="color" @bind="datosBox.ThemeText" @bind:event="oninput" @onchange="ActualizarVistaPrevia" class="color-input" />
+                            </div>
+                            <div class="color-item">
+                                <label>Color de Letra Apagada (Textos secundarios)</label>
+                                <input type="color" @bind="datosBox.ThemeTextMuted" @bind:event="oninput" @onchange="ActualizarVistaPrevia" class="color-input" />
+                            </div>
                         </div>
-                        <div class="color-item">
-                            <label>Fondo de la App</label>
-                            <input type="color" @bind="datosBox.ThemeBg" @bind:event="oninput" @onchange="ActualizarVistaPrevia" class="color-input" />
-                        </div>
-                        <div class="color-item">
-                            <label>Fondo de Tarjetas</label>
-                            <input type="color" @bind="datosBox.ThemeCard" @bind:event="oninput" @onchange="ActualizarVistaPrevia" class="color-input" />
-                        </div>
-                        <div class="color-item">
-                            <label>Bordes de Tarjetas</label>
-                            <input type="color" @bind="datosBox.ThemeBorder" @bind:event="oninput" @onchange="ActualizarVistaPrevia" class="color-input" />
-                        </div>
-                        <div class="color-item">
-                            <label>Texto Principal</label>
-                            <input type="color" @bind="datosBox.ThemeText" @bind:event="oninput" @onchange="ActualizarVistaPrevia" class="color-input" />
-                        </div>
-                        <div class="color-item">
-                            <label>Texto Secundario</label>
-                            <input type="color" @bind="datosBox.ThemeTextMuted" @bind:event="oninput" @onchange="ActualizarVistaPrevia" class="color-input" />
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button class="btn-cancelar flex-fill" @onclick="RestaurarColoresDefault">
+                                <i class="fas fa-undo"></i> ORIGINAL
+                            </button>
+                            <button class="btn-save flex-fill glow-effect" @onclick="GuardarPrecios" disabled="@guardando">
+                                @if (guardando) { <span><i class="fas fa-spinner fa-spin"></i></span> }
+                                else { <span><i class="fas fa-save"></i> GUARDAR</span> }
+                            </button>
                         </div>
                     </div>
+                }
 
-                    <div class="d-flex gap-2 mt-4">
-                        <button class="btn-cancelar flex-fill" @onclick="RestaurarColoresDefault">
-                            <i class="fas fa-undo"></i> ORIGINAL
-                        </button>
-                        <button class="btn-save flex-fill glow-effect" @onclick="GuardarPrecios" disabled="@guardando">
-                            @if (guardando) { <span><i class="fas fa-spinner fa-spin"></i></span> }
-                            else { <span><i class="fas fa-save"></i> GUARDAR</span> }
-                        </button>
-                    </div>
-                </div>
-            }
+            </div> 
+            
+            <div style="height: 40px;"></div>
+        </div> 
+    </div> 
+</div> 
 
-        </div>
-        
-        <div style="height: 40px;"></div>
-    </div>
-</div>
-</div>
 <style>
     /* VARIABLES INYECTADAS */
     .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--theme-bg); display: flex; flex-direction: column; z-index: 1; }
@@ -266,7 +267,7 @@
     .header-section p { color: var(--theme-text-muted); font-size: 0.9rem; }
 
     /* TABS */
-    .tabs-container { display: flex; justify-content: center; margin-bottom: 20px; border-bottom: 1px solid var(--theme-border); width: 100%; max-width: 600px; overflow-x: auto; }
+    .tabs-container { display: flex; justify-content: center; margin-bottom: 20px; border-bottom: 1px solid var(--theme-border); width: 100%; max-width: 600px; overflow-x: auto; flex-shrink: 0;}
     .tab-btn { flex: 1; background: none; border: none; color: var(--theme-text-muted); padding: 15px 10px; font-weight: bold; border-bottom: 2px solid transparent; transition: 0.3s; cursor: pointer; font-family: 'Oswald'; font-size: 0.85rem; white-space: nowrap; }
     .tab-btn.active { color: var(--theme-primary); border-bottom: 2px solid var(--theme-primary); }
     .tab-btn i { margin-right: 5px; }
@@ -293,12 +294,13 @@
     .upload-area:hover { border-color: var(--theme-primary); }
     .upload-placeholder { color: var(--theme-text-muted); text-align: center; }
     .file-input-hidden { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
+    .image-preview-container { display: flex; justify-content: center; align-items: center; height: 100%; padding: 10px; }
     .image-preview-container img { max-height: 100%; max-width: 100%; object-fit: contain; }
 
     /* GRID COLORES */
-    .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left; }
-    .color-item { display: flex; flex-direction: column; gap: 5px; }
-    .color-item label { color: var(--theme-text); font-size: 0.75rem; font-weight: bold; }
+    .color-grid { display: grid; grid-template-columns: 1fr; gap: 15px; text-align: left; }
+    .color-item { display: flex; flex-direction: column; gap: 5px; background: var(--theme-bg); padding: 10px; border-radius: 8px; border: 1px solid var(--theme-border);}
+    .color-item label { color: var(--theme-text); font-size: 0.80rem; font-weight: bold; font-family: 'Oswald'; letter-spacing: 1px;}
     .color-input { width: 100%; height: 45px; border: none; border-radius: 8px; cursor: pointer; padding: 0; background: none; }
     .color-input::-webkit-color-swatch-wrapper { padding: 0; }
     .color-input::-webkit-color-swatch { border: 1px solid var(--theme-border); border-radius: 8px; }

@@ -107,29 +107,51 @@
         </div>
     }
 
-    @* --- MODAL CANDIDATOS --- *@
+    @* --- MODAL CANDIDATOS (VIP CON BUSCADOR) --- *@
     @if (mostrarModalCandidatos)
     {
         <div class="modal-overlay fade-in">
-            <div class="modal-content custom-modal slide-up" style="border-color: var(--theme-primary);">
-                <div class="modal-header" style="background: var(--theme-card); border-bottom-color: var(--theme-border);">
-                    <h5 style="margin:0; color:var(--theme-primary);">SELECCIONA UN ATLETA</h5>
-                    <button class="btn-close-custom" @onclick="() => mostrarModalCandidatos = false"><i class="fas fa-times"></i></button>
+            <div class="modal-content custom-modal slide-up" style="border-color: var(--theme-primary); max-height: 80vh; display: flex; flex-direction: column;">
+                
+                <div class="modal-header" style="background: var(--theme-card); border-bottom-color: var(--theme-border); flex-shrink: 0;">
+                    <h5 style="margin:0; color:var(--theme-primary); font-family: 'Oswald'; letter-spacing: 1px;"><i class="fas fa-user-plus me-2"></i> SELECCIONA UN ATLETA</h5>
+                    <button class="btn-close-custom" @onclick="CerrarModalCandidatos"><i class="fas fa-times"></i></button>
                 </div>
 
-                <div class="modal-body scrollable-body" style="background: var(--theme-bg); max-height: 50vh; overflow-y: auto;">
+                @* Buscador Fijo *@
+                <div class="search-container" style="background: var(--theme-bg); padding: 15px; border-bottom: 1px solid var(--theme-border); flex-shrink: 0;">
+                    <div class="search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" @bind="textoBusquedaCandidato" @bind:event="oninput" placeholder="Buscar por nombre..." class="form-control input-dark" />
+                        @if (!string.IsNullOrEmpty(textoBusquedaCandidato))
+                        {
+                            <i class="fas fa-times clear-icon" @onclick="LimpiarBusquedaCandidato"></i>
+                        }
+                    </div>
+                </div>
+
+                <div class="modal-body" style="background: var(--theme-bg); overflow-y: auto; flex-grow: 1; padding: 10px 15px;">
                     @if (listaCandidatos.Count == 0)
                     {
-                        <div class="text-center mt-4" style="color: var(--theme-text-muted);">No hay atletas disponibles para ascender.</div>
+                        <div class="text-center mt-4" style="color: var(--theme-text-muted); font-style: italic;">No hay atletas disponibles en el gimnasio.</div>
+                    }
+                    else if (!CandidatosFiltrados.Any())
+                    {
+                        <div class="text-center mt-4" style="color: var(--theme-text-muted); font-style: italic;">No se encontró a nadie con ese nombre.</div>
                     }
                     else
                     {
-                        @foreach (var atleta in listaCandidatos)
+                        @foreach (var atleta in CandidatosFiltrados)
                         {
-                            <div class="candidate-row" style="border-bottom-color: var(--theme-border);">
-                                <div class="candidate-name" style="color: var(--theme-text);">@atleta.NombreCompleto</div>
-                                <button class="btn-promote" @onclick="() => AscenderAtleta(atleta)">
-                                    ASCENDER <i class="fas fa-level-up-alt"></i>
+                            <div class="candidate-row fade-in" style="border-bottom-color: var(--theme-border);">
+                                <div class="candidate-info">
+                                    <div class="avatar-mini" style="border-color: var(--theme-border); color: var(--theme-text-muted); background: var(--theme-card);">
+                                        @atleta.NombreCompleto.Substring(0, 1).ToUpper()
+                                    </div>
+                                    <div class="candidate-name" style="color: var(--theme-text);">@atleta.NombreCompleto</div>
+                                </div>
+                                <button class="btn-promote" style="background: var(--theme-primary); color: var(--theme-bg);" @onclick="() => AscenderAtleta(atleta)">
+                                    HACER COACH
                                 </button>
                             </div>
                         }
@@ -141,49 +163,82 @@
 </div>
 
 <style>
-    /* --- ESTRUCTURA BASE --- */
-    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--theme-bg); display: flex; flex-direction: column; z-index: 1; }
+    /* --- ESTRUCTURA BASE RESPETA NOTCH --- */
+    .main-layout { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: var(--theme-bg); display: flex; flex-direction: column; z-index: 1; }
+    
     .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: var(--theme-bg); border-bottom: 1px solid var(--theme-primary); color: var(--theme-text); display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
+    
     .nav-left { color: var(--theme-primary); font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
     .nav-title { font-weight: bold; font-size: 1.1rem; color: var(--theme-text); letter-spacing: 1px; }
-    .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
+    
+    .scrollable-content { flex-grow: 1; width: 100%; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; padding-bottom: 100px; }
 
+    /* --- ESTILOS STAFF --- */
     .header-section { text-align: center; width: 100%; max-width: 600px; margin-bottom: 20px; }
     .header-section h3 { font-family: 'Oswald'; color: var(--theme-primary); margin: 0; font-size: 1.5rem; }
     .staff-grid { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 15px; }
 
-    .staff-card { background: var(--theme-card); border: 1px solid var(--theme-border); border-radius: 10px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+    .staff-card { background: var(--theme-card); border: 1px solid var(--theme-border); border-radius: 10px; padding: 15px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.3);}
     .card-info { display: flex; align-items: center; gap: 15px; }
     .avatar-placeholder { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-family: 'Oswald'; font-size: 1.2rem; border: 1px solid; }
     .staff-name { font-weight: bold; font-size: 1rem; color: var(--theme-text); font-family: 'Roboto'; }
     .staff-role { font-size: 0.7rem; letter-spacing: 1px; text-transform: uppercase; }
 
+    .card-actions { display: flex; align-items: center; gap: 8px; }
     .btn-permisos { background: transparent; border: 1px solid; padding: 5px 12px; border-radius: 20px; font-size: 0.7rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
     .btn-permisos:active { background: var(--theme-primary); color: var(--theme-bg) !important; }
-    .btn-remove { background: var(--theme-bg); border: none; color: #dc3545; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .btn-remove { background: rgba(220, 53, 69, 0.1); border: 1px solid #dc3545; color: #dc3545; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+    .btn-remove:active { transform: scale(0.9); background: #dc3545; color: white; }
 
     .btn-add-floating { position: absolute; bottom: 30px; right: 30px; border: none; padding: 15px 25px; border-radius: 30px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; box-shadow: 0 5px 20px rgba(0,0,0, 0.4); display: flex; align-items: center; gap: 10px; z-index: 200; transition: transform 0.2s; cursor: pointer; }
     .btn-add-floating:active { transform: scale(0.95); }
 
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
-    .custom-modal { background: var(--theme-card); width: 90%; max-width: 400px; border: 1px solid; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
-    .modal-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+    /* ========================================= */
+    /* MODALES GENÉRICOS VIP                     */
+    /* ========================================= */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 3000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(4px); padding: 20px;}
+    .custom-modal { background: var(--theme-card); width: 100%; max-width: 420px; border: 1px solid; border-radius: 15px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+    .modal-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
     .modal-body { padding: 20px; }
-    .modal-footer { padding: 15px; display: flex; justify-content: flex-end; }
+    .modal-footer { padding: 15px 20px; display: flex; justify-content: flex-end; }
 
-    .btn-close-custom { background: none; border: none; color: var(--theme-text); font-size: 1.2rem; cursor: pointer; }
-    .btn-confirm { width: 100%; border: none; padding: 12px; font-weight: bold; border-radius: 5px; font-family: 'Oswald'; cursor: pointer; }
+    .btn-close-custom { background: rgba(220, 53, 69, 0.1); border: 1px solid #dc3545; color: #dc3545; width: 32px; height: 32px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1rem; cursor: pointer; transition: all 0.2s; }
+    .btn-close-custom:active { transform: scale(0.9); }
+    .btn-confirm { width: 100%; border: none; padding: 12px; font-weight: bold; border-radius: 8px; font-family: 'Oswald'; cursor: pointer; letter-spacing: 1px; transition: 0.2s; }
+    .btn-confirm:active { transform: scale(0.95); }
 
-    .permiso-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid; cursor: pointer; }
-    .switch-track { width: 40px; height: 20px; border-radius: 10px; background: var(--theme-border); position: relative; transition: background 0.3s; }
+    /* --- ESTILOS DEL BUSCADOR (NUEVO) --- */
+    .search-box { position: relative; width: 100%; }
+    .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--theme-text-muted); }
+    .clear-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--theme-text-muted); cursor: pointer; padding: 5px; }
+    .input-dark { background: rgba(0, 0, 0, 0.4) !important; border: 1px solid var(--theme-border) !important; color: var(--theme-text) !important; border-radius: 30px !important; padding: 10px 40px 10px 40px; font-size: 0.9rem; width: 100%; transition: all 0.3s ease; }
+    .input-dark:focus { border-color: var(--theme-primary) !important; outline: none; }
+    .input-dark::placeholder { color: var(--theme-text-muted) !important; opacity: 0.7; }
+
+    /* --- ESTILOS CANDIDATOS (NUEVO) --- */
+    .candidate-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; border-bottom: 1px solid; transition: background 0.2s; border-radius: 8px; margin-bottom: 5px;}
+    .candidate-row:hover { background: rgba(255,255,255,0.03); }
+    .candidate-info { display: flex; align-items: center; gap: 12px; }
+    .avatar-mini { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-family: 'Oswald'; font-size: 0.9rem; border: 1px solid; }
+    .candidate-name { font-family: 'Roboto'; font-size: 0.95rem; font-weight: bold; }
+    
+    .btn-promote { border: none; font-family: 'Oswald'; font-size: 0.75rem; padding: 6px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: 0.2s; letter-spacing: 0.5px;}
+    .btn-promote:active { transform: scale(0.95); }
+
+    /* --- ESTILOS PERMISOS --- */
+    .permiso-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid; cursor: pointer; }
+    .switch-track { width: 44px; height: 24px; border-radius: 15px; background: var(--theme-border); position: relative; transition: background 0.3s; }
     .switch-track.on { background: #28a745; }
-    .switch-thumb { width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: transform 0.3s; }
+    .switch-thumb { width: 20px; height: 20px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: transform 0.3s; }
     .switch-track.on .switch-thumb { transform: translateX(20px); }
 
-    .candidate-row { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid; }
-    .btn-promote { background: #28a745; border: none; color: white; font-size: 0.7rem; padding: 5px 10px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+    /* --- SCROLLBAR --- */
+    .modal-body::-webkit-scrollbar { width: 6px; }
+    .modal-body::-webkit-scrollbar-track { background: transparent; }
+    .modal-body::-webkit-scrollbar-thumb { background: var(--theme-border); border-radius: 10px; }
+    .modal-body::-webkit-scrollbar-thumb:hover { background: var(--theme-primary); }
 
-    .fade-in { animation: fadeIn 0.5s ease; }
+    .fade-in { animation: fadeIn 0.4s ease; }
     .slide-up { animation: slideUp 0.3s ease; }
     @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -217,6 +272,7 @@
 
     private bool mostrarModalPermisos = false;
     private bool mostrarModalCandidatos = false;
+    private string textoBusquedaCandidato = ""; // NUEVA VARIABLE PARA EL BUSCADOR
 
     private List<PermisoCatalogo> catalogoPermisos = new List<PermisoCatalogo>
     {
@@ -226,6 +282,12 @@
         new PermisoCatalogo { Clave = "MANAGE_AVISOS", Descripcion = "Publicar Avisos Generales" },
         new PermisoCatalogo { Clave = "DELETE_DATA", Descripcion = "Eliminar Registros (Peligroso)" }
     };
+
+    // PROPIEDAD COMPUTADA PARA EL BUSCADOR
+    private IEnumerable<StaffDto> CandidatosFiltrados => 
+        string.IsNullOrWhiteSpace(textoBusquedaCandidato) 
+            ? listaCandidatos 
+            : listaCandidatos.Where(c => c.NombreCompleto.Contains(textoBusquedaCandidato, StringComparison.OrdinalIgnoreCase));
 
     protected override async Task OnInitializedAsync()
     {
@@ -273,7 +335,7 @@
             if (resp.IsSuccessStatusCode)
             {
                 await App.Current.MainPage.DisplayAlert("¡Listo!", "Nuevo miembro del equipo agregado.", "OK");
-                mostrarModalCandidatos = false;
+                CerrarModalCandidatos();
                 await CargarStaff(); 
             }
         }
@@ -327,8 +389,20 @@
 
     private async Task AbrirModalCandidatos()
     {
+        textoBusquedaCandidato = ""; // Limpiamos la búsqueda al abrir
         await CargarCandidatos();
         mostrarModalCandidatos = true;
+    }
+
+    private void CerrarModalCandidatos()
+    {
+        mostrarModalCandidatos = false;
+        textoBusquedaCandidato = "";
+    }
+
+    private void LimpiarBusquedaCandidato()
+    {
+        textoBusquedaCandidato = "";
     }
 
     private void Volver() => Nav.NavigateTo("/home");

@@ -11,14 +11,20 @@
 <div style="@EstilosTema">
 
     <div class="resumen-container">
-        <div class="resumen-card">
+
+        @* --- BOTÓN DE REGRESO AL DASHBOARD --- *@
+        <button class="btn-back-dashboard fade-in" @onclick="RegresarAlDashboard" title="Volver a la clase">
+            <i class="fas fa-arrow-left"></i> VOLVER AL DASHBOARD
+        </button>
+
+        <div class="resumen-card fade-in">
             
             <div class="header-resumen">
                 <h2>CLASE FINALIZADA</h2>
-                <p style="color:var(--theme-text-muted); font-size:0.8rem;">Asigna reconocimientos y guarda la asistencia.</p>
+                <p style="color:var(--theme-text-muted); font-size:0.8rem; margin-top:5px; margin-bottom: 0;">Asigna reconocimientos y guarda la asistencia.</p>
             </div>
 
-            <div class="attendance-list scroll-custom">
+            <div class="attendance-list scroll-custom mt-2">
                 @if (listaLocal.Count == 0)
                 {
                     <div class="text-theme-muted text-center mt-4">Nadie hizo check-in.</div>
@@ -67,7 +73,7 @@
             </div>
 
             <div class="footer-actions mt-3">
-                <button class="btn-close-session w-100" style="background:var(--theme-primary); color:var(--theme-bg); font-family:'Oswald'; font-weight:bold; padding:15px; border-radius:10px; border:none;" @onclick="GuardarAsistencia" disabled="@guardando">
+                <button class="btn-close-session" @onclick="GuardarAsistencia" disabled="@guardando">
                     @if (guardando) { <span><i class="fas fa-spinner fa-spin"></i> GUARDANDO...</span> }
                     else { <span>FINALIZAR CLASE</span> }
                 </button>
@@ -79,7 +85,7 @@
     @if (mostrarModalMedallas)
     {
         <div class="modal-overlay" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); z-index:5000; display:flex; justify-content:center; align-items:center;" @onclick="CerrarModalMedallas">
-            <div class="modal-content custom-modal" style="background:var(--theme-card); width:90%; max-width:350px; border-radius:15px; border:1px solid var(--theme-primary); overflow:hidden;" @onclick:stopPropagation="true">
+            <div class="modal-content custom-modal slide-up" style="background:var(--theme-card); width:90%; max-width:350px; border-radius:15px; border:1px solid var(--theme-primary); overflow:hidden;" @onclick:stopPropagation="true">
                 <div class="modal-header" style="background:var(--theme-bg); padding:15px; border-bottom:1px solid var(--theme-border); display:flex; justify-content:space-between; align-items:center;">
                     <h5 style="margin:0; color:var(--theme-primary); font-family:'Oswald';">OTORGAR MEDALLAS</h5>
                     <button style="background:none; border:none; color:var(--theme-text-muted); font-size:1.2rem;" @onclick="CerrarModalMedallas"><i class="fas fa-times"></i></button>
@@ -109,13 +115,76 @@
 </div>
 
 <style>
-    .resumen-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--theme-bg); display: flex; justify-content: center; align-items: center; padding: 15px; }
-    .resumen-card { background: var(--theme-card); width: 100%; max-width: 500px; border-radius: 20px; padding: 20px; border: 2px solid var(--theme-primary); display: flex; flex-direction: column; max-height: 90vh; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
-    .header-resumen { text-align: center; margin-bottom: 20px; }
-    .header-resumen h2 { font-family: 'Oswald'; color: var(--theme-text); margin:0; }
-    .attendance-list { flex: 1; overflow-y: auto; padding-right: 5px; }
-    .scroll-custom::-webkit-scrollbar { width: 4px; } .scroll-custom::-webkit-scrollbar-thumb { background: var(--theme-border); border-radius: 4px; }
+    /* --- ESTILOS GENERALES Y ESTRUCTURA --- */
+    .resumen-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: var(--theme-bg); display: flex; justify-content: center; align-items: center; padding: 15px; z-index: 1;}
     .text-theme-muted { color: var(--theme-text-muted); }
+
+    /* --- BOTÓN VOLVER (COMPACTO Y MODERNO) --- */
+    .btn-back-dashboard {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--theme-primary);
+        color: var(--theme-primary);
+        padding: 8px 15px; 
+        border-radius: 50px;
+        font-family: 'Oswald';
+        font-weight: bold;
+        font-size: 0.85rem; 
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        z-index: 10;
+        backdrop-filter: blur(5px);
+    }
+    .btn-back-dashboard:hover {
+        background: var(--theme-primary);
+        color: var(--theme-bg);
+    }
+
+    /* --- REGLA EXCLUSIVA PARA MODO VERTICAL (PORTRAIT) --- */
+    @@media (orientation: portrait) {
+        .btn-back-dashboard {
+            /* Empuja el botón hacia abajo usando la variable nativa de iOS/Android para el notch */
+            top: calc(env(safe-area-inset-top) + 15px) !important;
+            left: 15px;
+        }
+    }
+
+    /* Regla para pantallas muy pequeñas */
+    @@media (max-width: 600px) {
+        .btn-back-dashboard {
+            padding: 6px 12px;
+            font-size: 0.75rem;
+        }
+    }
+
+    /* --- TARJETA PRINCIPAL --- */
+    .resumen-card { background: var(--theme-card); width: 100%; max-width: 500px; border-radius: 15px; padding: 15px 20px; border: 2px solid var(--theme-primary); display: flex; flex-direction: column; max-height: 85vh; box-shadow: 0 0 30px rgba(0,0,0,0.5); z-index: 5;}
+    
+    .header-resumen { text-align: center; margin-bottom: 10px; flex-shrink: 0;}
+    .header-resumen h2 { font-family: 'Oswald'; color: var(--theme-text); margin:0; font-size: 1.2rem;}
+    
+    .attendance-list { flex: 1; overflow-y: auto; padding-right: 5px; }
+    
+    .scroll-custom::-webkit-scrollbar { width: 4px; } 
+    .scroll-custom::-webkit-scrollbar-thumb { background: var(--theme-border); border-radius: 4px; }
+    
+    .footer-actions { flex-shrink: 0; }
+
+    /* BOTÓN INFERIOR COMPACTO */
+    .btn-close-session { width: 100%; padding: 10px; border-radius: 50px; border: none; background: var(--theme-primary); color: var(--theme-bg); font-weight: bold; font-family: 'Oswald'; font-size: 1rem; cursor: pointer; transition: 0.2s; }
+    .btn-close-session:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(0,0,0, 0.4); }
+    .btn-close-session:disabled { background: var(--theme-border); color: var(--theme-text-muted); cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* Animaciones */
+    .fade-in { animation: fadeIn 0.5s ease; }
+    .slide-up { animation: slideUp 0.3s ease; }
+    @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 </style>
 
 @code {
@@ -170,6 +239,11 @@
             NombreCompleto = a.NombreCompleto, 
             FotoUrl = a.FotoUrl 
         }).ToList();
+    }
+
+    private void RegresarAlDashboard()
+    {
+        Nav.NavigateTo("/live-dashboard");
     }
 
     private void AbrirModalMedallas(AtletaSimple atleta)
