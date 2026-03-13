@@ -22,7 +22,7 @@
                     </div>
                 </div>
                 
-                @if (!string.IsNullOrEmpty(Distintivo) && Distintivo != " ")
+               @if (!string.IsNullOrEmpty(Distintivo) && Distintivo != "NA")
                 {
                     <div class="info-row mt-3">
                         <i class="fas fa-tshirt"></i>
@@ -111,7 +111,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Cargar el tema del gimnasio 
+        // AQUÍ SOLO CARGAMOS EL TEMA VISUAL. NADA DE RELOJES.
         try 
         {
             var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
@@ -121,10 +121,25 @@
             }
         } 
         catch { }
+    }
 
+    protected override void OnParametersSet()
+    {
+        // AQUÍ CONTROLAMOS EL RELOJ (Se ejecuta al entrar y si llegan alertas nuevas)
+        
+        // 1. Limpiamos y detenemos el reloj de la alerta anterior (si existía)
+        if (_timer != null)
+        {
+            _timer.Stop();
+            _timer.Dispose();
+        }
+
+        // 2. Reiniciamos todo con los datos del NUEVO Spotter
+        tiempoAgotado = false;
         segundosRestantes = Minutos * 60;
         ActualizarDisplay();
 
+        // 3. Arrancamos el nuevo reloj
         _timer = new Timer(1000);
         _timer.Elapsed += OnTimerTick;
         _timer.AutoReset = true;

@@ -30,7 +30,7 @@
             </div>
             <div class="alert-actions mt-3">
                 <button class="btn-ignorar" @onclick="CerrarAlertaRecibida">NO PUEDO</button>
-                <button class="btn-voy" @onclick="CerrarAlertaRecibida"><i class="fas fa-running me-1"></i> ¡VOY EN CAMINO!</button>
+              <button class="btn-voy" @onclick="IrAlRescate"><i class="fas fa-running me-1"></i> ¡VOY EN CAMINO!</button>
             </div>
         </div>
     }
@@ -378,6 +378,11 @@
     private bool cargando = true;
     private bool guardando = false;
     private RutinaDiaDto rutina;
+    private string alertaInNombre = "";
+    private string alertaInZona = "";
+    private string alertaInDistintivo = "";
+    private int alertaInMin = 2;
+
 
     // --- VARIABLES DEL TIMER ---
     private int segundosDescansoDefecto = 90;
@@ -450,6 +455,11 @@
 
         hubConnection.On<string, string, string, int>("RecibirAlertaSpotter", async (nombre, zona, distintivo, min) =>
         {
+
+            alertaInNombre = nombre;
+            alertaInZona = zona;
+            alertaInDistintivo = string.IsNullOrWhiteSpace(distintivo) ? "NA" : distintivo;
+            alertaInMin = min;
             mensajeAlertaExterna = $"¡{nombre} necesita ayuda en {zona.ToUpper()}! Distintivo: {distintivo}. ¿Puedes ir?";
             alertaRecibida = true;
             await InvokeAsync(StateHasChanged);
@@ -581,6 +591,13 @@
         }
         catch { }
         finally { guardando = false; }
+    }
+
+    private void IrAlRescate()
+    {
+        alertaRecibida = false; // Cerramos el banner
+        string url = $"/spotter-rescue/{Uri.EscapeDataString(alertaInNombre)}/{Uri.EscapeDataString(alertaInZona)}/{Uri.EscapeDataString(alertaInDistintivo)}/{alertaInMin}";
+        Nav.NavigateTo(url);
     }
 
     // ===============================================

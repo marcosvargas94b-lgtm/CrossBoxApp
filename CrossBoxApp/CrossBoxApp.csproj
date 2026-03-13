@@ -25,7 +25,7 @@
 		<ApplicationId>aftrack.aftrack</ApplicationId>
 		
 		<ApplicationDisplayVersion>1.1</ApplicationDisplayVersion>
-		<ApplicationVersion>26</ApplicationVersion>
+		<ApplicationVersion>28</ApplicationVersion>
 
 		<WindowsPackageType>None</WindowsPackageType>
 
@@ -140,7 +140,9 @@
 	</ItemGroup>
 -->
 	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0-ios'">
-		<BundleResource Include="Platforms\iOS\GoogleService-Info.plist" />
-	</ItemGroup>
+    <BundleResource Include="Platforms\iOS\GoogleService-Info.plist">
+        <LogicalName>GoogleService-Info.plist</LogicalName>
+    </BundleResource>
+</ItemGroup>
 
 </Project>

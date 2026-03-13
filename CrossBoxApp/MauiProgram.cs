@@ -45,14 +45,14 @@ namespace CrossBoxApp
 #if IOS
                 events.AddiOS(iOS => iOS.FinishedLaunching((app, launchOptions) => {
                     CrossFirebase.Initialize(); 
-                    ConfigurarInterceptorPush(); // Llamamos al cerebro
-                    return false;
+                    ConfigurarInterceptorPush(); 
+                    return true; // <--- ¡CRÍTICO! DEBE SER TRUE, SI NO APPLE MATA LA NOTIFICACIÓN
                 }));
 #elif ANDROID
                 events.AddAndroid(android => android.OnCreate((activity, state) =>
                 {
                     CrossFirebase.Initialize(activity, () => activity);
-                    ConfigurarInterceptorPush(); // Llamamos al cerebro
+                    ConfigurarInterceptorPush();
                 }));
 #endif
             });
@@ -83,22 +83,25 @@ namespace CrossBoxApp
                 {
                     string nombre = data.ContainsKey("nombre") ? data["nombre"] : "Un Atleta";
                     string zona = data.ContainsKey("zona") ? data["zona"] : "El Gym";
-                    string dist = data.ContainsKey("distintivo") && !string.IsNullOrWhiteSpace(data["distintivo"]) ? data["distintivo"] : " ";
+
+                    // ARREGLO 2: En vez de un espacio " ", mandamos "NA" para que Blazor no se confunda con el %20 en la URL
+                    string dist = data.ContainsKey("distintivo") && !string.IsNullOrWhiteSpace(data["distintivo"]) ? data["distintivo"] : "NA";
                     string min = data.ContainsKey("minutos") ? data["minutos"] : "2";
 
-                    // Armamos la ruta exacta a la que Blazor debe ir
                     string urlDestino = $"/spotter-rescue/{Uri.EscapeDataString(nombre)}/{Uri.EscapeDataString(zona)}/{Uri.EscapeDataString(dist)}/{min}";
 
-                    // CASO 1: Si la app ya estaba abierta en segundo plano, le avisamos a Blazor que navegue
-                    if (InterceptSpotterAction != null)
+                    // ARREGLO 3: OBLIGATORIO usar MainThread para cambiar la UI de Blazor desde un evento en segundo plano
+                    MainThread.BeginInvokeOnMainThread(() =>
                     {
-                        InterceptSpotterAction.Invoke(urlDestino);
-                    }
-                    // CASO 2: Si la app estaba totalmente CERRADA, guardamos la ruta en memoria para cuando Blazor termine de arrancar
-                    else
-                    {
-                        RutaPendienteSpotter = urlDestino;
-                    }
+                        if (InterceptSpotterAction != null)
+                        {
+                            InterceptSpotterAction.Invoke(urlDestino);
+                        }
+                        else
+                        {
+                            RutaPendienteSpotter = urlDestino;
+                        }
+                    });
                 }
             };
         }

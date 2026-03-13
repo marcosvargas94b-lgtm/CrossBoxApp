@@ -50,14 +50,14 @@
 
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Necesitamos tu ubicación para validar que te encuentras físicamente dentro del Box para utilizar la función de spotter.</string>
-	
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Necesitamos tu ubicación para validar que te encuentras físicamente dentro del Box para utilizar la función de spotter.</string>
-	
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>Necesitamos tu ubicación para asegurarnos de que estés en el gimnasio al hacer check-in.</string>
 
-	<key>CFBundleIdentifier</key>
-	<string></string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>
