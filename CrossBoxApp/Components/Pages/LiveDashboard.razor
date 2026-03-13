@@ -281,16 +281,18 @@
                         }
                     </div>
 
-                    @* --- BOTONES FLOTANTES DE CONTROL DE ZOOM Y EDICIÓN --- *@
-                    <div class="wod-zoom-controls">
-                        <button class="btn-zoom-float" style="background-color: var(--theme-primary); border: none; color: var(--theme-bg);" @onclick="AbrirModalEdicionWod" title="Editar WOD">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-zoom-float @(wodBloqueado ? "locked" : "unlocked")" @onclick="ToggleCandadoWod">
-                            <i class="fas @(wodBloqueado ? "fa-lock" : "fa-lock-open")"></i>
-                        </button>
-                    </div>
+      
 
+                </div>
+
+                @* --- BOTONES FLOTANTES MOVIDOS AQUÍ AFUERA PARA QUE NO HAGAN SCROLL --- *@
+                <div class="wod-zoom-controls">
+                    <button class="btn-zoom-float" style="background-color: var(--theme-primary); border: none; color: var(--theme-bg);" @onclick="AbrirModalEdicionWod" title="Editar WOD">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-zoom-float @(wodBloqueado ? "locked" : "unlocked")" @onclick="ToggleCandadoWod">
+                        <i class="fas @(wodBloqueado ? "fa-lock" : "fa-lock-open")"></i>
+                    </button>
                 </div>
             }
             else
@@ -677,8 +679,28 @@
 
     .wod-block { margin-bottom: 20px; break-inside: avoid; -webkit-column-break-inside: avoid; }
     .block-title { color: var(--theme-primary); background: transparent; padding: 2px 10px; margin: 0 0 2px 0; font-size: 1.1em; font-weight: bold; font-family: 'Oswald'; border-left: 4px solid var(--theme-primary); border-bottom: 1px solid var(--theme-border); text-transform: uppercase; letter-spacing: 1px; }
-    .ejercicio-row-clean { display: grid; grid-template-columns: 60px 1fr; gap: 8px; align-items: baseline; padding: 1px 0; margin-bottom: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.03); min-height: auto; line-height: 1; }
-    .ej-reps { color: var(--theme-primary); font-weight: 900; font-family: 'Oswald'; font-size: 1.15em; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+   /* Ajustamos las columnas para que el contenido se pegue a la izquierda y quitamos el 60px fijo */
+    .ejercicio-row-clean { 
+        display: grid; 
+        grid-template-columns: min-content 1fr; /* Magia pura: ajusta la columna al tamaño del número */
+        gap: 8px; 
+        align-items: baseline; 
+        padding: 2px 0; 
+        margin-bottom: 0; 
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03); 
+        min-height: auto; 
+        line-height: 1.2; 
+    }
+    
+    /* Alineamos el texto a la izquierda para que respete el margen del título */
+    .ej-reps { 
+        color: var(--theme-primary); 
+        font-weight: 900; 
+        font-family: 'Oswald'; 
+        font-size: 1.15em; 
+        text-align: left; /* Antes estaba en right */
+        white-space: nowrap; 
+    }
     .ej-nombre { color: var(--theme-text); font-family: 'Roboto', sans-serif; font-size: 1em; font-weight: 500; line-height: 1.1; text-align: left; padding: 0; }
     .scroll-custom::-webkit-scrollbar { width: 6px; } .scroll-custom::-webkit-scrollbar-track { background: var(--theme-card); } .scroll-custom::-webkit-scrollbar-thumb { background: var(--theme-border); border-radius: 10px; }
     .dashboard-container.wod-wide .list-panel { flex: 0 0 0 !important; width: 0 !important; padding: 0 !important; border: none !important; margin: 0 !important; }

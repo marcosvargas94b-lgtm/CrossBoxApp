@@ -1050,10 +1050,28 @@
     .main-dropdown { position: absolute; top: 45px; right: 0; width: 260px; background: var(--theme-card); border: 1px solid var(--theme-primary); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); overflow-y: auto; -webkit-overflow-scrolling: touch; max-height: 70vh; padding-bottom: 30px; z-index: 2000; animation: slideDown 0.2s ease-out; }
     
     /* Notificaciones */
+    /* Notificaciones */
+    .noti-wrapper { position: relative; cursor: pointer; display: flex; align-items: center; } /* Aseguramos que sea relative */
     .noti-icon { font-size: 1.3rem; color: var(--theme-text); }
     .noti-dot { position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; background: red; border-radius: 50%; border: 2px solid var(--theme-bg); }
     .bell-ring { animation: ring 4s .7s ease-in-out infinite; color: var(--theme-primary); }
-    .noti-dropdown { position: absolute; top: 35px; right: -50px; width: 280px; background: var(--theme-card); border: 1px solid var(--theme-border); border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); overflow: hidden; z-index: 1000; max-height: 300px; overflow-y: auto; }
+    
+    /* EL ARREGLO DEL RECUADRO ESTÁ AQUÍ */
+    .noti-dropdown { 
+        position: absolute; 
+        top: 45px; /* Empuja el cuadro hacia abajo, lejos del notch */
+        right: -10px; /* Lo mantiene pegado a la orilla derecha sin salirse */
+        width: 280px; 
+        background: var(--theme-card); 
+        border: 1px solid var(--theme-border); 
+        border-radius: 8px; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
+        overflow: hidden; 
+        z-index: 9999; /* Máxima prioridad para que no se tape con nada */
+        max-height: 300px; 
+        overflow-y: auto; 
+    }
+    
     .noti-item { padding: 12px; border-bottom: 1px solid var(--theme-border); font-size: 0.8rem; display: flex; align-items: center; gap: 10px; color: var(--theme-text); }
     .noti-item.unread { background: rgba(255,255,255,0.05); border-left: 3px solid var(--theme-primary); }
 

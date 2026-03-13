@@ -74,23 +74,29 @@ namespace CrossBoxApp
         // =======================================================
         // EL CEREBRO DE LAS NOTIFICACIONES (Limpio y Extraído)
         // =======================================================
+        // =======================================================
+        // EL CEREBRO DE LAS NOTIFICACIONES (Blindado contra congelamientos)
+        // =======================================================
         private static void ConfigurarInterceptorPush()
         {
-            CrossFirebaseCloudMessaging.Current.NotificationTapped += (sender, e) =>
+            CrossFirebaseCloudMessaging.Current.NotificationTapped += async (sender, e) =>
             {
                 var data = e.Notification.Data;
-                if (data.ContainsKey("action") && data["action"] == "open_spotter")
+
+                // Nos aseguramos de leer la llave aunque llegue con mayúsculas/minúsculas
+                if (data.TryGetValue("action", out var actionValue) && actionValue == "open_spotter")
                 {
                     string nombre = data.ContainsKey("nombre") ? data["nombre"] : "Un Atleta";
                     string zona = data.ContainsKey("zona") ? data["zona"] : "El Gym";
-
-                    // ARREGLO 2: En vez de un espacio " ", mandamos "NA" para que Blazor no se confunda con el %20 en la URL
                     string dist = data.ContainsKey("distintivo") && !string.IsNullOrWhiteSpace(data["distintivo"]) ? data["distintivo"] : "NA";
                     string min = data.ContainsKey("minutos") ? data["minutos"] : "2";
 
                     string urlDestino = $"/spotter-rescue/{Uri.EscapeDataString(nombre)}/{Uri.EscapeDataString(zona)}/{Uri.EscapeDataString(dist)}/{min}";
 
-                    // ARREGLO 3: OBLIGATORIO usar MainThread para cambiar la UI de Blazor desde un evento en segundo plano
+                    // ¡EL TRUCO DE ORO! Le damos 200ms a Blazor para que se descongele del background
+                    await System.Threading.Tasks.Task.Delay(200);
+
+                    // Lo mandamos obligatoriamente por el hilo principal de la pantalla
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
                         if (InterceptSpotterAction != null)

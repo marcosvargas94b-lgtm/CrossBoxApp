@@ -139,6 +139,8 @@
 		<GoogleServicesJson Include="Platforms\Android\google-services.json" />
 	</ItemGroup>
 -->
+	
+		
 	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0-ios'">
     <BundleResource Include="Platforms\iOS\GoogleService-Info.plist">
         <LogicalName>GoogleService-Info.plist</LogicalName>
