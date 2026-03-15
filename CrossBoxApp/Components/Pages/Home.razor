@@ -1671,17 +1671,20 @@
     private void ToggleNotificaciones() { mostrarNotis = !mostrarNotis; if (mostrarNotis) { mostrarMenuPrincipal = false; if (hayNuevas) { hayNuevas = false; _ = Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/notificaciones/leer/{Sesion.Usuario.UsuarioID}", null); } } }
 
     // --- LOGICA MODAL WOD ---
+       // --- LOGICA MODAL WOD ---
     private async void AbrirModalWod()
     {
         CerrarTodosLosMenus();
-        string accion = await App.Current.MainPage.DisplayActionSheet("¿Cómo deseas crear el WOD?", "Cancelar", null, "Modo Normal (Por Bloques)", "Modo Texto Libre");
-        if (accion == "Cancelar" || string.IsNullOrEmpty(accion)) return;
-        modoTextoLibre = (accion == "Modo Texto Libre");
+        
+        // ELIMINAMOS EL MENÚ DE OPCIONES Y FORZAMOS TEXTO LIBRE POR DEFECTO
+        modoTextoLibre = true; 
+        
         editandoWod = false;
         nuevoWod = new ProgramacionWodViewModel { FechaProgramacion = DateTime.Today };
         mostrarModalWod = true;
         await VerificarWodExistente(DateTime.Today);
     }
+
 
     private async Task AlCambiarFechaWod(ChangeEventArgs e) { if (DateTime.TryParse(e.Value.ToString(), out DateTime fecha)) { nuevoWod.FechaProgramacion = fecha; await VerificarWodExistente(fecha); } }
 

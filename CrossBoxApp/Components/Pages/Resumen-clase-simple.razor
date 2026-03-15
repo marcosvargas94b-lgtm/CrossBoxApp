@@ -84,33 +84,33 @@
     @* --- MODAL MULTIPLE MEDALLAS --- *@
     @if (mostrarModalMedallas)
     {
-        <div class="modal-overlay" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); z-index:5000; display:flex; justify-content:center; align-items:center;" @onclick="CerrarModalMedallas">
-            <div class="modal-content custom-modal slide-up" style="background:var(--theme-card); width:90%; max-width:350px; border-radius:15px; border:1px solid var(--theme-primary); overflow:hidden;" @onclick:stopPropagation="true">
-                <div class="modal-header" style="background:var(--theme-bg); padding:15px; border-bottom:1px solid var(--theme-border); display:flex; justify-content:space-between; align-items:center;">
-                    <h5 style="margin:0; color:var(--theme-primary); font-family:'Oswald';">OTORGAR MEDALLAS</h5>
-                    <button style="background:none; border:none; color:var(--theme-text-muted); font-size:1.2rem;" @onclick="CerrarModalMedallas"><i class="fas fa-times"></i></button>
+        <div class="modal-overlay fade-in" @onclick="CerrarModalMedallas">
+            <div class="modal-content custom-modal slide-up" @onclick:stopPropagation="true">
+                <div class="modal-header">
+                    <h5 style="margin:0; color:var(--theme-primary); font-weight:bold; font-family:'Oswald';">OTORGAR MEDALLAS</h5>
+                    <button class="btn-icon-header" @onclick="CerrarModalMedallas"><i class="fas fa-times"></i></button>
                 </div>
                 
-                <div class="modal-body" style="padding:20px; display:flex; flex-direction:column; gap:10px;">
-                    <p style="color:var(--theme-text-muted); font-size:0.8rem; text-align:center; margin-bottom:10px;">Selecciona los logros para @(atletaEditando?.NombreCompleto?.Split(' ')[0]):</p>
+                <div class="modal-body scroll-custom">
+                    <p style="color:var(--theme-text-muted); font-size:0.85rem; text-align:center; margin-bottom:15px;">Selecciona los logros para @(atletaEditando?.NombreCompleto?.Split(' ')[0]):</p>
                     
                     @foreach (var opcion in opcionesMedallas)
                     {
                         bool seleccionado = atletaEditando != null && atletaEditando.Medallas.Contains(opcion);
-                        <div style="background:@(seleccionado ? "rgba(255,255,255,0.05)" : "var(--theme-bg)"); border:1px solid @(seleccionado ? "var(--theme-primary)" : "var(--theme-border)"); padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; cursor:pointer;" 
-                             @onclick="() => ToggleMedalla(opcion)">
-                            <span style="color:var(--theme-text); font-family:'Oswald'; letter-spacing:1px; font-size:0.9rem;">@opcion.ToUpper()</span>
-                            @if(seleccionado){ <i class="fas fa-check-circle" style="color:var(--theme-primary);"></i> }
+                        <div class="medalla-opcion @(seleccionado ? "seleccionada" : "")" @onclick="() => ToggleMedalla(opcion)">
+                            <span>@opcion.ToUpper()</span>
+                            @if(seleccionado){ <i class="fas fa-check-circle"></i> }
                         </div>
                     }
                 </div>
                 
-                <div class="modal-footer" style="padding:15px; background:var(--theme-bg); border-top:1px solid var(--theme-border);">
-                    <button style="width:100%; background:var(--theme-primary); color:var(--theme-bg); font-family:'Oswald'; font-weight:bold; border:none; padding:10px; border-radius:8px;" @onclick="CerrarModalMedallas">LISTO</button>
+                <div class="modal-footer">
+                    <button class="btn-confirm w-100" @onclick="CerrarModalMedallas">LISTO</button>
                 </div>
             </div>
         </div>
     }
+
 
 </div>
 
@@ -121,58 +121,30 @@
 
     /* --- BOTÓN VOLVER (COMPACTO Y MODERNO) --- */
     .btn-back-dashboard {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid var(--theme-primary);
-        color: var(--theme-primary);
-        padding: 8px 15px; 
-        border-radius: 50px;
-        font-family: 'Oswald';
-        font-weight: bold;
-        font-size: 0.85rem; 
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        transition: all 0.3s ease;
-        z-index: 10;
-        backdrop-filter: blur(5px);
+        position: absolute; top: 20px; left: 20px; background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--theme-primary); color: var(--theme-primary);
+        padding: 8px 15px; border-radius: 50px; font-family: 'Oswald';
+        font-weight: bold; font-size: 0.85rem; cursor: pointer;
+        display: flex; align-items: center; gap: 8px; transition: all 0.3s ease;
+        z-index: 10; backdrop-filter: blur(5px);
     }
-    .btn-back-dashboard:hover {
-        background: var(--theme-primary);
-        color: var(--theme-bg);
-    }
+    .btn-back-dashboard:hover { background: var(--theme-primary); color: var(--theme-bg); }
 
-    /* --- REGLA EXCLUSIVA PARA MODO VERTICAL (PORTRAIT) --- */
     @@media (orientation: portrait) {
-        .btn-back-dashboard {
-            /* Empuja el botón hacia abajo usando la variable nativa de iOS/Android para el notch */
-            top: calc(env(safe-area-inset-top) + 15px) !important;
-            left: 15px;
-        }
+        .btn-back-dashboard { top: calc(env(safe-area-inset-top) + 15px) !important; left: 15px; }
     }
-
-    /* Regla para pantallas muy pequeñas */
     @@media (max-width: 600px) {
-        .btn-back-dashboard {
-            padding: 6px 12px;
-            font-size: 0.75rem;
-        }
+        .btn-back-dashboard { padding: 6px 12px; font-size: 0.75rem; }
     }
 
     /* --- TARJETA PRINCIPAL --- */
     .resumen-card { background: var(--theme-card); width: 100%; max-width: 500px; border-radius: 15px; padding: 15px 20px; border: 2px solid var(--theme-primary); display: flex; flex-direction: column; max-height: 85vh; box-shadow: 0 0 30px rgba(0,0,0,0.5); z-index: 5;}
-    
     .header-resumen { text-align: center; margin-bottom: 10px; flex-shrink: 0;}
     .header-resumen h2 { font-family: 'Oswald'; color: var(--theme-text); margin:0; font-size: 1.2rem;}
     
     .attendance-list { flex: 1; overflow-y: auto; padding-right: 5px; }
-    
     .scroll-custom::-webkit-scrollbar { width: 4px; } 
     .scroll-custom::-webkit-scrollbar-thumb { background: var(--theme-border); border-radius: 4px; }
-    
     .footer-actions { flex-shrink: 0; }
 
     /* BOTÓN INFERIOR COMPACTO */
@@ -180,12 +152,29 @@
     .btn-close-session:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(0,0,0, 0.4); }
     .btn-close-session:disabled { background: var(--theme-border); color: var(--theme-text-muted); cursor: not-allowed; transform: none; box-shadow: none; }
 
+    /* --- ESTILOS DEL MODAL (IDÉNTICOS A RESUMEN-CLASE) --- */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 5000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); padding: 20px; }
+    .custom-modal { background: var(--theme-bg); width: 100%; max-width: 420px; border-radius: 20px; border: 1px solid var(--theme-border); border-top: 4px solid var(--theme-primary); display: flex; flex-direction: column; color: var(--theme-text); max-height: 85vh; box-shadow: 0 25px 50px rgba(0,0,0,0.9); overflow: hidden; }
+    .modal-header { padding: 20px 25px; background: var(--theme-card); border-bottom: 1px solid var(--theme-border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .modal-body { padding: 20px; overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 10px; }
+    .modal-footer { padding: 15px 20px; background: var(--theme-card); border-top: 1px solid var(--theme-border); display: flex; gap: 10px; flex-shrink: 0; }
+    .btn-icon-header { background: none; border: none; color: var(--theme-text-muted); font-size: 1.2rem; cursor: pointer; }
+    .btn-confirm { background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; flex: 1; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.2s; text-align: center; cursor: pointer; }
+    .btn-confirm:active { transform: scale(0.95); }
+
+    /* Estilo de las opciones de medallas */
+    .medalla-opcion { background: var(--theme-bg); border: 1px solid var(--theme-border); padding: 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
+    .medalla-opcion span { color: var(--theme-text); font-family: 'Oswald'; letter-spacing: 1px; font-size: 0.9rem; }
+    .medalla-opcion.seleccionada { background: rgba(255,255,255,0.05); border-color: var(--theme-primary); }
+    .medalla-opcion.seleccionada i { color: var(--theme-primary); font-size: 1.2rem; }
+
     /* Animaciones */
     .fade-in { animation: fadeIn 0.5s ease; }
     .slide-up { animation: slideUp 0.3s ease; }
     @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 </style>
+
 
 @code {
     // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
