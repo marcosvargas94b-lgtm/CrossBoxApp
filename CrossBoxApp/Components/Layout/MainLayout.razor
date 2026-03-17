@@ -13,11 +13,12 @@
     protected override void OnInitialized()
     {
         Nav.LocationChanged += AlCambiarDePagina;
-        
+
         // 1. CONECTAR DELEGADO PARA APP EN SEGUNDO PLANO
-        MauiProgram.InterceptSpotterAction = async (url) =>
+        MauiProgram.InterceptSpotterAction = (url) =>
         {
-            await InvokeAsync(() => 
+            // Le damos un electrochoque al hilo principal de MAUI para asegurar que despierte
+            Application.Current.Dispatcher.Dispatch(() =>
             {
                 Nav.NavigateTo(url);
                 StateHasChanged();
@@ -30,14 +31,14 @@
 
     private async Task VerificarRutaPendiente()
     {
-        // Pequeño delay para asegurar que el router de Blazor esté 100% montado
-        await Task.Delay(200); 
+        await Task.Delay(200);
 
         if (!string.IsNullOrEmpty(MauiProgram.RutaPendienteSpotter))
         {
             var rutaDestino = MauiProgram.RutaPendienteSpotter;
             MauiProgram.RutaPendienteSpotter = null; // Consumir y limpiar
-            
+
+            // Aquí sí usamos InvokeAsync porque Blazor ya está corriendo en pantalla
             await InvokeAsync(() => Nav.NavigateTo(rutaDestino));
         }
     }

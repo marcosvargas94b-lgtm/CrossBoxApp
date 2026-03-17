@@ -369,7 +369,10 @@
                     if (usuario != null)
                     {
                         Sesion.Usuario = usuario;
-                        Nav.NavigateTo("/home");
+                        if (!Nav.Uri.Contains("spotter-rescue"))
+                        {
+                            Nav.NavigateTo("/home");
+                        }
                         return;
                     }
                 }

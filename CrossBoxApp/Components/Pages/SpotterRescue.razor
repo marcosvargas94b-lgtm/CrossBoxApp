@@ -93,9 +93,10 @@
     [SupplyParameterFromQuery] public string Zona { get; set; }
     [SupplyParameterFromQuery] public string Distintivo { get; set; }
     [SupplyParameterFromQuery] public int Minutos { get; set; }
+    [SupplyParameterFromQuery] public string Ts { get; set; } // <--- ATRAPAMOS LA HORA EXACTA DEL SERVIDOR
 
     private string EstilosTema = @"
-        --theme-primary: #A9A9A9; 
+        --theme-primary: #A9A9A9;
         --theme-secondary: #808080;
         --theme-bg: #0d0d0d;
         --theme-card: #1a1a1a;
@@ -111,39 +112,64 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // AQUÍ SOLO CARGAMOS EL TEMA VISUAL. NADA DE RELOJES.
-        try 
+        try
         {
             var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
-            if (!string.IsNullOrEmpty(cache)) 
-            { 
-                EstilosTema = cache; 
+            if (!string.IsNullOrEmpty(cache))
+            {
+                EstilosTema = cache;
             }
-        } 
+        }
         catch { }
     }
 
     protected override void OnParametersSet()
     {
-        // AQUÍ CONTROLAMOS EL RELOJ (Se ejecuta al entrar y si llegan alertas nuevas)
-        
-        // 1. Limpiamos y detenemos el reloj de la alerta anterior (si existía)
+        // 1. Limpiamos el reloj anterior
         if (_timer != null)
         {
             _timer.Stop();
             _timer.Dispose();
         }
 
-        // 2. Reiniciamos todo con los datos del NUEVO Spotter
         tiempoAgotado = false;
-        segundosRestantes = Minutos * 60;
+
+        // 2. MATEMÁTICAS DE TIEMPO REAL
+        if (string.IsNullOrEmpty(Ts) || !long.TryParse(Ts, out long unixTime))
+        {
+            // Si el servidor no mandó hora, confiamos en los minutos ciegamente
+            segundosRestantes = Minutos * 60;
+        }
+        else
+        {
+            // Calculamos cuánto tiempo ha pasado en el mundo real
+            DateTime horaEnvio = DateTimeOffset.FromUnixTimeSeconds(unixTime).LocalDateTime;
+            int segundosPasados = (int)(DateTime.Now - horaEnvio).TotalSeconds;
+            int segundosTotales = Minutos * 60;
+
+            segundosRestantes = segundosTotales - segundosPasados;
+
+            // Si abrieron la notificación tarde, ya no hay tiempo
+            if (segundosRestantes < 0)
+            {
+                segundosRestantes = 0;
+            }
+        }
+
         ActualizarDisplay();
 
-        // 3. Arrancamos el nuevo reloj
-        _timer = new Timer(1000);
-        _timer.Elapsed += OnTimerTick;
-        _timer.AutoReset = true;
-        _timer.Start();
+        // 3. Arrancamos el reloj SOLO si queda tiempo
+        if (segundosRestantes > 0)
+        {
+            _timer = new Timer(1000);
+            _timer.Elapsed += OnTimerTick;
+            _timer.AutoReset = true;
+            _timer.Start();
+        }
+        else
+        {
+            tiempoAgotado = true;
+        }
     }
 
     private void OnTimerTick(object sender, ElapsedEventArgs e)

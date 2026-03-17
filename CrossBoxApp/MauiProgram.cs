@@ -121,12 +121,13 @@ namespace CrossBoxApp
         {
             if (data != null && data.TryGetValue("action", out var actionValue) && actionValue == "open_spotter")
             {
-                string nombre = data.ContainsKey("nombre") ? data["nombre"] : "Un Atleta";
-                string zona = data.ContainsKey("zona") ? data["zona"] : "El Gym";
-                string dist = data.ContainsKey("distintivo") && !string.IsNullOrWhiteSpace(data["distintivo"]) ? data["distintivo"] : "NA";
+                string nombre = data.ContainsKey("nombre") ? data["nombre"] : "Atleta";
+                string zona = data.ContainsKey("zona") ? data["zona"] : "Gym";
+                string dist = data.ContainsKey("distintivo") ? data["distintivo"] : "NA";
                 string min = data.ContainsKey("minutos") ? data["minutos"] : "2";
+                string ts = data.ContainsKey("timestamp") ? data["timestamp"] : "0"; // <--- Atrapamos el tiempo
 
-                string urlDestino = $"/spotter-rescue?Nombre={Uri.EscapeDataString(nombre)}&Zona={Uri.EscapeDataString(zona)}&Distintivo={Uri.EscapeDataString(dist)}&Minutos={min}";
+                string urlDestino = $"/spotter-rescue?Nombre={Uri.EscapeDataString(nombre)}&Zona={Uri.EscapeDataString(zona)}&Distintivo={Uri.EscapeDataString(dist)}&Minutos={min}&Ts={ts}";
 
                 EnviarRutaABlazor(urlDestino);
             }
