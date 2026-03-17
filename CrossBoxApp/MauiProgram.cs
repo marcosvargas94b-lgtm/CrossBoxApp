@@ -2,7 +2,7 @@
 using CrossBoxApp.Models.Services;
 using Microsoft.Extensions.Logging;
 using Plugin.LocalNotification;
-using Plugin.LocalNotification.EventArgs; // Necesario para e.Request
+using Plugin.LocalNotification.EventArgs;
 using Plugin.Maui.Audio;
 using ZXing.Net.Maui.Controls;
 using Microsoft.Maui.LifecycleEvents;
@@ -13,6 +13,8 @@ using System.Collections.Generic;
 
 #if IOS
 using Plugin.Firebase.Core.Platforms.iOS;
+using UIKit;       // <--- NUEVO: Para el salvavidas manual de iOS
+using Foundation;  // <--- NUEVO: Para el salvavidas manual de iOS
 #elif ANDROID
 using Plugin.Firebase.Core.Platforms.Android;
 #endif
@@ -39,19 +41,39 @@ namespace CrossBoxApp
             builder.UseLocalNotification();
 #endif
 
+            // 1. ¡CRÍTICO! Encendemos los radares AQUÍ AFUERA, antes de que arranque cualquier plataforma
+            // para no perder ningún toque en segundo plano.
+            ConfigurarInterceptorPush();
+
             builder.ConfigureLifecycleEvents(events =>
             {
 #if IOS
                 events.AddiOS(iOS => iOS.FinishedLaunching((app, launchOptions) => {
-                    CrossFirebase.Initialize(); // <--- Así de limpio
-                    ConfigurarInterceptorPush(); 
+                    CrossFirebase.Initialize(); 
+                    
+                    // --- 2. SALVAVIDAS MANUAL PARA COLD START (App 100% cerrada) ---
+                    if (launchOptions != null && launchOptions.ContainsKey(UIApplication.LaunchOptionsRemoteNotificationKey))
+                    {
+                        var pushPayload = launchOptions[UIApplication.LaunchOptionsRemoteNotificationKey] as NSDictionary;
+                        if (pushPayload != null)
+                        {
+                            var dict = new Dictionary<string, string>();
+                            foreach (var key in pushPayload.Keys)
+                            {
+                                dict[key.ToString()] = pushPayload[key]?.ToString() ?? "";
+                            }
+                            // Inyectamos a la fuerza los datos a Blazor
+                            ProcesarDatosPush(dict);
+                        }
+                    }
+                    // ---------------------------------------------------------------
+                    
                     return true;
                 }));
 #elif ANDROID
                 events.AddAndroid(android => android.OnCreate((activity, state) =>
                 {
-                    CrossFirebase.Initialize(activity, () => activity); // <--- Así de limpio
-                    ConfigurarInterceptorPush();
+                    CrossFirebase.Initialize(activity, () => activity); 
                 }));
 #endif
             });
@@ -71,13 +93,20 @@ namespace CrossBoxApp
 
         private static void ConfigurarInterceptorPush()
         {
-            // 1. ESCUCHAR FIREBASE PUSH
+            // 1. ESCUCHAR FIREBASE PUSH (App Minimizada)
+#if ANDROID || IOS
+            // 1. ESCUCHAR FIREBASE PUSH (App Minimizada)
+            // Esto solo compilará y se ejecutará en celulares, Windows lo ignorará.
             CrossFirebaseCloudMessaging.Current.NotificationTapped += (sender, e) =>
             {
-                ProcesarDatosPush(e.Notification.Data);
+                if (e.Notification != null && e.Notification.Data != null)
+                {
+                    ProcesarDatosPush(e.Notification.Data);
+                }
             };
+#endif
 
-            // 2. ESCUCHAR NOTIFICACIONES LOCALES (Timer de Descanso)
+            // 2. ESCUCHAR NOTIFICACIONES LOCALES (Timer / App Abierta)
             LocalNotificationCenter.Current.NotificationActionTapped += (NotificationActionEventArgs e) =>
             {
                 if (e.IsTapped && !string.IsNullOrEmpty(e.Request.ReturningData) && e.Request.ReturningData.StartsWith("/spotter-rescue"))
@@ -87,7 +116,7 @@ namespace CrossBoxApp
             };
         }
 
-        // MÉTODO PÚBLICO PARA PROCESAR DICCIONARIOS (Usado por MainActivity también)
+        // MÉTODO PÚBLICO PARA PROCESAR DICCIONARIOS
         public static void ProcesarDatosPush(IDictionary<string, string> data)
         {
             if (data != null && data.TryGetValue("action", out var actionValue) && actionValue == "open_spotter")
@@ -107,8 +136,8 @@ namespace CrossBoxApp
         {
             MainThread.BeginInvokeOnMainThread(async () =>
             {
-                // Respiro crítico para Blazor
-                await System.Threading.Tasks.Task.Delay(300);
+                // Aumentamos el respiro a 800ms para asegurar que Blazor en iOS termine de cargar su UI pesada
+                await System.Threading.Tasks.Task.Delay(800);
 
                 if (InterceptSpotterAction != null)
                 {
