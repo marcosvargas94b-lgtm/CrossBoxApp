@@ -480,7 +480,7 @@
                         Title = "🚨 ¡SPOTTER REQUERIDO!",
                         Description = $"{nombre} necesita ayuda en {zona}. Esperará {min} min.",
                         // AÑADIR ESTO:
-                        ReturningData = $"/spotter-rescue/{Uri.EscapeDataString(nombre)}/{Uri.EscapeDataString(zona)}/{Uri.EscapeDataString(distintivo)}/{min}"
+                        ReturningData = $"/spotter-rescue?Nombre={Uri.EscapeDataString(nombre)}&Zona={Uri.EscapeDataString(zona)}&Distintivo={Uri.EscapeDataString(distintivo ?? "NA")}&Minutos={min}"
                     };
                     await LocalNotificationCenter.Current.Show(request);
                 }

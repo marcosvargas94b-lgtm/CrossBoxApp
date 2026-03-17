@@ -1,4 +1,4 @@
-﻿@page "/spotter-rescue/{Nombre}/{Zona}/{Distintivo}/{Minutos:int}"
+﻿@page "/spotter-rescue"
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 @using System.Timers
@@ -89,10 +89,10 @@
 </style>
 
 @code {
-    [Parameter] public string Nombre { get; set; }
-    [Parameter] public string Zona { get; set; }
-    [Parameter] public string Distintivo { get; set; }
-    [Parameter] public int Minutos { get; set; }
+    [SupplyParameterFromQuery] public string Nombre { get; set; }
+    [SupplyParameterFromQuery] public string Zona { get; set; }
+    [SupplyParameterFromQuery] public string Distintivo { get; set; }
+    [SupplyParameterFromQuery] public int Minutos { get; set; }
 
     private string EstilosTema = @"
         --theme-primary: #A9A9A9; 

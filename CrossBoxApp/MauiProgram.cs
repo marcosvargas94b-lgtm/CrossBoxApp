@@ -97,7 +97,7 @@ namespace CrossBoxApp
                 string dist = data.ContainsKey("distintivo") && !string.IsNullOrWhiteSpace(data["distintivo"]) ? data["distintivo"] : "NA";
                 string min = data.ContainsKey("minutos") ? data["minutos"] : "2";
 
-                string urlDestino = $"/spotter-rescue/{Uri.EscapeDataString(nombre)}/{Uri.EscapeDataString(zona)}/{Uri.EscapeDataString(dist)}/{min}";
+                string urlDestino = $"/spotter-rescue?Nombre={Uri.EscapeDataString(nombre)}&Zona={Uri.EscapeDataString(zona)}&Distintivo={Uri.EscapeDataString(dist)}&Minutos={min}";
 
                 EnviarRutaABlazor(urlDestino);
             }

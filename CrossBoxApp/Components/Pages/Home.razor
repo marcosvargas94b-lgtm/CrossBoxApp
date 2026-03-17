@@ -1622,14 +1622,21 @@
             Console.WriteLine($"🔥 ¡FIREBASE VIVO! MI TOKEN ES: {miTokenFirebase}");
             Console.WriteLine($"=================================================");
 
-            if (Sesion.Usuario != null && !string.IsNullOrEmpty(miTokenFirebase))
+          if (Sesion.Usuario != null && !string.IsNullOrEmpty(miTokenFirebase))
             {
-            try
-            {
-                var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/guardar-token/{Sesion.Usuario.UsuarioID}";
-                await Http.PostAsJsonAsync(url, new { Token = miTokenFirebase });
-            }
-            catch { /* Ignorar errores de red temporales */ }
+                try
+                {
+                    // Forzamos un objeto tipado porque los anónimos fallan en AOT/iOS
+                    var payloadToken = new TokenDto { Token = miTokenFirebase };
+                    var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/guardar-token/{Sesion.Usuario.UsuarioID}";
+                    
+                    var test = await Http.PostAsJsonAsync(url, payloadToken);
+                    Console.WriteLine($"Token subido: {test.StatusCode}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error subiendo token: {ex.Message}");
+                }
             }
 
          }
@@ -1902,4 +1909,9 @@
     private async Task CargarNotificaciones() { try { misNotificaciones = await Http.GetFromJsonAsync<List<NotificacionDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/notificaciones/{Sesion.Usuario.UsuarioID}"); hayNuevas = misNotificaciones.Any(n => !n.Leido); } catch { } }
     private string GetIcono(string t) => t == "MATCH_MUTUO" ? "fas fa-heart text-danger" : "fas fa-bell";
     public class RespuestaMercadoPago { public string url { get; set; } }
+
+    public class TokenDto 
+    { 
+        public string Token { get; set; } 
+    }
 }
