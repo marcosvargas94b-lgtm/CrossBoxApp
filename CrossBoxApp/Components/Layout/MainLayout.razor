@@ -14,28 +14,31 @@
     {
         Nav.LocationChanged += AlCambiarDePagina;
         
-        // 1. CASO APP ABIERTA O SEGUNDO PLANO: Escuchamos la orden de MAUI
-        MauiProgram.InterceptSpotterAction = (url) =>
+        // 1. CONECTAR DELEGADO PARA APP EN SEGUNDO PLANO
+        MauiProgram.InterceptSpotterAction = async (url) =>
         {
-            // Forzamos la navegación en el hilo principal de Blazor
-            InvokeAsync(() => Nav.NavigateTo(url));
+            await InvokeAsync(() => 
+            {
+                Nav.NavigateTo(url);
+                StateHasChanged();
+            });
         };
+
+        // 2. REVISAR SI VENIMOS DE UN COLD START
+        _ = VerificarRutaPendiente();
     }
 
-    // 2. CASO COLD START (App cerrada por completo): Revisamos si al abrir la app traíamos una ruta pendiente
-    // Lo movemos aquí para asegurar que Blazor ya cargó su enrutador base antes de redirigir
-    protected override void OnAfterRender(bool firstRender)
+    private async Task VerificarRutaPendiente()
     {
-        if (firstRender)
+        // Pequeño delay para asegurar que el router de Blazor esté 100% montado
+        await Task.Delay(200); 
+
+        if (!string.IsNullOrEmpty(MauiProgram.RutaPendienteSpotter))
         {
-            if (!string.IsNullOrEmpty(MauiProgram.RutaPendienteSpotter))
-            {
-                var rutaDestino = MauiProgram.RutaPendienteSpotter;
-                MauiProgram.RutaPendienteSpotter = null; // La limpiamos para que no se repita
-                
-                // Forzamos el hilo UI para la redirección inicial
-                InvokeAsync(() => Nav.NavigateTo(rutaDestino));
-            }
+            var rutaDestino = MauiProgram.RutaPendienteSpotter;
+            MauiProgram.RutaPendienteSpotter = null; // Consumir y limpiar
+            
+            await InvokeAsync(() => Nav.NavigateTo(rutaDestino));
         }
     }
 

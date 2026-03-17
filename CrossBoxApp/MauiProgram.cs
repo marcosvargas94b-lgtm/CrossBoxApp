@@ -2,12 +2,14 @@
 using CrossBoxApp.Models.Services;
 using Microsoft.Extensions.Logging;
 using Plugin.LocalNotification;
+using Plugin.LocalNotification.EventArgs; // Necesario para e.Request
 using Plugin.Maui.Audio;
 using ZXing.Net.Maui.Controls;
 using Microsoft.Maui.LifecycleEvents;
 using Plugin.Firebase.CloudMessaging;
 using Plugin.Firebase.Core;
-using System; // IMPORTANTE PARA EL ACTION
+using System;
+using System.Collections.Generic;
 
 #if IOS
 using Plugin.Firebase.Core.Platforms.iOS;
@@ -19,9 +21,6 @@ namespace CrossBoxApp
 {
     public static class MauiProgram
     {
-        // =======================================================
-        // EL PUENTE MÁGICO BLAZOR <-> MAUI
-        // =======================================================
         public static Action<string> InterceptSpotterAction { get; set; }
         public static string RutaPendienteSpotter { get; set; }
 
@@ -46,7 +45,7 @@ namespace CrossBoxApp
                 events.AddiOS(iOS => iOS.FinishedLaunching((app, launchOptions) => {
                     CrossFirebase.Initialize(); 
                     ConfigurarInterceptorPush(); 
-                    return true; // <--- ¡CRÍTICO! DEBE SER TRUE, SI NO APPLE MATA LA NOTIFICACIÓN
+                    return true;
                 }));
 #elif ANDROID
                 events.AddAndroid(android => android.OnCreate((activity, state) =>
@@ -58,58 +57,68 @@ namespace CrossBoxApp
             });
 
             builder.Services.AddMauiBlazorWebView();
-
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
-            builder.Logging.AddDebug();
+            builder.Services.AddLogging(configure => configure.AddDebug());
 #endif
             builder.Services.AddSingleton<LiveSessionState>();
             builder.Services.AddSingleton<SesionService>();
-            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/"), Timeout = TimeSpan.FromMinutes(3) });
+            builder.Services.AddScoped(sp => new System.Net.Http.HttpClient { BaseAddress = new Uri("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/"), Timeout = TimeSpan.FromMinutes(3) });
             builder.Services.AddSingleton(AudioManager.Current);
 
             return builder.Build();
         }
 
-        // =======================================================
-        // EL CEREBRO DE LAS NOTIFICACIONES (Limpio y Extraído)
-        // =======================================================
-        // =======================================================
-        // EL CEREBRO DE LAS NOTIFICACIONES (Blindado contra congelamientos)
-        // =======================================================
         private static void ConfigurarInterceptorPush()
         {
-            CrossFirebaseCloudMessaging.Current.NotificationTapped += async (sender, e) =>
+            // 1. ESCUCHAR FIREBASE PUSH
+            CrossFirebaseCloudMessaging.Current.NotificationTapped += (sender, e) =>
             {
-                var data = e.Notification.Data;
+                ProcesarDatosPush(e.Notification.Data);
+            };
 
-                // Nos aseguramos de leer la llave aunque llegue con mayúsculas/minúsculas
-                if (data.TryGetValue("action", out var actionValue) && actionValue == "open_spotter")
+            // 2. ESCUCHAR NOTIFICACIONES LOCALES (Timer de Descanso)
+            LocalNotificationCenter.Current.NotificationActionTapped += (NotificationActionEventArgs e) =>
+            {
+                if (e.IsTapped && !string.IsNullOrEmpty(e.Request.ReturningData) && e.Request.ReturningData.StartsWith("/spotter-rescue"))
                 {
-                    string nombre = data.ContainsKey("nombre") ? data["nombre"] : "Un Atleta";
-                    string zona = data.ContainsKey("zona") ? data["zona"] : "El Gym";
-                    string dist = data.ContainsKey("distintivo") && !string.IsNullOrWhiteSpace(data["distintivo"]) ? data["distintivo"] : "NA";
-                    string min = data.ContainsKey("minutos") ? data["minutos"] : "2";
-
-                    string urlDestino = $"/spotter-rescue/{Uri.EscapeDataString(nombre)}/{Uri.EscapeDataString(zona)}/{Uri.EscapeDataString(dist)}/{min}";
-
-                    // ¡EL TRUCO DE ORO! Le damos 200ms a Blazor para que se descongele del background
-                    await System.Threading.Tasks.Task.Delay(200);
-
-                    // Lo mandamos obligatoriamente por el hilo principal de la pantalla
-                    MainThread.BeginInvokeOnMainThread(() =>
-                    {
-                        if (InterceptSpotterAction != null)
-                        {
-                            InterceptSpotterAction.Invoke(urlDestino);
-                        }
-                        else
-                        {
-                            RutaPendienteSpotter = urlDestino;
-                        }
-                    });
+                    EnviarRutaABlazor(e.Request.ReturningData);
                 }
             };
+        }
+
+        // MÉTODO PÚBLICO PARA PROCESAR DICCIONARIOS (Usado por MainActivity también)
+        public static void ProcesarDatosPush(IDictionary<string, string> data)
+        {
+            if (data != null && data.TryGetValue("action", out var actionValue) && actionValue == "open_spotter")
+            {
+                string nombre = data.ContainsKey("nombre") ? data["nombre"] : "Un Atleta";
+                string zona = data.ContainsKey("zona") ? data["zona"] : "El Gym";
+                string dist = data.ContainsKey("distintivo") && !string.IsNullOrWhiteSpace(data["distintivo"]) ? data["distintivo"] : "NA";
+                string min = data.ContainsKey("minutos") ? data["minutos"] : "2";
+
+                string urlDestino = $"/spotter-rescue/{Uri.EscapeDataString(nombre)}/{Uri.EscapeDataString(zona)}/{Uri.EscapeDataString(dist)}/{min}";
+
+                EnviarRutaABlazor(urlDestino);
+            }
+        }
+
+        private static void EnviarRutaABlazor(string urlDestino)
+        {
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                // Respiro crítico para Blazor
+                await System.Threading.Tasks.Task.Delay(300);
+
+                if (InterceptSpotterAction != null)
+                {
+                    InterceptSpotterAction.Invoke(urlDestino);
+                }
+                else
+                {
+                    RutaPendienteSpotter = urlDestino;
+                }
+            });
         }
     }
 }

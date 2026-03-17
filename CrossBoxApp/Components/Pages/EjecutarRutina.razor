@@ -478,7 +478,9 @@
                     {
                         NotificationId = 9999,
                         Title = "🚨 ¡SPOTTER REQUERIDO!",
-                        Description = $"{nombre} necesita ayuda en {zona}. Esperará {min} min."
+                        Description = $"{nombre} necesita ayuda en {zona}. Esperará {min} min.",
+                        // AÑADIR ESTO:
+                        ReturningData = $"/spotter-rescue/{Uri.EscapeDataString(nombre)}/{Uri.EscapeDataString(zona)}/{Uri.EscapeDataString(distintivo)}/{min}"
                     };
                     await LocalNotificationCenter.Current.Show(request);
                 }

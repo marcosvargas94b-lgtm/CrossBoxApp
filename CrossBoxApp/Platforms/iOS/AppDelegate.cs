@@ -1,6 +1,7 @@
 ﻿using Foundation;
 using UIKit;
-using AVFoundation; // <--- AGREGA ESTO IMPORTANTE
+using AVFoundation;
+using Plugin.Firebase.CloudMessaging; // NECESARIO
 
 namespace CrossBoxApp
 {
@@ -15,24 +16,30 @@ namespace CrossBoxApp
             try
             {
                 var session = AVAudioSession.SharedInstance();
-
-                // 1. Configuramos la sesión ANTES de que arranque la UI
-                // Category: Playback (para sonar en silencio)
-                // Options: MixWithOthers (CLAVE: No pausar Spotify)
                 AVAudioSession.SharedInstance().SetCategory(AVAudioSessionCategory.Ambient);
                 AVAudioSession.SharedInstance().SetActive(true);
                 session.SetCategory(AVAudioSessionCategory.Playback, AVAudioSessionCategoryOptions.MixWithOthers);
-
-                // 2. Activamos la sesión
                 session.SetActive(true);
             }
             catch (System.Exception ex)
             {
                 System.Console.WriteLine($"Error Audio AppDelegate: {ex.Message}");
             }
-            // ----------------------------------
 
             return base.FinishedLaunching(application, launchOptions);
+        }
+
+        // --- ESTOS MÉTODOS SON OBLIGATORIOS PARA QUE IOS DESPIERTE LA APP ---
+        [Export("application:didRegisterForRemoteNotificationsWithDeviceToken:")]
+        public void RegisteredForRemoteNotifications(UIApplication application, NSData deviceToken)
+        {
+            FirebaseCloudMessagingImplementation.RegisteredForRemoteNotifications(deviceToken);
+        }
+
+        [Export("application:didFailToRegisterForRemoteNotificationsWithError:")]
+        public void FailedToRegisterForRemoteNotifications(UIApplication application, NSError error)
+        {
+            FirebaseCloudMessagingImplementation.FailedToRegisterForRemoteNotifications(error);
         }
     }
 }
