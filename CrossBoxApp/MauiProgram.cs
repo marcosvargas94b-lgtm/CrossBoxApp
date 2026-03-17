@@ -43,14 +43,14 @@ namespace CrossBoxApp
             {
 #if IOS
                 events.AddiOS(iOS => iOS.FinishedLaunching((app, launchOptions) => {
-                    CrossFirebase.Initialize(); 
+                    CrossFirebase.Initialize(); // <--- Así de limpio
                     ConfigurarInterceptorPush(); 
                     return true;
                 }));
 #elif ANDROID
                 events.AddAndroid(android => android.OnCreate((activity, state) =>
                 {
-                    CrossFirebase.Initialize(activity, () => activity);
+                    CrossFirebase.Initialize(activity, () => activity); // <--- Así de limpio
                     ConfigurarInterceptorPush();
                 }));
 #endif

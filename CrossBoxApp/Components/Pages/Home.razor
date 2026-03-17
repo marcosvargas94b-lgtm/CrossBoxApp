@@ -1607,44 +1607,46 @@
 
         await CargarRecuperacion();
 
-        try
+       try
         {
-         if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
-         {
-            // 1. Pedimos permiso al sistema para notificaciones push
-            await CrossFirebaseCloudMessaging.Current.CheckIfValidAsync();
-
-            // 2. Obtenemos el Token único de este celular
-            var miTokenFirebase = await CrossFirebaseCloudMessaging.Current.GetTokenAsync();
-            
-            // 3. Lo imprimimos en consola para verificar que Google nos respondió
-            Console.WriteLine($"=================================================");
-            Console.WriteLine($"🔥 ¡FIREBASE VIVO! MI TOKEN ES: {miTokenFirebase}");
-            Console.WriteLine($"=================================================");
-
-          if (Sesion.Usuario != null && !string.IsNullOrEmpty(miTokenFirebase))
+            if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
             {
-                try
+                // 1. Pedimos permiso OFICIAL al iPhone/Android usando LocalNotification (esto despierta a Apple APNs)
+                if (await Plugin.LocalNotification.LocalNotificationCenter.Current.AreNotificationsEnabled() == false)
                 {
-                    // Forzamos un objeto tipado porque los anónimos fallan en AOT/iOS
-                    var payloadToken = new TokenDto { Token = miTokenFirebase };
-                    var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/guardar-token/{Sesion.Usuario.UsuarioID}";
-                    
-                    var test = await Http.PostAsJsonAsync(url, payloadToken);
-                    Console.WriteLine($"Token subido: {test.StatusCode}");
+                    await Plugin.LocalNotification.LocalNotificationCenter.Current.RequestNotificationPermission();
                 }
-                catch (Exception ex)
+
+                // 2. Validamos Firebase
+                await CrossFirebaseCloudMessaging.Current.CheckIfValidAsync();
+
+                // 3. Obtenemos el Token único y validado de este celular
+                var miTokenFirebase = await CrossFirebaseCloudMessaging.Current.GetTokenAsync();
+                
+                Console.WriteLine($"=================================================");
+                Console.WriteLine($"🔥 ¡FIREBASE VIVO! MI TOKEN ES: {miTokenFirebase}");
+                Console.WriteLine($"=================================================");
+
+                if (Sesion.Usuario != null && !string.IsNullOrEmpty(miTokenFirebase))
                 {
-                    Console.WriteLine($"Error subiendo token: {ex.Message}");
+                    try
+                    {
+                        var payloadToken = new TokenDto { Token = miTokenFirebase };
+                        var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/guardar-token/{Sesion.Usuario.UsuarioID}";
+                        
+                        await Http.PostAsJsonAsync(url, payloadToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error subiendo token: {ex.Message}");
+                    }
                 }
             }
-
-         }
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error de Firebase: {ex.Message}");
-    }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error de Firebase: {ex.Message}");
+        }
 
         cargandoConfiguracion = false;
     }
