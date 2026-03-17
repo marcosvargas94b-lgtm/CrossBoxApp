@@ -1,7 +1,6 @@
 ﻿using Foundation;
 using UIKit;
 using AVFoundation;
-using Plugin.Firebase.CloudMessaging; // NECESARIO
 
 namespace CrossBoxApp
 {
@@ -27,19 +26,6 @@ namespace CrossBoxApp
             }
 
             return base.FinishedLaunching(application, launchOptions);
-        }
-
-        // --- ESTOS MÉTODOS SON OBLIGATORIOS PARA QUE IOS DESPIERTE LA APP ---
-        [Export("application:didRegisterForRemoteNotificationsWithDeviceToken:")]
-        public void RegisteredForRemoteNotifications(UIApplication application, NSData deviceToken)
-        {
-            FirebaseCloudMessagingImplementation.RegisteredForRemoteNotifications(deviceToken);
-        }
-
-        [Export("application:didFailToRegisterForRemoteNotificationsWithError:")]
-        public void FailedToRegisterForRemoteNotifications(UIApplication application, NSError error)
-        {
-            FirebaseCloudMessagingImplementation.FailedToRegisterForRemoteNotifications(error);
         }
     }
 }
