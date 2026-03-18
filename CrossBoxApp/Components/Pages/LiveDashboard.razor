@@ -15,16 +15,29 @@
 @* ENVOLVEMOS TODA LA PÁGINA EN EL TEMA *@
 <div style="@EstilosTema">
 
-    @* --- AVISO DE GIRO PARA MÓVIL --- *@
-    <div class="rotate-warning">
-        <div class="phone-animation">
-            <i class="fas fa-mobile-alt"></i>
+    @* --- AVISO DE GIRO DINÁMICO --- *@
+    @if (!mostrarModalWodEdicion)
+    {
+        <div class="rotate-warning landscape-required">
+            <div class="phone-animation">
+                <i class="fas fa-mobile-alt"></i>
+            </div>
+            <h3>MODO DASHBOARD</h3>
+            <p>Para controlar la clase, gira tu teléfono en <strong>horizontal</strong>.</p>
         </div>
-        <h3>MODO DASHBOARD</h3>
-        <p>Para controlar la clase, gira tu teléfono en horizontal.</p>
-    </div>
+    }
+    else
+    {
+        <div class="rotate-warning portrait-required">
+            <div class="phone-animation-vertical">
+                <i class="fas fa-mobile-alt"></i>
+            </div>
+            <h3>MODO EDICIÓN</h3>
+            <p>Para editar cómodamente, gira tu teléfono en <strong>vertical</strong>.</p>
+        </div>
+    }
 
-    <div class="dashboard-container @(wodExpandido ? "wod-wide" : "")">
+    <div class="dashboard-container @(wodExpandido ? "wod-wide" : "") @(mostrarModalWodEdicion ? "editing-mode" : "")">
 
         @* --- PANEL 1: TIMER (CON OPCIÓN EMOM AGREGADA) --- *@
         <div class="panel timer-panel @(verTimer ? "" : "collapsed")">
@@ -507,7 +520,7 @@
     @if (mostrarModalWodEdicion)
     {
         <div class="modal-overlay overlay-wod">
-            <div class="modal-content custom-modal modal-wod" style="max-width: 600px; width: 100%;">
+            <div class="modal-content custom-modal modal-wod editing-active" style="max-width: 600px; width: 100%;">
 
                 <div class="modal-header">
                     <h5 style="margin:0; color:var(--theme-primary); font-family:'Oswald'">
@@ -643,11 +656,26 @@
     .btn-action-finish { flex: 3; background: #dc3545; border: none; color: white; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; cursor: pointer; padding: 15px; }
     .btn-action-finish:hover { background: #bd2130; }
 
-    /* ROTACIÓN */
+   /* ROTACIÓN */
     .rotate-warning { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: var(--theme-bg); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; color: var(--theme-primary); text-align: center; padding: 40px; }
+    
     .phone-animation { font-size: 4rem; margin-bottom: 20px; animation: rotarCelular 2s infinite ease-in-out; }
-    @@keyframes rotarCelular { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
-    @@media (orientation: portrait) { .rotate-warning { display: flex; } .dashboard-container { display: none !important; } }
+    .phone-animation-vertical { font-size: 4rem; margin-bottom: 20px; animation: rotarCelularVertical 2s infinite ease-in-out; }
+    
+    ´@@keyframes rotarCelular { 0% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } 100% { transform: rotate(0deg); } }
+    ´@@keyframes rotarCelularVertical { 0% { transform: rotate(-90deg); } 50% { transform: rotate(0deg); } 100% { transform: rotate(-90deg); } }
+
+    /* ESTADO NORMAL: Pide horizontal, oculta si está vertical */
+    @@media (orientation: portrait) { 
+        .landscape-required { display: flex; } 
+        .dashboard-container:not(.editing-mode) { display: none !important; } 
+    }
+
+    /* ESTADO EDICIÓN: Pide vertical, oculta el modal si está horizontal */
+    @@media (orientation: landscape) { 
+        .portrait-required { display: flex; } 
+        .modal-wod.editing-active { display: none !important; } 
+    }
 
     /* DASHBOARD */
     .dashboard-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: var(--theme-bg); color: var(--theme-text); display: flex; flex-direction: row; padding: 15px; gap: 15px; box-sizing: border-box; overflow: hidden; }
