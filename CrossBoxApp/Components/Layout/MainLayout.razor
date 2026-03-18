@@ -1,35 +1,139 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@using Microsoft.AspNetCore.SignalR.Client
+@using Plugin.LocalNotification
+@using Microsoft.Maui.Devices
 @implements IDisposable
 
-<div style="width: 100%; min-height: 100vh; margin: 0; padding: 0;">
+<div style="width: 100%; min-height: 100vh; margin: 0; padding: 0; position: relative;">
+    
+    @* ======================================================= *@
+    @* BANNER GLOBAL DE EMERGENCIA (Aparece sobre cualquier vista) *@
+    @* ======================================================= *@
+    @if (alertaRecibida)
+    {
+        <div class="spotter-alert-banner slide-in-down">
+            <div class="d-flex align-items-center">
+                <div class="alert-icon pulse-animation"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="alert-text">@mensajeAlertaExterna</div>
+            </div>
+            <div class="alert-actions mt-3">
+                <button class="btn-ignorar" @onclick="CerrarAlertaRecibida">CERRAR</button>
+                <button class="btn-voy" @onclick="IrAlRescate"><i class="fas fa-running me-1"></i> ¡IR AL RESCATE!</button>
+            </div>
+        </div>
+    }
+
     <main style="margin: 0; padding: 0;">
         @Body
     </main>
 </div>
 
+<style>
+    /* Estilos del Banner Global para que flote sobre toda la app */
+    .spotter-alert-banner { position: fixed; top: 60px; left: 15px; right: 15px; background: #FF3B30; color: white; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(255, 59, 48, 0.5); border: 2px solid #ff736b; z-index: 9999; }
+    .alert-icon { font-size: 1.8rem; margin-right: 15px; background: white; color: #FF3B30; width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; flex-shrink: 0;}
+    .alert-text { font-family: 'Oswald'; font-size: 1.1rem; line-height: 1.2; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+    .alert-actions { display: flex; gap: 10px; }
+    .btn-ignorar { flex: 1; background: rgba(0,0,0,0.3); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; }
+    .btn-voy { flex: 2; background: white; color: #FF3B30; border: none; padding: 10px; border-radius: 8px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .btn-voy:active { transform: scale(0.95); }
+    
+    .slide-in-down { animation: slideInDown 0.4s ease-out backwards; }
+    .pulse-animation { animation: pulseRed 2s infinite; }
+    @@keyframes slideInDown { from { opacity: 0; transform: translateY(-50px); } to { opacity: 1; transform: translateY(0); } }
+    @@keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(255, 59, 48, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); } }
+</style>
+
 @code {
-    protected override void OnInitialized()
+    private bool alertaRecibida = false;
+    private string mensajeAlertaExterna = "";
+    private string urlDestinoPendiente = "";
+    private HubConnection hubConnection;
+
+    protected override async Task OnInitializedAsync()
     {
         Nav.LocationChanged += AlCambiarDePagina;
 
-        MauiProgram.InterceptSpotterAction = async (url) =>
-          {
-              // VITAL: Esperamos 1.2 segundos para que iOS termine de "descongelar"
-              await Task.Delay(1200);
+        // ---------------------------------------------------------
+        // 1. ESCUCHAR FIREBASE PUSH (Cuando la app estaba minimizada)
+        // ---------------------------------------------------------
+        MauiProgram.InterceptSpotterAction = (url) =>
+        {
+            // Simplemente levantamos el Banner en lugar de forzar la redirección
+            urlDestinoPendiente = url;
+            mensajeAlertaExterna = "¡Alerta de Spotter! Alguien solicitó ayuda mientras estabas fuera.";
+            alertaRecibida = true;
+            InvokeAsync(StateHasChanged);
+        };
 
-              // ¡AQUÍ ESTÁ EL SECRETO! Usar Dispatcher.Dispatch en lugar de InvokeAsync
-              Application.Current.Dispatcher.Dispatch(() =>
-              {
-                  // Ahora sí, obligamos a Blazor a cambiar la pantalla
-                  Nav.NavigateTo(url);
-                  StateHasChanged();
-              });
-          };
+        // ---------------------------------------------------------
+        // 2. CONECTAR SIGNALR (Radar Global para app abierta)
+        // ---------------------------------------------------------
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/livehub")
+            .WithAutomaticReconnect()
+            .Build();
 
-        // 2. REVISAR SI VENIMOS DE UN COLD START
+        hubConnection.On<string, string, string, int, string>("RecibirAlertaSpotter", async (nombre, zona, dist, min, ts) =>
+        {
+            urlDestinoPendiente = $"/spotter-rescue?Nombre={Uri.EscapeDataString(nombre)}&Zona={Uri.EscapeDataString(zona)}&Distintivo={Uri.EscapeDataString(dist ?? "NA")}&Minutos={min}&Ts={ts}";
+            mensajeAlertaExterna = $"¡{nombre} necesita ayuda en {zona.ToUpper()}!";
+            alertaRecibida = true;
+            await InvokeAsync(StateHasChanged);
+
+            try { await JS.InvokeVoidAsync("playTimerBeep"); } catch { }
+
+            // Notificación nativa si está en la app pero en otra pestaña
+            try
+            {
+                if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
+                {
+                    Vibration.Default.Vibrate(TimeSpan.FromSeconds(2));
+                    var request = new NotificationRequest
+                    {
+                        NotificationId = 9999,
+                        Title = "🚨 ¡SPOTTER REQUERIDO!",
+                        Description = $"{nombre} necesita ayuda en {zona}.",
+                        ReturningData = urlDestinoPendiente
+                    };
+                    await LocalNotificationCenter.Current.Show(request);
+                }
+            }
+            catch { }
+        });
+
+        try { await hubConnection.StartAsync(); } catch { }
+
+        // Pedir permisos de notificación al arrancar la app
+        try
+        {
+            if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
+            {
+                if (await LocalNotificationCenter.Current.AreNotificationsEnabled() == false)
+                {
+                    await LocalNotificationCenter.Current.RequestNotificationPermission();
+                }
+            }
+        }
+        catch { }
+
+        // ---------------------------------------------------------
+        // 3. REVISAR COLD START (App 100% Cerrada)
+        // ---------------------------------------------------------
         _ = VerificarRutaPendiente();
+    }
+
+    private void IrAlRescate()
+    {
+        alertaRecibida = false;
+        Nav.NavigateTo(urlDestinoPendiente);
+    }
+
+    private void CerrarAlertaRecibida()
+    {
+        alertaRecibida = false;
     }
 
     private async Task VerificarRutaPendiente()
@@ -39,9 +143,8 @@
         if (!string.IsNullOrEmpty(MauiProgram.RutaPendienteSpotter))
         {
             var rutaDestino = MauiProgram.RutaPendienteSpotter;
-            MauiProgram.RutaPendienteSpotter = null; // Consumir y limpiar
-
-            // Aquí sí usamos InvokeAsync porque Blazor ya está corriendo en pantalla
+            MauiProgram.RutaPendienteSpotter = null; 
+            
             await InvokeAsync(() => Nav.NavigateTo(rutaDestino));
         }
     }
@@ -54,5 +157,6 @@
     public void Dispose()
     {
         Nav.LocationChanged -= AlCambiarDePagina;
+        _ = hubConnection?.DisposeAsync();
     }
 }

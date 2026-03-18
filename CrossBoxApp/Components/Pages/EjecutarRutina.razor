@@ -8,8 +8,8 @@
 @inject HttpClient Http
 @inject SesionService Sesion
 @inject IJSRuntime JS
-<div style="@EstilosTema">
 
+<div style="@EstilosTema">
 <div class="main-layout" >
     @* NAVBAR WORKOUT MODE *@
     <div class="navbar-container">
@@ -19,21 +19,6 @@
         <div class="nav-title text-theme-primary"><i class="fas fa-fire"></i> WORKOUT MODE</div>
         <div class="nav-right"></div>
     </div>
-
-    @* BANNER DE EMERGENCIA (Aparece cuando llega un SignalR) *@
-    @if (alertaRecibida)
-    {
-        <div class="spotter-alert-banner slide-in">
-            <div class="d-flex align-items-center">
-                <div class="alert-icon pulse-animation"><i class="fas fa-exclamation-triangle"></i></div>
-                <div class="alert-text">@mensajeAlertaExterna</div>
-            </div>
-            <div class="alert-actions mt-3">
-                <button class="btn-ignorar" @onclick="CerrarAlertaRecibida">NO PUEDO</button>
-              <button class="btn-voy" @onclick="IrAlRescate"><i class="fas fa-running me-1"></i> ¡VOY EN CAMINO!</button>
-            </div>
-        </div>
-    }
 
     <div class="scrollable-content">
         @if (cargando)
@@ -51,8 +36,6 @@
                 @foreach (var bloque in rutina.Bloques)
                 {
                     <div class="bloque-card slide-in @(bloque.Completado ? "bloque-completado" : "")">
-                        
-                        @* HEADER DEL BLOQUE CON EL BOTÓN CHECK A LA DERECHA *@
                         <div class="bloque-header">
                             <div class="b-info">
                                 <span class="b-tipo">
@@ -105,17 +88,15 @@
         }
     </div>
 
-    @* BOTÓN SPOTTER (Color Universal Rojo de Emergencia) *@
+    @* BOTÓN SPOTTER *@
     <button class="btn-spotter pulse-animation" @onclick="AbrirModalSpotter">
         <i class="fas fa-hands-helping"></i>
         <span>SPOTTER</span>
     </button>
 
-
-    @* TIMER FLOTANTE MANUAL (Anti-Desbordes) *@
+    @* TIMER FLOTANTE MANUAL *@
     <div class="floating-timer-container slide-up">
         <div class="timer-controls">
-
             <div class="timer-input-group">
                 <button class="btn-timer-adj" @onclick="() => AjustarTiempo(-10)"><i class="fas fa-minus"></i></button>
 
@@ -151,9 +132,7 @@
     </div>
 </div>
 
-@* ========================================== *@
-@* MODAL: SOLICITAR SPOTTER                   *@
-@* ========================================== *@
+@* MODAL: SOLICITAR SPOTTER *@
 @if (mostrarModalSpotter)
 {
     <div class="modal-overlay fade-in" @onclick="CerrarModalSpotter">
@@ -208,8 +187,9 @@
     </div>
 }
 </div>
+
 <style>
-    /* LAYOUT PRINCIPAL */
+    /* CSS intacto, se mantienen tus estilos tal cual los enviaste */
     .main-layout { position: fixed; top:0; left:0; width:100vw; height:100vh; background: var(--theme-bg); display:flex; flex-direction:column; z-index:1; }
     .navbar-container { flex-shrink:0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom:10px; padding-left:15px; padding-right:15px; background: var(--theme-bg); border-bottom:1px solid var(--theme-primary); display:flex; justify-content:space-between; align-items:center; z-index:100; font-family:'Oswald'; color: var(--theme-text); min-height:60px; }
     .nav-left { color: var(--theme-text-muted); font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:8px; font-size:0.9rem; }
@@ -218,26 +198,20 @@
     .text-theme-muted { color: var(--theme-text-muted); }
     
     .scrollable-content { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 220px; background: radial-gradient(circle at top, var(--theme-card) 0%, var(--theme-bg) 100%); -webkit-overflow-scrolling: touch; }
-
     .workout-header { text-align: center; margin-bottom: 10px; }
     .fecha-title { font-family: 'Oswald'; color: var(--theme-text); margin: 0; font-size: 1.8rem; }
-
-    /* BLOQUES Y EJERCICIOS */
     .bloques-list { display: flex; flex-direction: column; gap: 15px; }
     .bloque-card { background: var(--theme-card); border: 1px solid var(--theme-border); border-radius: 15px; overflow: hidden; transition: 0.3s; border-left: 4px solid var(--theme-primary); }
     .bloque-completado { border-left-color: #28a745; opacity: 0.6; }
-    
     .bloque-header { display: flex; justify-content: space-between; align-items: center; background: var(--theme-bg); padding: 12px 15px; border-bottom: 1px solid var(--theme-border); }
     .b-info { display: flex; flex-direction: column; flex: 1; }
     .b-tipo { color: var(--theme-primary); font-family: 'Oswald'; font-weight: bold; letter-spacing: 1px; font-size: 0.9rem; line-height: 1; }
     .b-series { color: var(--theme-text-muted); font-size: 0.75rem; font-weight: bold; margin-top: 4px; }
     .bloque-completado .b-tipo { color: #28a745; }
-
     .b-action { flex-shrink: 0; display: flex; align-items: center; justify-content: flex-end; padding-left: 10px; }
     .btn-check-pill { display: flex; align-items: center; gap: 6px; background: transparent; border: 1px solid var(--theme-text-muted); color: var(--theme-text-muted); padding: 6px 14px; border-radius: 50px; font-family: 'Oswald'; font-size: 0.85rem; cursor: pointer; transition: 0.3s; white-space: nowrap; }
     .btn-check-pill.active { background: #28a745; border-color: #28a745; color: white; box-shadow: 0 0 15px rgba(40,167,69,0.3); }
     .check-text { font-weight: bold; letter-spacing: 1px; margin-top: 1px; }
-
     .ejercicios-list { padding: 10px 15px; display: flex; flex-direction: column; gap: 10px; }
     .ej-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--theme-border); padding-bottom: 8px; }
     .ej-row:last-child { border-bottom: none; padding-bottom: 0; }
@@ -246,86 +220,28 @@
     .ej-musculo { color: var(--theme-text-muted); font-size: 0.7rem; text-transform: uppercase; font-weight: bold; }
     .ej-reps { background: var(--theme-bg); border: 1px solid var(--theme-primary); color: var(--theme-primary); padding: 5px 10px; border-radius: 8px; font-family: 'Oswald'; font-size: 1.1rem; font-weight: bold; display: flex; flex-direction: column; align-items: center; line-height: 1; }
     .ej-reps span { font-size: 1.2rem; }
-
-    /* BOTONES FINALES */
     .btn-terminar { background: #28a745; color: white; border: none; padding: 18px; border-radius: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; box-shadow: 0 5px 15px rgba(40,167,69,0.3); transition: 0.2s; }
     .btn-terminar:active { transform: scale(0.98); }
     .btn-pausar { background: var(--theme-bg); color: var(--theme-primary); border: 1px solid var(--theme-primary); padding: 18px; border-radius: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; transition: 0.2s; }
     .btn-pausar:active { transform: scale(0.98); background: var(--theme-card); }
-
-    /* SPOTTER BUTTON (Más arriba y Z-Index 2000) */
     .btn-spotter { position: fixed; bottom: 120px; right: 20px; background: #FF3B30; color: white; border: none; padding: 12px 20px; border-radius: 50px; font-family: 'Oswald'; font-weight: bold; letter-spacing: 1px; z-index: 2000; box-shadow: 0 5px 15px rgba(255, 59, 48, 0.4); display: flex; align-items: center; gap: 8px; font-size: 1rem; cursor: pointer; pointer-events: auto; }
     .pulse-animation { animation: pulseRed 2s infinite; }
     @@keyframes pulseRed { 0% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(255, 59, 48, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); } }
-
-    /* ======================================================= */
-    /* TIMER FLOTANTE - ARREGLO VISUAL ANTI-DESBORDES          */
-    /* ======================================================= */
-    .floating-timer-container { 
-        position: fixed; 
-        bottom: 0; left: 0; right: 0; /* Usa right:0 en vez de width:100vw para no desbordar */
-        background: var(--theme-card); 
-        border-top: 2px solid var(--theme-border); 
-        padding: 15px 20px; /* (Arriba, Derecha, Abajo, Izquierda) */
-        z-index: 1000; 
-        box-shadow: 0 -10px 30px rgba(0,0,0,0.9); 
-        box-sizing: border-box; /* Obliga al padding a quedarse adentro */
-        width: 100%;
-    }
-    
-    .timer-controls {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8px;
-        width: 100%;
-        box-sizing: border-box;
-    }
-    
-    .timer-input-group { 
-        flex: 1; display: flex; align-items: center; justify-content: space-between; 
-        background: var(--theme-bg); 
-        padding: 5px 8px; /* Margen interno para los botones +/- */
-        border-radius: 25px; border: 1px solid var(--theme-border); 
-        min-width: 0;
-    }
-    
-    /* BOTONES MÁS Y MENOS */
-    .btn-timer-adj { 
-        width: 40px; height: 40px; 
-        border-radius: 50%; background: var(--theme-card); color: var(--theme-text); border: none; 
-        font-size: .9rem; display: flex; justify-content: center; align-items: center; flex-shrink: 0;
-    }
-    
-    /* NUEVO CONTENEDOR CENTRAL: Pone la leyenda arriba de los números */
+    .floating-timer-container { position: fixed; bottom: 0; left: 0; right: 0; background: var(--theme-card); border-top: 2px solid var(--theme-border); padding: 15px 20px; z-index: 1000; box-shadow: 0 -10px 30px rgba(0,0,0,0.9); box-sizing: border-box; width: 100%; }
+    .timer-controls { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; }
+    .timer-input-group { flex: 1; display: flex; align-items: center; justify-content: space-between; background: var(--theme-bg); padding: 5px 8px; border-radius: 25px; border: 1px solid var(--theme-border); min-width: 0; }
+    .btn-timer-adj { width: 40px; height: 40px; border-radius: 50%; background: var(--theme-card); color: var(--theme-text); border: none; font-size: .9rem; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
     .timer-display-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; }
     .timer-legend-mini { color: var(--theme-text-muted); font-size: 0.65rem; font-weight: bold; letter-spacing: 1px; margin-bottom: -2px; }
     .timer-display { display: flex; align-items: baseline; justify-content: center; gap: 5px; }
-    
-    /* CAJA DEL NÚMERO */
-    .input-segs { 
-        width: 40px; /* Si necesitas que el número sea más ancho, súbele aquí */
-        background: transparent; border: none; color: var(--theme-text); 
-        font-family: 'Oswald'; font-size: 2rem; /* Tamaño del número */
-        font-weight: bold; text-align: center; outline: none; padding: 0; 
-    }
+    .input-segs { width: 40px; background: transparent; border: none; color: var(--theme-text); font-family: 'Oswald'; font-size: 2rem; font-weight: bold; text-align: center; outline: none; padding: 0; }
     .segs-label { color: var(--theme-text-muted); font-size: 0.85rem; font-weight: bold; }
     .time-text { font-family: 'Oswald'; font-size: 2rem; font-weight: bold; letter-spacing: 2px; line-height: 1; }
-
-    /* BOTÓN PLAY/STOP */
     .timer-action { flex-shrink: 0; }
-    .btn-play-stop { 
-        width: 50px; height: 50px; 
-        border-radius: 50%; border: none; display: flex; justify-content: center; align-items: center; 
-        font-size: 1.6rem; color: var(--theme-bg); transition: 0.2s; 
-    }
+    .btn-play-stop { width: 50px; height: 50px; border-radius: 50%; border: none; display: flex; justify-content: center; align-items: center; font-size: 1.6rem; color: var(--theme-bg); transition: 0.2s; }
     .btn-play-stop.play { background: var(--theme-primary); box-shadow: 0 0 15px rgba(0, 0, 0, 0.4); }
     .btn-play-stop.stop { background: #ff4d4d; color: white; box-shadow: 0 0 15px rgba(255, 77, 77, 0.4); }
     .btn-play-stop:active { transform: scale(0.9); }
-
-    /* ======================================================= */
-    /* MODAL SPOTTER */
-    /* ======================================================= */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 5000; display: flex; justify-content: center; align-items: flex-end; }
     .custom-modal { background: var(--theme-card); width: 100%; border-top-left-radius: 25px; border-top-right-radius: 25px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -10px 40px rgba(0,0,0,0.9); }
     .modal-spotter { height: auto !important; max-height: 90vh; border-top: 4px solid #FF3B30; padding-bottom: 20px;}
@@ -334,27 +250,14 @@
     .modal-body { padding: 0 20px; }
     .form-group label { color: var(--theme-text-muted); font-size: 0.75rem; font-weight: bold; margin-bottom: 5px; display: block; }
     .custom-input { width: 100%; background: var(--theme-bg); border: 1px solid var(--theme-border); color: var(--theme-text); padding: 12px; border-radius: 8px; font-size: 1rem; outline: none; }
-    
     .chips-container { display: flex; flex-wrap: wrap; gap: 8px; }
     .chip { background: var(--theme-bg); border: 1px solid var(--theme-border); color: var(--theme-text-muted); padding: 8px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
     .chip.active { background: rgba(255, 59, 48, 0.2); border-color: #FF3B30; color: #FF3B30; }
-    
     .timer-selector { display: flex; gap: 10px; }
     .btn-time-chip { flex: 1; background: var(--theme-bg); border: 1px solid var(--theme-border); color: var(--theme-text); padding: 12px; border-radius: 10px; font-family: 'Oswald'; font-size: 1.1rem; transition: 0.2s; }
     .btn-time-chip.active { background: var(--theme-primary); color: var(--theme-bg); border-color: var(--theme-primary); box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }
-
     .btn-lanzar-alerta { background: #FF3B30; color: white; border: none; padding: 18px; border-radius: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.2rem; letter-spacing: 1px; box-shadow: 0 5px 15px rgba(255, 59, 48, 0.4); margin-top: 10px; }
     .btn-lanzar-alerta:disabled { opacity: 0.5; background: #555; box-shadow: none; }
-
-    /* BANNER ALERTA RECIBIDA */
-    .spotter-alert-banner { background: #FF3B30; color: white; margin: 15px; padding: 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(255, 59, 48, 0.5); border: 2px solid #ff736b; z-index: 500; position: relative; }
-    .alert-icon { font-size: 1.8rem; margin-right: 15px; background: white; color: #FF3B30; width: 40px; height: 40px; border-radius: 50%; display: flex; justify-content: center; align-items: center; flex-shrink: 0;}
-    .alert-text { font-family: 'Oswald'; font-size: 1.1rem; line-height: 1.2; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
-    .alert-actions { display: flex; gap: 10px; }
-    .btn-ignorar { flex: 1; background: rgba(0,0,0,0.3); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; }
-    .btn-voy { flex: 2; background: white; color: #FF3B30; border: none; padding: 10px; border-radius: 8px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-    .btn-voy:active { transform: scale(0.95); }
-
     .slide-in { animation: slideIn 0.4s ease-out backwards; }
     .slide-up { animation: slideUp 0.4s ease-out backwards; }
     @@keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
@@ -362,7 +265,6 @@
 </style>
 
 @code {
-    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
     private string EstilosTema = @"
         --theme-primary: #A9A9A9; 
         --theme-secondary: #808080;
@@ -378,11 +280,6 @@
     private bool cargando = true;
     private bool guardando = false;
     private RutinaDiaDto rutina;
-    private string alertaInNombre = "";
-    private string alertaInZona = "";
-    private string alertaInDistintivo = "";
-    private int alertaInMin = 2;
-
 
     // --- VARIABLES DEL TIMER ---
     private int segundosDescansoDefecto = 90;
@@ -402,14 +299,10 @@
     private string zonaSpotter = "";
     private string distintivoSpotter = "";
     private int minutosEspera = 2;
-
-    private HubConnection hubConnection;
-    private bool alertaRecibida = false;
-    private string mensajeAlertaExterna = "";
+    private HubConnection hubConnectionSender;
 
     protected override async Task OnInitializedAsync()
     {
-        // LEER EL CACHÉ LOCAL AL INSTANTE
         try 
         {
             var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
@@ -423,23 +316,8 @@
 
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
         await CargarRutina();
-
-        // 1. Pedir permisos de notificación al sistema (Solo en móviles)
-        try
-        {
-            if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
-            {
-                // Primero verificamos si ya nos dio permiso antes
-                if (await LocalNotificationCenter.Current.AreNotificationsEnabled() == false)
-                {
-                    // Si no tiene permiso, se lo pedimos (Nota: NO lleva la palabra Async al final)
-                    await LocalNotificationCenter.Current.RequestNotificationPermission();
-                }
-            }
-        }
-        catch { }
-       
-        // 2. Avisar a la BD que entramos al gym (Estado 2)
+        
+        // Avisar a la BD que entramos al gym
         try
         {
             string url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/iniciar-dia/{RutinaDiaId}";
@@ -447,56 +325,20 @@
         }
         catch { }
 
-        // 3. CONECTAR SIGNALR PARA RECIBIR ALERTAS EN TIEMPO REAL
-        hubConnection = new HubConnectionBuilder()
+        // Mantenemos una conexión local SOLO para mandar tu petición de ayuda
+        hubConnectionSender = new HubConnectionBuilder()
             .WithUrl("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/livehub")
             .WithAutomaticReconnect()
             .Build();
 
-        hubConnection.On<string, string, string, int, string>("RecibirAlertaSpotter", async (nombre, zona, distintivo, min, ts) =>
-        {
-
-            alertaInNombre = nombre;
-            alertaInZona = zona;
-            alertaInDistintivo = string.IsNullOrWhiteSpace(distintivo) ? "NA" : distintivo;
-            alertaInMin = min;
-            mensajeAlertaExterna = $"¡{nombre} necesita ayuda en {zona.ToUpper()}! Distintivo: {distintivo}. ¿Puedes ir?";
-            alertaRecibida = true;
-            await InvokeAsync(StateHasChanged);
-
-            // A. Hacer sonar el Beep (App abierta)
-            try { await JS.InvokeVoidAsync("playTimerBeep"); } catch { }
-
-            // B. Notificación nativa y Vibración (Solo móviles)
-            try
-            {
-                if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
-                {
-                    Vibration.Default.Vibrate(TimeSpan.FromSeconds(2));
-
-                    var request = new NotificationRequest
-                    {
-                        NotificationId = 9999,
-                        Title = "🚨 ¡SPOTTER REQUERIDO!",
-                        Description = $"{nombre} necesita ayuda en {zona}. Esperará {min} min.",
-
-                        // 2. ¡LA MAGIA DEL TIEMPO! Le pegamos el &Ts={ts} al final de la ruta
-                        ReturningData = $"/spotter-rescue?Nombre={Uri.EscapeDataString(nombre)}&Zona={Uri.EscapeDataString(zona)}&Distintivo={Uri.EscapeDataString(distintivo ?? "NA")}&Minutos={min}&Ts={ts}"
-                    };
-                    await LocalNotificationCenter.Current.Show(request);
-                }
-            }
-            catch { }
-        });
-
-        await hubConnection.StartAsync();
+        try { await hubConnectionSender.StartAsync(); } catch { }
     }
 
     public async ValueTask DisposeAsync()
     {
-        if (hubConnection is not null)
+        if (hubConnectionSender is not null)
         {
-            await hubConnection.DisposeAsync();
+            await hubConnectionSender.DisposeAsync();
         }
     }
 
@@ -509,20 +351,18 @@
     }
 
     private void CerrarModalSpotter() => mostrarModalSpotter = false;
-    private void CerrarAlertaRecibida() => alertaRecibida = false;
 
     private async Task LanzarAlertaSpotter()
     {
         enviandoAlerta = true;
         try
         {
-            if (hubConnection is not null && hubConnection.State == HubConnectionState.Connected)
+            if (hubConnectionSender is not null && hubConnectionSender.State == HubConnectionState.Connected)
             {
                 string miNombre = Sesion.Usuario.Nombre ?? "Un atleta";
-                Guid miId = Sesion.Usuario.UsuarioID; // Obtenemos tu ID
+                Guid miId = Sesion.Usuario.UsuarioID;
 
-                // Agregamos miId como el primer parámetro
-                await hubConnection.SendAsync("PedirSpotter", miId, miNombre, zonaSpotter, distintivoSpotter, minutosEspera);
+                await hubConnectionSender.SendAsync("PedirSpotter", miId, miNombre, zonaSpotter, distintivoSpotter, minutosEspera);
 
                 mostrarModalSpotter = false;
                 await App.Current.MainPage.DisplayAlert("¡Alerta Enviada! 🚨", "Alguien irá a apoyarte.", "OK");
@@ -596,13 +436,6 @@
         finally { guardando = false; }
     }
 
-    private void IrAlRescate()
-    {
-        alertaRecibida = false; // Cerramos el banner
-        string url = $"/spotter-rescue/{Uri.EscapeDataString(alertaInNombre)}/{Uri.EscapeDataString(alertaInZona)}/{Uri.EscapeDataString(alertaInDistintivo)}/{alertaInMin}";
-        Nav.NavigateTo(url);
-    }
-
     // ===============================================
     // LÓGICA DEL TIMER MANUAL E INMUNE A BLOQUEOS
     // ===============================================
@@ -610,13 +443,11 @@
     {
         if (segundosDescansoDefecto <= 0) return;
 
-        // ¡IMPORTANTE! Desbloqueamos el motor de audio al hacer clic en Play
         try { await JS.InvokeVoidAsync("unlockAudio"); } catch { }
 
         timerCorriendo = true;
         horaFinTimer = DateTime.Now.AddSeconds(segundosDescansoDefecto);
 
-        // 1. Programamos notificación para cuando esté bloqueado (Solo en móviles)
         try
         {
             if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
@@ -634,7 +465,6 @@
         }
         catch { }
 
-        // 2. Bucle Visual
         while (timerCorriendo)
         {
             var restante = horaFinTimer - DateTime.Now;
@@ -645,17 +475,14 @@
             await Task.Delay(500);
         }
 
-        // 3. Finalizar y Sonar si está en la App
         if (timerCorriendo)
         {
             tiempoRestanteFormateado = "00:00";
             timerCorriendo = false;
             StateHasChanged();
 
-            // Emitimos los 3 pitidos de JS
             try { await JS.InvokeVoidAsync("playTimerBeep"); } catch { }
 
-            // Vibración (Solo móviles)
             try
             {
                 if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
@@ -672,7 +499,6 @@
         timerCorriendo = false;
         tiempoRestanteFormateado = "00:00";
 
-        // Cancelar alarma (Solo móviles)
         try
         {
             if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
