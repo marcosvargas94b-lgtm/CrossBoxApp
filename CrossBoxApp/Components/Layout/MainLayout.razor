@@ -14,16 +14,19 @@
     {
         Nav.LocationChanged += AlCambiarDePagina;
 
-        // 1. CONECTAR DELEGADO PARA APP EN SEGUNDO PLANO
-        MauiProgram.InterceptSpotterAction = (url) =>
-        {
-            // Le damos un electrochoque al hilo principal de MAUI para asegurar que despierte
-            Application.Current.Dispatcher.Dispatch(() =>
-            {
-                Nav.NavigateTo(url);
-                StateHasChanged();
-            });
-        };
+        MauiProgram.InterceptSpotterAction = async (url) =>
+          {
+              // VITAL: Esperamos 1.2 segundos para que iOS termine de "descongelar"
+              await Task.Delay(1200);
+
+              // ¡AQUÍ ESTÁ EL SECRETO! Usar Dispatcher.Dispatch en lugar de InvokeAsync
+              Application.Current.Dispatcher.Dispatch(() =>
+              {
+                  // Ahora sí, obligamos a Blazor a cambiar la pantalla
+                  Nav.NavigateTo(url);
+                  StateHasChanged();
+              });
+          };
 
         // 2. REVISAR SI VENIMOS DE UN COLD START
         _ = VerificarRutaPendiente();

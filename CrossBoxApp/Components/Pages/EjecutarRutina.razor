@@ -453,7 +453,7 @@
             .WithAutomaticReconnect()
             .Build();
 
-        hubConnection.On<string, string, string, int>("RecibirAlertaSpotter", async (nombre, zona, distintivo, min) =>
+        hubConnection.On<string, string, string, int, string>("RecibirAlertaSpotter", async (nombre, zona, distintivo, min, ts) =>
         {
 
             alertaInNombre = nombre;
@@ -479,8 +479,9 @@
                         NotificationId = 9999,
                         Title = "🚨 ¡SPOTTER REQUERIDO!",
                         Description = $"{nombre} necesita ayuda en {zona}. Esperará {min} min.",
-                        // AÑADIR ESTO:
-                        ReturningData = $"/spotter-rescue?Nombre={Uri.EscapeDataString(nombre)}&Zona={Uri.EscapeDataString(zona)}&Distintivo={Uri.EscapeDataString(distintivo ?? "NA")}&Minutos={min}"
+
+                        // 2. ¡LA MAGIA DEL TIEMPO! Le pegamos el &Ts={ts} al final de la ruta
+                        ReturningData = $"/spotter-rescue?Nombre={Uri.EscapeDataString(nombre)}&Zona={Uri.EscapeDataString(zona)}&Distintivo={Uri.EscapeDataString(distintivo ?? "NA")}&Minutos={min}&Ts={ts}"
                     };
                     await LocalNotificationCenter.Current.Show(request);
                 }
