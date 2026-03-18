@@ -87,6 +87,12 @@ namespace CrossBoxApp
             builder.Services.AddSingleton<SesionService>();
             builder.Services.AddScoped(sp => new System.Net.Http.HttpClient { BaseAddress = new Uri("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/"), Timeout = TimeSpan.FromMinutes(3) });
             builder.Services.AddSingleton(AudioManager.Current);
+#if IOS
+            Microsoft.Maui.Handlers.BlazorWebViewHandler.BlazorWebViewMapper.AppendToMapping("EnableSwipeBack", (handler, view) =>
+            {
+                handler.PlatformView.AllowsBackForwardNavigationGestures = true;
+            });
+#endif
 
             return builder.Build();
         }
