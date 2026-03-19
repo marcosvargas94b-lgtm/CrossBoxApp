@@ -361,7 +361,7 @@
             {
                 string miNombre = Sesion.Usuario.Nombre ?? "Un atleta";
                 Guid miId = Sesion.Usuario.UsuarioID;
-
+                MauiProgram.AcaboDePedirAyuda = true;
                 await hubConnectionSender.SendAsync("PedirSpotter", miId, miNombre, zonaSpotter, distintivoSpotter, minutosEspera);
 
                 mostrarModalSpotter = false;

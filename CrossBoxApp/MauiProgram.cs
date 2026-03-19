@@ -138,22 +138,24 @@ namespace CrossBoxApp
                 EnviarRutaABlazor(urlDestino);
             }
         }
-
+        public static bool AcaboDePedirAyuda { get; set; } = false;
         private static void EnviarRutaABlazor(string urlDestino)
         {
+
             MainThread.BeginInvokeOnMainThread(async () =>
             {
+                RutaPendienteSpotter = urlDestino;
                 // Aumentamos el respiro a 800ms para asegurar que Blazor en iOS termine de cargar su UI pesada
-                await System.Threading.Tasks.Task.Delay(1500);
+                //await System.Threading.Tasks.Task.Delay(1500);
 
-                if (InterceptSpotterAction != null)
-                {
-                    InterceptSpotterAction.Invoke(urlDestino);
-                }
-                else
-                {
-                    RutaPendienteSpotter = urlDestino;
-                }
+                //if (InterceptSpotterAction != null)
+                //{
+                //    InterceptSpotterAction.Invoke(urlDestino);
+                //}
+                //else
+                //{
+                //    RutaPendienteSpotter = urlDestino;
+                //}
             });
         }
     }
