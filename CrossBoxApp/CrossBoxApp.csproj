@@ -25,7 +25,7 @@
 		<ApplicationId>com.alfafit.aftrack</ApplicationId>
 		
 		<ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-		<ApplicationVersion>39</ApplicationVersion>
+		<ApplicationVersion>57</ApplicationVersion>
 
 		<WindowsPackageType>None</WindowsPackageType>
 
@@ -134,10 +134,10 @@
 	    <LogicalName>%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
 	  </MauiAsset>
 	</ItemGroup>
-	<!--
 	<ItemGroup Condition="'$(TargetFramework)' == 'net9.0-android'">
 		<GoogleServicesJson Include="Platforms\Android\google-services.json" />
 	</ItemGroup>
+	<!--
 -->
 	
 			<PropertyGroup Condition="'$(TargetFramework)' == 'net9.0-ios'">
