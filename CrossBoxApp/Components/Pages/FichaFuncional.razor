@@ -217,6 +217,17 @@
                             }
                         </div>
                     </div>
+
+                    @* BOTÓN DE VER LOGROS DEBAJO DE LA TARJETA *@
+                    @if (boxTieneMedallas)
+                    {
+                        <div class="btn-logros-wrapper mt-4">
+                            <button class="btn-ver-logros" @onclick="IrALogros">
+                                <i class="fas fa-medal" style="margin-right: 8px;"></i> VER LOGROS
+                            </button>
+                        </div>
+                    }
+
                 </div>
             }
         </div>
@@ -659,6 +670,8 @@
         --theme-text-muted: #888888;
     ";
 
+    private bool boxTieneMedallas = false;
+
     [Parameter] public Guid? TargetUserId { get; set; }
     private bool EsMiFicha => !TargetUserId.HasValue || TargetUserId.Value == Sesion.Usuario.UsuarioID;
     private bool cargando = true;
@@ -738,6 +751,13 @@
         catch { }
 
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+
+        try
+        {
+            boxTieneMedallas = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/tiene-medallas/{Sesion.Usuario.BoxID}");
+        }
+        catch { boxTieneMedallas = false; }
+
         try
         {
             Guid idConsulta = TargetUserId ?? Sesion.Usuario.UsuarioID;
@@ -787,6 +807,19 @@
         if (puntos >= 40) return "badge-avanzado";
         if (puntos >= 10) return "badge-intermedio";
         return "badge-novato";
+    }
+
+    private void IrALogros()
+    {
+        Guid idNavegar = TargetUserId ?? Sesion.Usuario.UsuarioID;
+        if (idNavegar == Sesion.Usuario.UsuarioID)
+        {
+            Nav.NavigateTo("/logrodesbloqueado");
+        }
+        else
+        {
+            Nav.NavigateTo($"/logrodesbloqueado/{idNavegar}");
+        }
     }
 
     // MÉTODO PARA ABRIR EL MODAL DE INFORMACIÓN

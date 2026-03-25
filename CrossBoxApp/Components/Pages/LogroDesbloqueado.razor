@@ -89,7 +89,10 @@
             {
 
                 var medallaFinal = misMedallas.FirstOrDefault(m => m.Diseno.ToLower() == "legendary");
-                var gruposNormales = misMedallas.Where(m => m.Diseno.ToLower() != "legendary").GroupBy(m => m.Diseno).OrderBy(g => g.Key);
+                // Filtramos las de premio:
+                var medallasReward = misMedallas.Where(m => m.Diseno.ToLower() == "reward").ToList();
+                // Filtramos para que no salgan repetidas abajo:
+                var gruposNormales = misMedallas.Where(m => m.Diseno.ToLower() != "legendary" && m.Diseno.ToLower() != "reward").GroupBy(m => m.Diseno).OrderBy(g => g.Key);
                 @* SECCIÓN ESTADÍSTICAS RÁPIDAS *@
                 <div class="stats-panel fade-in">
                     <div class="stat-box">
@@ -141,6 +144,48 @@
                         </div>
                     </div>
                 }
+
+                @* ======================================================== *@
+                @* SECCIÓN DE RECOMPENSAS FÍSICAS (REWARDS)                 *@
+                @* ======================================================== *@
+                @if (medallasReward.Any())
+                {
+                    <div class="reward-section fade-in mt-4 mb-4">
+                        <h3 class="section-title text-center" style="color: #00E676; border-bottom: none; justify-content: center; display: flex; align-items: center; gap: 10px;">
+                            <i class="fas fa-gift"></i> RECOMPENSAS DEL BOX
+                        </h3>
+
+                        <div class="medallas-grid">
+                            @foreach (var medalla in medallasReward)
+                            {
+                                bool bloqueada = medalla.FechaObtencion == null;
+                                string claseFondo = bloqueada ? "locked-reward" : "unlocked-reward";
+
+                                <div class="medalla-card-reward @claseFondo" @onclick="() => AbrirMedallaExpandida(medalla)">
+                                    @if (!bloqueada)
+                                    {
+                                        <div class="date-badge" style="background: #00E676; color: #000;">@medalla.FechaObtencion?.ToString("dd/MMM/yy")</div>
+                                    }
+
+                                    <img src="@($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/Imagenes/Medallas/{medalla.Id}.png")" class="medalla-img-reward @(bloqueada ? "img-bw" : "")" />
+
+                                    <div class="reward-info">
+                                        <h4>@medalla.Nombre</h4>
+                                        @if (bloqueada)
+                                        {
+                                            <div class="lock-icon" style="position: static; margin-top: 5px;"><i class="fas fa-lock"></i></div>
+                                        }
+                                        else
+                                        {
+                                            <span class="reward-claim"><i class="fas fa-ticket-alt"></i> RECLAMABLE</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
 
                 @* GENERACIÓN DINÁMICA DEL RESTO DE LAS SECCIONES *@
                 @foreach (var grupo in gruposNormales)
@@ -567,6 +612,44 @@
    @@keyframes pulseAura { 0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.1; } 100% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.3; } }
    @@keyframes legendaryPulse { 0% { border-color: #B8860B; box-shadow: 0 10px 25px rgba(255,215,0,0.1), inset 0 0 10px rgba(255,215,0,0.1); } 100% { border-color: #FFD700; box-shadow: 0 10px 35px rgba(255,215,0,0.5), inset 0 0 30px rgba(255,215,0,0.3); } }
    @@keyframes spinGlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+
+   /* ==================================================== */
+    /* NUEVA SECCIÓN: REWARD (PREMIOS FÍSICOS)              */
+    /* ==================================================== */
+    .medalla-card-reward {
+        background: var(--theme-card);
+        border: 2px solid var(--theme-border);
+        border-radius: 12px;
+        padding: 15px 10px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .medalla-card-reward:active { transform: scale(0.95); }
+    .medalla-img-reward { width: 80px; height: 80px; object-fit: contain; margin-bottom: 10px; z-index: 2; }
+    
+    .reward-info h4 { font-family: 'Oswald'; font-size: 0.95rem; color: var(--theme-text); margin: 0; line-height: 1.2; }
+    .reward-claim { font-size: 0.7rem; color: #00E676; font-weight: bold; margin-top: 5px; display: inline-block; background: rgba(0, 230, 118, 0.1); padding: 3px 8px; border-radius: 10px; border: 1px solid #00E676; }
+
+    .locked-reward { background: rgba(0,0,0,0.3); border: 2px dashed #555; }
+    .unlocked-reward {
+        border-color: #00E676;
+        background: linear-gradient(180deg, rgba(0, 230, 118, 0.1) 0%, var(--theme-card) 100%);
+        box-shadow: 0 5px 15px rgba(0, 230, 118, 0.2), inset 0 0 10px rgba(0, 230, 118, 0.1);
+    }
+    .unlocked-reward .medalla-img-reward { 
+        filter: drop-shadow(0 5px 10px rgba(0, 230, 118, 0.6)); 
+        animation: floatReward 3s ease-in-out infinite; 
+    }
+
+    /* Expansión del Modal para Reward */
+    .unlocked-exp-reward { border-color: #00E676; background: radial-gradient(circle at center, #003311 0%, var(--theme-card) 80%); box-shadow: 0 0 40px rgba(0, 230, 118, 0.3); }
+
+    @@keyframes floatReward { 0% { transform: translateY(0px); } 50% { transform: translateY(-5px); } 100% { transform: translateY(0px); } }
 </style>
 
 @code {

@@ -95,25 +95,59 @@
                     }
                 </div>
             }
-            <div class="focus-card fade-in">
-                <div class="readiness-score">
-                    <span class="big-num">@datos.DisponibilidadGlobal<small style="font-size: 2rem;">%</small></span>
-                    <span class="score-label">ENERGÍA MUSCULAR</span>
-                    <p class="status-msg">@datos.Mensaje.ToUpper()</p>
-                    <div class="btn-detalles" style="color:var(--theme-text-muted); font-weight:normal;">Algoritmo de Fisiología Activo</div>
-                </div>
+                <div class="focus-card fade-in">
+                    <div class="readiness-score" style="width: 100%;">
+                        @if (viendoVolumenSemanal)
+                        {
+                            <div class="d-flex justify-content-center align-items-center gap-3 w-100 mb-3 fade-in">
+                                <div class="text-center" style="flex: 1;">
+                                    <span class="big-num" style="font-size: 2.8rem; color: #ff4d4d;">@MaxIntensidadSemana<small style="font-size: 1.2rem;">%</small></span>
+                                    <span class="score-label d-block" style="font-size: 0.65rem;">MÁS TRABAJADO</span>
+                                    <span style="font-size: 0.85rem; color: var(--theme-text); font-family: 'Oswald';">@MaxMusculoSemana</span>
+                                </div>
+                                <div class="middle-divider" style="height: 60px; background: var(--theme-border);"></div>
+                                <div class="text-center" style="flex: 1;">
+                                    <span class="big-num" style="font-size: 2.8rem; color: #00C3A5;">@MinIntensidadSemana<small style="font-size: 1.2rem;">%</small></span>
+                                    <span class="score-label d-block" style="font-size: 0.65rem;">MENOS TRABAJADO</span>
+                                    <span style="font-size: 0.85rem; color: var(--theme-text); font-family: 'Oswald';">@MinMusculoSemana</span>
+                                </div>
+                            </div>
+                            <span class="score-label" style="color: var(--theme-text);">INTENSIDAD DE ÁREAS TRABAJADAS</span>
+                            <p class="status-msg" style="color: var(--theme-primary);">SEMANA ACTUAL (DESDE EL LUNES)</p>
+                        }
+                        else
+                        {
+                            <span class="big-num">@datos.DisponibilidadGlobal<small style="font-size: 2rem;">%</small></span>
+                            <span class="score-label">ENERGÍA MUSCULAR</span>
+                            <p class="status-msg">@datos.Mensaje.ToUpper()</p>
+                            <div class="btn-detalles" style="color:var(--theme-text-muted); font-weight:normal;">Algoritmo de Fisiología Activo</div>
+                        }
+                    </div>
 
-                <div class="map-container">
-                    @if (!string.IsNullOrEmpty(datos.Sexo) && datos.Sexo.ToUpper() == "F")
+                    <div class="map-container">
+                        @if (!string.IsNullOrEmpty(datos.Sexo) && datos.Sexo.ToUpper() == "F")
+                        {
+                            <MapaCalorFemenino Datos="@(viendoVolumenSemanal? MusculosVolumenSemanal : datos.Musculos)" />
+                        }
+                        else
+                        {
+                            <MapaCalor Datos="@(viendoVolumenSemanal? MusculosVolumenSemanal : datos.Musculos)" />
+                        }
+                    </div>
+
+                    @if (Sesion.Usuario.TipoLugar == "Gimnasio")
                     {
-                        <MapaCalorFemenino Datos="datos.Musculos" />
-                    }
-                    else
-                    {
-                        <MapaCalor Datos="datos.Musculos" />
+                        <button class="btn-hold-view mt-4"
+                                @onmousedown="MostrarVolumen"
+                                @onmouseup="OcultarVolumen"
+                                @onmouseleave="OcultarVolumen"
+                                @ontouchstart="MostrarVolumen"
+                                @ontouchend="OcultarVolumen"
+                                @ontouchcancel="OcultarVolumen">
+                            <i class="fas fa-hand-pointer"></i> PRESIONA PARA VER ZONAS DE LA SEMANA
+                        </button>
                     }
                 </div>
-            </div>
             
             @* AQUI ESTÁ LA NOTA ACLARATORIA QUE PEDISTE *@
             <p class="text-center mt-2 mb-0 fade-in" style="color: var(--theme-text-muted); font-size: 0.75rem; font-style: italic; max-width: 300px; line-height: 1.3;">
@@ -322,6 +356,26 @@
 </div>
 
 <style>
+    .btn-hold-view {
+        background: transparent;
+        border: 1px dashed var(--theme-primary);
+        color: var(--theme-primary);
+        padding: 12px 20px;
+        border-radius: 30px;
+        font-family: 'Oswald';
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+        width: 100%;
+        transition: 0.2s;
+        cursor: pointer;
+        user-select: none; /* Evita que el celular seleccione el texto al mantener presionado */
+        -webkit-user-select: none; 
+    }
+    .btn-hold-view:active {
+        background: rgba(248,197,69,0.15);
+        transform: scale(0.95);
+    }
+
     /* ESTILOS BASE Y VARIABLES */
     .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--theme-bg); display: flex; flex-direction: column; z-index: 1; }
     .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 5px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: var(--theme-bg); border-bottom: 1px solid var(--theme-primary); color: var(--theme-text); display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; }
@@ -444,6 +498,21 @@
     private EstadoRecuperacionDto datos;
     private string scalingSeleccionado = "";
 
+    // ============================================
+    // LÓGICA PARA MANTENER PRESIONADO (SEMANA)
+    // ============================================
+    private bool viendoVolumenSemanal = false;
+
+    private void MostrarVolumen() => viendoVolumenSemanal = true;
+    private void OcultarVolumen() => viendoVolumenSemanal = false;
+
+    // Cambiamos a 35 series como el tope máximo de intensidad semanal (Nivel Infierno)
+    private int MaxIntensidadSemana => datos?.VolumenSemanal?.FirstOrDefault() != null ? Math.Min((int)((datos.VolumenSemanal.First().SeriesTotales / 35.0) * 100), 100) : 0;
+    private string MaxMusculoSemana => datos?.VolumenSemanal?.FirstOrDefault()?.GrupoMuscular?.ToUpper() ?? "NINGUNO";
+
+    private int MinIntensidadSemana => datos?.VolumenSemanal?.LastOrDefault() != null ? Math.Min((int)((datos.VolumenSemanal.Last().SeriesTotales / 35.0) * 100), 100) : 0;
+    private string MinMusculoSemana => datos?.VolumenSemanal?.LastOrDefault()?.GrupoMuscular?.ToUpper() ?? "NINGUNO";
+
     // RPE
     private int rpeSeleccionado = 0;
     private bool guardandoRpe = false;
@@ -482,6 +551,34 @@
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
 
         await CargarDatos();
+    }
+
+    private List<MusculoRecuperacionDto> MusculosVolumenSemanal
+    {
+        get
+        {
+            var lista = new List<MusculoRecuperacionDto>();
+            var catalogo = new List<string> { "Pecho", "Espalda Alta", "Lumbares", "Hombros", "Bíceps", "Tríceps", "Antebrazos", "Abdomen", "Oblicuos", "Cuádriceps", "Isquiotibiales", "Glúteos", "Pantorrillas", "Trapecios" };
+
+            foreach (var musculo in catalogo)
+            {
+                var vol = datos?.VolumenSemanal?.FirstOrDefault(v => v.GrupoMuscular == musculo);
+                int seriesTotales = vol?.SeriesTotales ?? 0;
+
+                // Usamos 35.0 para que 15-20 series se pinten de amarillo/naranja (óptimo) y no rojo.
+                double intensidad = Math.Min((seriesTotales / 35.0) * 100.0, 100.0);
+
+                int porcentajeFalso = 100 - (int)intensidad;
+
+                lista.Add(new MusculoRecuperacionDto
+                {
+                    Nombre = musculo,
+                    Porcentaje = porcentajeFalso,
+                    HorasParaRecuperacion = 0
+                });
+            }
+            return lista;
+        }
     }
 
     private async Task CargarDatos()

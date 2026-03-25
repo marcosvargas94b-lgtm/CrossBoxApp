@@ -1,0 +1,173 @@
+﻿@page "/cumpleanos"
+@using CrossBoxApp.Models.Services
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject SesionService Sesion
+@inject IJSRuntime JS
+
+<div style="@EstilosTema">
+    <div class="main-layout">
+        <div class="navbar-container">
+            <div class="nav-left" @onclick="Volver">
+                <i class="fas fa-arrow-left"></i> VOLVER
+            </div>
+            <div class="nav-title">CUMPLEAÑOS</div>
+            <div class="nav-right"></div>
+        </div>
+
+        <div class="scrollable-content">
+            
+            <div class="instruction-banner fade-in mb-4">
+                <i class="fas fa-birthday-cake" style="color: var(--theme-primary);"></i> 
+                Cumpleañeros de <strong>@DateTime.Now.ToString("MMMM").ToUpper()</strong>
+            </div>
+
+            @if (cargando)
+            {
+                <div class="text-center mt-5">
+                    <div class="spinner-border" style="color: var(--theme-primary);"></div>
+                    <p class="mt-2 text-theme-muted font-oswald">CARGANDO...</p>
+                </div>
+            }
+            else if (listaCumpleaneros == null || !listaCumpleaneros.Any())
+            {
+                <div class="empty-state fade-in">
+                    <i class="fas fa-calendar-times" style="font-size: 3rem; opacity: 0.3; margin-bottom: 15px; color: var(--theme-text-muted);"></i>
+                    <h3>SIN CUMPLEAÑOS</h3>
+                    <p style="color: var(--theme-text-muted);">Parece que no hay pastel para este mes en el box. ¡Toca entrenar el doble!</p>
+                </div>
+            }
+            else
+            {
+                <div class="cumple-list fade-in">
+                    @foreach (var persona in listaCumpleaneros)
+                    {
+                        if (persona.EsHoy)
+                        {
+                            @* TARJETA VIP (ES HOY) *@
+                            <div class="cumple-card hoy bounce-animation">
+                                <div class="sparkle-container">
+                                    <div class="sparkle s1"></div>
+                                    <div class="sparkle s2"></div>
+                                    <div class="sparkle s3"></div>
+                                </div>
+                                <div class="badge-hoy">¡ES HOY!</div>
+                                
+                                <div class="avatar-wrapper">
+                                    <div class="avatar-cumple" style="@(!string.IsNullOrEmpty(persona.FotoUrl) ? $"background-image: url('{persona.FotoUrl}');" : "")">
+                                        @if (string.IsNullOrEmpty(persona.FotoUrl)) { @persona.NombreCompleto.Substring(0, 1).ToUpper() }
+                                    </div>
+                                    <i class="fas fa-crown crown-icon"></i>
+                                </div>
+                                
+                                <div class="cumple-info">
+                                    <h4 class="nombre-hoy">@persona.NombreCompleto</h4>
+                                    <p class="texto-hoy">¡Felicítalo en su próximo WOD!</p>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            @* TARJETA NORMAL (ESTE MES) *@
+                            <div class="cumple-item">
+                                <div class="dia-box">
+                                    <span class="dia-num">@persona.Dia</span>
+                                </div>
+                                <div class="avatar-mini" style="@(!string.IsNullOrEmpty(persona.FotoUrl) ? $"background-image: url('{persona.FotoUrl}');" : "")">
+                                    @if (string.IsNullOrEmpty(persona.FotoUrl)) { @persona.NombreCompleto.Substring(0, 1).ToUpper() }
+                                </div>
+                                <div class="cumple-nombre">@persona.NombreCompleto</div>
+                            </div>
+                        }
+                    }
+                </div>
+            }
+            <div style="height: 40px;"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--theme-bg); display: flex; flex-direction: column; z-index: 1; }
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: var(--theme-bg); border-bottom: 1px solid var(--theme-primary); color: var(--theme-text); display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .nav-left { color: var(--theme-primary); font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; }
+    .nav-title { font-weight: bold; font-size: 1.2rem; color: var(--theme-text); letter-spacing: 1px; }
+    .nav-right { width: 60px; }
+    .scrollable-content { flex-grow: 1; overflow-y: auto; background-color: var(--theme-bg); padding: 20px 15px; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; align-items: center; }
+
+    .instruction-banner { width: 100%; max-width: 600px; text-align: center; color: var(--theme-text-muted); font-size: 0.9rem; font-family: 'Roboto', sans-serif; background: rgba(255, 255, 255, 0.05); padding: 12px; border-radius: 12px; border: 1px dashed var(--theme-border); }
+    .empty-state { text-align: center; margin-top: 60px; color: var(--theme-text-muted); font-family: 'Roboto'; }
+    .font-oswald { font-family: 'Oswald'; letter-spacing: 1px; }
+
+    /* LISTA CUMPLES */
+    .cumple-list { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 15px; }
+
+    /* TARJETA VIP (ES HOY) */
+    .cumple-card.hoy { background: linear-gradient(135deg, var(--theme-card) 0%, rgba(248, 197, 69, 0.15) 100%); border: 2px solid var(--theme-primary); border-radius: 20px; padding: 20px; display: flex; align-items: center; gap: 20px; position: relative; overflow: hidden; box-shadow: 0 10px 25px rgba(248, 197, 69, 0.2); }
+    .badge-hoy { position: absolute; top: 10px; right: 10px; background: var(--theme-primary); color: var(--theme-bg); font-family: 'Oswald'; font-weight: bold; font-size: 0.7rem; padding: 3px 10px; border-radius: 10px; animation: pulse 2s infinite; }
+    
+    .avatar-wrapper { position: relative; }
+    .avatar-cumple { width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--theme-primary); background-color: var(--theme-bg); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--theme-primary); font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+    .crown-icon { position: absolute; top: -15px; left: 50%; transform: translateX(-50%) rotate(-15deg); color: #FFD700; font-size: 1.8rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+    
+    .cumple-info { flex: 1; }
+    .nombre-hoy { margin: 0; color: var(--theme-text); font-family: 'Oswald'; font-size: 1.4rem; text-transform: uppercase; line-height: 1.1; }
+    .texto-hoy { margin: 5px 0 0 0; color: var(--theme-primary); font-family: 'Roboto'; font-size: 0.85rem; font-weight: bold; }
+
+    /* TARJETA NORMAL */
+    .cumple-item { background: var(--theme-card); border: 1px solid var(--theme-border); border-radius: 12px; padding: 12px 15px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+    .dia-box { background: rgba(255,255,255,0.05); border: 1px solid var(--theme-border); width: 45px; height: 45px; border-radius: 10px; display: flex; justify-content: center; align-items: center; color: var(--theme-primary); font-family: 'Oswald'; font-weight: bold; font-size: 1.2rem; }
+    .avatar-mini { width: 45px; height: 45px; border-radius: 50%; border: 1px solid var(--theme-primary); background-color: var(--theme-bg); display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--theme-primary); background-size: cover; background-position: center; }
+    .cumple-nombre { color: var(--theme-text); font-family: 'Roboto'; font-size: 1rem; font-weight: 500; }
+
+    /* ANIMACIONES */
+    .fade-in { animation: fadeIn 0.4s ease; }
+    .bounce-animation { animation: slideUpBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    
+    .sparkle-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+    .sparkle { position: absolute; background: white; border-radius: 50%; box-shadow: 0 0 5px 2px rgba(255, 255, 255, 0.6); opacity: 0; animation: blink 3s infinite; }
+    .s1 { top: 20%; left: 10%; width: 4px; height: 4px; animation-delay: 0s; }
+    .s2 { top: 70%; left: 85%; width: 5px; height: 5px; animation-delay: 1s; }
+    .s3 { top: 40%; left: 90%; width: 3px; height: 3px; animation-delay: 2s; }
+
+    @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    @@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+    @@keyframes blink { 0%, 100% { opacity: 0; transform: scale(0.5); } 50% { opacity: 1; transform: scale(1.5); } }
+    @@keyframes slideUpBounce { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+@code {
+    private string EstilosTema = @"--theme-primary: #A9A9A9; --theme-secondary: #808080; --theme-bg: #0d0d0d; --theme-card: #1a1a1a; --theme-border: #333333; --theme-text: #ffffff; --theme-text-muted: #888888;";
+    private bool cargando = true;
+    private List<CumpleaneroDto> listaCumpleaneros;
+
+    public class CumpleaneroDto
+    {
+        public Guid UsuarioId { get; set; }
+        public string NombreCompleto { get; set; }
+        public string? FotoUrl { get; set; }
+        public int Dia { get; set; }
+        public bool EsHoy { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box"); if (!string.IsNullOrEmpty(cache)) { EstilosTema = cache; StateHasChanged(); } } catch { }
+        if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+
+        await CargarCumpleaneros();
+    }
+
+    private async Task CargarCumpleaneros()
+    {
+        try
+        {
+            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/CumpleanosApi/mes/{Sesion.Usuario.BoxID}";
+            listaCumpleaneros = await Http.GetFromJsonAsync<List<CumpleaneroDto>>(url);
+        }
+        catch { }
+        finally { cargando = false; }
+    }
+
+    private void Volver() => Nav.NavigateTo("/home");
+}

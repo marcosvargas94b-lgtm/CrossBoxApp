@@ -352,6 +352,12 @@
                     </div>
                 }
 
+                 <div class="menu-card yellow-highlight" @onclick='() => Nav.NavigateTo("/cumpleanos")'>
+                 <i class="fas fa-birthday-cake card-icon" style="color: var(--theme-bg);"></i>
+                 <h3>CUMPLEAÑOS</h3>
+                 <p>¡Felicita a tu comunidad!</p>
+                 </div>
+
                 @if (EstaActivo("RANKING"))
                 {
                     <div class="menu-card yellow-highlight" @onclick="IrARanking">
@@ -503,12 +509,37 @@
     </div>
 </div>
 
-@* ========================================== *@
-@* MODAL DE EDICIÓN DE BANNER                 *@
-@* ========================================== *@
-@* ========================================== *@
-@* MODAL DE EDICIÓN DE BANNER                 *@
-@* ========================================== *@
+@* --- MODAL PEDIR CUMPLEAÑOS --- *@
+@if (mostrarModalPedirCumple)
+{
+    <div class="modal-overlay fade-in">
+        <div class="modal-content custom-modal slide-up text-center">
+            <div class="modal-header" style="justify-content: center; border-bottom: none;">
+                <h5 style="color:var(--theme-primary); margin:0; font-family:'Oswald'; font-size: 1.5rem;">
+                    <i class="fas fa-birthday-cake"></i> ¡QUEREMOS CELEBRARTE!
+                </h5>
+            </div>
+            
+            <div class="modal-body">
+                <p style="color:var(--theme-text-muted); font-size: 0.9rem; margin-bottom: 20px; font-family: 'Roboto';">
+                    Ingresa tu fecha de nacimiento para que toda la comunidad pueda felicitarte en tu día especial.
+                </p>
+                
+                <input type="date" @bind="fechaCumpleInput" class="form-control input-dark mb-4" style="text-align: center; font-size: 1.2rem; font-family: 'Oswald';" />
+            </div>
+
+            <div class="modal-footer" style="flex-direction: column; gap: 10px;">
+                <button class="btn-confirm w-100" @onclick="GuardarMiCumple" disabled="@guardandoCumple">
+                    @if(guardandoCumple) { <i class="fas fa-spinner fa-spin"></i> } else { <span>GUARDAR FECHA</span> }
+                </button>
+                <button class="btn-cancel w-100" style="background: transparent !important; border: none !important; color: var(--theme-text-muted) !important;" @onclick="() => mostrarModalPedirCumple = false">
+                    Hacerlo más tarde
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
 @if (mostrarModalBanner)
 {
     <div class="modal-overlay fade-in" @onclick="CerrarModalBanner">
@@ -1431,6 +1462,12 @@
         --theme-text-muted: #888888;
     ";
 
+    private bool mostrarModalPedirCumple = false;
+    private bool guardandoCumple = false;
+    private DateTime fechaCumpleInput = new DateTime(1990, 1, 1);
+    public class GuardarCumpleDto { public DateTime Fecha { get; set; } }
+    
+
     private bool boxTieneMedallas = false;
     private bool modoTextoLibre = false;
     private bool editandoWod = false;
@@ -1543,6 +1580,9 @@
             }
         } 
         catch { }
+        
+        try { bool faltaFecha = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/CumpleanosApi/falta-fecha/{Sesion.Usuario.UsuarioID}");
+            if (faltaFecha) mostrarModalPedirCumple = true;} catch { }
 
         try 
         { 
@@ -1650,6 +1690,19 @@
 
         cargandoConfiguracion = false;
     }
+    
+    private async Task GuardarMiCumple()
+    {
+        guardandoCumple = true;
+        try
+        {
+            var dto = new GuardarCumpleDto { Fecha = fechaCumpleInput };
+            var r = await Http.PostAsJsonAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/CumpleanosApi/guardar-fecha/{Sesion.Usuario.UsuarioID}", dto);
+            if (r.IsSuccessStatusCode) { mostrarModalPedirCumple = false; }
+        }
+        catch { }
+        finally { guardandoCumple = false; }
+    }
 
     private async Task CargarRecuperacion()
     {
@@ -1697,11 +1750,12 @@
 
     private async Task AlCambiarFechaWod(ChangeEventArgs e) { if (DateTime.TryParse(e.Value.ToString(), out DateTime fecha)) { nuevoWod.FechaProgramacion = fecha; await VerificarWodExistente(fecha); } }
 
-    private void IrAMiFicha()
+   private void IrAMiFicha()
     {
         string tipoLugar = Sesion.Usuario?.TipoLugar ?? "";
         if (tipoLugar == "Running") Nav.NavigateTo("/ficha-running");
         else if (tipoLugar == "Funcional" || tipoLugar == "Calistenia") Nav.NavigateTo("/ficha-funcional");
+        else if (tipoLugar == "Gimnasio") Nav.NavigateTo("/ficha-gym"); 
         else Nav.NavigateTo("/ficha-atleta");
     }
 

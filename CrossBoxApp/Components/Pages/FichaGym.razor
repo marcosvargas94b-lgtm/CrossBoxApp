@@ -1,5 +1,5 @@
-﻿@page "/ficha-running"
-@page "/ficha-running/{TargetUserId:guid}"
+﻿@page "/ficha-gym"
+@page "/ficha-gym/{TargetUserId:guid}"
 @using System.Net.Http.Json
 @using CrossBoxApp.Models.Services
 @using System.Net.Http.Headers
@@ -97,9 +97,8 @@
                         @* CABECERA *@
                         <div class="card-top">
                             <div class="stats-left">
-                                @* MATEMÁTICA DE OVR RUNNING: Base 70 + (Semanas * 1.5) *@
-                                @{ 
-                                    int ovr = 70 + (int)(ficha.SemanasRunning * 1.5); 
+                                @{
+                                    int ovr = 70 + (int)(ficha.SemanasGym * 1.5);
                                     if(ovr > 100) ovr = 100; // Tope máximo 100
                                 }
                                 
@@ -140,8 +139,8 @@
                             </div>
                             <div class="middle-divider"></div>
                             <div class="stat-column medals-column">
-                                <span class="stat-value" style="color: var(--c-nums);">@ficha.SemanasRunning</span>
-                                <span class="stat-title">SEMANAS ACUMULADAS</span>
+                                <span class="stat-value" style="color: var(--c-nums);">@ficha.SemanasGym</span>
+                                <span class="stat-title">SEMANAS (3+ DÍAS)</span>
                             </div>
                         </div>
 
@@ -615,7 +614,7 @@
     private bool cargando = true;
     private bool solicitandoFoto = false;
     private FichaAtletaDto ficha;
-
+    private bool boxTieneMedallas = false;
     // --- VARIABLES DE MODALES ---
     private bool mostrarModalSubtitulos = false;
     private string tabActiva = "Comedia";
@@ -628,7 +627,6 @@
 
     private bool mostrarModalPRs = false;
     private bool guardandoPRs = false;
-    private bool boxTieneMedallas = false;
 
     // --- DTOs ---
     public class FichaAtletaDto
@@ -646,6 +644,7 @@
         public string ColorNumeros { get; set; }
         public string ColorFondo1 { get; set; }
         public string ColorFondo2 { get; set; }
+        public int SemanasGym { get; set; }
         public string Textura { get; set; }
         public string FiltroFoto { get; set; }
         public string FiltroFondo { get; set; }
@@ -692,8 +691,7 @@
         {
             Guid idConsulta = TargetUserId ?? Sesion.Usuario.UsuarioID;
 
-            // RUTA ESPECÍFICA PARA RUNNING
-            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/running/{idConsulta}";
+            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/gym/{idConsulta}";
             ficha = await Http.GetFromJsonAsync<FichaAtletaDto>(url);
 
             // ==============================================================
@@ -722,6 +720,19 @@
         }
         catch { }
         finally { cargando = false; }
+    }
+
+    private void IrALogros()
+    {
+        Guid idNavegar = TargetUserId ?? Sesion.Usuario.UsuarioID;
+        if (idNavegar == Sesion.Usuario.UsuarioID)
+        {
+            Nav.NavigateTo("/logrodesbloqueado");
+        }
+        else
+        {
+            Nav.NavigateTo($"/logrodesbloqueado/{idNavegar}");
+        }
     }
 
     private void ActivarCambioFoto() => solicitandoFoto = true;
@@ -842,19 +853,6 @@
     }
 
     private void QuitarFondoCustom() { ficha.FondoCustomUrl = ""; }
-
-    private void IrALogros()
-    {
-        Guid idNavegar = TargetUserId ?? Sesion.Usuario.UsuarioID;
-        if (idNavegar == Sesion.Usuario.UsuarioID)
-        {
-            Nav.NavigateTo("/logrodesbloqueado");
-        }
-        else
-        {
-            Nav.NavigateTo($"/logrodesbloqueado/{idNavegar}");
-        }
-    }
 
     private async Task SubirFondoCustom(InputFileChangeEventArgs e)
     {

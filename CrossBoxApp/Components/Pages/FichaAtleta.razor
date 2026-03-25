@@ -179,13 +179,16 @@
                             }
                         </div>
                     </div> @* <-- CIERRE DE LA TARJETA (.esports-card) *@
-
+                    
                     @* BOTÓN DE VER LOGROS DEBAJO DE LA TARJETA *@
-                    <div class="btn-logros-wrapper mt-4">
-                        <button class="btn-ver-logros" @onclick="IrALogros">
-                            <i class="fas fa-medal" style="margin-right: 8px;"></i> VER LOGROS
-                        </button>
-                    </div>
+                    @if (boxTieneMedallas)
+                    {
+                        <div class="btn-logros-wrapper mt-4">
+                            <button class="btn-ver-logros" @onclick="IrALogros">
+                                <i class="fas fa-medal" style="margin-right: 8px;"></i> VER LOGROS
+                            </button>
+                        </div>
+                    }
 
                 </div> @* <-- CIERRE DE LA ESCENA (.card-scene) *@
             }
@@ -681,6 +684,8 @@
         --theme-text-muted: #888888;
     ";
 
+    private bool boxTieneMedallas = false;
+
     [Parameter] public Guid? TargetUserId { get; set; }
     private bool EsMiFicha => !TargetUserId.HasValue || TargetUserId.Value == Sesion.Usuario.UsuarioID;
     private bool cargando = true;
@@ -737,6 +742,13 @@
         catch { }
 
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+        
+        try
+        {
+            boxTieneMedallas = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/tiene-medallas/{Sesion.Usuario.BoxID}");
+        }
+        catch { boxTieneMedallas = false; }
+
         try
         {
             Guid idConsulta = TargetUserId ?? Sesion.Usuario.UsuarioID;

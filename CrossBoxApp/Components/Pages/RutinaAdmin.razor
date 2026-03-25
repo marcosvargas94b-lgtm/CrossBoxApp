@@ -6,7 +6,6 @@
 @inject SesionService Sesion
 @inject IJSRuntime JS
 
-@* ENVOLVEMOS TODA LA PÁGINA EN EL TEMA *@
 <div style="@EstilosTema">
 
     <div class="main-layout">
@@ -24,81 +23,129 @@
         </div>
 
         <div class="scrollable-content">
+
+            @* SELECTORES DE CALENDARIO (MES Y SEMANA) *@
+            <div class="calendar-selectors fade-in">
+                <div class="selector-group">
+                    <label>MES</label>
+                    <select class="form-control input-dark" value="@mesSeleccionado" @onchange="OnMesCambiado">
+                        <option value="1">ENERO</option>
+                        <option value="2">FEBRERO</option>
+                        <option value="3">MARZO</option>
+                        <option value="4">ABRIL</option>
+                        <option value="5">MAYO</option>
+                        <option value="6">JUNIO</option>
+                        <option value="7">JULIO</option>
+                        <option value="8">AGOSTO</option>
+                        <option value="9">SEPTIEMBRE</option>
+                        <option value="10">OCTUBRE</option>
+                        <option value="11">NOVIEMBRE</option>
+                        <option value="12">DICIEMBRE</option>
+                    </select>
+                </div>
+
+                <div class="selector-group">
+                    <label>SEMANA</label>
+                    <select class="form-control input-dark" value="@lunesSeleccionado.ToString("yyyy-MM-dd")" @onchange="OnSemanaCambiada">
+                        @foreach (var semana in semanasDelMes)
+                        {
+                            <option value="@semana.ToString("yyyy-MM-dd")">Semana del @semana.ToString("dd MMM")</option>
+                        }
+                    </select>
+                </div>
+            </div>
             
-            <div class="routine-grid">
-                @for (int i = 1; i <= 7; i++)
+            <div class="routine-grid mt-3">
+                @if (cargando)
                 {
-                    var diaNum = i;
-                    var rutinaDia = ObtenerRutina(diaNum);
-                    bool tieneRutina = rutinaDia != null && !string.IsNullOrEmpty(rutinaDia.Descripcion);
-                    bool estaEditando = (diaEditando == diaNum);
+                    <div class="text-center mt-5"><div class="spinner-border" style="color: var(--theme-primary);"></div></div>
+                }
+                else
+                {
+                    @for (int i = 0; i < 7; i++)
+                    {
+                        var fechaActual = lunesSeleccionado.AddDays(i);
+                        var rutinaDia = ObtenerRutina(fechaActual);
+                        bool tieneRutina = rutinaDia != null && !string.IsNullOrEmpty(rutinaDia.Descripcion);
+                        bool estaEditando = (fechaEditando == fechaActual);
 
-                    <div class="day-card @(tieneRutina ? "filled" : "empty") fade-in">
-                        
-                        @* CABECERA DEL DÍA *@
-                        <div class="day-header">
-                            <span class="day-name">@NombreDia(diaNum)</span>
-                            @if (tieneRutina && !estaEditando)
-                            {
-                                <span class="coach-badge">
-                                    <i class="fas fa-user-edit"></i> @rutinaDia.CoachNombre
-                                </span>
-                            }
-                        </div>
-
-                        @* CUERPO DE LA TARJETA *@
-                        <div class="day-body">
+                        <div class="day-card @(tieneRutina ? "filled" : "empty") fade-in">
                             
-                            @if (estaEditando)
-                            {
-                                // --- MODO EDITOR ---
-                                <div class="editor-zone">
-                                    <textarea @bind="textoEditando" 
-                                              @bind:event="oninput" 
-                                              class="custom-textarea" 
-                                              placeholder="Escribe el WOD o rutina aquí..."></textarea>
-                                    
-                                    <div class="action-buttons">
-                                        <button class="btn-cancel" @onclick="CancelarEdicion">
-                                            <i class="fas fa-times"></i> CANCELAR
-                                        </button>
-                                        <button class="btn-save" @onclick="() => Guardar(diaNum)">
-                                            <i class="fas fa-save"></i> GUARDAR
-                                        </button>
-                                    </div>
+                            @* CABECERA DEL DÍA *@
+                            <div class="day-header">
+                                <div class="day-name-wrapper">
+                                    <span class="day-name">@NombreDia(fechaActual.DayOfWeek)</span>
+                                    <span class="day-number">@fechaActual.ToString("dd MMM").ToUpper()</span>
                                 </div>
-                            }
-                            else
-                            {
-                                if (tieneRutina)
+                                
+                                @if (tieneRutina && !estaEditando)
                                 {
-                                    // --- MODO VISUALIZACIÓN ---
-                                    <div class="routine-content">
-                                        <p>@rutinaDia.Descripcion</p>
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if(rutinaDia.Completada)
+                                        {
+                                            <span class="badge-done"><i class="fas fa-check-circle"></i> HECHO</span>
+                                        }
+                                        <span class="coach-badge">
+                                            <i class="fas fa-user-edit"></i> @rutinaDia.CoachNombre
+                                        </span>
                                     </div>
-                                    <div class="card-footer-actions">
-                                        <div class="status-ok"><i class="fas fa-check-circle"></i> Asignado</div>
-                                        <div class="btn-group">
-                                            <button class="btn-icon edit" @onclick='() => Editar(diaNum, rutinaDia.Descripcion)'>
-                                                <i class="fas fa-pencil-alt"></i>
+                                }
+                            </div>
+
+                            @* CUERPO DE LA TARJETA *@
+                            <div class="day-body">
+                                
+                                @if (estaEditando)
+                                {
+                                    // --- MODO EDITOR ---
+                                    <div class="editor-zone">
+                                        <textarea @bind="textoEditando" 
+                                                  @bind:event="oninput" 
+                                                  class="custom-textarea" 
+                                                  placeholder="Escribe la rutina, superseries, pesos..."></textarea>
+                                        
+                                        <div class="action-buttons">
+                                            <button class="btn-cancel" @onclick="CancelarEdicion">
+                                                <i class="fas fa-times"></i> CANCELAR
                                             </button>
-                                            <button class="btn-icon delete" @onclick="() => Eliminar(diaNum)">
-                                                <i class="fas fa-trash"></i>
+                                            <button class="btn-save" @onclick="() => Guardar(fechaActual)">
+                                                <i class="fas fa-save"></i> GUARDAR
                                             </button>
                                         </div>
                                     </div>
                                 }
                                 else
                                 {
-                                    // --- MODO VACÍO (BOTÓN GRANDE) ---
-                                    <div class="empty-state" @onclick='() => Editar(diaNum, "")'>
-                                        <div class="plus-circle"><i class="fas fa-plus"></i></div>
-                                        <span>ASIGNAR RUTINA</span>
-                                    </div>
+                                    if (tieneRutina)
+                                    {
+                                        // --- MODO VISUALIZACIÓN ---
+                                        <div class="routine-content">
+                                            <p>@rutinaDia.Descripcion</p>
+                                        </div>
+                                        <div class="card-footer-actions">
+                                            <div class="status-ok"><i class="fas fa-check-circle"></i> Asignado y analizado por IA</div>
+                                            <div class="btn-group">
+                                                <button class="btn-icon edit" @onclick='() => Editar(fechaActual, rutinaDia.Descripcion)'>
+                                                    <i class="fas fa-pencil-alt"></i>
+                                                </button>
+                                                <button class="btn-icon delete" @onclick="() => Eliminar(fechaActual)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        // --- MODO VACÍO (BOTÓN GRANDE) ---
+                                        <div class="empty-state" @onclick='() => Editar(fechaActual, "")'>
+                                            <div class="plus-circle"><i class="fas fa-plus"></i></div>
+                                            <span>ASIGNAR RUTINA</span>
+                                        </div>
+                                    }
                                 }
-                            }
+                            </div>
                         </div>
-                    </div>
+                    }
                 }
             </div>
             
@@ -112,157 +159,66 @@
     /* --- ESTRUCTURA BASE Y NAVBAR BLINDADA --- */
     .main-layout { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--theme-bg); display: flex; flex-direction: column; z-index: 1; }
 
-    .navbar-container {
-        flex-shrink: 0;
-        padding-top: calc(env(safe-area-inset-top) + 10px);
-        padding-bottom: 10px;
-        padding-left: 20px;
-        padding-right: 20px;
-        background-color: var(--theme-bg);
-        border-bottom: 1px solid var(--theme-primary);
-        color: var(--theme-text);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        z-index: 100;
-        font-family: 'Oswald';
-        min-height: 60px;
-    }
+    .navbar-container { flex-shrink: 0; padding-top: calc(env(safe-area-inset-top) + 10px); padding-bottom: 10px; padding-left: 20px; padding-right: 20px; background-color: var(--theme-bg); border-bottom: 1px solid var(--theme-primary); color: var(--theme-text); display: flex; justify-content: space-between; align-items: center; z-index: 100; font-family: 'Oswald'; min-height: 60px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .nav-left { color: var(--theme-primary); font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 0.9rem; white-space: nowrap; z-index: 10; }
+    .nav-center { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; overflow: hidden; padding: 0 10px; }
+    .nav-title-main { font-weight: bold; font-size: 1.1rem; color: var(--theme-text); letter-spacing: 1px; white-space: nowrap; }
+    .nav-title-sub { font-size: 0.75rem; color: var(--theme-text-muted); font-family: 'Roboto'; font-weight: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .nav-right { display: flex; justify-content: flex-end; z-index: 10; min-width: 60px; }
+    
+    .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; }
 
-    .nav-left {
-        color: var(--theme-primary);
-        font-weight: bold;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 0.9rem;
-        white-space: nowrap;
-        z-index: 10;
-    }
-
-    .nav-center {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        flex: 1;
-        overflow: hidden;
-        padding: 0 10px;
-    }
-
-    .nav-title-main {
-        font-weight: bold;
-        font-size: 1.1rem;
-        color: var(--theme-text);
-        letter-spacing: 1px;
-        white-space: nowrap;
-    }
-
-    .nav-title-sub {
-        font-size: 0.75rem;
-        color: var(--theme-text-muted);
-        font-family: 'Roboto';
-        font-weight: normal;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100%;
-    }
-
-    .nav-right {
-        display: flex;
-        justify-content: flex-end;
-        z-index: 10;
-        min-width: 60px;
-    }
-    .scrollable-content {
-        flex-grow: 1; overflow-y: auto; padding: 20px;
-        display: flex; flex-direction: column; align-items: center;
-        -webkit-overflow-scrolling: touch;
-    }
+    /* --- SELECTORES CALENDARIO --- */
+    .calendar-selectors { width: 100%; max-width: 600px; display: flex; gap: 15px; background: var(--theme-card); padding: 15px; border-radius: 12px; border: 1px solid var(--theme-border); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .selector-group { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+    .selector-group label { color: var(--theme-text-muted); font-family: 'Oswald'; font-size: 0.8rem; letter-spacing: 1px; margin: 0; }
+    .input-dark { background: rgba(0, 0, 0, 0.4) !important; border: 1px solid var(--theme-border) !important; color: var(--theme-text) !important; border-radius: 8px !important; padding: 8px 12px; font-family: 'Roboto'; font-size: 0.9rem; }
+    .input-dark:focus { border-color: var(--theme-primary) !important; box-shadow: 0 0 5px rgba(0,0,0,0.5) !important; }
 
     .routine-grid { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 20px; }
 
     /* --- TARJETA DE DÍA --- */
-    .day-card {
-        background: var(--theme-card);
-        border-radius: 12px;
-        border: 1px solid var(--theme-border);
-        overflow: hidden;
-        transition: transform 0.2s;
-    }
-    /* Borde temático si ya tiene rutina */
+    .day-card { background: var(--theme-card); border-radius: 12px; border: 1px solid var(--theme-border); overflow: hidden; transition: transform 0.2s; }
     .day-card.filled { border-left: 5px solid var(--theme-primary); }
-    /* Borde gris tenue si está vacío */
     .day-card.empty { border-left: 5px solid var(--theme-border); opacity: 0.9; }
 
-    .day-header {
-        background: var(--theme-bg); padding: 12px 15px;
-        display: flex; justify-content: space-between; align-items: center;
-        border-bottom: 1px solid var(--theme-border);
-    }
-    .day-name { font-family: 'Oswald'; color: var(--theme-primary); font-size: 1.1rem; letter-spacing: 1px; }
+    .day-header { background: var(--theme-bg); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--theme-border); }
+    .day-name-wrapper { display: flex; flex-direction: column; }
+    .day-name { font-family: 'Oswald'; color: var(--theme-primary); font-size: 1.1rem; letter-spacing: 1px; line-height: 1; }
+    .day-number { font-family: 'Roboto'; color: var(--theme-text-muted); font-size: 0.75rem; font-weight: bold; margin-top: 2px; }
     
-    .coach-badge {
-        font-size: 0.7rem; color: var(--theme-text-muted); background: rgba(0,0,0,0.3);
-        padding: 4px 8px; border-radius: 4px; display: flex; align-items: center; gap: 5px;
-    }
+    .coach-badge { font-size: 0.7rem; color: var(--theme-text-muted); background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; display: flex; align-items: center; gap: 5px; }
+    .badge-done { font-size: 0.7rem; color: #28a745; background: rgba(40, 167, 69, 0.1); border: 1px solid rgba(40, 167, 69, 0.3); padding: 4px 8px; border-radius: 4px; display: flex; align-items: center; gap: 5px; font-weight: bold; }
 
     .day-body { padding: 0; }
 
     /* --- ESTADO VACÍO (BOTÓN GRANDE) --- */
-    .empty-state {
-        padding: 30px;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        cursor: pointer; transition: background 0.2s;
-    }
+    .empty-state { padding: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: background 0.2s; }
     .empty-state:active { background-color: var(--theme-bg); }
-    
-    .plus-circle {
-        width: 50px; height: 50px; border-radius: 50%; border: 2px dashed var(--theme-text-muted);
-        display: flex; justify-content: center; align-items: center; margin-bottom: 10px;
-        color: var(--theme-text-muted); transition: 0.2s;
-    }
+    .plus-circle { width: 50px; height: 50px; border-radius: 50%; border: 2px dashed var(--theme-text-muted); display: flex; justify-content: center; align-items: center; margin-bottom: 10px; color: var(--theme-text-muted); transition: 0.2s; }
     .empty-state:active .plus-circle { border-color: var(--theme-primary); color: var(--theme-primary); }
     .empty-state span { font-family: 'Oswald'; font-size: 0.9rem; color: var(--theme-text-muted); letter-spacing: 1px; }
 
     /* --- ESTADO CON RUTINA --- */
     .routine-content { padding: 20px; }
-    .routine-content p {
-        white-space: pre-wrap; font-family: 'Roboto'; color: var(--theme-text); font-size: 0.95rem; margin: 0; line-height: 1.5;
-    }
+    .routine-content p { white-space: pre-wrap; font-family: 'Roboto'; color: var(--theme-text); font-size: 0.95rem; margin: 0; line-height: 1.5; }
 
-    .card-footer-actions {
-        background: var(--theme-bg); padding: 10px 15px; border-top: 1px solid var(--theme-border);
-        display: flex; justify-content: space-between; align-items: center;
-    }
+    .card-footer-actions { background: var(--theme-bg); padding: 10px 15px; border-top: 1px solid var(--theme-border); display: flex; justify-content: space-between; align-items: center; }
     .status-ok { color: var(--theme-primary); font-size: 0.8rem; font-weight: bold; display: flex; align-items: center; gap: 5px; }
     
     .btn-icon { background: none; border: none; font-size: 1.1rem; padding: 5px 10px; cursor: pointer; transition: 0.2s; }
     .btn-icon.edit { color: var(--theme-text-muted); } .btn-icon.edit:hover { color: var(--theme-text); }
-    .btn-icon.delete { color: #dc3545; } /* Rojo Semántico Intocable */
+    .btn-icon.delete { color: #dc3545; }
 
     /* --- EDITOR (TEXTAREA) --- */
     .editor-zone { padding: 15px; background: var(--theme-bg); }
-    
-    .custom-textarea {
-        width: 100%; height: 160px; /* Altura fija cómoda */
-        background: var(--theme-card); color: var(--theme-text); border: 1px solid var(--theme-border); border-radius: 8px;
-        padding: 15px; font-family: 'Roboto'; font-size: 1rem; resize: none; outline: none;
-        margin-bottom: 15px;
-    }
+    .custom-textarea { width: 100%; height: 160px; background: var(--theme-card); color: var(--theme-text); border: 1px solid var(--theme-border); border-radius: 8px; padding: 15px; font-family: 'Roboto'; font-size: 1rem; resize: none; outline: none; margin-bottom: 15px; }
     .custom-textarea:focus { border-color: var(--theme-primary); box-shadow: 0 0 10px rgba(0,0,0,0.3); }
 
     .action-buttons { display: flex; gap: 10px; }
-    
-    .btn-save, .btn-cancel {
-        flex: 1; border: none; padding: 12px; border-radius: 6px; font-family: 'Oswald'; font-weight: bold; font-size: 0.9rem; cursor: pointer;
-        display: flex; justify-content: center; align-items: center; gap: 8px;
-    }
+    .btn-save, .btn-cancel { flex: 1; border: none; padding: 12px; border-radius: 6px; font-family: 'Oswald'; font-weight: bold; font-size: 0.9rem; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
     .btn-save { background: var(--theme-primary); color: var(--theme-bg); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .btn-save:active { transform: scale(0.98); }
-    
     .btn-cancel { background: var(--theme-card); color: var(--theme-text); border: 1px solid var(--theme-border); }
     .btn-cancel:active { background: var(--theme-border); }
 
@@ -271,7 +227,6 @@
 </style>
 
 @code {
-    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
     private string EstilosTema = @"
         --theme-primary: #A9A9A9; 
         --theme-secondary: #808080;
@@ -286,63 +241,134 @@
     [Parameter] public string NombreAtleta { get; set; }
 
     public class RutinaAdminDto { 
-        public int DiaSemana { get; set; } 
+        public int RutinaID { get; set; }
+        public DateTime Fecha { get; set; } 
         public string Descripcion { get; set; } 
         public string CoachNombre { get; set; } 
+        public bool Completada { get; set; }
     }
     
     private List<RutinaAdminDto> rutinas = new List<RutinaAdminDto>();
-    private int diaEditando = 0;
+    private bool cargando = false;
+    
+    // Selectores de fecha
+    private int mesSeleccionado;
+    private DateTime lunesSeleccionado;
+    private List<DateTime> semanasDelMes = new();
+    
+    // Editor
+    private DateTime? fechaEditando = null;
     private string textoEditando = "";
 
     protected override async Task OnInitializedAsync()
     {
-        // LEER EL CACHÉ LOCAL AL INSTANTE
         try 
         {
             var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
-            if (!string.IsNullOrEmpty(cache)) 
-            { 
-                EstilosTema = cache; 
-                StateHasChanged(); 
-            }
+            if (!string.IsNullOrEmpty(cache)) { EstilosTema = cache; StateHasChanged(); }
         } 
         catch { }
 
+        mesSeleccionado = DateTime.Now.Month;
+        GenerarSemanasDelMes(mesSeleccionado);
         await CargarRutinas();
     }
 
-    private async Task CargarRutinas()
+    // ==========================================
+    // LÓGICA DEL CALENDARIO DINÁMICO
+    // ==========================================
+    private void GenerarSemanasDelMes(int mes)
     {
-        try {
-            rutinas = await Http.GetFromJsonAsync<List<RutinaAdminDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/semana/{UsuarioId}");
-        } catch { rutinas = new List<RutinaAdminDto>(); }
+        semanasDelMes.Clear();
+        int anio = DateTime.Now.Year;
+        DateTime primerDia = new DateTime(anio, mes, 1);
+        
+        // Buscar el Lunes de esa semana (puede caer en el mes anterior)
+        DateTime iterador = primerDia;
+        int offset = (int)iterador.DayOfWeek - (int)DayOfWeek.Monday;
+        if (offset < 0) offset += 7; // Ajuste si el primer día es domingo
+        iterador = iterador.AddDays(-offset);
+
+        // Agregamos semanas mientras el inicio o fin de la semana toquen el mes
+        while (iterador.Month == mes || iterador.AddDays(6).Month == mes)
+        {
+            semanasDelMes.Add(iterador);
+            iterador = iterador.AddDays(7);
+        }
+
+        // Seleccionar la semana actual por defecto si estamos en el mismo mes
+        if (mes == DateTime.Now.Month)
+        {
+            DateTime hoy = DateTime.Now.Date;
+            int offsetHoy = (int)hoy.DayOfWeek - (int)DayOfWeek.Monday;
+            if (offsetHoy < 0) offsetHoy += 7;
+            lunesSeleccionado = hoy.AddDays(-offsetHoy);
+            
+            // Si la semana actual cayó fuera de la lista, forzamos la primera
+            if (!semanasDelMes.Contains(lunesSeleccionado)) lunesSeleccionado = semanasDelMes.First();
+        }
+        else
+        {
+            lunesSeleccionado = semanasDelMes.First();
+        }
     }
 
-    private RutinaAdminDto ObtenerRutina(int dia) => rutinas.FirstOrDefault(r => r.DiaSemana == dia);
-
-    private string NombreDia(int d) => d switch { 1=>"LUNES", 2=>"MARTES", 3=>"MIÉRCOLES", 4=>"JUEVES", 5=>"VIERNES", 6=>"SÁBADO", 7=>"DOMINGO", _=>"" };
-
-    private void Editar(int dia, string actual)
+    private async Task OnMesCambiado(ChangeEventArgs e)
     {
-        diaEditando = dia;
+        if (int.TryParse(e.Value?.ToString(), out int mes))
+        {
+            mesSeleccionado = mes;
+            GenerarSemanasDelMes(mesSeleccionado);
+            await CargarRutinas();
+        }
+    }
+
+    private async Task OnSemanaCambiada(ChangeEventArgs e)
+    {
+        if (DateTime.TryParse(e.Value?.ToString(), out DateTime lunes))
+        {
+            lunesSeleccionado = lunes;
+            await CargarRutinas();
+        }
+    }
+
+    // ==========================================
+    // LÓGICA DE DATOS
+    // ==========================================
+    private async Task CargarRutinas()
+    {
+        cargando = true;
+        try {
+            string fechaFormat = lunesSeleccionado.ToString("yyyy-MM-dd");
+            rutinas = await Http.GetFromJsonAsync<List<RutinaAdminDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/semana/{UsuarioId}/{fechaFormat}");
+        } catch { rutinas = new List<RutinaAdminDto>(); }
+        finally { cargando = false; }
+    }
+
+    private RutinaAdminDto ObtenerRutina(DateTime fecha) => rutinas.FirstOrDefault(r => r.Fecha.Date == fecha.Date);
+
+    private string NombreDia(DayOfWeek d) => d switch { DayOfWeek.Monday=>"LUNES", DayOfWeek.Tuesday=>"MARTES", DayOfWeek.Wednesday=>"MIÉRCOLES", DayOfWeek.Thursday=>"JUEVES", DayOfWeek.Friday=>"VIERNES", DayOfWeek.Saturday=>"SÁBADO", DayOfWeek.Sunday=>"DOMINGO", _=>"" };
+
+    private void Editar(DateTime fecha, string actual)
+    {
+        fechaEditando = fecha;
         textoEditando = actual;
     }
 
     private void CancelarEdicion()
     {
-        diaEditando = 0;
+        fechaEditando = null;
         textoEditando = "";
     }
 
-    private async Task Guardar(int dia)
+    private async Task Guardar(DateTime fecha)
     {
         if (string.IsNullOrWhiteSpace(textoEditando)) return;
 
         var req = new { 
             UsuarioID = UsuarioId, 
             CoachID = Sesion.Usuario.UsuarioID, 
-            DiaSemana = dia, 
+            Fecha = fecha, 
             Descripcion = textoEditando 
         };
 
@@ -351,20 +377,23 @@
         if (resp.IsSuccessStatusCode)
         {
             await CargarRutinas();
-            diaEditando = 0;
+            fechaEditando = null;
         }
         else
         {
-            await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar", "OK");
+            // MAGIA AQUÍ: Leemos el error real que escupe el Backend
+            string errorReal = await resp.Content.ReadAsStringAsync();
+            await App.Current.MainPage.DisplayAlert("Error del Servidor", errorReal, "OK");
         }
     }
 
-    private async Task Eliminar(int dia)
+    private async Task Eliminar(DateTime fecha)
     {
         bool confirm = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Borrar rutina de este día?", "Sí", "No");
         if (confirm)
         {
-            await Http.DeleteAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/eliminar/{UsuarioId}/{dia}");
+            string fechaFormat = fecha.ToString("yyyy-MM-dd");
+            await Http.DeleteAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/eliminar/{UsuarioId}/{fechaFormat}");
             await CargarRutinas();
         }
     }

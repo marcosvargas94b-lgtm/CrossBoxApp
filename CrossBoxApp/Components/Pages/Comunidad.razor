@@ -204,8 +204,14 @@
     private void VerPlayerCard(Guid targetId)
     {
         string tipoLugar = Sesion.Usuario?.TipoLugar ?? "";
-        if (tipoLugar == "Running") Nav.NavigateTo($"/ficha-running/{targetId}");
-        else if (tipoLugar == "Funcional" || tipoLugar == "Calistenia") Nav.NavigateTo($"/ficha-funcional/{targetId}");
-        else Nav.NavigateTo($"/ficha-atleta/{targetId}");
+
+        if (tipoLugar == "Running")
+            Nav.NavigateTo($"/ficha-running/{targetId}");
+        else if (tipoLugar == "Funcional" || tipoLugar == "Calistenia")
+            Nav.NavigateTo($"/ficha-funcional/{targetId}");
+        else if (tipoLugar == "Gimnasio")
+            Nav.NavigateTo($"/ficha-gym/{targetId}");
+        else
+            Nav.NavigateTo($"/ficha-atleta/{targetId}");
     }
 }

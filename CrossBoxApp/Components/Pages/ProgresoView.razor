@@ -6,7 +6,6 @@
 @inject SesionService Sesion
 @inject IJSRuntime JS
 
-@* ENVOLVEMOS LA VISTA EN EL TEMA GLOBAL *@
 <div style="@EstilosTema">
 
     <div class="main-layout">
@@ -21,17 +20,22 @@
 
         <div class="scrollable-content">
 
-            @* PESTAÑAS DE NAVEGACIÓN *@
-            <div class="filter-tabs fade-in">
-                <button class="tab-btn @(pestañaActiva == "HISTORIAL" ? "active" : "")" 
-                        @onclick='() => CambiarPestaña("HISTORIAL")'>
+            @* PESTAÑAS DE NAVEGACIÓN (SIEMPRE VISIBLES) *@
+            <div class="filter-tabs fade-in mt-2">
+                <button class="tab-btn @(pestañaActiva == "HISTORIAL" ? "active" : "")" @onclick='async () => await CambiarPestaña("HISTORIAL")'>
                     <i class="fas fa-history"></i> MI HISTORIAL
                 </button>
-                
-                <button class="tab-btn @(pestañaActiva == "REGISTRAR" ? "active" : "")" 
-                        @onclick='() => CambiarPestaña("REGISTRAR")'>
+
+                <button class="tab-btn @(pestañaActiva == "REGISTRAR" ? "active" : "")" @onclick='async () => await CambiarPestaña("REGISTRAR")'>
                     <i class="fas fa-plus-circle"></i> NUEVA MARCA
                 </button>
+
+                @if (Sesion.Usuario?.TipoLugar == "Gimnasio")
+                {
+                    <button class="tab-btn @(pestañaActiva == "MEDIDAS" ? "active" : "")" @onclick='async () => await CambiarPestaña("MEDIDAS")'>
+                        <i class="fas fa-weight"></i> MEDIDAS
+                    </button>
+                }
             </div>
 
             @if (cargando)
@@ -44,14 +48,14 @@
             else
             {
                 @* ======================================================= *@
-                @* PESTAÑA 1: HISTORIAL DE PROGRESO (La vista original)    *@
+                @* PESTAÑA 1: HISTORIAL DE PROGRESO (Tus marcas personales)*@
                 @* ======================================================= *@
                 @if (pestañaActiva == "HISTORIAL")
                 {
                     @if (gruposProgreso != null && gruposProgreso.Any())
                     {
                         <div class="instruction-banner fade-in">
-                            <i class="fas fa-hand-pointer"></i> Toca una marca para ver tus récords anteriores
+                            <i class="fas fa-hand-pointer"></i> Toca una marca para ver los récords anteriores
                         </div>
                     }
 
@@ -60,7 +64,7 @@
                         <div class="empty-state fade-in">
                             <i class="fas fa-chart-line"></i>
                             <h3>SIN REGISTROS</h3>
-                            <p>Ve a "NUEVA MARCA" para registrar tu primer PR.</p>
+                            <p>Ve a "NUEVA MARCA" para registrar el primer PR.</p>
                         </div>
                     }
                     else
@@ -92,7 +96,7 @@
                 }
 
                 @* ======================================================= *@
-                @* PESTAÑA 2: REGISTRAR NUEVAS MARCAS (Las Tarjetas)       *@
+                @* PESTAÑA 2: REGISTRAR NUEVAS MARCAS (Tus marcas personales)*@
                 @* ======================================================= *@
                 @if (pestañaActiva == "REGISTRAR")
                 {
@@ -148,11 +152,208 @@
                                                 </button>
                                             }
                                         </div>
-                                    </div> @* <-- AQUÍ ESTABA EL ERROR, ¡AHORA SÍ ES UN DIV! *@
+                                    </div> 
                                 </div>
                             }
                         </div>
                     }
+                }
+
+                @* ======================================================= *@
+                @* PESTAÑA 3: MEDIDAS CORPORALES (SOLO GIMNASIOS)          *@
+                @* ======================================================= *@
+                @if (pestañaActiva == "MEDIDAS")
+                {
+                    <div class="fade-in" style="width: 100%; max-width: 600px;">
+
+                        @* SI ES COACH Y NO HA SELECCIONADO ATLETA: MOSTRAR BUSCADOR *@
+                        @if (EsAdminOCoach && atletaActivo == null)
+                        {
+                            <div class="instruction-banner">
+                                <i class="fas fa-user-check"></i> Selecciona un atleta para ver o registrar su composición corporal.
+                            </div>
+
+                            <div class="search-box mb-3">
+                                <input type="text" class="form-control input-dark search-input" placeholder="Buscar por nombre..." value="@filtroAtleta" @oninput="FiltrarAtletas" />
+                            </div>
+
+                            <div class="records-list" style="max-height: 60vh; overflow-y: auto;">
+                                @if (listaAtletasFiltrada == null)
+                                {
+                                    <div class="text-center p-4"><div class="spinner-border" style="color: var(--theme-primary);"></div></div>
+                                }
+                                else if (!listaAtletasFiltrada.Any())
+                                {
+                                    <div class="text-center p-4 text-theme-muted">No hay resultados.</div>
+                                }
+                                else
+                                {
+                                    @foreach (var atleta in listaAtletasFiltrada)
+                                    {
+                                        <div class="record-item" @onclick="() => SeleccionarAtleta(atleta)">
+                                            <div style="display:flex; align-items:center; gap:10px;">
+                                                <div class="avatar-mini" style="@(!string.IsNullOrEmpty(atleta.FotoUrl) ? $"background-image: url('{atleta.FotoUrl}');" : "")">
+                                                    @if (string.IsNullOrEmpty(atleta.FotoUrl))
+                                                    {
+                                                        @atleta.NombreCompleto.Substring(0, 1).ToUpper()
+                                                    }
+                                                </div>
+                                                <span class="record-name">@atleta.NombreCompleto</span>
+                                            </div>
+                                            <i class="fas fa-chevron-right history-icon"></i>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            @* YA HAY ATLETA SELECCIONADO O ES USUARIO NORMAL: MOSTRAR DASHBOARD *@
+                            @if (EsAdminOCoach)
+                            {
+                                <div class="active-athlete-bar mb-3">
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        <div class="avatar-mini" style="@(!string.IsNullOrEmpty(atletaActivo?.FotoUrl) ? $"background-image: url('{atletaActivo.FotoUrl}');" : "")">
+                                            @if (string.IsNullOrEmpty(atletaActivo?.FotoUrl))
+                                            {
+                                                @atletaActivo?.NombreCompleto.Substring(0, 1).ToUpper()
+                                            }
+                                        </div>
+                                        <span style="font-weight:bold; color:var(--theme-primary);">@atletaActivo?.NombreCompleto</span>
+                                    </div>
+                                    <button class="btn-change-athlete" @onclick="CambiarDeAtleta">
+                                        <i class="fas fa-exchange-alt"></i> CAMBIAR
+                                    </button>
+                                </div>
+                            }
+
+                            @if (historialMedidas == null || !historialMedidas.Any())
+                            {
+                                <div class="empty-state">
+                                    <i class="fas fa-weight" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px;"></i>
+                                    <h3>SIN COMPOSICIÓN CORPORAL</h3>
+                                    <p>No existen medidas registradas actualmente.</p>
+                                    @* AQUÍ SE OCULTÓ EL BOTÓN AL ATLETA *@
+                                    @if (EsAdminOCoach)
+                                    {
+                                        <button class="btn-confirm mt-4" @onclick="AbrirModalNuevaMedida" style="width: 200px; margin: 0 auto;">
+                                            NUEVO REGISTRO
+                                        </button>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                var actual = historialMedidas.First();
+                                double imc = CalcularIMC(actual.Peso, actual.Altura);
+                                var (imcCategoria, imcColor) = ObtenerCategoriaIMC(imc);
+
+                                @* TARJETA CENTRAL (RESUMEN ACTUAL) *@
+                                <div class="body-comp-card" @onclick="() => mostrarModalHistorialMedidas = true">
+                                    <div class="card-glow"></div>
+                                    <div class="badge-actual">ACTUAL</div>
+
+                                    <div class="comp-date">@actual.Fecha.ToString("dd DE MMMM, yyyy").ToUpper()</div>
+
+                                    <div class="comp-grid">
+                                        <div class="comp-item">
+                                            <i class="fas fa-weight"></i>
+                                            <div class="comp-val">@actual.Peso</div>
+                                            <div class="comp-label">PESO (KG)</div>
+                                        </div>
+                                        <div class="comp-item">
+                                            <i class="fas fa-fire-alt text-warning"></i>
+                                            <div class="comp-val">@(actual.PorcentajeGrasa?.ToString() ?? "--")</div>
+                                            <div class="comp-label">% GRASA</div>
+                                        </div>
+                                        <div class="comp-item">
+                                            <i class="fas fa-heartbeat text-danger"></i>
+                                            <div class="comp-val">@(actual.GrasaVisceral?.ToString() ?? "--")</div>
+                                            <div class="comp-label">VISCERAL</div>
+                                        </div>
+                                        <div class="comp-item">
+                                            <i class="fas fa-dumbbell" style="color: #28a745;"></i>
+                                            <div class="comp-val">@(actual.Musculo?.ToString() ?? "--")</div>
+                                            <div class="comp-label">MÚSCULO (KG)</div>
+                                        </div>
+                                    </div>
+                                    <div class="tap-hint">TOCA PARA VER HISTORIAL <i class="fas fa-chevron-right"></i></div>
+                                </div>
+
+                                @* SECCIÓN IMC Y MENSAJE IA *@
+                                <div class="imc-section fade-in mt-4">
+                                    <div class="imc-header">
+                                        <span class="imc-title">ÍNDICE DE MASA CORPORAL</span>
+                                        <span class="imc-value" style="color: @imcColor">@imc.ToString("0.0")</span>
+                                    </div>
+
+                                    <div class="imc-bar">
+                                        <div class="imc-segment" style="background-color: #3498db;" title="Bajo Peso"></div>
+                                        <div class="imc-segment" style="background-color: #2ecc71;" title="Saludable"></div>
+                                        <div class="imc-segment" style="background-color: #f1c40f;" title="Sobrepeso"></div>
+                                        <div class="imc-segment" style="background-color: #e74c3c;" title="Obesidad"></div>
+                                        <div class="imc-marker" style="left: @(CalcularPosicionIMC(imc))%;">▼</div>
+                                    </div>
+
+                                    <div class="imc-category-label text-center mb-3" style="color: @imcColor; font-weight: bold; font-family: 'Oswald'; font-size: 0.9rem;">
+                                        @imcCategoria
+                                    </div>
+
+                                    @if (!string.IsNullOrEmpty(actual.MensajeIA))
+                                    {
+                                        <div class="ia-message-box">
+                                            <i class="fas fa-robot ia-icon"></i>
+                                            <p>@actual.MensajeIA</p>
+                                        </div>
+                                    }
+                                </div>
+
+                                @* AQUÍ SE OCULTÓ EL BOTÓN AL ATLETA *@
+                                @if (EsAdminOCoach)
+                                {
+                                    <button class="btn-ingresar mb-4 mt-3" @onclick="AbrirModalNuevaMedida">
+                                        <i class="fas fa-plus"></i> REGISTRAR NUEVA MARCA
+                                    </button>
+                                }
+
+                                @* GRÁFICA DE BARRAS CSS *@
+                                <div class="chart-wrapper mb-4">
+                                    <h4 class="chart-title">EVOLUCIÓN DEL PESO (KG)</h4>
+                                    <div class="chart-scroll-x scroll-custom">
+                                        <div class="chart-flex">
+                                            @foreach (var m in historialMedidas.OrderBy(x => x.Fecha))
+                                            {
+                                                <div class="bar-col">
+                                                    <div class="bar-value">@m.Peso</div>
+                                                    <div class="bar-track">
+                                                        <div class="bar-fill" style="height: @(CalcularAlturaBarra(m.Peso))%;"></div>
+                                                    </div>
+                                                    <div class="bar-date">@m.Fecha.ToString("dd MMM")</div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @* PREGUNTAS FRECUENTES (FAQ NATIVO) *@
+                                <div class="faq-container mb-4">
+                                    <h4 class="faq-main-title"><i class="fas fa-info-circle"></i> ACERCA DEL IMC Y TU COMPOSICIÓN</h4>
+                                    <details class="faq-details">
+                                        <summary class="faq-summary">¿Es el IMC un indicador fiable de grasa corporal?</summary>
+                                        <div class="faq-content">Es una guía útil y rápida para poblaciones generales, pero <strong>no distingue entre grasa y músculo</strong>. Los atletas que entrenan fuerza pueden tener un IMC "alto" debido al peso de su masa muscular, estando en realidad perfectamente saludables.</div>
+                                    </details>
+                                    <details class="faq-details">
+                                        <summary class="faq-summary">¿Por qué es importante mantener un IMC dentro del rango recomendado?</summary>
+                                        <div class="faq-content">Estadísticamente, un rango equilibrado se asocia con mayor energía diaria, mejor salud cardiovascular, menor estrés en las rodillas y articulaciones, y un sistema inmunológico más fuerte.</div>
+                                    </details>
+                                    <details class="faq-details">
+                                        <summary class="faq-summary">¿Puede un IMC alto/bajo ser saludable en algunos casos?</summary>
+                                        <div class="faq-content">¡Totalmente! Como mencionamos, el músculo pesa más que la grasa ocupando menos volumen. Lo más importante no es este número, sino tu <strong>composición corporal real</strong> (% de grasa vs músculo), tu resistencia y cómo te sientes en el día a día.</div>
+                                    </details>
+                                </div>
+                            }
+                        }
+                    </div>
                 }
             }
             
@@ -217,7 +418,7 @@
     }
 
     @* ========================================== *@
-    @* MODAL 2: REGISTRAR / EDITAR MARCA          *@
+    @* MODAL 2: REGISTRAR / EDITAR MARCA TEST     *@
     @* ========================================== *@
     @if (mostrarModalRegistro)
     {
@@ -249,6 +450,120 @@
         </div>
     }
 
+    @* ========================================== *@
+    @* MODAL 3: REGISTRAR MEDIDAS CORPORALES      *@
+    @* ========================================== *@
+    @if (mostrarModalRegistroMedida)
+    {
+        <div class="modal-overlay fade-in">
+            <div class="modal-content custom-modal slide-up">
+                <div class="modal-header">
+                    <h5 style="color:var(--theme-primary); margin:0; font-family:'Oswald'">
+                        <i class="fas fa-weight" style="margin-right:8px;"></i> REGISTRO CORPORAL
+                    </h5>
+                    <button class="btn-close-custom" @onclick="() => mostrarModalRegistroMedida = false"><i class="fas fa-times"></i></button>
+                </div>
+                
+                <div class="modal-body scroll-custom">
+                    <p class="text-theme-muted text-center" style="font-size: 0.8rem; margin-bottom: 20px;">Llena los datos que entregue tu báscula. Tu coach e IA analizarán el progreso.</p>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="lbl-input">PESO (Obligatorio)</label>
+                            <div class="input-group">
+                                <input type="number" step="0.1" @bind="nuevaMedidaInput.Peso" class="form-control input-dark" placeholder="0.00" />
+                                <span class="input-group-text" style="background:var(--theme-bg); border-color:var(--theme-border); color:var(--theme-primary); font-family:'Oswald';">KG</span>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="lbl-input">ALTURA</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" @bind="nuevaMedidaInput.Altura" class="form-control input-dark" placeholder="Ej: 1.75" />
+                                <span class="input-group-text" style="background:var(--theme-bg); border-color:var(--theme-border); color:var(--theme-primary); font-family:'Oswald';">M</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="lbl-input">SEXO BIOLÓGICO</label>
+                        <select @bind="nuevaMedidaInput.Sexo" class="form-control input-dark">
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="lbl-input">% GRASA CORPORAL</label>
+                        <div class="input-group">
+                            <input type="number" step="0.1" @bind="nuevaMedidaInput.PorcentajeGrasa" class="form-control input-dark" placeholder="Opcional" />
+                            <span class="input-group-text" style="background:var(--theme-bg); border-color:var(--theme-border); color:var(--theme-primary); font-family:'Oswald';">%</span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="lbl-input">GRASA VISCERAL</label>
+                            <input type="number" step="0.1" @bind="nuevaMedidaInput.GrasaVisceral" class="form-control input-dark" placeholder="Índice" />
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="lbl-input">MÚSCULO</label>
+                            <div class="input-group">
+                                <input type="number" step="0.1" @bind="nuevaMedidaInput.Musculo" class="form-control input-dark" placeholder="Opcional" />
+                                <span class="input-group-text" style="background:var(--theme-bg); border-color:var(--theme-border); color:var(--theme-primary); font-family:'Oswald';">KG</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn-cancel" @onclick="() => mostrarModalRegistroMedida = false">Cancelar</button>
+                    <button class="btn-confirm" @onclick="GuardarMedidaCorporal" disabled="@guardandoMedida">
+                        @if(guardandoMedida) { <i class="fas fa-spinner fa-spin"></i> } else { <span>GUARDAR Y ANALIZAR</span> }
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* --- MODAL 4: HISTORIAL FLOTANTE DE MEDIDAS --- *@
+    @if (mostrarModalHistorialMedidas)
+    {
+        <div class="modal-overlay fade-in" @onclick="() => mostrarModalHistorialMedidas = false">
+            <div class="modal-content custom-modal slide-up" @onclick:stopPropagation="true">
+                <div class="modal-header">
+                    <h5 style="color:var(--theme-primary); margin:0; font-family:'Oswald'">
+                        <i class="fas fa-history" style="margin-right:8px;"></i> HISTORIAL CORPORAL
+                    </h5>
+                    <button class="btn-close-custom" @onclick="() => mostrarModalHistorialMedidas = false"><i class="fas fa-times"></i></button>
+                </div>
+
+                <div class="modal-body scroll-custom" style="padding: 0;">
+                    @foreach (var item in historialMedidas)
+                    {
+                        <div class="history-item" style="flex-direction: column; align-items: stretch; gap: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--theme-border); padding-bottom: 5px;">
+                                <span style="font-weight: bold; color: var(--theme-primary);"><i class="far fa-calendar-alt"></i> @item.Fecha.ToString("dd MMM yyyy")</span>
+
+                                @* AQUÍ SE OCULTÓ EL BOTE DE BASURA AL ATLETA *@
+                                @if (EsAdminOCoach)
+                                {
+                                    <button class="btn-delete-mini" @onclick="() => EliminarMedida(item.MedidaID)" title="Borrar registro"><i class="fas fa-trash"></i></button>
+                                }
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; text-align: center; font-family: 'Oswald';">
+                                <div><div style="font-size:1.2rem; color:var(--theme-text);">@item.Peso</div><div style="font-size:0.7rem; color:var(--theme-text-muted);">PESO</div></div>
+                                <div><div style="font-size:1.2rem; color:var(--theme-text);">@(item.PorcentajeGrasa?.ToString() ?? "--")</div><div style="font-size:0.7rem; color:var(--theme-text-muted);">% GRASA</div></div>
+                                <div><div style="font-size:1.2rem; color:var(--theme-text);">@(item.GrasaVisceral?.ToString() ?? "--")</div><div style="font-size:0.7rem; color:var(--theme-text-muted);">VISCERAL</div></div>
+                                <div><div style="font-size:1.2rem; color:var(--theme-text);">@(item.Musculo?.ToString() ?? "--")</div><div style="font-size:0.7rem; color:var(--theme-text-muted);">MÚSCULO</div></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
 </div>
 
 <style>
@@ -262,130 +577,136 @@
     
     .scrollable-content { flex-grow: 1; overflow-y: auto; background-color: var(--theme-bg); padding: 20px 15px; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; align-items: center; }
 
-    /* --- TABS (PESTAÑAS) --- */
+    /* BÚSQUEDA Y SELECTOR DE ATLETA */
+    .active-athlete-bar { width: 100%; max-width: 600px; background: var(--theme-card); border: 1px solid var(--theme-primary); padding: 10px 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+    .btn-change-athlete { background: rgba(255,255,255,0.05); border: 1px solid var(--theme-border); color: var(--theme-text-muted); font-family: 'Oswald'; font-size: 0.8rem; padding: 5px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+    .btn-change-athlete:hover { color: var(--theme-primary); border-color: var(--theme-primary); }
+    .search-box { width: 100%; max-width: 600px; }
+    .search-input { border-radius: 20px !important; padding-left: 15px; text-align: center; }
+    .avatar-mini { width: 35px; height: 35px; border-radius: 50%; background-color: var(--theme-bg); border: 1px solid var(--theme-primary); display: flex; align-items: center; justify-content: center; font-weight: bold; color: var(--theme-primary); background-size: cover; background-position: center; }
+
+    /* TABS */
     .filter-tabs { display: flex; gap: 10px; margin-bottom: 25px; background: var(--theme-card); padding: 5px; border-radius: 12px; border: 1px solid var(--theme-border); width: 100%; max-width: 600px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .tab-btn { flex: 1; background: transparent; border: none; color: var(--theme-text-muted); padding: 10px 5px; font-family: 'Oswald'; font-size: 0.95rem; border-radius: 8px; transition: all 0.3s; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; letter-spacing: 1px; }
     .tab-btn.active { background: var(--theme-primary); color: var(--theme-bg); font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
 
-    /* --- ESTILOS DE LA PESTAÑA: HISTORIAL --- */
+    /* ESTADO VACÍO Y BANNERS */
     .instruction-banner { width: 100%; max-width: 600px; text-align: center; color: var(--theme-text-muted); font-size: 0.85rem; margin-bottom: 20px; font-family: 'Roboto', sans-serif; background: rgba(255, 255, 255, 0.05); padding: 8px; border-radius: 20px; border: 1px dashed var(--theme-border); }
-    .instruction-banner i { color: var(--theme-primary); margin-right: 5px; animation: bounce 2s infinite; }
+    .empty-state { text-align: center; margin-top: 60px; color: var(--theme-text-muted); font-family: 'Roboto'; }
+    .empty-state i { font-size: 3rem; margin-bottom: 15px; color: var(--theme-border); }
 
+    /* HISTORIAL PESTAÑA */
     .category-section { margin-bottom: 30px; width: 100%; max-width: 600px; align-self: center; }
     .category-header { color: var(--theme-primary); font-family: 'Oswald'; font-size: 1.2rem; border-bottom: 1px solid var(--theme-primary); padding-bottom: 5px; margin-bottom: 10px; letter-spacing: 1px; }
     .records-list { background-color: var(--theme-card); border-radius: 12px; border: 1px solid var(--theme-border); overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-    
     .record-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid var(--theme-border); cursor: pointer; position: relative; background-color: var(--theme-card); transition: background 0.2s; }
     .record-item:last-child { border-bottom: none; }
     .record-item:active { background-color: var(--theme-bg); }
-
     .record-name { font-family: 'Roboto'; font-size: 1rem; color: var(--theme-text); flex: 1; font-weight: bold; }
     .record-value-wrapper { display: flex; align-items: baseline; gap: 5px; margin-right: 25px; }
     .record-num { font-family: 'Oswald'; font-size: 1.4rem; color: var(--theme-text); font-weight: bold; }
     .record-unit { font-family: 'Oswald'; font-size: 0.8rem; color: var(--theme-primary); font-weight: bold; text-transform: uppercase; }
     .history-icon { color: var(--theme-text-muted); font-size: 0.8rem; position: absolute; right: 15px; }
 
-    /* --- ESTILOS DE LA PESTAÑA: REGISTRAR (Tarjetas) --- */
+    /* EVALUACIONES (TARJETAS) */
     .eval-grid { width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 15px; }
     .eval-card { border: 1px solid var(--theme-border); border-radius: 12px; overflow: hidden; background: var(--theme-card); box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     .card-header-yellow { background-color: var(--theme-primary); padding: 8px 15px; display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: bold; color: var(--theme-bg); font-family: 'Oswald'; }
     .card-body-dark { padding: 15px; }
-
     .test-name { color: var(--theme-text); font-family: 'Oswald'; font-size: 1.2rem; margin-bottom: 10px; text-transform: uppercase; }
     .result-area { display: flex; justify-content: space-between; align-items: center; min-height: 40px; }
     .result-display { display: flex; flex-direction: column; }
     .value-row { display: flex; align-items: baseline; gap: 5px; }
-    
     .result-value { color: var(--theme-primary); font-size: 1.8rem; font-weight: bold; line-height: 1; font-family: 'Oswald'; }
     .result-unit { color: var(--theme-primary); font-size: 1rem; font-weight: bold; text-transform: uppercase; font-family: 'Oswald'; }
     .result-date { color: var(--theme-text-muted); font-size: 0.75rem; margin-top: 4px; font-family: 'Roboto'; }
-
     .action-buttons { display: flex; gap: 8px; }
     .btn-icon { background: transparent; border: 1px solid var(--theme-border); color: var(--theme-text-muted); border-radius: 8px; padding: 8px 12px; font-size: 1rem; cursor: pointer; transition: 0.2s; }
     .btn-icon:active { transform: scale(0.95); }
     .btn-icon.edit:hover { color: var(--theme-primary); border-color: var(--theme-primary); background: rgba(255,255,255,0.05); }
     .btn-icon.delete:hover { color: #d9534f; border-color: #d9534f; background: rgba(217,83,79,0.1); }
-    
     .btn-icon.new-record { color: #28a745; border-color: #28a745; font-weight: bold; font-family: 'Oswald'; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
     .btn-icon.new-record:hover { background-color: rgba(40, 167, 69, 0.1); }
-
     .btn-ingresar { width: 100%; background: transparent; border: 1px dashed var(--theme-primary); color: var(--theme-primary); padding: 10px; border-radius: 8px; font-weight: bold; font-family: 'Oswald'; transition: 0.2s; }
     .btn-ingresar:active { background: rgba(255,255,255,0.05); }
 
-    .empty-state { text-align: center; margin-top: 60px; color: var(--theme-text-muted); font-family: 'Roboto'; }
-    .empty-state i { font-size: 3rem; margin-bottom: 15px; color: var(--theme-border); }
+    /* ========================================= */
+    /* NUEVO: ESTILOS IMC Y MENSAJE IA           */
+    /* ========================================= */
+    .body-comp-card { background: var(--theme-card); border: 2px solid var(--theme-primary); border-radius: 20px; padding: 25px; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.6); cursor: pointer; transition: transform 0.2s; }
+    .body-comp-card:active { transform: scale(0.97); }
+    .card-glow { position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: radial-gradient(circle, var(--theme-primary) 0%, transparent 70%); opacity: 0.15; pointer-events: none; }
+    .badge-actual { position: absolute; top: 15px; right: 15px; background: var(--theme-primary); color: var(--theme-bg); padding: 4px 10px; font-size: 0.7rem; font-family: 'Oswald'; font-weight: bold; border-radius: 12px; box-shadow: 0 0 10px rgba(255, 255, 255, 0.2); }
+    .comp-date { font-family: 'Roboto'; color: var(--theme-text-muted); font-size: 0.85rem; margin-bottom: 20px; letter-spacing: 1px; }
+    .comp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center; }
+    .comp-item { background: rgba(0,0,0,0.3); padding: 15px 10px; border-radius: 12px; border: 1px solid var(--theme-border); }
+    .comp-item i { font-size: 1.5rem; color: var(--theme-primary); margin-bottom: 8px; }
+    .comp-val { font-family: 'Oswald'; font-size: 1.8rem; font-weight: bold; color: var(--theme-text); line-height: 1; margin-bottom: 5px; }
+    .comp-label { font-family: 'Roboto'; font-size: 0.65rem; color: var(--theme-text-muted); font-weight: bold; letter-spacing: 1px; }
+    .tap-hint { text-align: center; font-size: 0.7rem; color: var(--theme-primary); font-family: 'Oswald'; margin-top: 25px; letter-spacing: 1px; }
 
-    /* ========================================= */
-    /* MODALES GENÉRICOS VIP                     */
-    /* ========================================= */
+    /* Barra IMC */
+    .imc-section { background: var(--theme-card); padding: 20px; border-radius: 15px; border: 1px solid var(--theme-border); width: 100%; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    .imc-header { display: flex; justify-content: space-between; align-items: center; font-family: 'Oswald'; margin-bottom: 15px; }
+    .imc-title { color: var(--theme-text-muted); letter-spacing: 1px; font-size: 0.9rem; }
+    .imc-value { font-size: 2rem; font-weight: bold; }
+    .imc-bar { display: flex; width: 100%; height: 12px; border-radius: 6px; overflow: hidden; position: relative; margin-bottom: 8px; }
+    .imc-segment { flex: 1; }
+    .imc-marker { position: absolute; top: -5px; font-size: 1.2rem; transform: translateX(-50%); transition: left 0.5s ease-out; color: var(--theme-text); text-shadow: 0 0 5px black; }
+    
+    .ia-message-box { background: rgba(255,255,255,0.05); border-left: 4px solid var(--theme-primary); padding: 15px; border-radius: 0 8px 8px 0; display: flex; gap: 15px; align-items: flex-start; margin-top: 15px; }
+    .ia-icon { font-size: 1.5rem; color: var(--theme-primary); margin-top: 2px; }
+    .ia-message-box p { margin: 0; font-family: 'Roboto'; font-size: 0.85rem; color: var(--theme-text); line-height: 1.5; font-style: italic; }
+
+    /* Gráfica CSS de Barras */
+    .chart-wrapper { background: var(--theme-card); border-radius: 15px; border: 1px solid var(--theme-border); padding: 20px; width: 100%; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    .chart-title { color: var(--theme-text-muted); font-family: 'Oswald'; font-size: 0.9rem; text-align: center; margin-bottom: 20px; letter-spacing: 1px; }
+    .chart-scroll-x { width: 100%; overflow-x: auto; padding-bottom: 10px; }
+    .chart-flex { display: flex; gap: 20px; align-items: flex-end; height: 180px; min-width: min-content; padding: 0 10px; }
+    .bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+    .bar-value { font-family: 'Oswald'; font-size: 0.8rem; color: var(--theme-text); margin-bottom: 5px; }
+    .bar-track { width: 30px; height: 120px; background: rgba(255,255,255,0.05); border-radius: 6px 6px 0 0; position: relative; display: flex; align-items: flex-end; }
+    .bar-fill { width: 100%; background: linear-gradient(to top, var(--theme-primary), var(--theme-secondary)); border-radius: 6px 6px 0 0; box-shadow: 0 -3px 10px rgba(0,0,0,0.5); transition: height 0.5s ease-out; }
+    .bar-date { font-family: 'Roboto'; font-size: 0.65rem; color: var(--theme-text-muted); margin-top: 8px; text-transform: uppercase; white-space: nowrap; }
+
+    /* FAQ ACORDEÓN */
+    .faq-container { width: 100%; }
+    .faq-main-title { font-family: 'Oswald'; color: var(--theme-text-muted); font-size: 1rem; margin-bottom: 15px; padding-left: 10px; }
+    .faq-details { background: var(--theme-card); border: 1px solid var(--theme-border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; transition: all 0.3s; }
+    .faq-summary { font-family: 'Roboto'; font-weight: bold; font-size: 0.9rem; color: var(--theme-text); padding: 15px; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+    .faq-summary::-webkit-details-marker { display: none; }
+    .faq-summary::after { content: '\f078'; font-family: 'Font Awesome 5 Free'; font-weight: 900; color: var(--theme-primary); font-size: 0.8rem; transition: 0.3s; }
+    .faq-details[open] .faq-summary::after { transform: rotate(180deg); }
+    .faq-content { padding: 0 15px 15px 15px; font-family: 'Roboto'; font-size: 0.85rem; color: var(--theme-text-muted); line-height: 1.5; }
+
+    /* MODALES GENÉRICOS */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 5000; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(8px); padding: 20px; }
-    
-    .custom-modal { background: var(--theme-bg); width: 100%; max-width: 420px; border-radius: 20px; border: 1px solid var(--theme-border); border-top: 4px solid var(--theme-primary); display: flex; flex-direction: column; color: var(--theme-text); max-height: 85vh; box-shadow: 0 25px 50px rgba(0,0,0,0.9); overflow: hidden; animation: modalBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-    
+    .custom-modal { background: var(--theme-bg); width: 100%; max-width: 420px; border-radius: 20px; border: 1px solid var(--theme-border); border-top: 4px solid var(--theme-primary); display: flex; flex-direction: column; color: var(--theme-text); max-height: 85vh; overflow: hidden; }
     .modal-header { padding: 20px 25px; background: var(--theme-card); border-bottom: 1px solid var(--theme-border); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-    .modal-body { padding: 25px 20px; overflow-y: auto; flex-grow: 1; -webkit-overflow-scrolling: touch; }
+    .modal-body { padding: 25px 20px; overflow-y: auto; flex-grow: 1; }
     .modal-footer { padding: 15px 20px; background: var(--theme-card); border-top: 1px solid var(--theme-border); display: flex; gap: 10px; flex-shrink: 0; }
-    
-    /* LA CRUZ ROJA ELEGANTE */
-    .btn-close-custom { background: rgba(220, 53, 69, 0.1); border: 1px solid #dc3545; color: #dc3545; width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(220, 53, 69, 0.2); }
-    .btn-close-custom:hover { background: #dc3545; color: white; transform: scale(1.1); }
-    .btn-close-custom:active { transform: scale(0.9); }
-    
-    /* BOTONES DE ACCIÓN DEL MODAL */
-    .btn-confirm { background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; flex: 1; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.2s; text-align: center; }
-    .btn-confirm:active { transform: scale(0.95); }
-    
-    .btn-cancel { background: #333333 !important; color: #ffffff !important; border: 1px solid #555555 !important; padding: 12px; font-family: 'Oswald', sans-serif; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; flex: 1; border-radius: 10px; transition: 0.2s; text-align: center; cursor: pointer; }
-    .btn-cancel:active { transform: scale(0.95); background: #222222 !important; }
-
-    /* CAMPOS DE TEXTO ENCAPSULADOS */
+    .btn-close-custom { background: rgba(220, 53, 69, 0.1); border: 1px solid #dc3545; color: #dc3545; width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; cursor: pointer; transition: 0.2s; }
+    .btn-confirm { background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; flex: 1; border-radius: 10px; cursor: pointer; }
+    .btn-cancel { background: #333333; color: #ffffff; border: 1px solid #555555; padding: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; flex: 1; border-radius: 10px; cursor: pointer; }
     .lbl-input { color: var(--theme-text-muted); font-size: 0.8rem; font-weight: bold; margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 1px; }
-    .input-dark { background: rgba(0, 0, 0, 0.4) !important; border: 1px solid var(--theme-border) !important; color: var(--theme-text) !important; border-radius: 10px !important; padding: 12px 15px; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); width: 100%; box-sizing: border-box; }
-    .input-dark:focus { border-color: var(--theme-primary) !important; box-shadow: 0 0 10px rgba(255, 255, 255, 0.05) !important; outline: none; }
-    .input-dark::placeholder { color: var(--theme-text-muted) !important; opacity: 0.7; }
-
-    /* --- ESPECÍFICOS DE MODALES DE ESTA VISTA --- */
-    .test-title-modal { 
-    color: var(--theme-text); 
-    font-family: 'Oswald'; 
-    margin-top: 25px;  
-    margin-bottom: 20px; 
-    font-size: 1.5rem; 
-    text-transform: uppercase; 
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.5); 
-}
+    .input-dark { background: rgba(0, 0, 0, 0.4) !important; border: 1px solid var(--theme-border) !important; color: var(--theme-text) !important; border-radius: 10px !important; padding: 12px 15px; font-size: 0.95rem; }
+    .input-group { display: flex; align-items: stretch; width: 100%; }
+    .input-group .form-control { border-radius: 10px 0 0 10px !important; flex: 1; }
+    .input-group-text { display: flex; align-items: center; justify-content: center; padding: 0 15px; border-radius: 0 10px 10px 0; border: 1px solid; border-left: none; }
     
+    .test-title-modal { color: var(--theme-text); font-family: 'Oswald'; margin-top: 25px; margin-bottom: 20px; font-size: 1.5rem; text-transform: uppercase; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
     .input-with-unit { display: flex; align-items: center; justify-content: center; gap: 15px; }
     .big-input { text-align: center; font-size: 2.2rem !important; font-weight: bold; width: 150px !important; padding: 10px !important; font-family: 'Oswald'; }
-    .big-input::placeholder { font-size: 1.2rem !important; font-weight: normal; vertical-align: middle; }
     .unit-label { color: var(--theme-primary); font-size: 1.6rem; font-family: 'Oswald'; font-weight: bold; text-transform: uppercase; }
 
-    /* Historial List */
-    .history-list { padding: 0 !important; }
-    .history-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid var(--theme-border); color: var(--theme-text-muted); background: var(--theme-bg); }
-    .history-item.current-pr { background: rgba(255, 255, 255, 0.05); border-left: 4px solid var(--theme-primary); color: var(--theme-text); }
-    .h-info { display: flex; flex-direction: column; gap: 4px; }
-    .h-date { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--theme-text-muted); font-family: 'Roboto'; }
-    .current-pr .h-date { color: var(--theme-primary); font-weight: bold; }
-    .h-value { font-family: 'Oswald'; font-size: 1.5rem; font-weight: bold; color: var(--theme-text); }
-    .unit-small { font-size: 0.8rem; color: var(--theme-text-muted); font-weight: normal; margin-left: 2px; }
-    .badge-pr { background: var(--theme-primary); color: var(--theme-bg); font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; width: fit-content; display: flex; align-items: center; gap: 4px; font-family: 'Oswald'; }
-
-    /* SCROLLBAR PREMIUM */
-    .modal-body::-webkit-scrollbar, .scroll-custom::-webkit-scrollbar { width: 6px; }
-    .modal-body::-webkit-scrollbar-track, .scroll-custom::-webkit-scrollbar-track { background: transparent; border-radius: 10px; }
-    .modal-body::-webkit-scrollbar-thumb, .scroll-custom::-webkit-scrollbar-thumb { background: var(--theme-border); border-radius: 10px; }
-    .modal-body::-webkit-scrollbar-thumb:hover, .scroll-custom::-webkit-scrollbar-thumb:hover { background: var(--theme-primary); }
-
-    /* ANIMACIONES */
     .fade-in { animation: fadeIn 0.4s ease; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    @@keyframes modalBounce { from { transform: scale(0.8) translateY(30px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
-    @@keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
+    .btn-delete-mini { background: rgba(220, 53, 69, 0.1); color: #dc3545; border: 1px solid transparent; width: 30px; height: 30px; border-radius: 8px; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; }
+    .btn-delete-mini:active { transform: scale(0.9); }
 </style>
 
 @code {
-    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
     private string EstilosTema = @"
         --theme-primary: #A9A9A9; 
         --theme-secondary: #808080;
@@ -397,7 +718,16 @@
     ";
 
     private bool cargando = true;
-    private string pestañaActiva = "HISTORIAL"; // HISTORIAL o REGISTRAR
+    private string pestañaActiva = "HISTORIAL"; 
+
+    // Variables de Permisos y Selector de Atletas
+    private bool EsAdminOCoach = false;
+    private string filtroAtleta = "";
+    private List<UsuarioListDto> listaTodosAtletas;
+    private List<UsuarioListDto> listaAtletasFiltrada;
+    
+    private Guid usuarioObjetivoId; 
+    private UsuarioListDto atletaActivo = null;
 
     // Variables Pestaña Historial
     private IEnumerable<IGrouping<string, EvaluacionVisualDto>> gruposProgreso = new List<IGrouping<string, EvaluacionVisualDto>>();
@@ -412,28 +742,99 @@
     private EvaluacionVisualDto testSeleccionadoParaRegistro;
     private string valorInputRegistro;
 
+    // Variables Pestaña Medidas
+    private List<MedidaCorporalDto> historialMedidas = new List<MedidaCorporalDto>();
+    private bool mostrarModalHistorialMedidas = false;
+    private bool mostrarModalRegistroMedida = false;
+    private bool guardandoMedida = false;
+    private MedidaCorporalDto nuevaMedidaInput = new MedidaCorporalDto();
+    
+    public class MedidaCorporalDto
+    {
+        public Guid MedidaID { get; set; }
+        public Guid UsuarioID { get; set; }
+        public DateTime Fecha { get; set; }
+        public decimal Peso { get; set; }
+        public decimal? PorcentajeGrasa { get; set; }
+        public decimal? GrasaVisceral { get; set; }
+        public decimal? Musculo { get; set; }
+        public decimal Altura { get; set; }
+        public string? Sexo { get; set; } = "M";
+        public string? MensajeIA { get; set; }
+    }
+
     protected override async Task OnInitializedAsync()
     {
-        // LEER EL CACHÉ LOCAL AL INSTANTE
         try 
         {
             var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
-            if (!string.IsNullOrEmpty(cache)) 
-            { 
-                EstilosTema = cache; 
-                StateHasChanged(); 
-            }
+            if (!string.IsNullOrEmpty(cache)) { EstilosTema = cache; StateHasChanged(); }
         } 
         catch { }
 
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
 
+        EsAdminOCoach = Sesion.Usuario.TipoUsuarioID == 1 || Sesion.Usuario.TipoUsuarioID == 3;
+        usuarioObjetivoId = Sesion.Usuario.UsuarioID;
+
+        // Cargamos la lista de atletas siempre, por si el admin se pasa a la pestaña MEDIDAS luego
+        if (EsAdminOCoach)
+        {
+            await CargarListaAtletasGym();
+        }
+
+        // Cargamos por defecto los RM del Coach/Atleta que acaba de entrar
         await CargarDatosUniversales();
     }
 
-    private void CambiarPestaña(string tab)
+    // --- LÓGICA SELECTOR ATLETA (COACH) ---
+    private async Task CargarListaAtletasGym()
+    {
+        try
+        {
+            var boxId = Sesion.Usuario.BoxID;
+            listaTodosAtletas = await Http.GetFromJsonAsync<List<UsuarioListDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/buscador/{boxId}");
+            listaAtletasFiltrada = listaTodosAtletas;
+        }
+        catch { listaTodosAtletas = new List<UsuarioListDto>(); listaAtletasFiltrada = new List<UsuarioListDto>(); }
+    }
+
+    // EL ONINPUT HACE QUE BUSQUE LETRA POR LETRA
+    private void FiltrarAtletas(ChangeEventArgs e)
+    {
+        filtroAtleta = e.Value?.ToString() ?? "";
+        if (string.IsNullOrWhiteSpace(filtroAtleta)) listaAtletasFiltrada = listaTodosAtletas;
+        else listaAtletasFiltrada = listaTodosAtletas.Where(x => x.NombreCompleto != null && x.NombreCompleto.Contains(filtroAtleta, StringComparison.OrdinalIgnoreCase)).ToList();
+    }
+
+    private async Task SeleccionarAtleta(UsuarioListDto atleta)
+    {
+        atletaActivo = atleta;
+        usuarioObjetivoId = atleta.UsuarioId;
+        await CargarMedidasCorporales(); // Cargamos SOLO las medidas corporales del cliente
+    }
+
+    private void CambiarDeAtleta()
+    {
+        atletaActivo = null;
+        usuarioObjetivoId = Sesion.Usuario.UsuarioID; // Regresamos al id del coach por si cambia de pestaña
+        historialMedidas = new List<MedidaCorporalDto>();
+        filtroAtleta = "";
+        listaAtletasFiltrada = listaTodosAtletas;
+    }
+
+    // --- LÓGICA NAVEGACIÓN Y CARGA ---
+    private async Task CambiarPestaña(string tab)
     {
         pestañaActiva = tab;
+
+        if (tab == "MEDIDAS" && !historialMedidas.Any())
+        {
+            if (!EsAdminOCoach || (EsAdminOCoach && atletaActivo != null))
+            {
+                await CargarMedidasCorporales();
+            }
+        }
     }
 
     private async Task CargarDatosUniversales()
@@ -442,125 +843,162 @@
         {
             cargando = true;
             var boxId = Sesion.Usuario.BoxID;
-            var userId = Sesion.Usuario.UsuarioID;
 
-            // La API de evaluaciones nos trae TODOS los tests configurados en el box.
-            // Si el usuario ya tiene una marca, el campo "Valor" viene lleno. Si no, viene nulo.
-            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/evaluacionesapi/usuario/{boxId}/{userId}");
+            // Se carga la info del USUARIO LOGUEADO (porque esto es para la pestaña 1 y 2)
+            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/evaluacionesapi/usuario/{boxId}/{Sesion.Usuario.UsuarioID}");
 
             if (response.IsSuccessStatusCode)
             {
                 var todosLosTests = await response.Content.ReadFromJsonAsync<List<EvaluacionVisualDto>>();
-
-                // Llenar Lista para la pestaña REGISTRAR (Muestra absolutamente todos los tests)
                 listaEvaluaciones = todosLosTests;
-
-                // Llenar Grupos para la pestaña HISTORIAL (Solo muestra los que sí tienen algún valor)
-                gruposProgreso = todosLosTests
-                    .Where(x => !string.IsNullOrEmpty(x.Valor))
-                    .GroupBy(x => x.Categoria)
-                    .ToList();
+                gruposProgreso = todosLosTests.Where(x => !string.IsNullOrEmpty(x.Valor)).GroupBy(x => x.Categoria).ToList();
             }
         }
-        catch (Exception ex)
-        {
-            await App.Current.MainPage.DisplayAlert("Error", "No se pudo conectar con el servidor", "OK");
-        }
-        finally
-        {
-            cargando = false;
-        }
+        catch { await App.Current.MainPage.DisplayAlert("Error", "No se pudo conectar con el servidor", "OK"); }
+        finally { cargando = false; }
     }
 
-    // --- LÓGICA MODAL HISTORIAL ---
+    // --- LÓGICA MODAL HISTORIAL TESTS ---
     private async Task VerHistorial(Guid testBoxId, string nombreTest)
     {
         nombreEjercicioSeleccionado = nombreTest;
         mostrarModalHistorial = true;
         historialCargado = null; 
 
-        try
-        {
-            var userId = Sesion.Usuario.UsuarioID;
-            historialCargado = await Http.GetFromJsonAsync<List<HistorialDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/Evaluacionesapi/historial/{userId}/{testBoxId}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-        }
+        try { historialCargado = await Http.GetFromJsonAsync<List<HistorialDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/Evaluacionesapi/historial/{Sesion.Usuario.UsuarioID}/{testBoxId}"); }
+        catch { }
     }
     private void CerrarModalHistorial() => mostrarModalHistorial = false;
 
-    // --- LÓGICA MODAL REGISTRO/EDICIÓN ---
+    // --- LÓGICA MODAL REGISTRO/EDICIÓN TESTS ---
     private void AbrirModalRegistro(EvaluacionVisualDto item, bool esNuevaMarca)
     {
         testSeleccionadoParaRegistro = item;
         esModoNuevaMarca = esNuevaMarca;
-        // Si es nuevo, vacío. Si es editar, ponemos el último valor que tenga.
         valorInputRegistro = esNuevaMarca ? "" : (item.Valor ?? "");
         mostrarModalRegistro = true;
     }
 
     private async Task GuardarMarca()
     {
-        if (string.IsNullOrWhiteSpace(valorInputRegistro))
-        {
-            await App.Current.MainPage.DisplayAlert("Aviso", "No puedes guardar una marca vacía.", "OK");
-            return;
-        }
-
+        if (string.IsNullOrWhiteSpace(valorInputRegistro)) { await App.Current.MainPage.DisplayAlert("Aviso", "No puedes guardar una marca vacía.", "OK"); return; }
         try 
         {
-            var dto = new GuardarResultadoDto 
-            { 
-                TestUsuarioId = testSeleccionadoParaRegistro.TestUsuarioId, 
-                TestBoxId = testSeleccionadoParaRegistro.TestBoxId, 
-                UsuarioId = Sesion.Usuario.UsuarioID, 
-                Valor = valorInputRegistro, 
-                EsNuevaMarca = esModoNuevaMarca 
-            };
-
+            var dto = new GuardarResultadoDto { TestUsuarioId = testSeleccionadoParaRegistro.TestUsuarioId, TestBoxId = testSeleccionadoParaRegistro.TestBoxId, UsuarioId = Sesion.Usuario.UsuarioID, Valor = valorInputRegistro, EsNuevaMarca = esModoNuevaMarca };
             var r = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/evaluacionesapi/guardar", dto);
-            
-            if (r.IsSuccessStatusCode) 
-            { 
-                mostrarModalRegistro = false; 
-                await CargarDatosUniversales(); // Recargamos para que se actualicen ambas pestañas
-                await App.Current.MainPage.DisplayAlert("¡Felicidades!", "Marca guardada con éxito.", "OK");
-            }
-            else 
-            { 
-                await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar la marca. Intenta de nuevo.", "OK"); 
-            }
+            if (r.IsSuccessStatusCode) { mostrarModalRegistro = false; await CargarDatosUniversales(); await App.Current.MainPage.DisplayAlert("¡Felicidades!", "Marca guardada con éxito.", "OK"); }
+            else { await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar la marca.", "OK"); }
         } 
-        catch(Exception ex) 
-        { 
-            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); 
-        }
+        catch(Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }
     }
 
     private async Task EliminarRegistro(Guid? testUsuarioId)
     {
-        bool c = await App.Current.MainPage.DisplayAlert("Eliminar Marca", "¿Estás seguro que deseas borrar esta marca de tu historial? Esta acción no se puede deshacer.", "Sí, borrar", "Cancelar");
+        bool c = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Borrar esta marca del historial?", "Sí, borrar", "Cancelar");
         if (!c) return;
-        
-        try 
-        {
+        try {
             var r = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/evaluacionesapi/eliminar-registro/{testUsuarioId}", null);
-            if (r.IsSuccessStatusCode) 
-            {
-                await CargarDatosUniversales();
-            }
-            else 
-            {
-                await App.Current.MainPage.DisplayAlert("Error", "No se pudo eliminar.", "OK");
-            }
-        } 
-        catch(Exception ex) 
-        { 
-            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); 
-        }
+            if (r.IsSuccessStatusCode) await CargarDatosUniversales();
+        } catch { }
     }
 
-    private void Volver() => Nav.NavigateTo("/home");
+    private async Task CargarMedidasCorporales()
+    {
+        try
+        {
+            historialMedidas = await Http.GetFromJsonAsync<List<MedidaCorporalDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/evaluacionesapi/medidas/{usuarioObjetivoId}");
+
+            StateHasChanged();
+        }
+        catch { }
+    }
+
+    private void AbrirModalNuevaMedida()
+    {
+        decimal alturaPrevia = 0;
+        string sexoPrevio = "M";
+        if(historialMedidas != null && historialMedidas.Any())
+        {
+            alturaPrevia = historialMedidas.First().Altura;
+            sexoPrevio = historialMedidas.First().Sexo ?? "M";
+        }
+
+        // Le asignamos la medida al usuarioObjetivoId (El seleccionado o el propio atleta)
+        nuevaMedidaInput = new MedidaCorporalDto { UsuarioID = usuarioObjetivoId, Altura = alturaPrevia, Sexo = sexoPrevio };
+        mostrarModalRegistroMedida = true;
+    }
+
+    private async Task GuardarMedidaCorporal()
+    {
+        if (nuevaMedidaInput.Peso <= 0 || nuevaMedidaInput.Altura <= 0)
+        {
+            await App.Current.MainPage.DisplayAlert("Dato faltante", "El peso y la altura son obligatorios (mayores a cero).", "OK");
+            return;
+        }
+
+        guardandoMedida = true;
+        try
+        {
+            var r = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/evaluacionesapi/medidas/guardar", nuevaMedidaInput);
+            if (r.IsSuccessStatusCode)
+            {
+                mostrarModalRegistroMedida = false;
+                await CargarMedidasCorporales();
+            }
+            else await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar la medida.", "OK");
+        }
+        catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }
+        finally { guardandoMedida = false; }
+    }
+
+    private async Task EliminarMedida(Guid id)
+    {
+        bool confirmar = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Borrar esta lectura de composición corporal?", "Sí", "Cancelar");
+        if(!confirmar) return;
+        try {
+            var r = await Http.DeleteAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/evaluacionesapi/medidas/eliminar/{id}");
+            if(r.IsSuccessStatusCode) { await CargarMedidasCorporales(); mostrarModalHistorialMedidas = false; }
+        } catch {}
+    }
+
+    // --- UTILIDADES GRÁFICAS IMC ---
+    private double CalcularIMC(decimal peso, decimal altura)
+    {
+        if (altura <= 0) return 0;
+        return (double)peso / (double)(altura * altura);
+    }
+
+    private (string Categoria, string Color) ObtenerCategoriaIMC(double imc)
+    {
+        if (imc < 18.5) return ("BAJO PESO", "#3498db");
+        if (imc < 25) return ("SALUDABLE", "#2ecc71");
+        if (imc < 30) return ("SOBREPESO", "#f1c40f");
+        return ("OBESIDAD", "#e74c3c");
+    }
+
+    private double CalcularPosicionIMC(double imc)
+    {
+        if (imc < 15) return 5;
+        if (imc > 40) return 95;
+        return ((imc - 15) / 25) * 100;
+    }
+
+    private double CalcularAlturaBarra(decimal peso)
+    {
+        if (historialMedidas == null || !historialMedidas.Any()) return 0;
+        decimal maxPeso = historialMedidas.Max(m => m.Peso);
+        if (maxPeso == 0) return 0;
+        return (double)((peso / maxPeso) * 90);
+    }
+
+    private void Volver() {
+        if(pestañaActiva == "MEDIDAS" && EsAdminOCoach && atletaActivo != null) 
+        {
+            CambiarDeAtleta();
+        }
+        else 
+        {
+            Nav.NavigateTo("/home");
+        }
+    }
 }
