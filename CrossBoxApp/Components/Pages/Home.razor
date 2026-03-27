@@ -1620,9 +1620,18 @@
         
 
         // Firebase (Opcional, podrías considerar moverlo a otro lugar si no es estrictamente necesario al iniciar)
-        _ = InicializarFirebaseAsync();
+        
 
         cargandoConfiguracion = false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Esto asegura que solo se pida el permiso la PRIMERA vez que entran al Home
+        if (firstRender)
+        {
+            await InicializarFirebaseAsync();
+        }
     }
 
     // Métodos de ayuda para las tareas secundarias
@@ -1631,16 +1640,26 @@
         try { listaPlanes = await Http.GetFromJsonAsync<List<PlanDto>>("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/planes"); } catch { }
     }
 
-    private async Task InicializarFirebaseAsync()
+   private async Task InicializarFirebaseAsync()
     {
+        if (Sesion.Usuario?.TipoLugar != "Gimnasio") return;
+
         try
         {
             if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
             {
-                if (await Plugin.LocalNotification.LocalNotificationCenter.Current.AreNotificationsEnabled() == false)
+                // Obligamos a iOS a usar el hilo seguro de la interfaz
+                await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    await Plugin.LocalNotification.LocalNotificationCenter.Current.RequestNotificationPermission();
-                }
+                    try 
+                    {
+                        if (await Plugin.LocalNotification.LocalNotificationCenter.Current.AreNotificationsEnabled() == false)
+                        {
+                            await Plugin.LocalNotification.LocalNotificationCenter.Current.RequestNotificationPermission();
+                        }
+                    }
+                    catch { }
+                });
 
                 await CrossFirebaseCloudMessaging.Current.CheckIfValidAsync();
                 var miTokenFirebase = await CrossFirebaseCloudMessaging.Current.GetTokenAsync();
