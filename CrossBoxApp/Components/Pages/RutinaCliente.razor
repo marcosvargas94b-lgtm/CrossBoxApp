@@ -19,100 +19,116 @@
         </div>
 
         <div class="scrollable-content">
-
-            @* SELECTORES DE CALENDARIO *@
-            <div class="calendar-selectors fade-in mb-3">
-                <div class="selector-group">
-                    <label>MES</label>
-                    <select class="form-control input-dark" value="@mesSeleccionado" @onchange="OnMesCambiado">
-                        <option value="1">ENERO</option>
-                        <option value="2">FEBRERO</option>
-                        <option value="3">MARZO</option>
-                        <option value="4">ABRIL</option>
-                        <option value="5">MAYO</option>
-                        <option value="6">JUNIO</option>
-                        <option value="7">JULIO</option>
-                        <option value="8">AGOSTO</option>
-                        <option value="9">SEPTIEMBRE</option>
-                        <option value="10">OCTUBRE</option>
-                        <option value="11">NOVIEMBRE</option>
-                        <option value="12">DICIEMBRE</option>
-                    </select>
-                </div>
-
-                <div class="selector-group">
-                    <label>SEMANA</label>
-                    <select class="form-control input-dark" value="@lunesSeleccionado.ToString("yyyy-MM-dd")" @onchange="OnSemanaCambiada">
-                        @foreach (var semana in semanasDelMes)
-                        {
-                            <option value="@semana.ToString("yyyy-MM-dd")">Semana del @semana.ToString("dd MMM")</option>
-                        }
-                    </select>
-                </div>
-            </div>
-            
-            @if (cargando)
+            @if (cargandoConfiguracion)
             {
                 <div class="text-center mt-5">
                     <div class="spinner-border" style="color: var(--theme-primary);"></div>
                 </div>
             }
+            else if (tieneRutinaGlobal == false)
+            {
+                @* --- ESTADO VACÍO (SIN PLAN) --- *@
+                <div class="empty-plan-state fade-in">
+                    <i class="fas fa-clipboard-list empty-icon"></i>
+                    <h3>AÚN NO TIENES UN PLAN</h3>
+                    <p>Consulta a tu coach para estructurar tu rutina y empezar a registrar tu progreso.</p>
+                </div>
+            }
             else
             {
-                <div class="routine-list fade-in">
-                    @for (int i = 0; i < 7; i++)
-                    {
-                        var fechaActual = lunesSeleccionado.AddDays(i);
-                        var rutinaDia = ObtenerRutina(fechaActual);
-                        bool tieneRutina = rutinaDia != null && !string.IsNullOrEmpty(rutinaDia.Descripcion);
-                        bool estaCompletada = tieneRutina && rutinaDia.Completada;
+                @* SELECTORES DE CALENDARIO *@
+                <div class="calendar-selectors fade-in mb-3">
+                    <div class="selector-group">
+                        <label>MES</label>
+                        <select class="form-control input-dark" value="@mesSeleccionado" @onchange="OnMesCambiado">
+                            <option value="1">ENERO</option>
+                            <option value="2">FEBRERO</option>
+                            <option value="3">MARZO</option>
+                            <option value="4">ABRIL</option>
+                            <option value="5">MAYO</option>
+                            <option value="6">JUNIO</option>
+                            <option value="7">JULIO</option>
+                            <option value="8">AGOSTO</option>
+                            <option value="9">SEPTIEMBRE</option>
+                            <option value="10">OCTUBRE</option>
+                            <option value="11">NOVIEMBRE</option>
+                            <option value="12">DICIEMBRE</option>
+                        </select>
+                    </div>
 
-                        <div class="dia-card @(tieneRutina ? (estaCompletada ? "done" : "pending") : "empty")" 
-                             @onclick="() => AbrirDetalle(rutinaDia)">
-                            
-                            <div class="dia-header">
-                                <div class="day-name-wrapper">
-                                    <span class="dia-nombre">@NombreDia(fechaActual.DayOfWeek)</span>
-                                    <span class="day-number">@fechaActual.ToString("dd MMM").ToUpper()</span>
-                                </div>
-                                
-                                @if (tieneRutina)
-                                {
-                                    <span class="badge-coach">
-                                        <i class="fas fa-user-edit"></i> @rutinaDia.CoachNombre
-                                    </span>
-                                }
-                            </div>
-                            
-                            <div class="dia-body">
-                                @if (tieneRutina)
-                                {
-                                    if (estaCompletada)
+                    <div class="selector-group">
+                        <label>SEMANA</label>
+                        <select class="form-control input-dark" value="@lunesSeleccionado.ToString("yyyy-MM-dd")" @onchange="OnSemanaCambiada">
+                            @foreach (var semana in semanasDelMes)
+                            {
+                                <option value="@semana.ToString("yyyy-MM-dd")">Semana del @semana.ToString("dd MMM")</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                @if (cargandoRutinas)
+                {
+                    <div class="text-center mt-5">
+                        <div class="spinner-border" style="color: var(--theme-primary);"></div>
+                    </div>
+                }
+                else
+                {
+                    <div class="routine-list fade-in">
+                        @for (int i = 0; i < 7; i++)
+                        {
+                            var fechaActual = lunesSeleccionado.AddDays(i);
+                            var rutinaDia = ObtenerRutina(fechaActual);
+                            bool tieneRutina = rutinaDia != null && !string.IsNullOrEmpty(rutinaDia.Descripcion);
+                            bool estaCompletada = tieneRutina && rutinaDia.Completada;
+
+                            <div class="dia-card @(tieneRutina ? (estaCompletada ? "done" : "pending") : "empty")"
+                                 @onclick="() => AbrirDetalle(rutinaDia)">
+
+                                <div class="dia-header">
+                                    <div class="day-name-wrapper">
+                                        <span class="dia-nombre">@NombreDia(fechaActual.DayOfWeek)</span>
+                                        <span class="day-number">@fechaActual.ToString("dd MMM").ToUpper()</span>
+                                    </div>
+
+                                    @if (tieneRutina)
                                     {
-                                        <div class="status-indicator success">
-                                            <i class="fas fa-check-circle"></i> <span>RUTINA REALIZADA</span>
-                                        </div>
+                                        <span class="badge-coach">
+                                            <i class="fas fa-user-edit"></i> @rutinaDia.CoachNombre
+                                        </span>
+                                    }
+                                </div>
+
+                                <div class="dia-body">
+                                    @if (tieneRutina)
+                                    {
+                                        if (estaCompletada)
+                                        {
+                                            <div class="status-indicator success">
+                                                <i class="fas fa-check-circle"></i> <span>RUTINA REALIZADA</span>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="status-indicator warning">
+                                                <i class="fas fa-dumbbell"></i> <span>RUTINA CARGADA</span>
+                                            </div>
+                                        }
+                                        <div class="tap-hint">Toca para ver el detalle <i class="fas fa-chevron-right"></i></div>
                                     }
                                     else
                                     {
-                                        <div class="status-indicator warning">
-                                            <i class="fas fa-dumbbell"></i> <span>RUTINA CARGADA</span>
+                                        <div class="status-indicator empty">
+                                            <i class="fas fa-bed"></i> <span>DÍA LIBRE (REST DAY)</span>
                                         </div>
                                     }
-                                    <div class="tap-hint">Toca para ver el detalle <i class="fas fa-chevron-right"></i></div>
-                                }
-                                else
-                                {
-                                    <div class="status-indicator empty">
-                                        <i class="fas fa-bed"></i> <span>DÍA LIBRE (REST DAY)</span>
-                                    </div>
-                                }
+                                </div>
                             </div>
-                        </div>
-                    }
-                </div>
+                        }
+                    </div>
+                }
             }
-            
             <div style="height: 40px;"></div>
         </div>
     </div>
@@ -163,23 +179,30 @@
 
     .fade-in { animation: fadeIn 0.4s ease; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .empty-plan-state { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; margin-top: 40px; padding: 40px 20px; background: var(--theme-card); border: 2px dashed var(--theme-border); border-radius: 15px; width: 100%; max-width: 500px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+    .empty-icon { font-size: 4rem; color: var(--theme-primary); margin-bottom: 15px; opacity: 0.8; }
+    .empty-plan-state h3 { font-family: 'Oswald'; color: var(--theme-text); margin-bottom: 10px; letter-spacing: 1px; font-size: 1.5rem; }
+    .empty-plan-state p { color: var(--theme-text-muted); font-family: 'Roboto'; font-size: 0.95rem; line-height: 1.4; }
 </style>
 
 @code {
     private string EstilosTema = @"--theme-primary: #A9A9A9; --theme-secondary: #808080; --theme-bg: #0d0d0d; --theme-card: #1a1a1a; --theme-border: #333333; --theme-text: #ffffff; --theme-text-muted: #888888;";
-    
-    private bool cargando = true;
+
+    private bool cargandoConfiguracion = true;
+    private bool cargandoRutinas = false; // <-- Aquí está la variable correcta
+    private bool? tieneRutinaGlobal = null;
 
     // Calendario
     private int mesSeleccionado;
     private DateTime lunesSeleccionado;
     private List<DateTime> semanasDelMes = new();
 
-    public class RutinaDiaDto { 
+    public class RutinaDiaDto
+    {
         public int RutinaID { get; set; }
-        public DateTime Fecha { get; set; } 
-        public string Descripcion { get; set; } 
-        public string CoachNombre { get; set; } 
+        public DateTime Fecha { get; set; }
+        public string Descripcion { get; set; }
+        public string CoachNombre { get; set; }
         public bool Completada { get; set; }
     }
     private List<RutinaDiaDto> rutinas = new();
@@ -189,9 +212,20 @@
         try { var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box"); if (!string.IsNullOrEmpty(cache)) { EstilosTema = cache; StateHasChanged(); } } catch { }
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
 
-        mesSeleccionado = DateTime.Now.Month;
-        GenerarSemanasDelMes(mesSeleccionado);
-        await CargarRutinas();
+        try
+        {
+            tieneRutinaGlobal = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/tiene-rutina/{Sesion.Usuario.UsuarioID}");
+        }
+        catch { tieneRutinaGlobal = false; }
+
+        if (tieneRutinaGlobal == true)
+        {
+            mesSeleccionado = DateTime.Now.Month;
+            GenerarSemanasDelMes(mesSeleccionado);
+            await CargarRutinas();
+        }
+
+        cargandoConfiguracion = false;
     }
 
     private void GenerarSemanasDelMes(int mes)
@@ -199,7 +233,7 @@
         semanasDelMes.Clear();
         int anio = DateTime.Now.Year;
         DateTime primerDia = new DateTime(anio, mes, 1);
-        
+
         DateTime iterador = primerDia;
         int offset = (int)iterador.DayOfWeek - (int)DayOfWeek.Monday;
         if (offset < 0) offset += 7;
@@ -217,7 +251,7 @@
             int offsetHoy = (int)hoy.DayOfWeek - (int)DayOfWeek.Monday;
             if (offsetHoy < 0) offsetHoy += 7;
             lunesSeleccionado = hoy.AddDays(-offsetHoy);
-            
+
             if (!semanasDelMes.Contains(lunesSeleccionado)) lunesSeleccionado = semanasDelMes.First();
         }
         else
@@ -247,17 +281,19 @@
 
     private async Task CargarRutinas()
     {
-        cargando = true;
-        try {
+        cargandoRutinas = true; // <-- CORRECCIÓN: Usar la variable correcta aquí
+        try
+        {
             string fechaFormat = lunesSeleccionado.ToString("yyyy-MM-dd");
             rutinas = await Http.GetFromJsonAsync<List<RutinaDiaDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/semana/{Sesion.Usuario.UsuarioID}/{fechaFormat}");
-        } catch { rutinas = new List<RutinaDiaDto>(); }
-        finally { cargando = false; }
+        }
+        catch { rutinas = new List<RutinaDiaDto>(); }
+        finally { cargandoRutinas = false; } // <-- CORRECCIÓN: Usar la variable correcta aquí
     }
 
     private RutinaDiaDto ObtenerRutina(DateTime fecha) => rutinas.FirstOrDefault(r => r.Fecha.Date == fecha.Date);
 
-    private string NombreDia(DayOfWeek d) => d switch { DayOfWeek.Monday=>"LUNES", DayOfWeek.Tuesday=>"MARTES", DayOfWeek.Wednesday=>"MIÉRCOLES", DayOfWeek.Thursday=>"JUEVES", DayOfWeek.Friday=>"VIERNES", DayOfWeek.Saturday=>"SÁBADO", DayOfWeek.Sunday=>"DOMINGO", _=>"" };
+    private string NombreDia(DayOfWeek d) => d switch { DayOfWeek.Monday => "LUNES", DayOfWeek.Tuesday => "MARTES", DayOfWeek.Wednesday => "MIÉRCOLES", DayOfWeek.Thursday => "JUEVES", DayOfWeek.Friday => "VIERNES", DayOfWeek.Saturday => "SÁBADO", DayOfWeek.Sunday => "DOMINGO", _ => "" };
 
     private void AbrirDetalle(RutinaDiaDto rutina)
     {

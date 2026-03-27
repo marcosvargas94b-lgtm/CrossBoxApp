@@ -22,94 +22,112 @@
             <div class="nav-right"></div>
         </div>
 
-        <div class="scrollable-content">
+       <div class="scrollable-content">
             
-            @* CONTROLES DEL MES *@
-            <div class="month-control fade-in">
-                <button class="btn-nav" @onclick="MesAnterior"><i class="fas fa-chevron-left"></i></button>
-                <span class="month-label">@fechaActual.ToString("MMMM yyyy").ToUpper()</span>
-                <button class="btn-nav" @onclick="MesSiguiente"><i class="fas fa-chevron-right"></i></button>
-            </div>
-
-            @* CALENDARIO *@
-            <div class="calendar-grid fade-in">
-                <div class="day-name">DOM</div> <div class="day-name">LUN</div> <div class="day-name">MAR</div>
-                <div class="day-name">MIE</div> <div class="day-name">JUE</div> <div class="day-name">VIE</div>
-                <div class="day-name">SAB</div>
-
-                @for (int i = 0; i < diasVaciosInicio; i++)
-                {
-                    <div class="calendar-day empty"></div>
-                }
-
-                @for (int dia = 1; dia <= diasEnMes; dia++)
-                {
-                    int diaActual = dia;
-                    var log = ObtenerLog(diaActual);
-                    bool hayPlan = log != null;
-                    bool estaHecho = hayPlan && (log.Realizado == true);
-
-                    bool esHoy = (fechaActual.Year == DateTime.Today.Year && 
-                                  fechaActual.Month == DateTime.Today.Month && 
-                                  diaActual == DateTime.Today.Day);
-
-                    // Reemplazo de colores quemados por variables del tema para la cuadrícula
-                    string colorBorde = hayPlan ? ObtenerColorTipo(log.Tipo) : "var(--theme-border)";
-                    string bgDia = hayPlan ? "var(--theme-card)" : "var(--theme-bg)";
-                    string opacidad = hayPlan ? "1" : "0.5";
-
-                    <div class="calendar-day @(esHoy ? "dia-actual-pulse" : "")"
-                         style="border-color: @colorBorde; background: @bgDia; opacity: @opacidad"
-                         @onclick="() => AbrirModal(diaActual)">
-
-                        <span class="day-number">@dia</span>
-
-                        @if (hayPlan)
-                        {
-                            <div class="day-content">
-                                @if (estaHecho)
-                                {
-                                    <i class="fas fa-check-circle" style="color:#28a745; font-size:1.4rem;"></i>
-                                    <span class="day-status" style="color:#28a745">HECHO</span>
-                                }
-                                else
-                                {
-                                    <i class="fas fa-running" style="color: @colorBorde; font-size:1.4rem;"></i>
-                                    <span class="day-status" style="color: @colorBorde">@log.Tipo</span>
-                                }
-                            </div>
-                        }
-                    </div>
-                }
-            </div>
-
-            <div class="legend-scroll fade-in">
-                @foreach (var t in TiposEntreno)
-                {
-                    <div class="legend-item">
-                        <span class="dot" style="background:@(string.IsNullOrEmpty(t.Color) ? "var(--theme-primary)" : t.Color)"></span> 
-                        @t.Nombre
-                    </div>
-                }
-            </div>
-
-            @* --- SECCIÓN: GENERADOR DE HISTORIAS CON IA --- *@
-            @if (logDeHoy != null && logDeHoy.Realizado == true)
+            @if (cargandoConfiguracion)
             {
-                <div class="story-generator-card fade-in mt-4">
-                    <div class="story-header">
-                        <div class="ig-icon-container">
-                            <i class="fas fa-bolt" style="color: var(--theme-primary); font-size: 1.8rem;"></i>
-                        </div>
-                        <div class="story-title-box">
-                            <h4>¡ENTRENO SUPERADO!</h4>
-                            <p>Genera una historia épica con IA.</p>
-                        </div>
-                    </div>
-                    <button class="btn-create-story" @onclick="AbrirModalHistoria">
-                        <i class="fas fa-magic"></i> CREAR HISTORIA IA
-                    </button>
+                <div class="text-center mt-5">
+                    <div class="spinner-border" style="color: var(--theme-primary);"></div>
                 </div>
+            }
+            else if (tienePlanGlobal == false)
+            {
+                @* --- ESTADO VACÍO (SIN PLAN) --- *@
+                <div class="empty-plan-state fade-in">
+                    <i class="fas fa-running empty-icon"></i>
+                    <h3>AÚN NO TIENES UNA BITÁCORA</h3>
+                    <p>Consulta a tu coach para que estructure tu plan de Running y empieces a registrar kilómetros.</p>
+                </div>
+            }
+            else
+            {
+                @* CONTROLES DEL MES *@
+                <div class="month-control fade-in">
+                    <button class="btn-nav" @onclick="MesAnterior"><i class="fas fa-chevron-left"></i></button>
+                    <span class="month-label">@fechaActual.ToString("MMMM yyyy").ToUpper()</span>
+                    <button class="btn-nav" @onclick="MesSiguiente"><i class="fas fa-chevron-right"></i></button>
+                </div>
+
+                @* CALENDARIO *@
+                <div class="calendar-grid fade-in">
+                    <div class="day-name">DOM</div> <div class="day-name">LUN</div> <div class="day-name">MAR</div>
+                    <div class="day-name">MIE</div> <div class="day-name">JUE</div> <div class="day-name">VIE</div>
+                    <div class="day-name">SAB</div>
+
+                    @for (int i = 0; i < diasVaciosInicio; i++)
+                    {
+                        <div class="calendar-day empty"></div>
+                    }
+
+                    @for (int dia = 1; dia <= diasEnMes; dia++)
+                    {
+                        int diaActual = dia;
+                        var log = ObtenerLog(diaActual);
+                        bool hayPlan = log != null;
+                        bool estaHecho = hayPlan && (log.Realizado == true);
+
+                        bool esHoy = (fechaActual.Year == DateTime.Today.Year && 
+                                      fechaActual.Month == DateTime.Today.Month && 
+                                      diaActual == DateTime.Today.Day);
+
+                        // Reemplazo de colores quemados por variables del tema para la cuadrícula
+                        string colorBorde = hayPlan ? ObtenerColorTipo(log.Tipo) : "var(--theme-border)";
+                        string bgDia = hayPlan ? "var(--theme-card)" : "var(--theme-bg)";
+                        string opacidad = hayPlan ? "1" : "0.5";
+
+                        <div class="calendar-day @(esHoy ? "dia-actual-pulse" : "")"
+                             style="border-color: @colorBorde; background: @bgDia; opacity: @opacidad"
+                             @onclick="() => AbrirModal(diaActual)">
+
+                            <span class="day-number">@dia</span>
+
+                            @if (hayPlan)
+                            {
+                                <div class="day-content">
+                                    @if (estaHecho)
+                                    {
+                                        <i class="fas fa-check-circle" style="color:#28a745; font-size:1.4rem;"></i>
+                                        <span class="day-status" style="color:#28a745">HECHO</span>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-running" style="color: @colorBorde; font-size:1.4rem;"></i>
+                                        <span class="day-status" style="color: @colorBorde">@log.Tipo</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="legend-scroll fade-in">
+                    @foreach (var t in TiposEntreno)
+                    {
+                        <div class="legend-item">
+                            <span class="dot" style="background:@(string.IsNullOrEmpty(t.Color) ? "var(--theme-primary)" : t.Color)"></span> 
+                            @t.Nombre
+                        </div>
+                    }
+                </div>
+
+                @* --- SECCIÓN: GENERADOR DE HISTORIAS CON IA --- *@
+                @if (logDeHoy != null && logDeHoy.Realizado == true)
+                {
+                    <div class="story-generator-card fade-in mt-4">
+                        <div class="story-header">
+                            <div class="ig-icon-container">
+                                <i class="fas fa-bolt" style="color: var(--theme-primary); font-size: 1.8rem;"></i>
+                            </div>
+                            <div class="story-title-box">
+                                <h4>¡ENTRENO SUPERADO!</h4>
+                                <p>Genera una historia épica con IA.</p>
+                            </div>
+                        </div>
+                        <button class="btn-create-story" @onclick="AbrirModalHistoria">
+                            <i class="fas fa-magic"></i> CREAR HISTORIA IA
+                        </button>
+                    </div>
+                }
             }
             
             <div style="height: 40px;"></div>
@@ -604,19 +622,18 @@
     .legend-scroll { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; justify-content: center; width: 100%; max-width: 500px; }
     .legend-item { font-size: 0.7rem; color: var(--theme-text-muted); display: flex; align-items: center; gap: 5px; font-family: 'Roboto'; font-weight: bold; text-transform: uppercase; }
     .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; box-shadow: 0 0 5px rgba(255,255,255,0.2); }
+
+    .empty-plan-state { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; margin-top: 40px; padding: 40px 20px; background: var(--theme-card); border: 2px dashed var(--theme-border); border-radius: 15px; width: 100%; max-width: 500px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+    .empty-icon { font-size: 4rem; color: var(--theme-primary); margin-bottom: 15px; opacity: 0.8; }
+    .empty-plan-state h3 { font-family: 'Oswald'; color: var(--theme-text); margin-bottom: 10px; letter-spacing: 1px; font-size: 1.5rem; }
+    .empty-plan-state p { color: var(--theme-text-muted); font-family: 'Roboto'; font-size: 0.95rem; line-height: 1.4; }
 </style>
 
 @code {
-    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
-    private string EstilosTema = @"
-        --theme-primary: #A9A9A9; 
-        --theme-secondary: #808080;
-        --theme-bg: #0d0d0d;
-        --theme-card: #1a1a1a;
-        --theme-border: #333333;
-        --theme-text: #ffffff;
-        --theme-text-muted: #888888;
-    ";
+   private string EstilosTema = @"--theme-primary: #A9A9A9; --theme-secondary: #808080; --theme-bg: #0d0d0d; --theme-card: #1a1a1a; --theme-border: #333333; --theme-text: #ffffff; --theme-text-muted: #888888;";
+
+   private bool cargandoConfiguracion = true;
+    private bool? tienePlanGlobal = null;
 
     private DateTime fechaActual = DateTime.Today;
     private List<RunningLogs> logsDelMes = new List<RunningLogs>();
@@ -685,21 +702,23 @@
         new TipoEntreno { Nombre = "Otro", Color = "#FFFFFF" }
     };
 
-    protected override async Task OnInitializedAsync()
+protected override async Task OnInitializedAsync()
     {
-        // LEER EL CACHÉ LOCAL AL INSTANTE
-        try 
-        {
-            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
-            if (!string.IsNullOrEmpty(cache)) 
-            { 
-                EstilosTema = cache; 
-                StateHasChanged(); 
-            }
-        } 
-        catch { }
+        try { var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box"); if (!string.IsNullOrEmpty(cache)) { EstilosTema = cache; StateHasChanged(); } } catch { }
+        if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
 
-        await CargarCalendario();
+        try 
+        { 
+            tienePlanGlobal = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/tiene-plan/{Sesion.Usuario.UsuarioID}"); 
+        } 
+        catch { tienePlanGlobal = false; }
+
+        if (tienePlanGlobal == true)
+        {
+            await CargarCalendario();
+        }
+        
+        cargandoConfiguracion = false;
     }
 
     private async Task CargarCalendario()

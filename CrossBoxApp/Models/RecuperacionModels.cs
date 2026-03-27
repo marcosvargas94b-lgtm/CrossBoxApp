@@ -13,6 +13,7 @@ namespace CrossBoxApp.Models
         public bool RequiereScaling { get; set; }
         public int? Edad { get; set; }
         public decimal? Peso { get; set; }
+        public int? RutinaCoachHoyParaRPE { get; set; }
         public decimal? Estatura { get; set; }
         public string Sexo { get; set; }
     }

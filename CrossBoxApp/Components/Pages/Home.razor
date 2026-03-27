@@ -227,7 +227,7 @@
                 <div class="card-recuperacion-master @(resumenRecuperacion.RutinaHoyParaRPE.HasValue ? "alerta-rpe-aura" : "")" @onclick='() => Nav.NavigateTo("/detalle-recuperacion")'>
                     
                     @* ETIQUETA FLOTANTE SI FALTA RPE *@
-                    @if (resumenRecuperacion.RutinaHoyParaRPE.HasValue)
+                    @if (resumenRecuperacion.RutinaHoyParaRPE.HasValue || resumenRecuperacion.RutinaCoachHoyParaRPE.HasValue)
                     {
                         <div class="badge-falta-rpe">
                             <i class="fas fa-exclamation-circle"></i> FALTA RPE
@@ -376,7 +376,7 @@
                     </div>
                 }
 
-                @if (EstaActivo("RUNNING") && tieneRunning)
+                @if (EstaActivo("RUNNING"))
                 {
                     <div class="menu-card yellow-highlight" @onclick='() => Nav.NavigateTo("/mi-running")'>
                         <i class="fas fa-running card-icon"></i>
@@ -385,14 +385,13 @@
                     </div>
                 }
 
-                @if (tieneRutina)
-                {
+              
                     <div class="menu-card yellow-highlight" @onclick='() => Nav.NavigateTo("/rutina-cliente")'>
                         <i class="fas fa-dumbbell card-icon"></i>
-                        <h3>RUTINA PRO</h3>
+                        <h3>RUTINA PERSONALIZADA</h3>
                         <p>Tu plan personalizado</p>
                     </div>
-                }
+                
 
                 @if (EstaActivo("IAFUERZA"))
                 {
@@ -1570,116 +1569,87 @@
 
         // --- 1. INTENTAR CARGAR EL CACHÉ DE COLORES PRIMERO ---
         try 
-        {
+        { 
             var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
             if (!string.IsNullOrEmpty(cache)) 
             { 
                 EstilosTema = cache; 
-                // Forzamos un renderizado rápido para que la UI tome el color antes de cargar lo demás
                 StateHasChanged(); 
             }
         } 
         catch { }
-        
-        try { bool faltaFecha = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/CumpleanosApi/falta-fecha/{Sesion.Usuario.UsuarioID}");
-            if (faltaFecha) mostrarModalPedirCumple = true;} catch { }
 
-        try 
-        { 
-            boxTieneMedallas = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/tiene-medallas/{Sesion.Usuario.BoxID}"); 
-        } 
-        catch 
-        { 
-            boxTieneMedallas = false; 
-        }
+        // --- 2. DISPARAR TAREAS INDEPENDIENTES EN PARALELO ---
+        var tFaltaCumple = Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/CumpleanosApi/falta-fecha/{Sesion.Usuario.UsuarioID}");
+        var tTieneMedallas = Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/tiene-medallas/{Sesion.Usuario.BoxID}");        
+        var tDiasRestantes = Http.GetFromJsonAsync<int>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/dias-restantes/{Sesion.Usuario.UsuarioID}");
 
-        EsAdmin = Sesion.Usuario.TipoUsuarioID == 1;
-        await CargarNombreBox();
-        await CargarNotificaciones();
-        await CargarSegmentos();
-        await CargarConfiguracionModulos();
-        await CargarMiBanner();
-        if (!avisoVistoEnSesion) await CargarUltimoAviso();
-        try { tieneRutina = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/tiene-rutina/{Sesion.Usuario.UsuarioID}"); } catch { tieneRutina = false; }
-        try { tieneRunning = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/tiene-plan/{Sesion.Usuario.UsuarioID}"); } catch { tieneRunning = false; }
-        
-        if (Sesion.Usuario != null)
+        var tNombreBox = CargarNombreBox();
+        var tNotificaciones = CargarNotificaciones();
+        var tSegmentos = CargarSegmentos();
+        var tModulos = CargarConfiguracionModulos();
+        var tBanner = CargarMiBanner();
+        var tRecuperacion = CargarRecuperacion();
+        // --- 3. ESPERAR A QUE TODAS TERMINEN ---
+        try
         {
-            try
-            {
-                var estado = await Http.GetFromJsonAsync<int>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/dias-restantes/{Sesion.Usuario.UsuarioID}");
-                diasRestantes = estado;
-            }
-            catch { }
-            try
-            {
-                var configBox = await Http.GetFromJsonAsync<BoxConfigDTO>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
-                if (configBox != null) 
-                {
-                    boxTieneMP = configBox.EstaVinculadoMP;
+           await Task.WhenAll(
+                tFaltaCumple, tTieneMedallas, tDiasRestantes,
+                tNombreBox, tNotificaciones, tSegmentos, tModulos, tBanner, tRecuperacion
+            );
 
-                    // --- 2. ARMAMOS EL STRING DE ESTILOS DINÁMICO CON PROTECCIÓN DE NULOS ---
-                    string p = string.IsNullOrEmpty(configBox.ThemePrimary) ? "#F8C545" : configBox.ThemePrimary;
-                    string s = string.IsNullOrEmpty(configBox.ThemeSecondary) ? "#dcb03d" : configBox.ThemeSecondary;
-                    string bg = string.IsNullOrEmpty(configBox.ThemeBg) ? "#0d0d0d" : configBox.ThemeBg;
-                    string c = string.IsNullOrEmpty(configBox.ThemeCard) ? "#1a1a1a" : configBox.ThemeCard;
-                    string b = string.IsNullOrEmpty(configBox.ThemeBorder) ? "#333333" : configBox.ThemeBorder;
-                    string t = string.IsNullOrEmpty(configBox.ThemeText) ? "#ffffff" : configBox.ThemeText;
-                    string tm = string.IsNullOrEmpty(configBox.ThemeTextMuted) ? "#888888" : configBox.ThemeTextMuted;
-
-                    EstilosTema = $@"
-                        --theme-primary: {p};
-                        --theme-secondary: {s};
-                        --theme-bg: {bg};
-                        --theme-card: {c};
-                        --theme-border: {b};
-                        --theme-text: {t};
-                        --theme-text-muted: {tm};
-                    ";
-
-                    // --- 3. GUARDAR EN CACHÉ PARA LA PRÓXIMA VEZ ---
-                    try { await JS.InvokeVoidAsync("localStorage.setItem", "tema_box", EstilosTema); } catch { }
-                }
-            }
-            catch { boxTieneMP = false; }
+            // Asignar los resultados
+            mostrarModalPedirCumple = tFaltaCumple.Result;
+            boxTieneMedallas = tTieneMedallas.Result;        
+            diasRestantes = tDiasRestantes.Result;
         }
+        catch (Exception ex)
+        {
+            // Manejar excepciones de la carga en paralelo si es necesario
+            Console.WriteLine($"Error en carga paralela: {ex.Message}");
+        }
+
+        // --- 4. TAREAS SECUNDARIAS (Ejecución en segundo plano o no críticas) ---
+        EsAdmin = Sesion.Usuario.TipoUsuarioID == 1;
+
+        if (!avisoVistoEnSesion)
+        _ = CargarUltimoAviso(); // Disparar y olvidar (fire and forget)
+
+        _ = CargarConfiguracionBox(); // Extraído a un método separado
+        _ = CargarPlanesAsync(); // Extraído a un método separado
+        
+
+        // Firebase (Opcional, podrías considerar moverlo a otro lugar si no es estrictamente necesario al iniciar)
+        _ = InicializarFirebaseAsync();
+
+        cargandoConfiguracion = false;
+    }
+
+    // Métodos de ayuda para las tareas secundarias
+    private async Task CargarPlanesAsync()
+    {
         try { listaPlanes = await Http.GetFromJsonAsync<List<PlanDto>>("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/planes"); } catch { }
+    }
 
-        await CargarRecuperacion();
-
-       try
+    private async Task InicializarFirebaseAsync()
+    {
+        try
         {
             if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
             {
-                // 1. Pedimos permiso OFICIAL al iPhone/Android usando LocalNotification (esto despierta a Apple APNs)
                 if (await Plugin.LocalNotification.LocalNotificationCenter.Current.AreNotificationsEnabled() == false)
                 {
                     await Plugin.LocalNotification.LocalNotificationCenter.Current.RequestNotificationPermission();
                 }
 
-                // 2. Validamos Firebase
                 await CrossFirebaseCloudMessaging.Current.CheckIfValidAsync();
-
-                // 3. Obtenemos el Token único y validado de este celular
                 var miTokenFirebase = await CrossFirebaseCloudMessaging.Current.GetTokenAsync();
-                
-                Console.WriteLine($"=================================================");
-                Console.WriteLine($"🔥 ¡FIREBASE VIVO! MI TOKEN ES: {miTokenFirebase}");
-                Console.WriteLine($"=================================================");
 
                 if (Sesion.Usuario != null && !string.IsNullOrEmpty(miTokenFirebase))
                 {
-                    try
-                    {
-                        var payloadToken = new TokenDto { Token = miTokenFirebase };
-                        var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/guardar-token/{Sesion.Usuario.UsuarioID}";
-                        
-                        await Http.PostAsJsonAsync(url, payloadToken);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Error subiendo token: {ex.Message}");
-                    }
+                    var payloadToken = new TokenDto { Token = miTokenFirebase };
+                    var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/guardar-token/{Sesion.Usuario.UsuarioID}";
+                    await Http.PostAsJsonAsync(url, payloadToken);
                 }
             }
         }
@@ -1687,10 +1657,35 @@
         {
             Console.WriteLine($"Error de Firebase: {ex.Message}");
         }
-
-        cargandoConfiguracion = false;
     }
     
+
+    private async Task CargarConfiguracionBox()
+    {
+        try
+        {
+            var configBox = await Http.GetFromJsonAsync<BoxConfigDTO>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
+            if (configBox != null) 
+            {
+                boxTieneMP = configBox.EstaVinculadoMP;
+                string p = string.IsNullOrEmpty(configBox.ThemePrimary) ? "#F8C545" : configBox.ThemePrimary;
+                string s = string.IsNullOrEmpty(configBox.ThemeSecondary) ? "#dcb03d" : configBox.ThemeSecondary;
+                string bg = string.IsNullOrEmpty(configBox.ThemeBg) ? "#0d0d0d" : configBox.ThemeBg;
+                string c = string.IsNullOrEmpty(configBox.ThemeCard) ? "#1a1a1a" : configBox.ThemeCard;
+                string b = string.IsNullOrEmpty(configBox.ThemeBorder) ? "#333333" : configBox.ThemeBorder;
+                string t = string.IsNullOrEmpty(configBox.ThemeText) ? "#ffffff" : configBox.ThemeText;
+                string tm = string.IsNullOrEmpty(configBox.ThemeTextMuted) ? "#888888" : configBox.ThemeTextMuted;
+
+                EstilosTema = $"--theme-primary: {p}; --theme-secondary: {s}; --theme-bg: {bg}; --theme-card: {c}; --theme-border: {b}; --theme-text: {t}; --theme-text-muted: {tm};";
+                try { await JS.InvokeVoidAsync("localStorage.setItem", "tema_box", EstilosTema); } catch { }
+                StateHasChanged();
+            }
+        }
+        catch { boxTieneMP = false; }
+    }
+
+
+
     private async Task GuardarMiCumple()
     {
         guardandoCumple = true;

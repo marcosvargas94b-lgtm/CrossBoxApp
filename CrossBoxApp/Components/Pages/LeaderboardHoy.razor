@@ -54,73 +54,193 @@
             }
             else
             {
-                <div class="podium-list fade-in">
-                    @foreach (var item in listaActual)
+                @* LÓGICA DE CATEGORÍAS: Solo si es CrossFit Y al menos alguien tiene categoría real *@
+                @if (!string.IsNullOrEmpty(Sesion.Usuario?.TipoLugar) &&
+                            Sesion.Usuario.TipoLugar.ToUpper().Contains("CROSSFIT") &&
+                            listaActual.Any(x => !string.IsNullOrEmpty(x.Categoria) && x.Categoria.ToUpper() != "SIN ASIGNAR"))
+                {
+                    var grupos = listaActual
+                    .GroupBy(x => string.IsNullOrEmpty(x.Categoria) || x.Categoria.ToUpper() == "SIN ASIGNAR" ? "SIN CATEGORÍA" : x.Categoria.ToUpper())
+                    .OrderBy(g => ObtenerPesoCategoria(g.Key));
+
+                    foreach (var grupo in grupos)
                     {
-                        <div class="score-row @(item.Posicion == 1 ? "gold" : "") @(item.EsEquipo ? "team-border" : "")">
+                        <div class="category-header fade-in">
+                            <h4>@grupo.Key</h4>
+                        </div>
+                        <div class="podium-list fade-in mb-4">
+                            @{
+                                int pos = 1;
+                            }
+                            @foreach (var item in grupo)
+                            {
+                                <div class="score-row @(pos == 1 ? "gold" : "") @(item.EsEquipo ? "team-border" : "")">
 
-                            @* 1. POSICIÓN *@
-                            <div class="pos-column">
-                                @if (item.Posicion == 1) { <i class="fas fa-crown gold-icon"></i> }
-                                else if (item.Posicion == 2) { <i class="fas fa-medal silver-icon"></i> }
-                                else if (item.Posicion == 3) { <i class="fas fa-medal bronze-icon"></i> }
-                                else { <span>@item.Posicion</span> }
-                            </div>
+                                    @* 1. POSICIÓN (Calculada por Grupo) *@
+                                    <div class="pos-column">
+                                        @if (pos == 1)
+                                        {
+                                            <i class="fas fa-crown gold-icon"></i>
+                                        }
+                                        else if (pos == 2)
+                                        {
 
-                            @* 2. AVATAR *@
-                            <div class="avatar-column">
-                                @if (!string.IsNullOrEmpty(item.Foto))
-                                {
-                                    <img src="@item.Foto" class="score-avatar" />
-                                }
-                                else
-                                {
-                                    <div class="score-placeholder">
-                                        @(item.EsEquipo ? "T" : item.Nombre.Substring(0, 1).ToUpper())
+                                            <i class="fas fa-medal silver-icon"></i>
+                                        }
+                                        else if (pos == 3)
+                                        {
+
+                                            <i class="fas fa-medal bronze-icon"></i>
+                                        }
+                                        else
+                                        {
+
+                                            <span>@pos</span>
+                                        }
                                     </div>
-                                }
-                            </div>
 
-                            @* 3. NOMBRE *@
-                            <div class="name-column">
-                                <span class="name-text">@item.Nombre</span>
-                                @if (item.EsEquipo)
-                                {
-                                    <span class="team-badge">EQUIPO</span>
-                                }
-                            </div>
+                                    @* 2. AVATAR *@
+                                    <div class="avatar-column">
+                                        @if (!string.IsNullOrEmpty(item.Foto))
+                                        {
+                                            <img src="@item.Foto" class="score-avatar" />
+                                        }
+                                        else
+                                        {
+                                            <div class="score-placeholder">
+                                                @(item.EsEquipo ? "T" : item.Nombre.Substring(0, 1).ToUpper())
+                                            </div>
+                                        }
+                                    </div>
 
-                            @* 4. RESULTADO (DINÁMICO SEGÚN PESTAÑA Y REPES EXTRA) *@
-                            <div class="reps-column">
-                                @if (tabActiva == "REPS")
-                                {
-                                    <span class="reps-val">@item.Reps</span>
-                                    <small>REPS</small>
-                                }
-                                else if (tabActiva == "RONDAS")
-                                {
-                                    @if(item.Reps > 0)
+                                    @* 3. NOMBRE *@
+                                    <div class="name-column">
+                                        <span class="name-text">@item.Nombre</span>
+                                        @if (item.EsEquipo)
+                                        {
+                                            <span class="team-badge">EQUIPO</span>
+                                        }
+                                    </div>
+
+                                    @* 4. RESULTADO *@
+                                    <div class="reps-column">
+                                        @if (tabActiva == "REPS")
+                                        {
+                                            <span class="reps-val">@item.Reps</span>
+                                            <small>REPS</small>
+                                        }
+                                        else if (tabActiva == "RONDAS")
+                                        {
+                                            @if (item.Reps > 0)
+                                            {
+                                                <div class="split-score">
+                                                    <span class="reps-val">@item.Rondas<span class="reps-val-small"> RND</span></span>
+                                                    <span class="reps-plus">+ @item.Reps<span class="reps-val-small"> REP</span></span>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="reps-val">@item.Rondas</span>
+                                                <small>RONDAS</small>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="reps-val">@item.Tiempo</span>
+                                            <small>TIME</small>
+                                        }
+                                    </div>
+                                </div>
+                                pos++;
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    @* LÓGICA NORMAL GLOBAL (Funcional / Gym / CrossFit sin categorías asignadas hoy) *@
+                    <div class="podium-list fade-in">
+                        @foreach (var item in listaActual)
+                        {
+                            <div class="score-row @(item.Posicion == 1 ? "gold" : "") @(item.EsEquipo ? "team-border" : "")">
+                                @* 1. POSICIÓN *@
+                                <div class="pos-column">
+                                    @if (item.Posicion == 1)
                                     {
-                                        <div class="split-score">
-                                            <span class="reps-val">@item.Rondas<span class="reps-val-small"> RND</span></span>
-                                            <span class="reps-plus">+ @item.Reps<span class="reps-val-small"> REP</span></span>
-                                        </div>
+                                        <i class="fas fa-crown gold-icon"></i>
+                                    }
+                                    else if (item.Posicion == 2)
+                                    {
+
+                                        <i class="fas fa-medal silver-icon"></i>
+                                    }
+                                    else if (item.Posicion == 3)
+                                    {
+
+                                        <i class="fas fa-medal bronze-icon"></i>
                                     }
                                     else
                                     {
-                                        <span class="reps-val">@item.Rondas</span>
-                                        <small>RONDAS</small>
+
+                                        <span>@item.Posicion</span>
                                     }
-                                }
-                                else
-                                {
-                                    <span class="reps-val">@item.Tiempo</span>
-                                    <small>TIME</small>
-                                }
+                                </div>
+
+                                @* 2. AVATAR *@
+                                <div class="avatar-column">
+                                    @if (!string.IsNullOrEmpty(item.Foto))
+                                    {
+                                        <img src="@item.Foto" class="score-avatar" />
+                                    }
+                                    else
+                                    {
+                                        <div class="score-placeholder">
+                                            @(item.EsEquipo ? "T" : item.Nombre.Substring(0, 1).ToUpper())
+                                        </div>
+                                    }
+                                </div>
+
+                                @* 3. NOMBRE *@
+                                <div class="name-column">
+                                    <span class="name-text">@item.Nombre</span>
+                                    @if (item.EsEquipo)
+                                    {
+                                        <span class="team-badge">EQUIPO</span>
+                                    }
+                                </div>
+
+                                @* 4. RESULTADO *@
+                                <div class="reps-column">
+                                    @if (tabActiva == "REPS")
+                                    {
+                                        <span class="reps-val">@item.Reps</span>
+                                        <small>REPS</small>
+                                    }
+                                    else if (tabActiva == "RONDAS")
+                                    {
+                                        @if (item.Reps > 0)
+                                        {
+                                            <div class="split-score">
+                                                <span class="reps-val">@item.Rondas<span class="reps-val-small"> RND</span></span>
+                                                <span class="reps-plus">+ @item.Reps<span class="reps-val-small"> REP</span></span>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="reps-val">@item.Rondas</span>
+                                            <small>RONDAS</small>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="reps-val">@item.Tiempo</span>
+                                        <small>TIME</small>
+                                    }
+                                </div>
                             </div>
-                        </div>
-                    }
-                </div>
+                        }
+                    </div>
+                }
             }
 
             <div style="height: 40px;"></div>
@@ -135,7 +255,7 @@
     .nav-left { color: var(--theme-primary); font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
     .nav-title { font-weight: bold; font-size: 1.1rem; color: var(--theme-text); letter-spacing: 1px; }
     .nav-right { width: 60px; }
-    .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; padding-bottom: 40px; }
+    .scrollable-content { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; align-items: center; -webkit-overflow-scrolling: touch; padding-bottom: calc(env(safe-area-inset-bottom) + 40px); }
 
     /* --- TABS --- */
     .filter-tabs { display: flex; gap: 5px; margin-bottom: 20px; background: var(--theme-card); padding: 5px; border-radius: 12px; width: 100%; max-width: 600px; border: 1px solid var(--theme-border); }
@@ -177,6 +297,10 @@
     .empty-state { text-align: center; margin-top: 60px; font-family: 'Oswald'; }
     .fade-in { animation: fadeIn 0.4s ease-out; }
     @@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .category-header { text-align: center; margin-top: 30px; margin-bottom: 15px; position: relative; }
+    .category-header h4 { font-family: 'Oswald'; color: var(--theme-primary); font-size: 1.2rem; margin: 0; display: inline-block; background: var(--theme-bg); padding: 0 15px; position: relative; z-index: 2; letter-spacing: 1px; font-weight: bold; }
+    .category-header::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: var(--theme-border); z-index: 1; }
 </style>
 
 @code {
@@ -204,6 +328,17 @@
         public int Posicion { get; set; }
         public string Foto { get; set; }
         public bool EsEquipo { get; set; }
+        public string Categoria { get; set; }
+    }
+
+    private int ObtenerPesoCategoria(string cat)
+    {
+        if (cat == "RX" || cat == "RXS") return 1;
+        if (cat == "AVANZADO" || cat == "AVANZADOS") return 2;
+        if (cat == "INTERMEDIO" || cat == "INTERMEDIOS") return 3;
+        if (cat == "PRINCIPIANTE" || cat == "PRINCIPIANTES") return 4;
+        if (cat == "ESCALADO" || cat == "SCALED") return 5;
+        return 99; // "SIN ASIGNAR" se irá hasta el fondo
     }
 
     protected override async Task OnInitializedAsync()

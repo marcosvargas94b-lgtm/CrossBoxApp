@@ -197,13 +197,48 @@
     .bio-box label { color: var(--theme-primary); font-size: 0.75rem; font-weight: bold; display: block; margin-bottom: 5px; font-family: 'Oswald'; letter-spacing: 1px; }
     .bio-box p { color: var(--theme-text-muted); font-style: italic; margin: 0; font-size: 0.95rem; }
 
-    /* GALERÍA DE FOTOS */
+ /* GALERÍA DE FOTOS */
     .gallery-section { width: 100%; margin-bottom: 20px; }
     .gallery-title { color: var(--theme-text); font-family: 'Oswald'; font-size: 1.1rem; border-bottom: 1px solid var(--theme-border); padding-bottom: 5px; margin-bottom: 15px; }
     .gallery-grid { display: flex; flex-direction: column; gap: 15px; width: 100%; }
-    .gallery-item { width: 100%; border-radius: 12px; overflow: hidden; border: 1px solid var(--theme-border); box-shadow: 0 5px 15px rgba(0,0,0,0.5); cursor: pointer; transition: transform 0.2s; max-height: 400px; display: flex; justify-content: center; background: var(--theme-bg); }
+    
+    /* MODIFICACIÓN UX: Altura mínima y animación de carga */
+    .gallery-item { 
+        width: 100%; 
+        border-radius: 12px; 
+        overflow: hidden; 
+        border: 1px solid var(--theme-border); 
+        box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        cursor: pointer; 
+        transition: transform 0.2s; 
+        max-height: 400px; 
+        min-height: 250px; 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; /* Centra la imagen cuando llegue */
+        /* Animación Skeleton */
+        background: linear-gradient(90deg, var(--theme-bg) 25%, var(--theme-card) 50%, var(--theme-bg) 75%);
+        background-size: 200% 100%;
+        animation: skeletonPulse 1.5s infinite linear;
+        position: relative;
+    }
+    
     .gallery-item:active { transform: scale(0.98); }
-    .gallery-item img { width: 100%; height: auto; object-fit: contain; max-height: 400px; }
+    
+    .gallery-item img { 
+        width: 100%; 
+        height: auto; 
+        object-fit: contain; 
+        max-height: 400px; 
+        z-index: 2; /* Para que tape el fondo animado al cargar */
+        color: transparent; /* Oculta el icono de 'imagen rota' nativo del navegador */
+    }
+
+    /* Animación del fondo (brillo viajando de izquierda a derecha) */
+    @@keyframes skeletonPulse {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
 
     /* ACCIONES (Match) */
     .actions-area { width: 100%; }
