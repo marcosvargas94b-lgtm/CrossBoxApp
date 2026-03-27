@@ -1449,7 +1449,6 @@
 </style>
 
 @code {
-
     // --- AHORA INICIA CON EL COLOR PLATA MATE (FALLBACK/SKELETON) ---
     private string EstilosTema = @"
         --theme-primary: #A9A9A9;
@@ -1466,7 +1465,6 @@
     private DateTime fechaCumpleInput = new DateTime(1990, 1, 1);
     public class GuardarCumpleDto { public DateTime Fecha { get; set; } }
     
-
     private bool boxTieneMedallas = false;
     private bool modoTextoLibre = false;
     private bool editandoWod = false;
@@ -1532,7 +1530,6 @@
 
     private bool mostrarModalModulos = false;
     
-    // --- 1. AÑADIMOS LAS PROPIEDADES DE COLOR A TU DTO EXISTENTE ---
     public class BoxConfigDTO 
     { 
         public bool EstaVinculadoMP { get; set; } 
@@ -1569,7 +1566,7 @@
 
         // --- 1. INTENTAR CARGAR EL CACHÉ DE COLORES PRIMERO ---
         try 
-        { 
+        {
             var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
             if (!string.IsNullOrEmpty(cache)) 
             { 
@@ -1590,7 +1587,7 @@
         var tModulos = CargarConfiguracionModulos();
         var tBanner = CargarMiBanner();
         var tRecuperacion = CargarRecuperacion();
-        // --- 3. ESPERAR A QUE TODAS TERMINEN ---
+
         try
         {
            await Task.WhenAll(
@@ -1598,40 +1595,56 @@
                 tNombreBox, tNotificaciones, tSegmentos, tModulos, tBanner, tRecuperacion
             );
 
-            // Asignar los resultados
             mostrarModalPedirCumple = tFaltaCumple.Result;
             boxTieneMedallas = tTieneMedallas.Result;        
             diasRestantes = tDiasRestantes.Result;
         }
         catch (Exception ex)
         {
-            // Manejar excepciones de la carga en paralelo si es necesario
             Console.WriteLine($"Error en carga paralela: {ex.Message}");
         }
 
-        // --- 4. TAREAS SECUNDARIAS (Ejecución en segundo plano o no críticas) ---
+        // --- 3. TAREAS SECUNDARIAS ---
         EsAdmin = Sesion.Usuario.TipoUsuarioID == 1;
 
-        if (!avisoVistoEnSesion)
-        _ = CargarUltimoAviso(); // Disparar y olvidar (fire and forget)
+        if (!avisoVistoEnSesion) _ = CargarUltimoAviso(); 
 
-        _ = CargarConfiguracionBox(); // Extraído a un método separado
-        _ = CargarPlanesAsync(); // Extraído a un método separado
+        _ = CargarConfiguracionBox(); 
+        _ = CargarPlanesAsync(); 
         
+        try { tieneRutina = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/tiene-rutina/{Sesion.Usuario.UsuarioID}"); } catch { tieneRutina = false; }
+        try { tieneRunning = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/tiene-plan/{Sesion.Usuario.UsuarioID}"); } catch { tieneRunning = false; }
 
-        // Firebase (Opcional, podrías considerar moverlo a otro lugar si no es estrictamente necesario al iniciar)
-        
+        // --- 4. FIREBASE EXACTAMENTE COMO FUNCIONABA ANTES ---
+        if (Sesion.Usuario?.TipoLugar == "Gimnasio")
+        {
+            try
+            {
+                if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
+                {
+                    if (await Plugin.LocalNotification.LocalNotificationCenter.Current.AreNotificationsEnabled() == false)
+                    {
+                        await Plugin.LocalNotification.LocalNotificationCenter.Current.RequestNotificationPermission();
+                    }
+
+                    await CrossFirebaseCloudMessaging.Current.CheckIfValidAsync();
+                    var miTokenFirebase = await CrossFirebaseCloudMessaging.Current.GetTokenAsync();
+
+                    if (Sesion.Usuario != null && !string.IsNullOrEmpty(miTokenFirebase))
+                    {
+                        var payloadToken = new TokenDto { Token = miTokenFirebase };
+                        var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/guardar-token/{Sesion.Usuario.UsuarioID}";
+                        await Http.PostAsJsonAsync(url, payloadToken);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error de Firebase: {ex.Message}");
+            }
+        }
 
         cargandoConfiguracion = false;
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        // Esto asegura que solo se pida el permiso la PRIMERA vez que entran al Home
-        if (firstRender)
-        {
-            await InicializarFirebaseAsync();
-        }
     }
 
     // Métodos de ayuda para las tareas secundarias
@@ -1639,45 +1652,6 @@
     {
         try { listaPlanes = await Http.GetFromJsonAsync<List<PlanDto>>("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/planes"); } catch { }
     }
-
-   private async Task InicializarFirebaseAsync()
-    {
-        if (Sesion.Usuario?.TipoLugar != "Gimnasio") return;
-
-        try
-        {
-            if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
-            {
-                // Obligamos a iOS a usar el hilo seguro de la interfaz
-                await MainThread.InvokeOnMainThreadAsync(async () =>
-                {
-                    try 
-                    {
-                        if (await Plugin.LocalNotification.LocalNotificationCenter.Current.AreNotificationsEnabled() == false)
-                        {
-                            await Plugin.LocalNotification.LocalNotificationCenter.Current.RequestNotificationPermission();
-                        }
-                    }
-                    catch { }
-                });
-
-                await CrossFirebaseCloudMessaging.Current.CheckIfValidAsync();
-                var miTokenFirebase = await CrossFirebaseCloudMessaging.Current.GetTokenAsync();
-
-                if (Sesion.Usuario != null && !string.IsNullOrEmpty(miTokenFirebase))
-                {
-                    var payloadToken = new TokenDto { Token = miTokenFirebase };
-                    var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/guardar-token/{Sesion.Usuario.UsuarioID}";
-                    await Http.PostAsJsonAsync(url, payloadToken);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error de Firebase: {ex.Message}");
-        }
-    }
-    
 
     private async Task CargarConfiguracionBox()
     {
@@ -1702,8 +1676,6 @@
         }
         catch { boxTieneMP = false; }
     }
-
-
 
     private async Task GuardarMiCumple()
     {
@@ -1747,29 +1719,23 @@
     private void ToggleNotificaciones() { mostrarNotis = !mostrarNotis; if (mostrarNotis) { mostrarMenuPrincipal = false; if (hayNuevas) { hayNuevas = false; _ = Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/notificaciones/leer/{Sesion.Usuario.UsuarioID}", null); } } }
 
     // --- LOGICA MODAL WOD ---
-       // --- LOGICA MODAL WOD ---
     private async void AbrirModalWod()
     {
         CerrarTodosLosMenus();
-        
-        // ELIMINAMOS EL MENÚ DE OPCIONES Y FORZAMOS TEXTO LIBRE POR DEFECTO
         modoTextoLibre = true; 
-        
         editandoWod = false;
         nuevoWod = new ProgramacionWodViewModel { FechaProgramacion = DateTime.Today };
         mostrarModalWod = true;
         await VerificarWodExistente(DateTime.Today);
     }
 
-
     private async Task AlCambiarFechaWod(ChangeEventArgs e) { if (DateTime.TryParse(e.Value.ToString(), out DateTime fecha)) { nuevoWod.FechaProgramacion = fecha; await VerificarWodExistente(fecha); } }
 
-   private void IrAMiFicha()
+    private void IrAMiFicha()
     {
         string tipoLugar = Sesion.Usuario?.TipoLugar ?? "";
         if (tipoLugar == "Running") Nav.NavigateTo("/ficha-running");
         else if (tipoLugar == "Funcional" || tipoLugar == "Calistenia") Nav.NavigateTo("/ficha-funcional");
-        else if (tipoLugar == "Gimnasio") Nav.NavigateTo("/ficha-gym"); 
         else Nav.NavigateTo("/ficha-atleta");
     }
 
