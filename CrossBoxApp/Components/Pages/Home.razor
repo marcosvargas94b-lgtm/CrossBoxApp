@@ -207,7 +207,7 @@
         }
 
         <div class="welcome-section">
-            <h1>BIENVENID@@ @(Sesion.Usuario?.Nombre?.ToUpper() ?? "ATLETA")</h1>
+            <h1>@ObtenerPalabraBienvenida() @(Sesion.Usuario?.Nombre?.ToUpper() ?? "ATLETA")</h1>
         </div>
 
         @if (cargandoConfiguracion)
@@ -1464,12 +1464,12 @@
     private bool guardandoCumple = false;
     private DateTime fechaCumpleInput = new DateTime(1990, 1, 1);
     public class GuardarCumpleDto { public DateTime Fecha { get; set; } }
-    
+
     private bool boxTieneMedallas = false;
     private bool modoTextoLibre = false;
     private bool editandoWod = false;
     private bool cargandoConfiguracion = true;
-    
+
     // --- CLASES AUXILIARES ---
     public class EjercicioEditorViewModel
     {
@@ -1529,7 +1529,7 @@
     private static bool avisoVistoEnSesion = false;
 
     private bool mostrarModalModulos = false;
-    
+
     public class BoxConfigDTO 
     { 
         public bool EstaVinculadoMP { get; set; } 
@@ -1541,7 +1541,7 @@
         public string ThemeText { get; set; }
         public string ThemeTextMuted { get; set; }
     }
-    
+
     private List<ModuloConfig> listaConfiguracion = new List<ModuloConfig>();
 
     private bool mostrarModalPassword = false;
@@ -1590,10 +1590,10 @@
 
         try
         {
-           await Task.WhenAll(
-                tFaltaCumple, tTieneMedallas, tDiasRestantes,
-                tNombreBox, tNotificaciones, tSegmentos, tModulos, tBanner, tRecuperacion
-            );
+            await Task.WhenAll(
+                 tFaltaCumple, tTieneMedallas, tDiasRestantes,
+                 tNombreBox, tNotificaciones, tSegmentos, tModulos, tBanner, tRecuperacion
+             );
 
             mostrarModalPedirCumple = tFaltaCumple.Result;
             boxTieneMedallas = tTieneMedallas.Result;        
@@ -1611,7 +1611,7 @@
 
         _ = CargarConfiguracionBox(); 
         _ = CargarPlanesAsync(); 
-        
+
         try { tieneRutina = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/tiene-rutina/{Sesion.Usuario.UsuarioID}"); } catch { tieneRutina = false; }
         try { tieneRunning = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/tiene-plan/{Sesion.Usuario.UsuarioID}"); } catch { tieneRunning = false; }
 
@@ -1635,7 +1635,7 @@
 
                     // Obtenemos el Token único
                     var miTokenFirebase = await CrossFirebaseCloudMessaging.Current.GetTokenAsync();
-                    
+
                     Console.WriteLine($"=================================================");
                     Console.WriteLine($"🔥 ¡FIREBASE VIVO! MI TOKEN ES: {miTokenFirebase}");
                     Console.WriteLine($"=================================================");
@@ -1646,7 +1646,7 @@
                         {
                             var payloadToken = new TokenDto { Token = miTokenFirebase };
                             var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/guardar-token/{Sesion.Usuario.UsuarioID}";
-                            
+
                             await Http.PostAsJsonAsync(url, payloadToken);
                         }
                         catch (Exception ex)
@@ -1877,7 +1877,7 @@
     private void AbrirModalPassword() { CerrarTodosLosMenus(); passOld = ""; passNew = ""; passConfirm = ""; msgErrorPass = ""; procesandoPass = false; mostrarModalPassword = true; }
     private void ToggleVerPass(int campo) { if (campo == 1) tipoInputOld = tipoInputOld == "password" ? "text" : "password"; if (campo == 2) tipoInputNew = tipoInputNew == "password" ? "text" : "password"; if (campo == 3) tipoInputConfirm = tipoInputConfirm == "password" ? "text" : "password"; }
     private async Task GuardarNuevaPassword() { if (string.IsNullOrWhiteSpace(passOld) || string.IsNullOrWhiteSpace(passNew) || string.IsNullOrWhiteSpace(passConfirm)) { msgErrorPass = "Todos los campos son obligatorios"; return; } if (passNew != passConfirm) { msgErrorPass = "La contraseña nueva y la confirmación no coinciden"; return; } procesandoPass = true; msgErrorPass = ""; try { var req = new { UsuarioID = Sesion.Usuario.UsuarioID, OldPassword = passOld, NewPassword = passNew, ConfirmPassword = passConfirm }; var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/authapi/cambiar-password", req); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("¡Éxito!", "Tu contraseña ha sido actualizada.", "OK"); mostrarModalPassword = false; } else { var errorJson = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>(); if (errorJson.TryGetProperty("mensaje", out var msg)) msgErrorPass = msg.GetString(); else msgErrorPass = "Error al actualizar la contraseña"; } } catch (Exception ex) { msgErrorPass = "Error de conexión: " + ex.Message; } finally { procesandoPass = false; } }
-    
+
     private async Task CargarNombreBox()
     {
         try
@@ -1896,7 +1896,7 @@
     private async Task CargarConfiguracionModulos() { try { listaConfiguracion = await Http.GetFromJsonAsync<List<ModuloConfig>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/configapi/modulos/{Sesion.Usuario.BoxID}"); } catch { } }
     private async Task ToggleModulo(ModuloConfig mod) { mod.Activo = !mod.Activo; try { await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/configapi/actualizar", mod); } catch { } }
     private bool EstaActivo(string clave) { if (listaConfiguracion == null || listaConfiguracion.Count == 0) return true; var mod = listaConfiguracion.FirstOrDefault(m => m.ModuloClave == clave); return mod == null ? true : mod.Activo; }
-    
+
     private void CerrarSesion() { diasRestantes = 99; SecureStorage.Default.Remove("auth_token"); Sesion.Usuario = null; Nav.NavigateTo("/"); }
     private void IrAPerfil() => Nav.NavigateTo("/mi-perfil");
     private void IrAAgenda() => Nav.NavigateTo("/agenda-view");
@@ -1915,8 +1915,23 @@
     private bool subiendoFoto = false;
     private bool cargandoBanner = true;
 
-    public class BannerDto { public Guid UsuarioID { get; set; } public string NombreMostrar { get; set; } public string FotoAvatar { get; set; } public string FondoUrl { get; set; } public string ColorBorde { get; set; } public string EstiloVisual { get; set; } public bool EsMiBanner { get; set; } }
+    public class BannerDto { public Guid UsuarioID { get; set; } public string Sexo { get; set; } public string NombreMostrar { get; set; } public string FotoAvatar { get; set; } public string FondoUrl { get; set; } public string ColorBorde { get; set; } public string EstiloVisual { get; set; } public bool EsMiBanner { get; set; } }
     public class GuardarBannerDto { public Guid UsuarioID { get; set; } public Guid BoxID { get; set; } public bool UsarFotoPerfil { get; set; } = true; public string ColorBorde { get; set; } = "#F8C545"; public string EstiloVisual { get; set; } = "Glass"; }
+
+    private string ObtenerPalabraBienvenida()
+    {
+        // Si aún no carga el banner o no tiene sexo definido, usamos el neutral
+        if (miBanner == null || string.IsNullOrEmpty(miBanner.Sexo)) 
+            return "BIENVENID@@"; // Recuerda usar @@ para que Razor no marque error
+            
+        if (miBanner.Sexo.ToUpper() == "M") 
+            return "BIENVENIDO";
+            
+        if (miBanner.Sexo.ToUpper() == "F") 
+            return "BIENVENIDA";
+            
+        return "BIENVENID@@";
+    }
 
     private async Task CargarMiBanner()
     {

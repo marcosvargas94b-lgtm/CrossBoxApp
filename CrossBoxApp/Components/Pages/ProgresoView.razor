@@ -30,12 +30,12 @@
                     <i class="fas fa-plus-circle"></i> NUEVA MARCA
                 </button>
 
-                @if (Sesion.Usuario?.TipoLugar == "Gimnasio")
-                {
+               @*  @if (Sesion.Usuario?.TipoLugar == "Gimnasio")
+                { *@
                     <button class="tab-btn @(pestañaActiva == "MEDIDAS" ? "active" : "")" @onclick='async () => await CambiarPestaña("MEDIDAS")'>
                         <i class="fas fa-weight"></i> MEDIDAS
                     </button>
-                }
+               @*  } *@
             </div>
 
             @if (cargando)
