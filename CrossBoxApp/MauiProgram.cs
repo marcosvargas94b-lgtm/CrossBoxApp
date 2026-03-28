@@ -13,8 +13,8 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Components.WebView.Maui;
 #if IOS
 using Plugin.Firebase.Core.Platforms.iOS;
-using UIKit;       // <--- NUEVO: Para el salvavidas manual de iOS
-using Foundation;  // <--- NUEVO: Para el salvavidas manual de iOS
+using UIKit;       
+using Foundation;  
 #elif ANDROID
 using Plugin.Firebase.Core.Platforms.Android;
 #endif
@@ -41,17 +41,20 @@ namespace CrossBoxApp
             builder.UseLocalNotification();
 #endif
 
-            // 1. ¡CRÍTICO! Encendemos los radares AQUÍ AFUERA, antes de que arranque cualquier plataforma
-            // para no perder ningún toque en segundo plano.
-            ConfigurarInterceptorPush();
+            // ❌ ELIMINAMOS ConfigurarInterceptorPush() DE AQUÍ.
+            // Tocaba Firebase antes de que iOS estuviera listo.
 
             builder.ConfigureLifecycleEvents(events =>
             {
 #if IOS
                 events.AddiOS(iOS => iOS.FinishedLaunching((app, launchOptions) => {
+                    // 1. PRIMERO INICIALIZAMOS FIREBASE NATIVAMENTE
                     CrossFirebase.Initialize(); 
                     
-                    // --- 2. SALVAVIDAS MANUAL PARA COLD START (App 100% cerrada) ---
+                    // 2. AHORA SÍ, YA PODEMOS ENCENDER LOS RADARES SEGUROS
+                    ConfigurarInterceptorPush();
+                    
+                    // --- SALVAVIDAS MANUAL PARA COLD START (App 100% cerrada) ---
                     if (launchOptions != null && launchOptions.ContainsKey(UIApplication.LaunchOptionsRemoteNotificationKey))
                     {
                         var pushPayload = launchOptions[UIApplication.LaunchOptionsRemoteNotificationKey] as NSDictionary;
@@ -62,18 +65,19 @@ namespace CrossBoxApp
                             {
                                 dict[key.ToString()] = pushPayload[key]?.ToString() ?? "";
                             }
-                            // Inyectamos a la fuerza los datos a Blazor
                             ProcesarDatosPush(dict);
                         }
                     }
-                    // ---------------------------------------------------------------
-                    
                     return true;
                 }));
 #elif ANDROID
                 events.AddAndroid(android => android.OnCreate((activity, state) =>
                 {
+                    // 1. INICIALIZAMOS
                     CrossFirebase.Initialize(activity, () => activity); 
+                    
+                    // 2. ENCENDEMOS RADARES
+                    ConfigurarInterceptorPush();
                 }));
 #endif
             });
@@ -99,10 +103,7 @@ namespace CrossBoxApp
 
         private static void ConfigurarInterceptorPush()
         {
-            // 1. ESCUCHAR FIREBASE PUSH (App Minimizada)
 #if ANDROID || IOS
-            // 1. ESCUCHAR FIREBASE PUSH (App Minimizada)
-            // Esto solo compilará y se ejecutará en celulares, Windows lo ignorará.
             CrossFirebaseCloudMessaging.Current.NotificationTapped += (sender, e) =>
             {
                 if (e.Notification != null && e.Notification.Data != null)
@@ -112,7 +113,6 @@ namespace CrossBoxApp
             };
 #endif
 
-            // 2. ESCUCHAR NOTIFICACIONES LOCALES (Timer / App Abierta)
             LocalNotificationCenter.Current.NotificationActionTapped += (NotificationActionEventArgs e) =>
             {
                 if (e.IsTapped && !string.IsNullOrEmpty(e.Request.ReturningData) && e.Request.ReturningData.StartsWith("/spotter-rescue"))
@@ -122,7 +122,6 @@ namespace CrossBoxApp
             };
         }
 
-        // MÉTODO PÚBLICO PARA PROCESAR DICCIONARIOS
         public static void ProcesarDatosPush(IDictionary<string, string> data)
         {
             if (data != null && data.TryGetValue("action", out var actionValue) && actionValue == "open_spotter")
@@ -131,31 +130,21 @@ namespace CrossBoxApp
                 string zona = data.ContainsKey("zona") ? data["zona"] : "Gym";
                 string dist = data.ContainsKey("distintivo") ? data["distintivo"] : "NA";
                 string min = data.ContainsKey("minutos") ? data["minutos"] : "2";
-                string ts = data.ContainsKey("timestamp") ? data["timestamp"] : "0"; // <--- Atrapamos el tiempo
+                string ts = data.ContainsKey("timestamp") ? data["timestamp"] : "0";
 
                 string urlDestino = $"/spotter-rescue?Nombre={Uri.EscapeDataString(nombre)}&Zona={Uri.EscapeDataString(zona)}&Distintivo={Uri.EscapeDataString(dist)}&Minutos={min}&Ts={ts}";
 
                 EnviarRutaABlazor(urlDestino);
             }
         }
+
         public static bool AcaboDePedirAyuda { get; set; } = false;
+
         private static void EnviarRutaABlazor(string urlDestino)
         {
-
-            MainThread.BeginInvokeOnMainThread(async () =>
+            MainThread.BeginInvokeOnMainThread(() =>
             {
                 RutaPendienteSpotter = urlDestino;
-                // Aumentamos el respiro a 800ms para asegurar que Blazor en iOS termine de cargar su UI pesada
-                //await System.Threading.Tasks.Task.Delay(1500);
-
-                //if (InterceptSpotterAction != null)
-                //{
-                //    InterceptSpotterAction.Invoke(urlDestino);
-                //}
-                //else
-                //{
-                //    RutaPendienteSpotter = urlDestino;
-                //}
             });
         }
     }
