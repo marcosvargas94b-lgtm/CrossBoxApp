@@ -1449,7 +1449,7 @@
 </style>
 
 @code {
-    // --- AHORA INICIA CON EL COLOR PLATA MATE (FALLBACK/SKELETON) ---
+    // --- ESTADO INICIAL NEUTRAL (PLATA MATE) ---
     private string EstilosTema = @"
         --theme-primary: #A9A9A9;
         --theme-secondary: #808080;
@@ -1566,82 +1566,57 @@
 
         // --- 1. INTENTAR CARGAR EL CACHÉ DE COLORES PRIMERO ---
         try 
-        { 
+        {
             var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
             if (!string.IsNullOrEmpty(cache)) 
             { 
                 EstilosTema = cache; 
-                // Forzamos un renderizado rápido para que la UI tome el color antes de cargar lo demás
-                StateHasChanged(); 
+                StateHasChanged(); // Forzamos UI rápida
             }
         } 
         catch { }
 
-        try 
-        { 
-            boxTieneMedallas = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/tiene-medallas/{Sesion.Usuario.BoxID}"); 
-        } 
-        catch 
-        { 
-            boxTieneMedallas = false; 
+        // --- 2. DISPARAR TAREAS INDEPENDIENTES EN PARALELO (LA OPTIMIZACIÓN) ---
+        var tFaltaCumple = Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/CumpleanosApi/falta-fecha/{Sesion.Usuario.UsuarioID}");
+        var tTieneMedallas = Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/tiene-medallas/{Sesion.Usuario.BoxID}");        
+        var tDiasRestantes = Http.GetFromJsonAsync<int>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/dias-restantes/{Sesion.Usuario.UsuarioID}");
+
+        var tNombreBox = CargarNombreBox();
+        var tNotificaciones = CargarNotificaciones();
+        var tSegmentos = CargarSegmentos();
+        var tModulos = CargarConfiguracionModulos();
+        var tBanner = CargarMiBanner();
+        var tRecuperacion = CargarRecuperacion();
+
+        try
+        {
+           await Task.WhenAll(
+                tFaltaCumple, tTieneMedallas, tDiasRestantes,
+                tNombreBox, tNotificaciones, tSegmentos, tModulos, tBanner, tRecuperacion
+            );
+
+            mostrarModalPedirCumple = tFaltaCumple.Result;
+            boxTieneMedallas = tTieneMedallas.Result;        
+            diasRestantes = tDiasRestantes.Result;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en carga paralela: {ex.Message}");
         }
 
+        // --- 3. TAREAS SECUNDARIAS ---
         EsAdmin = Sesion.Usuario.TipoUsuarioID == 1;
-        await CargarNombreBox();
-        await CargarNotificaciones();
-        await CargarSegmentos();
-        await CargarConfiguracionModulos();
-        await CargarMiBanner();
-        if (!avisoVistoEnSesion) await CargarUltimoAviso();
+
+        if (!avisoVistoEnSesion) _ = CargarUltimoAviso(); 
+
+        _ = CargarConfiguracionBox(); 
+        _ = CargarPlanesAsync(); 
+        
         try { tieneRutina = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/tiene-rutina/{Sesion.Usuario.UsuarioID}"); } catch { tieneRutina = false; }
         try { tieneRunning = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/tiene-plan/{Sesion.Usuario.UsuarioID}"); } catch { tieneRunning = false; }
-        
-        if (Sesion.Usuario != null)
-        {
-            try
-            {
-                var estado = await Http.GetFromJsonAsync<int>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/dias-restantes/{Sesion.Usuario.UsuarioID}");
-                diasRestantes = estado;
-            }
-            catch { }
-            try
-            {
-                var configBox = await Http.GetFromJsonAsync<BoxConfigDTO>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
-                if (configBox != null) 
-                {
-                    boxTieneMP = configBox.EstaVinculadoMP;
-
-                    // --- 2. ARMAMOS EL STRING DE ESTILOS DINÁMICO CON PROTECCIÓN DE NULOS ---
-                    string p = string.IsNullOrEmpty(configBox.ThemePrimary) ? "#F8C545" : configBox.ThemePrimary;
-                    string s = string.IsNullOrEmpty(configBox.ThemeSecondary) ? "#dcb03d" : configBox.ThemeSecondary;
-                    string bg = string.IsNullOrEmpty(configBox.ThemeBg) ? "#0d0d0d" : configBox.ThemeBg;
-                    string c = string.IsNullOrEmpty(configBox.ThemeCard) ? "#1a1a1a" : configBox.ThemeCard;
-                    string b = string.IsNullOrEmpty(configBox.ThemeBorder) ? "#333333" : configBox.ThemeBorder;
-                    string t = string.IsNullOrEmpty(configBox.ThemeText) ? "#ffffff" : configBox.ThemeText;
-                    string tm = string.IsNullOrEmpty(configBox.ThemeTextMuted) ? "#888888" : configBox.ThemeTextMuted;
-
-                    EstilosTema = $@"
-                        --theme-primary: {p};
-                        --theme-secondary: {s};
-                        --theme-bg: {bg};
-                        --theme-card: {c};
-                        --theme-border: {b};
-                        --theme-text: {t};
-                        --theme-text-muted: {tm};
-                    ";
-
-                    // --- 3. GUARDAR EN CACHÉ PARA LA PRÓXIMA VEZ ---
-                    try { await JS.InvokeVoidAsync("localStorage.setItem", "tema_box", EstilosTema); } catch { }
-                }
-            }
-            catch { boxTieneMP = false; }
-        }
-        try { listaPlanes = await Http.GetFromJsonAsync<List<PlanDto>>("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/planes"); } catch { }
-
-        await CargarRecuperacion();
 
         // =========================================================================
-        // 🔥 EL CÓDIGO DE FIREBASE ORIGINAL Y PURO (SIN WRAPPERS DE HILOS)
+        // 🔥 4. EL CÓDIGO DE FIREBASE ORIGINAL Y PURO (SIN WRAPPERS QUE ROMPAN IOS)
         // =========================================================================
         if (Sesion.Usuario?.TipoLugar == "Gimnasio")
         {
@@ -1649,16 +1624,16 @@
             {
                 if (DeviceInfo.Platform == DevicePlatform.Android || DeviceInfo.Platform == DevicePlatform.iOS)
                 {
-                    // 1. Pedimos permiso OFICIAL al iPhone/Android usando LocalNotification
+                    // Pedimos permiso OFICIAL al iPhone/Android usando LocalNotification
                     if (await Plugin.LocalNotification.LocalNotificationCenter.Current.AreNotificationsEnabled() == false)
                     {
                         await Plugin.LocalNotification.LocalNotificationCenter.Current.RequestNotificationPermission();
                     }
 
-                    // 2. Validamos Firebase
+                    // Validamos Firebase
                     await CrossFirebaseCloudMessaging.Current.CheckIfValidAsync();
 
-                    // 3. Obtenemos el Token único y validado de este celular
+                    // Obtenemos el Token único
                     var miTokenFirebase = await CrossFirebaseCloudMessaging.Current.GetTokenAsync();
                     
                     Console.WriteLine($"=================================================");
@@ -1690,6 +1665,36 @@
         cargandoConfiguracion = false;
     }
 
+    // Métodos de ayuda para las tareas secundarias
+    private async Task CargarPlanesAsync()
+    {
+        try { listaPlanes = await Http.GetFromJsonAsync<List<PlanDto>>("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/planes"); } catch { }
+    }
+
+    private async Task CargarConfiguracionBox()
+    {
+        try
+        {
+            var configBox = await Http.GetFromJsonAsync<BoxConfigDTO>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
+            if (configBox != null) 
+            {
+                boxTieneMP = configBox.EstaVinculadoMP;
+                string p = string.IsNullOrEmpty(configBox.ThemePrimary) ? "#F8C545" : configBox.ThemePrimary;
+                string s = string.IsNullOrEmpty(configBox.ThemeSecondary) ? "#dcb03d" : configBox.ThemeSecondary;
+                string bg = string.IsNullOrEmpty(configBox.ThemeBg) ? "#0d0d0d" : configBox.ThemeBg;
+                string c = string.IsNullOrEmpty(configBox.ThemeCard) ? "#1a1a1a" : configBox.ThemeCard;
+                string b = string.IsNullOrEmpty(configBox.ThemeBorder) ? "#333333" : configBox.ThemeBorder;
+                string t = string.IsNullOrEmpty(configBox.ThemeText) ? "#ffffff" : configBox.ThemeText;
+                string tm = string.IsNullOrEmpty(configBox.ThemeTextMuted) ? "#888888" : configBox.ThemeTextMuted;
+
+                EstilosTema = $"--theme-primary: {p}; --theme-secondary: {s}; --theme-bg: {bg}; --theme-card: {c}; --theme-border: {b}; --theme-text: {t}; --theme-text-muted: {tm};";
+                try { await JS.InvokeVoidAsync("localStorage.setItem", "tema_box", EstilosTema); } catch { }
+                StateHasChanged();
+            }
+        }
+        catch { boxTieneMP = false; }
+    }
+
     private async Task GuardarMiCumple()
     {
         guardandoCumple = true;
@@ -1708,7 +1713,6 @@
         try
         {
             string tipoLugar = Sesion.Usuario.TipoLugar ?? "";
-
             if (tipoLugar == "Running") return; 
 
             if (tipoLugar == "Gimnasio")
