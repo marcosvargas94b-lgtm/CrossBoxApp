@@ -1922,7 +1922,7 @@
     {
         // Si aún no carga el banner o no tiene sexo definido, usamos el neutral
         if (miBanner == null || string.IsNullOrEmpty(miBanner.Sexo)) 
-            return "BIENVENID@@"; // Recuerda usar @@ para que Razor no marque error
+            return "BIENVENID@"; // Recuerda usar @@ para que Razor no marque error
             
         if (miBanner.Sexo.ToUpper() == "M") 
             return "BIENVENIDO";
