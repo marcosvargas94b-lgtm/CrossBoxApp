@@ -816,7 +816,27 @@
     .fade-in { animation: fadeIn 0.3s ease-in; } .slide-in { animation: slideIn 0.3s ease-out; }
     @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } } @@keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .prep-pulse-animation { animation: pulseBig 1s infinite; } @@keyframes pulseBig { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-    .last-round-alert { color: #dc3545 !important; animation: pulseRed 1s infinite; } @@keyframes pulseRed { 0% { transform: scale(1); } 50% { transform: scale(1.05); text-shadow: 0 0 10px red; } 100% { transform: scale(1); } }
+    /* CONTADOR DE RONDAS Y FIX DEL CUADRO ROJO */
+    .round-counter { 
+        display: inline-block; 
+        margin-top: 10px;
+        background: transparent !important; /* Evita que se pinte el fondo */
+        -webkit-transform: translateZ(0); /* Anti-glitch WebKit */
+        transform: translateZ(0);
+        will-change: transform;
+    }
+
+    .last-round-alert { 
+        color: #dc3545 !important; 
+        animation: pulseRedText 1.5s infinite ease-in-out; 
+        transform-origin: center center; /* Para que crezca desde el medio */
+    } 
+
+    @@keyframes pulseRedText { 
+        0% { transform: scale(1); text-shadow: 0 0 0 rgba(220, 53, 69, 0); } 
+        50% { transform: scale(1.15); text-shadow: 0 0 15px rgba(220, 53, 69, 0.6); } 
+        100% { transform: scale(1); text-shadow: 0 0 0 rgba(220, 53, 69, 0); } 
+    }
     .peso-highlight { color: var(--theme-primary); font-weight: 900; font-family: 'Oswald', sans-serif; font-size: 0.95em; margin-left: 5px; }
     .peso-silver { color: #C0C0C0; font-weight: 800; font-family: 'Oswald', sans-serif; font-size: 0.95em; letter-spacing: 0.5px; margin-left: 6px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
     
