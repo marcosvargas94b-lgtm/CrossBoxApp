@@ -30,7 +30,7 @@
                         @foreach (var n in medallasNuevasAnimacion)
                         {
                             <div class="medalla-nueva-card">
-                                <img src="@($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/Imagenes/Medallas/{n.Id}.png")" class="celeb-img glow-effect" />
+                                <img src="@($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/Imagenes/Medallas/{n.Id}.png")" class="celeb-img glow-effect" />
                                 <h3>@n.Nombre</h3>
                             </div>
                         }
@@ -126,7 +126,7 @@
                                 <div class="date-badge" style="background: #FFD700; color: #000;">@medallaFinal.FechaObtencion?.ToString("dd/MMM/yy")</div>
                             }
                             
-                            <img src="@($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/Imagenes/Medallas/{medallaFinal.Id}.png")" 
+                            <img src="@($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/Imagenes/Medallas/{medallaFinal.Id}.png")" 
                                  class="medalla-img-legendary @(bloqueadaLegend ? "img-bw" : "")" />
                             
                             <div class="legendary-info">
@@ -167,7 +167,7 @@
                                         <div class="date-badge" style="background: #00E676; color: #000;">@medalla.FechaObtencion?.ToString("dd/MMM/yy")</div>
                                     }
 
-                                    <img src="@($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/Imagenes/Medallas/{medalla.Id}.png")" class="medalla-img-reward @(bloqueada ? "img-bw" : "")" />
+                                    <img src="@($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/Imagenes/Medallas/{medalla.Id}.png")" class="medalla-img-reward @(bloqueada ? "img-bw" : "")" />
 
                                     <div class="reward-info">
                                         <h4>@medalla.Nombre</h4>
@@ -215,7 +215,7 @@
                                     <div class="date-badge">@medalla.FechaObtencion?.ToString("dd/MMM/yy")</div>
                                 }
 
-                                <img src="@($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/Imagenes/Medallas/{medalla.Id}.png")" class="medalla-img @(bloqueada ? "img-bw" : (medalla.Diseno.ToLower() == "sticker" ? "drop-shadow-sticker" : ""))" />
+                                <img src="@($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/Imagenes/Medallas/{medalla.Id}.png")" class="medalla-img @(bloqueada ? "img-bw" : (medalla.Diseno.ToLower() == "sticker" ? "drop-shadow-sticker" : ""))" />
 
                                 <h4 class="medalla-nombre">@medalla.Nombre</h4>
                                 
@@ -259,7 +259,7 @@
                 </div>
 
                 <div class="exp-img-container">
-                    <img src="@($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/Imagenes/Medallas/{medallaExpandida.Id}.png")" class="exp-img @claseImgExp" />
+                    <img src="@($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/Imagenes/Medallas/{medallaExpandida.Id}.png")" class="exp-img @claseImgExp" />
                     
                     @if (!bloqueadaExp && (medallaExpandida.Diseno.ToLower() == "neon" || medallaExpandida.Diseno.ToLower() == "holo" || medallaExpandida.Diseno.ToLower() == "legendary"))
                     {
@@ -714,7 +714,7 @@
         if (!EsMiMedallero)
         {
             try { 
-                var uInfo = await Http.GetFromJsonAsync<UsuarioSelectDto>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/info-basica/{TargetUserId}");
+                var uInfo = await Http.GetFromJsonAsync<UsuarioSelectDto>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/usuariosapi/info-basica/{TargetUserId}");
                 if (uInfo != null) nombreAtletaVisitado = uInfo.NombreCompleto;
             } catch { }
         }
@@ -730,7 +730,7 @@
             Guid idConsulta = TargetUserId ?? Sesion.Usuario.UsuarioID;
             
             misMedallas = await Http.GetFromJsonAsync<List<MedallaUsuarioDto>>(
-                $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/mis-medallas/{Sesion.Usuario.BoxID}/{idConsulta}?visitanteId={Sesion.Usuario.UsuarioID}");
+                $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/medallasapi/mis-medallas/{Sesion.Usuario.BoxID}/{idConsulta}?visitanteId={Sesion.Usuario.UsuarioID}");
             
             if (EsMiMedallero && misMedallas != null && misMedallas.Any(m => m.EsNueva))
             {
@@ -765,7 +765,7 @@
 
         if (listaUsuariosBox.Count == 0)
         {
-            try { listaUsuariosBox = await Http.GetFromJsonAsync<List<UsuarioSelectDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/usuarios-box/{Sesion.Usuario.BoxID}"); }
+            try { listaUsuariosBox = await Http.GetFromJsonAsync<List<UsuarioSelectDto>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/medallasapi/usuarios-box/{Sesion.Usuario.BoxID}"); }
             catch { }
         }
     }
@@ -780,7 +780,7 @@
         {
             usuarioSeleccionadoId = uId;
             cargandoCatalogoManual = true; StateHasChanged();
-            try { catalogoManual = await Http.GetFromJsonAsync<List<CatalogoManualDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/catalogo-manual/{Sesion.Usuario.BoxID}/{usuarioSeleccionadoId}"); }
+            try { catalogoManual = await Http.GetFromJsonAsync<List<CatalogoManualDto>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/medallasapi/catalogo-manual/{Sesion.Usuario.BoxID}/{usuarioSeleccionadoId}"); }
             catch { }
             finally { cargandoCatalogoManual = false; StateHasChanged(); }
         }
@@ -800,7 +800,7 @@
                 UsuarioId = usuarioSeleccionadoId,
                 MedallasActivasIds = catalogoManual.Where(m => m.LaTiene).Select(m => m.Id).ToList()
             };
-            var res = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/asignar-manual", payload);
+            var res = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/medallasapi/asignar-manual", payload);
             
             if (res.IsSuccessStatusCode)
             {
@@ -820,7 +820,7 @@
         tabAdmin = "Masivo";
         if (catalogoCompletoManual.Count == 0)
         {
-            try { catalogoCompletoManual = await Http.GetFromJsonAsync<List<CatalogoManualDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/catalogo-manual/{Sesion.Usuario.BoxID}/{Sesion.Usuario.UsuarioID}"); }
+            try { catalogoCompletoManual = await Http.GetFromJsonAsync<List<CatalogoManualDto>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/medallasapi/catalogo-manual/{Sesion.Usuario.BoxID}/{Sesion.Usuario.UsuarioID}"); }
             catch { }
         }
     }
@@ -832,7 +832,7 @@
         {
             medallaMasivaSeleccionada = mId;
             cargandoAtletasMasivo = true; StateHasChanged();
-            try { listaUsuariosMasivo = await Http.GetFromJsonAsync<List<UsuarioMasivoDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/atletas-por-medalla/{Sesion.Usuario.BoxID}/{medallaMasivaSeleccionada}"); }
+            try { listaUsuariosMasivo = await Http.GetFromJsonAsync<List<UsuarioMasivoDto>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/medallasapi/atletas-por-medalla/{Sesion.Usuario.BoxID}/{medallaMasivaSeleccionada}"); }
             catch { }
             finally { cargandoAtletasMasivo = false; StateHasChanged(); }
         }
@@ -852,7 +852,7 @@
                 MedallaId = medallaMasivaSeleccionada,
                 UsuariosActivosIds = listaUsuariosMasivo.Where(u => u.TieneLaMedalla).Select(u => u.UsuarioId).ToList()
             };
-            var res = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/asignar-masivo", payload);
+            var res = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/medallasapi/asignar-masivo", payload);
             
             if (res.IsSuccessStatusCode)
             {

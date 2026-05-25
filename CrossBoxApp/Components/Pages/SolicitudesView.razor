@@ -198,7 +198,7 @@
     private async Task CargarPendientes()
     {
         try {
-            listaPendientes = await Http.GetFromJsonAsync<List<PendienteDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/pendientes/{Sesion.Usuario.BoxID}");
+            listaPendientes = await Http.GetFromJsonAsync<List<PendienteDto>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/usuariosapi/pendientes/{Sesion.Usuario.BoxID}");
         } catch { listaPendientes = new List<PendienteDto>(); }
     }
 
@@ -212,7 +212,7 @@
 
         try
         {
-            var r = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/aprobar/{u.UsuarioID}", null);
+            var r = await Http.PostAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/usuariosapi/aprobar/{u.UsuarioID}", null);
             if (r.IsSuccessStatusCode)
             {
                 await App.Current.MainPage.DisplayAlert("Listo", $"{u.NombreCompleto} aceptado.", "OK");
@@ -241,7 +241,7 @@
 
         try
         {
-            var r = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/eliminar-definitivo/{u.UsuarioID}", null);
+            var r = await Http.PostAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/usuariosapi/eliminar-definitivo/{u.UsuarioID}", null);
             if (r.IsSuccessStatusCode)
             {
                 await CargarPendientes(); 

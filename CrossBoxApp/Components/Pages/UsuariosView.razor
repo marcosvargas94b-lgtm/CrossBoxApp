@@ -517,7 +517,7 @@
     {
         try {
             cargando = true;
-            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/atletas-status/{Sesion.Usuario.BoxID}");
+            var response = await Http.GetAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/pagosapi/atletas-status/{Sesion.Usuario.BoxID}");
             if (response.IsSuccessStatusCode) listaUsuarios = await response.Content.ReadFromJsonAsync<List<AtletaConEstadoDto>>();
         } catch { } finally { cargando = false; }
     }
@@ -563,7 +563,7 @@
                 NuevaFechaInicio = fechaPagoSeleccionada,
                 MontoPagado = montoPagoSeleccionado
             };
-            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/renovar", req);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/pagosapi/renovar", req);
             
             if (response.IsSuccessStatusCode) { 
                 await App.Current.MainPage.DisplayAlert("Éxito", "Pago registrado.", "OK"); 
@@ -602,7 +602,7 @@
             StateHasChanged();
 
             nuevoAtleta.BoxID = Sesion.Usuario.BoxID;
-            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/crear-manual", nuevoAtleta);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/usuariosapi/crear-manual", nuevoAtleta);
 
             if (response.IsSuccessStatusCode)
             {
@@ -643,7 +643,7 @@
         bool confirm = await App.Current.MainPage.DisplayAlert("⚠️ ELIMINAR", $"Se borrarán datos de {u.NombreCompleto}. ¿Seguro?", "SÍ, BORRAR", "Cancelar"); 
         if (!confirm) return; 
         try { 
-            var response = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/eliminar-definitivo/{u.UsuarioID}", null); 
+            var response = await Http.PostAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/usuariosapi/eliminar-definitivo/{u.UsuarioID}", null); 
             if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("Hecho", "Eliminado.", "OK"); listaUsuarios.Remove(u); } 
             else await App.Current.MainPage.DisplayAlert("Error", "No se pudo borrar.", "OK"); 
         } catch(Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } 

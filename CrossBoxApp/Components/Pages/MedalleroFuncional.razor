@@ -267,7 +267,7 @@
         try
         {
             // Apuntamos al nuevo endpoint que creaste en el backend
-            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/ranking-funcional/{Sesion.Usuario.BoxID}";
+            var url = $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/medallasapi/ranking-funcional/{Sesion.Usuario.BoxID}";
             var respuesta = await Http.GetFromJsonAsync<RankingResponseFuncional>(url);
 
             if (respuesta != null)

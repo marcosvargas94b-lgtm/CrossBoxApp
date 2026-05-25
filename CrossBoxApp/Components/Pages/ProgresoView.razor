@@ -829,7 +829,7 @@
         try
         {
             var boxId = Sesion.Usuario.BoxID;
-            listaTodosAtletas = await Http.GetFromJsonAsync<List<UsuarioListDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/buscador/{boxId}");
+            listaTodosAtletas = await Http.GetFromJsonAsync<List<UsuarioListDto>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/usuariosapi/buscador/{boxId}");
             listaAtletasFiltrada = listaTodosAtletas;
         }
         catch { listaTodosAtletas = new List<UsuarioListDto>(); listaAtletasFiltrada = new List<UsuarioListDto>(); }
@@ -878,7 +878,7 @@
             cargando = true;
             var boxId = Sesion.Usuario.BoxID;
 
-            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/evaluacionesapi/usuario/{boxId}/{Sesion.Usuario.UsuarioID}");
+            var response = await Http.GetAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/evaluacionesapi/usuario/{boxId}/{Sesion.Usuario.UsuarioID}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -897,7 +897,7 @@
         mostrarModalHistorial = true;
         historialCargado = null; 
 
-        try { historialCargado = await Http.GetFromJsonAsync<List<HistorialDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/Evaluacionesapi/historial/{Sesion.Usuario.UsuarioID}/{testBoxId}"); }
+        try { historialCargado = await Http.GetFromJsonAsync<List<HistorialDto>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/Evaluacionesapi/historial/{Sesion.Usuario.UsuarioID}/{testBoxId}"); }
         catch { }
     }
     private void CerrarModalHistorial() => mostrarModalHistorial = false;
@@ -920,7 +920,7 @@
         try 
         {
             var dto = new GuardarResultadoDto { TestUsuarioId = testSeleccionadoParaRegistro.TestUsuarioId, TestBoxId = testSeleccionadoParaRegistro.TestBoxId, UsuarioId = Sesion.Usuario.UsuarioID, Valor = valorInputRegistro, EsNuevaMarca = esModoNuevaMarca };
-            var r = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/evaluacionesapi/guardar", dto);
+            var r = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/evaluacionesapi/guardar", dto);
             if (r.IsSuccessStatusCode) { mostrarModalRegistro = false; await CargarDatosUniversales(); await App.Current.MainPage.DisplayAlert("¡Felicidades!", "Marca guardada con éxito.", "OK"); }
             else { await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar la marca.", "OK"); }
         } 
@@ -933,7 +933,7 @@
         bool c = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Borrar esta marca del historial?", "Sí, borrar", "Cancelar");
         if (!c) return;
         try {
-            var r = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/evaluacionesapi/eliminar-registro/{testUsuarioId}", null);
+            var r = await Http.PostAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/evaluacionesapi/eliminar-registro/{testUsuarioId}", null);
             if (r.IsSuccessStatusCode) await CargarDatosUniversales();
         } catch { }
     }
@@ -942,7 +942,7 @@
     {
         try
         {
-            historialMedidas = await Http.GetFromJsonAsync<List<MedidaCorporalDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/evaluacionesapi/medidas/{usuarioObjetivoId}");
+            historialMedidas = await Http.GetFromJsonAsync<List<MedidaCorporalDto>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/evaluacionesapi/medidas/{usuarioObjetivoId}");
             StateHasChanged();
         }
         catch { }
@@ -972,7 +972,7 @@
         guardandoMedida = true;
         try
         {
-            var r = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/evaluacionesapi/medidas/guardar", nuevaMedidaInput);
+            var r = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/evaluacionesapi/medidas/guardar", nuevaMedidaInput);
             if (r.IsSuccessStatusCode)
             {
                 mostrarModalRegistroMedida = false;
@@ -989,7 +989,7 @@
         bool confirmar = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Borrar esta lectura de composición corporal?", "Sí", "Cancelar");
         if(!confirmar) return;
         try {
-            var r = await Http.DeleteAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/evaluacionesapi/medidas/eliminar/{id}");
+            var r = await Http.DeleteAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/evaluacionesapi/medidas/eliminar/{id}");
             if(r.IsSuccessStatusCode) { await CargarMedidasCorporales(); mostrarModalHistorialMedidas = false; }
         } catch {}
     }

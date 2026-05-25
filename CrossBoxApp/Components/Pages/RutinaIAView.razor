@@ -411,7 +411,7 @@
     {
         cargandoInicial = true;
         try {
-            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/activa/{Sesion.Usuario.UsuarioID}");
+            var response = await Http.GetAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/IAEntrenador/activa/{Sesion.Usuario.UsuarioID}");
             if (response.StatusCode == System.Net.HttpStatusCode.OK) {
                 rutinaGenerada = await response.Content.ReadFromJsonAsync<RutinaGeneradaDto>();
                 semanaActiva = 1; 
@@ -424,7 +424,7 @@
     {
         if(rutinaGenerada == null) return;
         try {
-            var lista = await Http.GetFromJsonAsync<List<string>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/progreso/{rutinaGenerada.IdBaseDatos}");
+            var lista = await Http.GetFromJsonAsync<List<string>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/IAEntrenador/progreso/{rutinaGenerada.IdBaseDatos}");
             diasCompletados = new HashSet<string>(lista ?? new List<string>());
         } catch {}
     }
@@ -435,7 +435,7 @@
         generando = true; errorMensaje = null;
         _ = SimularProgresoIA();
         try {
-            var response = await Http.PostAsJsonAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/generar-rutina/{Sesion.Usuario.UsuarioID}", perfil);
+            var response = await Http.PostAsJsonAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/IAEntrenador/generar-rutina/{Sesion.Usuario.UsuarioID}", perfil);
             if (response.IsSuccessStatusCode) {
                 rutinaGenerada = await response.Content.ReadFromJsonAsync<RutinaGeneradaDto>();
                 semanaActiva = 1;
@@ -464,7 +464,7 @@
 
         try 
         {
-            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/feedback", datos);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/IAEntrenador/feedback", datos);
             
             if (response.IsSuccessStatusCode)
             {
@@ -519,7 +519,7 @@
                 NombreEjercicio = ejercicioActual.NombreEspanol
             };
 
-            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/reemplazar-ejercicio", dto);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/IAEntrenador/reemplazar-ejercicio", dto);
 
             if (response.IsSuccessStatusCode)
             {
@@ -553,7 +553,7 @@
     {
         cargandoResumen = true;
         try {
-            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/resumen-cierre/{rutinaGenerada.IdBaseDatos}");
+            var response = await Http.GetAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/IAEntrenador/resumen-cierre/{rutinaGenerada.IdBaseDatos}");
             if (response.IsSuccessStatusCode) {
                 resumenCierre = await response.Content.ReadFromJsonAsync<ResumenCierreDto>();
                 mostrandoResumen = true; 
@@ -573,13 +573,13 @@
 
         if (accion == "Ajustar y Generar Siguiente Nivel")
         {
-            await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/finalizar/{Sesion.Usuario.UsuarioID}", null);
+            await Http.PostAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/IAEntrenador/finalizar/{Sesion.Usuario.UsuarioID}", null);
             rutinaGenerada = null;
             modoContinuacion = true;
         }
         else if (accion == "Reiniciar Historial (Empezar de cero)")
         {
-            await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/IAEntrenador/reiniciar/{Sesion.Usuario.UsuarioID}", null);
+            await Http.PostAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/IAEntrenador/reiniciar/{Sesion.Usuario.UsuarioID}", null);
             rutinaGenerada = null;
             modoContinuacion = false;
         }

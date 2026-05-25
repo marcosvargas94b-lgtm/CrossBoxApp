@@ -588,7 +588,7 @@
             string tipoLugar = Sesion.Usuario.TipoLugar ?? "";
             string endpoint = tipoLugar == "Gimnasio" ? "rutinasgym" : "rutinasbox";
 
-            datos = await Http.GetFromJsonAsync<EstadoRecuperacionDto>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/{endpoint}/recuperacion/{Sesion.Usuario.UsuarioID}");
+            datos = await Http.GetFromJsonAsync<EstadoRecuperacionDto>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/{endpoint}/recuperacion/{Sesion.Usuario.UsuarioID}");
         }
         catch { }
     }
@@ -624,18 +624,18 @@
                 if (tipoLugar == "Gimnasio")
                 {
                     var req = new { RpeScore = rpeSeleccionado };
-                    await Http.PostAsJsonAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/guardar-rpe/{datos.RutinaHoyParaRPE}", req);
+                    await Http.PostAsJsonAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasgym/guardar-rpe/{datos.RutinaHoyParaRPE}", req);
                 }
                 else
                 {
                     var req = new { RpeScore = rpeSeleccionado, NivelScaling = scalingSeleccionado };
-                    await Http.PostAsJsonAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasbox/guardar-rpe-box/{datos.RutinaHoyParaRPE}", req);
+                    await Http.PostAsJsonAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasbox/guardar-rpe-box/{datos.RutinaHoyParaRPE}", req);
                 }
             }
             else if (datos.RutinaCoachHoyParaRPE.HasValue)
             {
                 var req = new { RpeScore = rpeSeleccionado };
-                await Http.PostAsJsonAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/guardar-rpe-coach/{datos.RutinaCoachHoyParaRPE}", req);
+                await Http.PostAsJsonAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasgym/guardar-rpe-coach/{datos.RutinaCoachHoyParaRPE}", req);
             }
 
             rpeEnviado = true;
@@ -675,7 +675,7 @@
         guardandoFisio = true;
         try
         {
-            var res = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/guardar-fisiologia", fisioEdit);
+            var res = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasgym/guardar-fisiologia", fisioEdit);
             if (res.IsSuccessStatusCode)
             {
                 mostrarModalFisiologia = false;

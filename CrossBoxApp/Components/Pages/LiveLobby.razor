@@ -289,7 +289,7 @@
 
         // 2. Conectar SignalR para los QR
         hubConnection = new HubConnectionBuilder()
-            .WithUrl("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/livehub")
+            .WithUrl("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/livehub")
             .WithAutomaticReconnect()
             .Build();
 
@@ -324,7 +324,7 @@
     {
         try
         {
-            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/agendaapi/lista-horarios/{Sesion.Usuario.BoxID}");
+            var response = await Http.GetAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/agendaapi/lista-horarios/{Sesion.Usuario.BoxID}");
             if (response.IsSuccessStatusCode)
             {
                 listaHorarios = await response.Content.ReadFromJsonAsync<List<HorarioSimple>>();
@@ -349,7 +349,7 @@
             cargandoAgenda = true;
             StateHasChanged();
 
-            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/agendaapi/lobby-agendados/{Sesion.Usuario.BoxID}/{HorarioSeleccionado}");
+            var response = await Http.GetAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/agendaapi/lobby-agendados/{Sesion.Usuario.BoxID}/{HorarioSeleccionado}");
             
             if (response.IsSuccessStatusCode)
             {

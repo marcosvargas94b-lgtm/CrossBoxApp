@@ -745,7 +745,7 @@
         
         try
         {
-            boxTieneMedallas = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/tiene-medallas/{Sesion.Usuario.BoxID}");
+            boxTieneMedallas = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/medallasapi/tiene-medallas/{Sesion.Usuario.BoxID}");
         }
         catch { boxTieneMedallas = false; }
 
@@ -754,7 +754,7 @@
             Guid idConsulta = TargetUserId ?? Sesion.Usuario.UsuarioID;
 
             // RUTA NORMAL PARA CROSSFIT
-            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/{idConsulta}";
+            var url = $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/fichaapi/{idConsulta}";
             ficha = await Http.GetFromJsonAsync<FichaAtletaDto>(url);
 
             if (string.IsNullOrEmpty(ficha.ColorDetalles)) ficha.ColorDetalles = "#aaaaaa";
@@ -835,7 +835,7 @@
             var seleccionados = ficha.PRs.Where(p => p.Seleccionado).Select(p => p.Ejercicio).ToList();
             var payload = new { UsuarioId = Sesion.Usuario.UsuarioID, Ejercicios = seleccionados };
             
-            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/guardar-prs", payload);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/fichaapi/guardar-prs", payload);
             
             if (response.IsSuccessStatusCode)
             {
@@ -860,7 +860,7 @@
         mostrarModalSubtitulos = true;
         if(listaSubtitulos.Count == 0) {
             try { 
-                listaSubtitulos = await Http.GetFromJsonAsync<List<SubtituloDto>>("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/catalogo-subtitulos"); 
+                listaSubtitulos = await Http.GetFromJsonAsync<List<SubtituloDto>>("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/fichaapi/catalogo-subtitulos"); 
             } catch { }
         }
     }
@@ -872,7 +872,7 @@
         mostrarModalSubtitulos = false;
         try {
             var payload = new { UsuarioId = Sesion.Usuario.UsuarioID, Subtitulo = textoFrase };
-            await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/guardar-subtitulo", payload);
+            await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/fichaapi/guardar-subtitulo", payload);
         } catch { }
     }
 
@@ -997,7 +997,7 @@
             form.Add(streamContent, "archivo", archivo.Name);
             form.Add(new StringContent(Sesion.Usuario.UsuarioID.ToString()), "usuarioId");
 
-            var response = await Http.PostAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/subir-fondo", form);
+            var response = await Http.PostAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/fichaapi/subir-fondo", form);
             
             if (response.IsSuccessStatusCode)
             {
@@ -1032,7 +1032,7 @@
                 OpacidadFondo = ficha.OpacidadFondo,
                 OpacidadMedallas = ficha.OpacidadMedallas
             };
-            await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/guardar-colores", payload);
+            await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/fichaapi/guardar-colores", payload);
             mostrarModalColores = false;
         } catch { } finally { guardandoColores = false; }
     }

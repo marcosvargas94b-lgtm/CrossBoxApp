@@ -362,7 +362,7 @@
     {
         try {
             var miId = Sesion.Usuario.UsuarioID;
-            perfil = await Http.GetFromJsonAsync<DetallePublicoDto>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/detalle-publico/{TargetUserId}/{miId}");
+            perfil = await Http.GetFromJsonAsync<DetallePublicoDto>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/SocialApi/detalle-publico/{TargetUserId}/{miId}");
         } catch (Exception ex) { 
             Console.WriteLine("Error cargando perfil público: " + ex.Message);
         }
@@ -385,7 +385,7 @@
     {
         try {
             var req = new LikeRequest { LikerID = Sesion.Usuario.UsuarioID, FotoID = TargetUserId };
-            var resp = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/hacer-match", req);
+            var resp = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/SocialApi/hacer-match", req);
             if (resp.IsSuccessStatusCode) {
                 var result = await resp.Content.ReadFromJsonAsync<MatchResponseDto>();
                 if (result.EsMatchMutuo) {

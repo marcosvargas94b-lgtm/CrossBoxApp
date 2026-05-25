@@ -351,14 +351,14 @@
         try
         {
             // Solo para actualizar cache por si cambió en otra pantalla
-            var configBox = await Http.GetFromJsonAsync<BoxConfigDTO>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/config/TU_BOX_ID_AQUI");
+            var configBox = await Http.GetFromJsonAsync<BoxConfigDTO>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/boxesAPI/config/TU_BOX_ID_AQUI");
             // Nota: En esta pantalla no tienes Sesion.Usuario.BoxID fácilmente a la mano en el OnInitialized si no inyectas tu servicio de sesión completo. 
             // Como ya lo lees de LocalStorage es suficiente para que se vea bien instantáneamente.
         }
         catch { }
 
         try {
-            baseEjercicios = await Http.GetFromJsonAsync<List<EjercicioDto>>("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/tabataapi/todos");
+            baseEjercicios = await Http.GetFromJsonAsync<List<EjercicioDto>>("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/tabataapi/todos");
         } catch { } finally { cargando = false; }
     }
 

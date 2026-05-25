@@ -702,7 +702,7 @@
     {
         try
         {
-            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/PerfilApi/obtener-edicion/{Sesion.Usuario.UsuarioID}");
+            var response = await Http.GetAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/PerfilApi/obtener-edicion/{Sesion.Usuario.UsuarioID}");
             if (response.IsSuccessStatusCode)
             {
                 miPerfil = await response.Content.ReadFromJsonAsync<PerfilEdicionDto>();
@@ -834,7 +834,7 @@
             await AgregarArchivo(fileCert1, "archivoCert1");
             await AgregarArchivo(fileCert2, "archivoCert2");
 
-            var response = await Http.PostAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/PerfilApi/guardar-completo", contenido);
+            var response = await Http.PostAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/PerfilApi/guardar-completo", contenido);
 
             if (response.IsSuccessStatusCode)
             {

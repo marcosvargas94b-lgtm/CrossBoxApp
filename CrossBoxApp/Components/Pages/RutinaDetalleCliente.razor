@@ -209,7 +209,7 @@
     {
         try
         {
-            string url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/obtener-por-id/{RutinaID}";
+            string url = $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasapi/obtener-por-id/{RutinaID}";
             rutina = await Http.GetFromJsonAsync<RutinaAdminDto>(url);
         }
         catch { rutina = null; }
@@ -222,7 +222,7 @@
         DetenerTimer(); // Si estaba corriendo, lo paramos por seguridad.
         try
         {
-            var r = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/terminar-dia/{RutinaID}", null);
+            var r = await Http.PostAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasapi/terminar-dia/{RutinaID}", null);
             if (r.IsSuccessStatusCode)
             {
                 rutina.Completada = true;

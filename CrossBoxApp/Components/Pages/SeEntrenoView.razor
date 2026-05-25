@@ -286,7 +286,7 @@
             fileContent.Headers.ContentType = new MediaTypeHeaderValue(fotoFeedNativa.ContentType ?? "image/jpeg");
             content.Add(fileContent, "archivoFoto", fotoFeedNativa.FileName);
 
-            var resp = await Http.PostAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/subir", content);
+            var resp = await Http.PostAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/SocialApi/subir", content);
 
             if (resp.IsSuccessStatusCode)
             {
@@ -317,7 +317,7 @@
         if (Sesion.Usuario == null) return;
         try
         {
-            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/feed/{Sesion.Usuario.UsuarioID}");
+            var response = await Http.GetAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/SocialApi/feed/{Sesion.Usuario.UsuarioID}");
             if (response.IsSuccessStatusCode)
             {
                 var data = await response.Content.ReadFromJsonAsync<FeedResponse>();
@@ -337,7 +337,7 @@
         try
         {
             var req = new LikeRequest { FotoID = foto.FotoDiaID, LikerID = Sesion.Usuario.UsuarioID };
-            var resp = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/darlike", req);
+            var resp = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/SocialApi/darlike", req);
             if (!resp.IsSuccessStatusCode)
             {
                 foto.YaDiLike = false;
@@ -374,7 +374,7 @@
                 UsuarioID = Sesion.Usuario.UsuarioID
             };
 
-            var resp = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/borrar-foto", req);
+            var resp = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/SocialApi/borrar-foto", req);
 
             if (resp.IsSuccessStatusCode)
             {

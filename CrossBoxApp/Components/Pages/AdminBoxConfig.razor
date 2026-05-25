@@ -327,7 +327,7 @@
     private bool guardando = false;
     private BoxConfigDTO datosBox = new BoxConfigDTO();
     private string appId = "3844219986795201";
-    private string redirectUri = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/marketplace/oauth/callback";
+    private string redirectUri = "https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/marketplace/oauth/callback";
 
     // --- MAGIA DE COLORES INICIALIZADA (FALLBACK PLATA MATE) ---
     private string EstilosTema = @"
@@ -369,7 +369,7 @@
     private IBrowserFile? archivoSeleccionado;
     private string? previewImagen;
     private bool subiendoImagen = false;
-    private string urlBaseImagenes = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/Imagenes/Logos/";
+    private string urlBaseImagenes = "https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/Imagenes/Logos/";
 
     protected override async Task OnInitializedAsync()
     {
@@ -411,7 +411,7 @@
     {
         try
         {
-            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
+            var response = await Http.GetAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
 
             if (response.IsSuccessStatusCode)
             {
@@ -475,7 +475,7 @@
         try
         {
             datosBox.BoxID = Sesion.Usuario.BoxID;
-            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/actualizar-precios", datosBox);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/boxesAPI/actualizar-precios", datosBox);
 
             if (response.IsSuccessStatusCode)
             {
@@ -510,7 +510,7 @@
             fileContent.Headers.ContentType = new MediaTypeHeaderValue(archivoSeleccionado.ContentType);
             content.Add(fileContent, "logo", archivoSeleccionado.Name);
 
-            var response = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/subir-logo/{Sesion.Usuario.BoxID}", content);
+            var response = await Http.PostAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/boxesAPI/subir-logo/{Sesion.Usuario.BoxID}", content);
 
             if (response.IsSuccessStatusCode)
             {
@@ -550,7 +550,7 @@
         {
             try
             {
-                var response = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/desvincular/{Sesion.Usuario.BoxID}", null);
+                var response = await Http.PostAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/boxesAPI/desvincular/{Sesion.Usuario.BoxID}", null);
                 if (response.IsSuccessStatusCode) await CargarDatos();
                 else await App.Current.MainPage.DisplayAlert("Error", "No se pudo desconectar.", "OK");
             }

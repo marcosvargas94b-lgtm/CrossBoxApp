@@ -340,7 +340,7 @@
         cargando = true;
         try {
             string fechaFormat = lunesSeleccionado.ToString("yyyy-MM-dd");
-            rutinas = await Http.GetFromJsonAsync<List<RutinaAdminDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/semana/{UsuarioId}/{fechaFormat}");
+            rutinas = await Http.GetFromJsonAsync<List<RutinaAdminDto>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasapi/semana/{UsuarioId}/{fechaFormat}");
         } catch { rutinas = new List<RutinaAdminDto>(); }
         finally { cargando = false; }
     }
@@ -372,7 +372,7 @@
             Descripcion = textoEditando 
         };
 
-        var resp = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/guardar", req);
+        var resp = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasapi/guardar", req);
         
         if (resp.IsSuccessStatusCode)
         {
@@ -393,7 +393,7 @@
         if (confirm)
         {
             string fechaFormat = fecha.ToString("yyyy-MM-dd");
-            await Http.DeleteAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/eliminar/{UsuarioId}/{fechaFormat}");
+            await Http.DeleteAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasapi/eliminar/{UsuarioId}/{fechaFormat}");
             await CargarRutinas();
         }
     }

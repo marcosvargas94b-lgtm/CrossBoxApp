@@ -306,7 +306,7 @@
         {
             esAdminOCoach = (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.Usuario.TipoUsuarioID == 3);
             try {
-                var configBox = await Http.GetFromJsonAsync<BoxConfigDTO>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
+                var configBox = await Http.GetFromJsonAsync<BoxConfigDTO>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
                 if (configBox != null) {
                     limiteBoxActual = configBox.LimitePorClase > 0 ? configBox.LimitePorClase : 15;
                 }
@@ -322,7 +322,7 @@
             horarioSeleccionado = Guid.Empty;
             miReservaActualId = Guid.Empty;
             string fechaStr = fechaSeleccionada.ToString("yyyy-MM-dd");
-            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/agendaapi/visual/{Sesion.Usuario.BoxID}/{Sesion.Usuario.UsuarioID}/{fechaStr}");
+            var response = await Http.GetAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/agendaapi/visual/{Sesion.Usuario.BoxID}/{Sesion.Usuario.UsuarioID}/{fechaStr}");
             if (response.IsSuccessStatusCode) {
                 agendaData = await response.Content.ReadFromJsonAsync<List<AgendaVisualDto>>();
                 var miHorario = agendaData.FirstOrDefault(x => x.EsMiReserva);
@@ -343,7 +343,7 @@
         guardandoLimite = true;
         try {
             var req = new { BoxID = Sesion.Usuario.BoxID, NuevoLimite = limiteAtletasInput };
-            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/actualizar-limite", req);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/boxesAPI/actualizar-limite", req);
             if (response.IsSuccessStatusCode) {
                 limiteBoxActual = limiteAtletasInput;
                 mostrarModalLimite = false;
@@ -377,7 +377,7 @@
                 Fecha = fechaSeleccionada 
             };
 
-            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/agendaapi/reservar", reserva);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/agendaapi/reservar", reserva);
 
             if (response.IsSuccessStatusCode)
             {
@@ -421,7 +421,7 @@
                 Fecha = fechaSeleccionada 
             };
 
-            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/agendaapi/cancelar", reserva);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/agendaapi/cancelar", reserva);
 
             if (response.IsSuccessStatusCode)
             {

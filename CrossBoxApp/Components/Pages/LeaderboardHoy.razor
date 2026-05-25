@@ -371,7 +371,7 @@
             else if (tabActiva == "TIEMPO") endpoint = "leaderboard-tiempo-hoy";
             else if (tabActiva == "RONDAS") endpoint = "leaderboard-rondas-hoy";
 
-            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/scoresapi/{endpoint}/{Sesion.Usuario.BoxID}";
+            var url = $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/scoresapi/{endpoint}/{Sesion.Usuario.BoxID}";
 
             var res = await Http.GetFromJsonAsync<List<LeaderboardItem>>(url);
             if (res != null)

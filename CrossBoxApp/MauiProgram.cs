@@ -89,7 +89,7 @@ namespace CrossBoxApp
 #endif
             builder.Services.AddSingleton<LiveSessionState>();
             builder.Services.AddSingleton<SesionService>();
-            builder.Services.AddScoped(sp => new System.Net.Http.HttpClient { BaseAddress = new Uri("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/"), Timeout = TimeSpan.FromMinutes(3) });
+            builder.Services.AddScoped(sp => new System.Net.Http.HttpClient { BaseAddress = new Uri("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/"), Timeout = TimeSpan.FromMinutes(3) });
             builder.Services.AddSingleton(AudioManager.Current);
 #if IOS
             Microsoft.AspNetCore.Components.WebView.Maui.BlazorWebViewHandler.BlazorWebViewMapper.AppendToMapping("EnableSwipeBack", (handler, view) =>

@@ -930,7 +930,7 @@
         get
         {
             if (logoGuidReal == null) return "";
-            return $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/Imagenes/Logos/{logoGuidReal}.jpg";
+            return $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/Imagenes/Logos/{logoGuidReal}.jpg";
         }
     }
 
@@ -1095,7 +1095,7 @@
     {
         try
         {
-            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/configapi/nombre-box/{Sesion.Usuario.BoxID}");
+            var response = await Http.GetAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/configapi/nombre-box/{Sesion.Usuario.BoxID}");
             if (response.IsSuccessStatusCode)
             {
                 var info = await response.Content.ReadFromJsonAsync<BoxInfoSimple>();
@@ -1125,7 +1125,7 @@
         try
         {
             var fecha = DateTime.Now.ToString("yyyy-MM-dd");
-            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/obtener/{Sesion.Usuario.BoxID}/{fecha}");
+            var response = await Http.GetAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/wodapi/obtener/{Sesion.Usuario.BoxID}/{fecha}");
             if (response.IsSuccessStatusCode)
             {
                 wodHoy = await response.Content.ReadFromJsonAsync<ProgramacionWodViewModel>();
@@ -1154,7 +1154,7 @@
         mostrarModalAtletas = true; filtroAtleta = "";
         if (listaTodosAtletas == null)
         {
-            try { listaTodosAtletas = await Http.GetFromJsonAsync<List<UsuarioListDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/buscador/{Sesion.Usuario.BoxID}"); }
+            try { listaTodosAtletas = await Http.GetFromJsonAsync<List<UsuarioListDto>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/usuariosapi/buscador/{Sesion.Usuario.BoxID}"); }
             catch { listaTodosAtletas = new List<UsuarioListDto>(); }
         }
         listaAtletasFiltrada = listaTodosAtletas;
@@ -1352,7 +1352,7 @@
     {
         try
         {
-            var r = await Http.GetAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/segmentos");
+            var r = await Http.GetAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/wodapi/segmentos");
             if (r.IsSuccessStatusCode) listaSegmentos = await r.Content.ReadFromJsonAsync<List<SegmentoDto>>();
         }
         catch { }
@@ -1482,7 +1482,7 @@
 
         try
         {
-            var r = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/guardar", wodPayload);
+            var r = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/wodapi/guardar", wodPayload);
 
             if (r.IsSuccessStatusCode)
             {

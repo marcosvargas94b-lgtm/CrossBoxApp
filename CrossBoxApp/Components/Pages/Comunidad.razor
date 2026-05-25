@@ -196,7 +196,7 @@
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
         
         try {
-            listaBanners = await Http.GetFromJsonAsync<List<BannerDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/communityapi/lista/{Sesion.Usuario.BoxID}/{Sesion.Usuario.UsuarioID}");
+            listaBanners = await Http.GetFromJsonAsync<List<BannerDto>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/communityapi/lista/{Sesion.Usuario.BoxID}/{Sesion.Usuario.UsuarioID}");
         } catch { }
         finally { cargando = false; }
     }

@@ -337,7 +337,7 @@
 
             var boxId = Sesion.Usuario.BoxID;
             var miId = Sesion.Usuario.UsuarioID;
-            lista = await Http.GetFromJsonAsync<List<CompaneroDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/companeros/{boxId}/{miId}");
+            lista = await Http.GetFromJsonAsync<List<CompaneroDto>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/SocialApi/companeros/{boxId}/{miId}");
         }
         catch (Exception ex)
         {

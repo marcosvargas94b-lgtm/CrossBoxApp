@@ -214,7 +214,7 @@
 
         try
         {
-            tieneRutinaGlobal = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/tiene-rutina/{Sesion.Usuario.UsuarioID}");
+            tieneRutinaGlobal = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasapi/tiene-rutina/{Sesion.Usuario.UsuarioID}");
         }
         catch { tieneRutinaGlobal = false; }
 
@@ -285,7 +285,7 @@
         try
         {
             string fechaFormat = lunesSeleccionado.ToString("yyyy-MM-dd");
-            rutinas = await Http.GetFromJsonAsync<List<RutinaDiaDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/semana/{Sesion.Usuario.UsuarioID}/{fechaFormat}");
+            rutinas = await Http.GetFromJsonAsync<List<RutinaDiaDto>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasapi/semana/{Sesion.Usuario.UsuarioID}/{fechaFormat}");
         }
         catch { rutinas = new List<RutinaDiaDto>(); }
         finally { cargandoRutinas = false; } // <-- CORRECCIÓN: Usar la variable correcta aquí

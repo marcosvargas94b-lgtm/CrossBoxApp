@@ -260,7 +260,7 @@
         cargando = true;
         try
         {
-            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/ranking/{Sesion.Usuario.BoxID}";
+            var url = $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/medallasapi/ranking/{Sesion.Usuario.BoxID}";
             var respuesta = await Http.GetFromJsonAsync<RankingResponse>(url);
 
             if (respuesta != null)

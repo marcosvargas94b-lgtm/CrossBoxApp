@@ -1515,7 +1515,7 @@
     private bool EsAdmin = false;
     private string NombreBox = "AFTRACK";
     private Guid? LogoBoxId; 
-    private string UrlLogo => LogoBoxId.HasValue ? $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/Imagenes/Logos/{LogoBoxId}.jpg" : "";
+    private string UrlLogo => LogoBoxId.HasValue ? $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/Imagenes/Logos/{LogoBoxId}.jpg" : "";
 
     private bool tieneRutina = false;
     private bool mostrarNotis = false;
@@ -1596,9 +1596,9 @@
         catch { }
 
         // --- 2. DISPARAR TAREAS INDEPENDIENTES EN PARALELO (LA OPTIMIZACIÓN) ---
-        var tFaltaCumple = Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/CumpleanosApi/falta-fecha/{Sesion.Usuario.UsuarioID}");
-        var tTieneMedallas = Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/tiene-medallas/{Sesion.Usuario.BoxID}");        
-        var tDiasRestantes = Http.GetFromJsonAsync<int>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/dias-restantes/{Sesion.Usuario.UsuarioID}");
+        var tFaltaCumple = Http.GetFromJsonAsync<bool>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/CumpleanosApi/falta-fecha/{Sesion.Usuario.UsuarioID}");
+        var tTieneMedallas = Http.GetFromJsonAsync<bool>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/medallasapi/tiene-medallas/{Sesion.Usuario.BoxID}");        
+        var tDiasRestantes = Http.GetFromJsonAsync<int>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/pagosapi/dias-restantes/{Sesion.Usuario.UsuarioID}");
 
         var tNombreBox = CargarNombreBox();
         var tNotificaciones = CargarNotificaciones();
@@ -1631,8 +1631,8 @@
         _ = CargarConfiguracionBox(); 
         _ = CargarPlanesAsync(); 
 
-        try { tieneRutina = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasapi/tiene-rutina/{Sesion.Usuario.UsuarioID}"); } catch { tieneRutina = false; }
-        try { tieneRunning = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/tiene-plan/{Sesion.Usuario.UsuarioID}"); } catch { tieneRunning = false; }
+        try { tieneRutina = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasapi/tiene-rutina/{Sesion.Usuario.UsuarioID}"); } catch { tieneRutina = false; }
+        try { tieneRunning = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/runningapi/tiene-plan/{Sesion.Usuario.UsuarioID}"); } catch { tieneRunning = false; }
 
         // =========================================================================
         // 🔥 4. EL CÓDIGO DE FIREBASE ORIGINAL Y PURO (SIN WRAPPERS QUE ROMPAN IOS)
@@ -1664,7 +1664,7 @@
                         try
                         {
                             var payloadToken = new TokenDto { Token = miTokenFirebase };
-                            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/usuariosapi/guardar-token/{Sesion.Usuario.UsuarioID}";
+                            var url = $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/usuariosapi/guardar-token/{Sesion.Usuario.UsuarioID}";
 
                             await Http.PostAsJsonAsync(url, payloadToken);
                         }
@@ -1687,14 +1687,14 @@
     // Métodos de ayuda para las tareas secundarias
     private async Task CargarPlanesAsync()
     {
-        try { listaPlanes = await Http.GetFromJsonAsync<List<PlanDto>>("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/pagosapi/planes"); } catch { }
+        try { listaPlanes = await Http.GetFromJsonAsync<List<PlanDto>>("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/pagosapi/planes"); } catch { }
     }
 
     private async Task CargarConfiguracionBox()
     {
         try
         {
-            var configBox = await Http.GetFromJsonAsync<BoxConfigDTO>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
+            var configBox = await Http.GetFromJsonAsync<BoxConfigDTO>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/boxesAPI/config/{Sesion.Usuario.BoxID}");
             if (configBox != null) 
             {
                 boxTieneMP = configBox.EstaVinculadoMP;
@@ -1720,7 +1720,7 @@
         try
         {
             var dto = new GuardarCumpleDto { Fecha = fechaCumpleInput };
-            var r = await Http.PostAsJsonAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/CumpleanosApi/guardar-fecha/{Sesion.Usuario.UsuarioID}", dto);
+            var r = await Http.PostAsJsonAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/CumpleanosApi/guardar-fecha/{Sesion.Usuario.UsuarioID}", dto);
             if (r.IsSuccessStatusCode) { mostrarModalPedirCumple = false; }
         }
         catch { }
@@ -1736,11 +1736,11 @@
 
             if (tipoLugar == "Gimnasio")
             {
-                resumenRecuperacion = await Http.GetFromJsonAsync<EstadoRecuperacionDto>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/recuperacion/{Sesion.Usuario.UsuarioID}");
+                resumenRecuperacion = await Http.GetFromJsonAsync<EstadoRecuperacionDto>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasgym/recuperacion/{Sesion.Usuario.UsuarioID}");
             }
             else
             {
-                resumenRecuperacion = await Http.GetFromJsonAsync<EstadoRecuperacionDto>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasbox/recuperacion/{Sesion.Usuario.UsuarioID}");
+                resumenRecuperacion = await Http.GetFromJsonAsync<EstadoRecuperacionDto>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasbox/recuperacion/{Sesion.Usuario.UsuarioID}");
             }
         }
         catch (Exception ex)
@@ -1752,7 +1752,7 @@
     // --- FUNCIONES MENÚS Y OVERLAY ---
     private void CerrarTodosLosMenus() { mostrarMenuPrincipal = false; mostrarNotis = false; }
     private void ToggleMainMenu() { mostrarMenuPrincipal = !mostrarMenuPrincipal; if (mostrarMenuPrincipal) mostrarNotis = false; }
-    private void ToggleNotificaciones() { mostrarNotis = !mostrarNotis; if (mostrarNotis) { mostrarMenuPrincipal = false; if (hayNuevas) { hayNuevas = false; _ = Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/notificaciones/leer/{Sesion.Usuario.UsuarioID}", null); } } }
+    private void ToggleNotificaciones() { mostrarNotis = !mostrarNotis; if (mostrarNotis) { mostrarMenuPrincipal = false; if (hayNuevas) { hayNuevas = false; _ = Http.PostAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/SocialApi/notificaciones/leer/{Sesion.Usuario.UsuarioID}", null); } } }
 
     // --- LOGICA MODAL WOD ---
     private async void AbrirModalWod()
@@ -1787,7 +1787,7 @@
         try
         {
             var fechaStr = fecha.ToString("yyyy-MM-dd");
-            wodExiste = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/existe/{Sesion.Usuario.BoxID}/{fechaStr}");
+            wodExiste = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/wodapi/existe/{Sesion.Usuario.BoxID}/{fechaStr}");
             if (!wodExiste) { listaBloquesEditor = new List<BloqueEditorViewModel>(); AgregarBloque(); }
         }
         catch { wodExiste = false; listaBloquesEditor = new List<BloqueEditorViewModel>(); AgregarBloque(); }
@@ -1800,7 +1800,7 @@
         try
         {
             var fechaStr = nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd");
-            var wodExistente = await Http.GetFromJsonAsync<ProgramacionWodViewModel>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/obtener/{Sesion.Usuario.BoxID}/{fechaStr}");
+            var wodExistente = await Http.GetFromJsonAsync<ProgramacionWodViewModel>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/wodapi/obtener/{Sesion.Usuario.BoxID}/{fechaStr}");
             if (wodExistente != null && wodExistente.Bloques.Any())
             {
                 nuevoWod = wodExistente;
@@ -1831,7 +1831,7 @@
             try
             {
                 var fechaStr = nuevoWod.FechaProgramacion.ToString("yyyy-MM-dd");
-                var response = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/eliminar-dia/{Sesion.Usuario.BoxID}/{fechaStr}", null);
+                var response = await Http.PostAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/wodapi/eliminar-dia/{Sesion.Usuario.BoxID}/{fechaStr}", null);
                 if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("Éxito", "WOD eliminado.", "OK"); wodExiste = false; listaBloquesEditor = new List<BloqueEditorViewModel>(); AgregarBloque(); }
                 else { string error = await response.Content.ReadAsStringAsync(); await App.Current.MainPage.DisplayAlert("Error", error, "OK"); }
             }
@@ -1880,7 +1880,7 @@
         cargandoOperacionWod = true; StateHasChanged();
         try
         {
-            var r = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/guardar", wodPayload);
+            var r = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/wodapi/guardar", wodPayload);
             if (r.IsSuccessStatusCode) { mostrarModalWod = false; editandoWod = false; await App.Current.MainPage.DisplayAlert("¡Éxito!", "WOD guardado correctamente.", "OK"); }
             else { var errorMsg = await r.Content.ReadAsStringAsync(); await App.Current.MainPage.DisplayAlert("Aviso", "No se pudo guardar: " + errorMsg, "OK"); }
         }
@@ -1889,19 +1889,19 @@
     }
 
     private async Task AbrirModalHorarios() { CerrarTodosLosMenus(); mostrarModalHorarios = true; await CargarHorariosAdmin(); }
-    private async Task CargarHorariosAdmin() { try { listaHorariosAdmin = await Http.GetFromJsonAsync<List<HorarioDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/AgendaApi/lista-horarios/{Sesion.Usuario.BoxID}"); } catch { listaHorariosAdmin = new List<HorarioDto>(); } }
-    private async Task AgregarHorario() { if (string.IsNullOrWhiteSpace(nuevoHorarioTexto)) return; try { var nuevo = new HorarioDto { BoxID = Sesion.Usuario.BoxID, Descripcion = nuevoHorarioTexto }; var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/AgendaApi/crear-horario", nuevo); if (response.IsSuccessStatusCode) { nuevoHorarioTexto = ""; await CargarHorariosAdmin(); } else await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar.", "OK"); } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } }
-    private async Task EliminarHorario(Guid id) { bool confirmar = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Seguro?", "Sí", "No"); if (!confirmar) return; try { var response = await Http.DeleteAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/AgendaApi/eliminar-horario/{id}"); if (response.IsSuccessStatusCode) { await CargarHorariosAdmin(); } else await App.Current.MainPage.DisplayAlert("Error", "No se pudo eliminar.", "OK"); } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } }
-    private async Task ConfirmarEliminarCuenta() { bool confirmacion = await App.Current.MainPage.DisplayAlert("⚠️ Eliminar Cuenta", "¿Estás seguro de que quieres eliminar tu cuenta permanentemente? Perderás todo tu historial, fotos y pagos. Esta acción NO se puede deshacer.", "Sí, Eliminar", "Cancelar"); if (confirmacion) { try { var response = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/authapi/eliminar-definitivo/{Sesion.Usuario.UsuarioID}", null); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("Cuenta Eliminada", "Lamentamos que te vayas. Tu cuenta ha sido borrada.", "Adiós"); CerrarSesion(); } else { string mensajeError = await response.Content.ReadAsStringAsync(); await App.Current.MainPage.DisplayAlert("Error", $"No se pudo eliminar: {mensajeError}", "OK"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK"); } } }
+    private async Task CargarHorariosAdmin() { try { listaHorariosAdmin = await Http.GetFromJsonAsync<List<HorarioDto>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/AgendaApi/lista-horarios/{Sesion.Usuario.BoxID}"); } catch { listaHorariosAdmin = new List<HorarioDto>(); } }
+    private async Task AgregarHorario() { if (string.IsNullOrWhiteSpace(nuevoHorarioTexto)) return; try { var nuevo = new HorarioDto { BoxID = Sesion.Usuario.BoxID, Descripcion = nuevoHorarioTexto }; var response = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/AgendaApi/crear-horario", nuevo); if (response.IsSuccessStatusCode) { nuevoHorarioTexto = ""; await CargarHorariosAdmin(); } else await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar.", "OK"); } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } }
+    private async Task EliminarHorario(Guid id) { bool confirmar = await App.Current.MainPage.DisplayAlert("Eliminar", "¿Seguro?", "Sí", "No"); if (!confirmar) return; try { var response = await Http.DeleteAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/AgendaApi/eliminar-horario/{id}"); if (response.IsSuccessStatusCode) { await CargarHorariosAdmin(); } else await App.Current.MainPage.DisplayAlert("Error", "No se pudo eliminar.", "OK"); } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); } }
+    private async Task ConfirmarEliminarCuenta() { bool confirmacion = await App.Current.MainPage.DisplayAlert("⚠️ Eliminar Cuenta", "¿Estás seguro de que quieres eliminar tu cuenta permanentemente? Perderás todo tu historial, fotos y pagos. Esta acción NO se puede deshacer.", "Sí, Eliminar", "Cancelar"); if (confirmacion) { try { var response = await Http.PostAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/authapi/eliminar-definitivo/{Sesion.Usuario.UsuarioID}", null); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("Cuenta Eliminada", "Lamentamos que te vayas. Tu cuenta ha sido borrada.", "Adiós"); CerrarSesion(); } else { string mensajeError = await response.Content.ReadAsStringAsync(); await App.Current.MainPage.DisplayAlert("Error", $"No se pudo eliminar: {mensajeError}", "OK"); } } catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK"); } } }
     private void AbrirModalPassword() { CerrarTodosLosMenus(); passOld = ""; passNew = ""; passConfirm = ""; msgErrorPass = ""; procesandoPass = false; mostrarModalPassword = true; }
     private void ToggleVerPass(int campo) { if (campo == 1) tipoInputOld = tipoInputOld == "password" ? "text" : "password"; if (campo == 2) tipoInputNew = tipoInputNew == "password" ? "text" : "password"; if (campo == 3) tipoInputConfirm = tipoInputConfirm == "password" ? "text" : "password"; }
-    private async Task GuardarNuevaPassword() { if (string.IsNullOrWhiteSpace(passOld) || string.IsNullOrWhiteSpace(passNew) || string.IsNullOrWhiteSpace(passConfirm)) { msgErrorPass = "Todos los campos son obligatorios"; return; } if (passNew != passConfirm) { msgErrorPass = "La contraseña nueva y la confirmación no coinciden"; return; } procesandoPass = true; msgErrorPass = ""; try { var req = new { UsuarioID = Sesion.Usuario.UsuarioID, OldPassword = passOld, NewPassword = passNew, ConfirmPassword = passConfirm }; var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/authapi/cambiar-password", req); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("¡Éxito!", "Tu contraseña ha sido actualizada.", "OK"); mostrarModalPassword = false; } else { var errorJson = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>(); if (errorJson.TryGetProperty("mensaje", out var msg)) msgErrorPass = msg.GetString(); else msgErrorPass = "Error al actualizar la contraseña"; } } catch (Exception ex) { msgErrorPass = "Error de conexión: " + ex.Message; } finally { procesandoPass = false; } }
+    private async Task GuardarNuevaPassword() { if (string.IsNullOrWhiteSpace(passOld) || string.IsNullOrWhiteSpace(passNew) || string.IsNullOrWhiteSpace(passConfirm)) { msgErrorPass = "Todos los campos son obligatorios"; return; } if (passNew != passConfirm) { msgErrorPass = "La contraseña nueva y la confirmación no coinciden"; return; } procesandoPass = true; msgErrorPass = ""; try { var req = new { UsuarioID = Sesion.Usuario.UsuarioID, OldPassword = passOld, NewPassword = passNew, ConfirmPassword = passConfirm }; var response = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/authapi/cambiar-password", req); if (response.IsSuccessStatusCode) { await App.Current.MainPage.DisplayAlert("¡Éxito!", "Tu contraseña ha sido actualizada.", "OK"); mostrarModalPassword = false; } else { var errorJson = await response.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>(); if (errorJson.TryGetProperty("mensaje", out var msg)) msgErrorPass = msg.GetString(); else msgErrorPass = "Error al actualizar la contraseña"; } } catch (Exception ex) { msgErrorPass = "Error de conexión: " + ex.Message; } finally { procesandoPass = false; } }
 
     private async Task CargarNombreBox()
     {
         try
         {
-            var response = await Http.GetFromJsonAsync<Boxes>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/configapi/nombre-box/{Sesion.Usuario.BoxID}");
+            var response = await Http.GetFromJsonAsync<Boxes>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/configapi/nombre-box/{Sesion.Usuario.BoxID}");
             if (response != null)
             {
                 if (!string.IsNullOrEmpty(response.Nombre)) NombreBox = response.Nombre.ToUpper();
@@ -1912,8 +1912,8 @@
     }
 
     private void AbrirGestionModulos() { CerrarTodosLosMenus(); mostrarModalModulos = true; }
-    private async Task CargarConfiguracionModulos() { try { listaConfiguracion = await Http.GetFromJsonAsync<List<ModuloConfig>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/configapi/modulos/{Sesion.Usuario.BoxID}"); } catch { } }
-    private async Task ToggleModulo(ModuloConfig mod) { mod.Activo = !mod.Activo; try { await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/configapi/actualizar", mod); } catch { } }
+    private async Task CargarConfiguracionModulos() { try { listaConfiguracion = await Http.GetFromJsonAsync<List<ModuloConfig>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/configapi/modulos/{Sesion.Usuario.BoxID}"); } catch { } }
+    private async Task ToggleModulo(ModuloConfig mod) { mod.Activo = !mod.Activo; try { await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/configapi/actualizar", mod); } catch { } }
     private bool EstaActivo(string clave) { if (listaConfiguracion == null || listaConfiguracion.Count == 0) return true; var mod = listaConfiguracion.FirstOrDefault(m => m.ModuloClave == clave); return mod == null ? true : mod.Activo; }
 
     private void CerrarSesion() { diasRestantes = 99; SecureStorage.Default.Remove("auth_token"); Sesion.Usuario = null; Nav.NavigateTo("/"); }
@@ -1955,14 +1955,14 @@
     private async Task CargarMiBanner()
     {
         cargandoBanner = true; StateHasChanged();
-        try { var urlBase = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/communityapi"; miBanner = await Http.GetFromJsonAsync<BannerDto>($"{urlBase}/mi-banner/{Sesion.Usuario.BoxID}/{Sesion.Usuario.UsuarioID}"); if (miBanner != null) { miBannerEdit.ColorBorde = miBanner.ColorBorde; miBannerEdit.EstiloVisual = miBanner.EstiloVisual; if (!string.IsNullOrEmpty(miBanner.FotoAvatar) && miBanner.FotoAvatar.Contains("/banners/")) { miBannerEdit.UsarFotoPerfil = false; } else { miBannerEdit.UsarFotoPerfil = true; } } }
+        try { var urlBase = "https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/communityapi"; miBanner = await Http.GetFromJsonAsync<BannerDto>($"{urlBase}/mi-banner/{Sesion.Usuario.BoxID}/{Sesion.Usuario.UsuarioID}"); if (miBanner != null) { miBannerEdit.ColorBorde = miBanner.ColorBorde; miBannerEdit.EstiloVisual = miBanner.EstiloVisual; if (!string.IsNullOrEmpty(miBanner.FotoAvatar) && miBanner.FotoAvatar.Contains("/banners/")) { miBannerEdit.UsarFotoPerfil = false; } else { miBannerEdit.UsarFotoPerfil = true; } } }
         catch (Exception ex) { Console.WriteLine("Error al cargar mi banner: " + ex.Message); } finally { cargandoBanner = false; StateHasChanged(); }
     }
 
     private void AbrirModalBanner() { miBannerEdit.UsuarioID = Sesion.Usuario.UsuarioID; miBannerEdit.BoxID = (Guid)Sesion.Usuario.BoxID; mostrarModalBanner = true; }
     private void CerrarModalBanner() => mostrarModalBanner = false;
     
-    private async Task QuitarFondoCustomBanner() { if (miBanner != null) miBanner.FondoUrl = ""; try { var urlBase = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/communityapi"; await Http.DeleteAsync($"{urlBase}/quitar-imagen/fondo/{Sesion.Usuario.UsuarioID}"); await CargarMiBanner(); } catch { } }
+    private async Task QuitarFondoCustomBanner() { if (miBanner != null) miBanner.FondoUrl = ""; try { var urlBase = "https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/communityapi"; await Http.DeleteAsync($"{urlBase}/quitar-imagen/fondo/{Sesion.Usuario.UsuarioID}"); await CargarMiBanner(); } catch { } }
 
     private async Task SubirImagenBannerForm(InputFileChangeEventArgs e, string tipo)
     {
@@ -1975,25 +1975,25 @@
             using var streamContent = new StreamContent(fileStream);
             streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(archivo.ContentType);
             form.Add(streamContent, "archivo", archivo.Name);
-            var response = await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/communityapi/subir-imagen/{tipo}/{Sesion.Usuario.UsuarioID}", form);
+            var response = await Http.PostAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/communityapi/subir-imagen/{tipo}/{Sesion.Usuario.UsuarioID}", form);
             if (response.IsSuccessStatusCode) { if (tipo == "foto") miBannerEdit.UsarFotoPerfil = false; await CargarMiBanner(); }
         }
         catch { await App.Current.MainPage.DisplayAlert("Error", "No se pudo subir la imagen", "OK"); }
         finally { if (tipo == "fondo") subiendoFondo = false; else subiendoFoto = false; StateHasChanged(); }
     }
 
-    private async Task GuardarConfiguracionBanner() { guardandoBanner = true; try { await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/communityapi/guardar-mi-banner", miBannerEdit); mostrarModalBanner = false; await CargarMiBanner(); } catch { } finally { guardandoBanner = false; } }
+    private async Task GuardarConfiguracionBanner() { guardandoBanner = true; try { await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/communityapi/guardar-mi-banner", miBannerEdit); mostrarModalBanner = false; await CargarMiBanner(); } catch { } finally { guardandoBanner = false; } }
 
     private async Task IrAPagar() { /* Lógica intacta */ }
     private async Task ProcesarPago(string titulo, decimal precio) { /* Lógica intacta */ }
     private void AbrirCrearAviso() { CerrarTodosLosMenus(); nuevoAviso = new Avisos(); mostrarModalCrearAviso = true; }
-    private async Task PublicarAviso() { if (string.IsNullOrEmpty(nuevoAviso.Titulo)) return; try { nuevoAviso.BoxID = Sesion.Usuario.BoxID; var r = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/avisosapi/crear", nuevoAviso); if (r.IsSuccessStatusCode) { mostrarModalCrearAviso = false; await App.Current.MainPage.DisplayAlert("Éxito", "Publicado", "OK"); } } catch { } }
-    private async Task CargarUltimoAviso() { try { var r = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/avisosapi/ultimo/{Sesion.Usuario.BoxID}"); if (r.StatusCode == System.Net.HttpStatusCode.NoContent) return; if (r.IsSuccessStatusCode) { ultimoAviso = await r.Content.ReadFromJsonAsync<Avisos>(); if (ultimoAviso != null) { var idVisto = await JS.InvokeAsync<string>("localStorage.getItem", "ultimoAvisoVisto"); if (idVisto != ultimoAviso.AvisoID.ToString()) mostrarAvisoPopUp = true; } } } catch { } }
+    private async Task PublicarAviso() { if (string.IsNullOrEmpty(nuevoAviso.Titulo)) return; try { nuevoAviso.BoxID = Sesion.Usuario.BoxID; var r = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/avisosapi/crear", nuevoAviso); if (r.IsSuccessStatusCode) { mostrarModalCrearAviso = false; await App.Current.MainPage.DisplayAlert("Éxito", "Publicado", "OK"); } } catch { } }
+    private async Task CargarUltimoAviso() { try { var r = await Http.GetAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/avisosapi/ultimo/{Sesion.Usuario.BoxID}"); if (r.StatusCode == System.Net.HttpStatusCode.NoContent) return; if (r.IsSuccessStatusCode) { ultimoAviso = await r.Content.ReadFromJsonAsync<Avisos>(); if (ultimoAviso != null) { var idVisto = await JS.InvokeAsync<string>("localStorage.getItem", "ultimoAvisoVisto"); if (idVisto != ultimoAviso.AvisoID.ToString()) mostrarAvisoPopUp = true; } } } catch { } }
     private async Task CerrarAviso() { if (ultimoAviso != null) await JS.InvokeVoidAsync("localStorage.setItem", "ultimoAvisoVisto", ultimoAviso.AvisoID.ToString()); mostrarAvisoPopUp = false; }
     private async Task AbrirEscanerParaEntrar() { /* Lógica intacta */ }
     private async Task ProcesarCheckIn(string boxIdLeido) { /* Lógica intacta */ }
-    private async Task CargarSegmentos() { try { var r = await Http.GetAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/segmentos"); if (r.IsSuccessStatusCode) listaSegmentos = await r.Content.ReadFromJsonAsync<List<SegmentoDto>>(); } catch { } }
-    private async Task CargarNotificaciones() { try { misNotificaciones = await Http.GetFromJsonAsync<List<NotificacionDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/SocialApi/notificaciones/{Sesion.Usuario.UsuarioID}"); hayNuevas = misNotificaciones.Any(n => !n.Leido); } catch { } }
+    private async Task CargarSegmentos() { try { var r = await Http.GetAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/wodapi/segmentos"); if (r.IsSuccessStatusCode) listaSegmentos = await r.Content.ReadFromJsonAsync<List<SegmentoDto>>(); } catch { } }
+    private async Task CargarNotificaciones() { try { misNotificaciones = await Http.GetFromJsonAsync<List<NotificacionDto>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/SocialApi/notificaciones/{Sesion.Usuario.UsuarioID}"); hayNuevas = misNotificaciones.Any(n => !n.Leido); } catch { } }
     private string GetIcono(string t) => t == "MATCH_MUTUO" ? "fas fa-heart text-danger" : "fas fa-bell";
     public class RespuestaMercadoPago { public string url { get; set; } }
 

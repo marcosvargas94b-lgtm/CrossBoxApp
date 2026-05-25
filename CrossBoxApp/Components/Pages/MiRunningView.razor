@@ -709,7 +709,7 @@ protected override async Task OnInitializedAsync()
 
         try 
         { 
-            tienePlanGlobal = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/tiene-plan/{Sesion.Usuario.UsuarioID}"); 
+            tienePlanGlobal = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/runningapi/tiene-plan/{Sesion.Usuario.UsuarioID}"); 
         } 
         catch { tienePlanGlobal = false; }
 
@@ -731,7 +731,7 @@ protected override async Task OnInitializedAsync()
 
         try
         {
-            logsDelMes = await Http.GetFromJsonAsync<List<RunningLogs>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/plan/{Sesion.Usuario.UsuarioID}/{fechaActual.Month}/{fechaActual.Year}");
+            logsDelMes = await Http.GetFromJsonAsync<List<RunningLogs>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/runningapi/plan/{Sesion.Usuario.UsuarioID}/{fechaActual.Month}/{fechaActual.Year}");
             
             // Calculamos el log de hoy para saber si mostrar la tarjeta de Historia
             logDeHoy = logsDelMes.FirstOrDefault(l => l.Fecha.Date == DateTime.Today.Date);
@@ -846,7 +846,7 @@ protected override async Task OnInitializedAsync()
                 form.Add(content, "fotos", archivo.FileName);
             }
 
-            var resp = await Http.PostAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/guardar-feedback-con-fotos", form);
+            var resp = await Http.PostAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/runningapi/guardar-feedback-con-fotos", form);
             
             if (resp.IsSuccessStatusCode)
             {
@@ -997,7 +997,7 @@ protected override async Task OnInitializedAsync()
             contentFoto.Headers.ContentType = new MediaTypeHeaderValue(fotoAtleta.ContentType);
             form.Add(contentFoto, "fotoAtleta", fotoAtleta.FileName);
 
-            var resp = await Http.PostAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/runningapi/generar-historia-extrema", form);
+            var resp = await Http.PostAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/runningapi/generar-historia-extrema", form);
             
             if (resp.IsSuccessStatusCode)
             {

@@ -238,7 +238,7 @@
     {
         try 
         { 
-            propositos = await Http.GetFromJsonAsync<List<PropositoDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/propositosapi/mis-propositos/{UsuarioId}"); 
+            propositos = await Http.GetFromJsonAsync<List<PropositoDto>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/propositosapi/mis-propositos/{UsuarioId}"); 
         } 
         catch { propositos = new List<PropositoDto>(); }
     }
@@ -251,7 +251,7 @@
         try
         {
             // Llamada API para guardar el cambio (validado por el coach actual)
-            await Http.PostAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/propositosapi/validar/{p.PropositoID}/{Sesion.Usuario.UsuarioID}", null);
+            await Http.PostAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/propositosapi/validar/{p.PropositoID}/{Sesion.Usuario.UsuarioID}", null);
         }
         catch
         {

@@ -162,7 +162,7 @@
     {
         try
         {
-            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/CumpleanosApi/mes/{Sesion.Usuario.BoxID}";
+            var url = $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/CumpleanosApi/mes/{Sesion.Usuario.BoxID}";
             listaCumpleaneros = await Http.GetFromJsonAsync<List<CumpleaneroDto>>(url);
         }
         catch { }

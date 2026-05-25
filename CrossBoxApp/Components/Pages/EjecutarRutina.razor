@@ -320,14 +320,14 @@
         // Avisar a la BD que entramos al gym
         try
         {
-            string url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/iniciar-dia/{RutinaDiaId}";
+            string url = $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasgym/iniciar-dia/{RutinaDiaId}";
             await Http.PostAsync(url, null);
         }
         catch { }
 
         // Mantenemos una conexión local SOLO para mandar tu petición de ayuda
         hubConnectionSender = new HubConnectionBuilder()
-            .WithUrl("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/livehub")
+            .WithUrl("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/livehub")
             .WithAutomaticReconnect()
             .Build();
 
@@ -377,7 +377,7 @@
         DetenerTimer();
         try
         {
-            string url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/pausar-dia/{RutinaDiaId}";
+            string url = $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasgym/pausar-dia/{RutinaDiaId}";
             await Http.PostAsync(url, null);
         }
         catch { }
@@ -389,7 +389,7 @@
         cargando = true;
         try
         {
-            string url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/dia/{RutinaDiaId}";
+            string url = $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasgym/dia/{RutinaDiaId}";
             rutina = await Http.GetFromJsonAsync<RutinaDiaDto>(url);
         }
         catch { }
@@ -413,7 +413,7 @@
         {
             if (bloque.BloqueID.HasValue)
             {
-                string url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/toggle-bloque/{bloque.BloqueID.Value}?completado={bloque.Completado}";
+                string url = $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasgym/toggle-bloque/{bloque.BloqueID.Value}?completado={bloque.Completado}";
                 await Http.PostAsync(url, null);
             }
         }
@@ -425,7 +425,7 @@
         guardando = true;
         try
         {
-            string url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/terminar-dia/{RutinaDiaId}";
+            string url = $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasgym/terminar-dia/{RutinaDiaId}";
             var res = await Http.PostAsync(url, null);
             if (res.IsSuccessStatusCode)
             {

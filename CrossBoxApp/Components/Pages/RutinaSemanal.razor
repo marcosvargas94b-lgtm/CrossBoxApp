@@ -371,7 +371,7 @@
         cargando = true;
         try
         {
-            string url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/semana/{Sesion.Usuario.UsuarioID}?fechaLunes={lunesActual.ToString("yyyy-MM-dd")}";
+            string url = $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasgym/semana/{Sesion.Usuario.UsuarioID}?fechaLunes={lunesActual.ToString("yyyy-MM-dd")}";
             rutinasSemana = await Http.GetFromJsonAsync<List<RutinaResumenDto>>(url) ?? new();
         }
         catch { }
@@ -398,7 +398,7 @@
             cargandoModal = true;
             try
             {
-                string url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/dia/{rutinaDiaId}";
+                string url = $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasgym/dia/{rutinaDiaId}";
                 var rutinaGuardada = await Http.GetFromJsonAsync<GuardarDiaDto>(url);
                 if (rutinaGuardada != null && rutinaGuardada.Bloques != null)
                 {
@@ -431,7 +431,7 @@
                 Bloques = bloquesUI
             };
 
-            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rutinasgym/guardar-dia", payload);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rutinasgym/guardar-dia", payload);
             if (response.IsSuccessStatusCode)
             {
                 mostrarModal = false;

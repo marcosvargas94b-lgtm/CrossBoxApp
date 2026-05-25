@@ -179,7 +179,7 @@
         try {
             var boxId = Sesion.Usuario.BoxID;
             var fechaStr = fechaSeleccionada.ToString("yyyy-MM-dd");
-            var response = await Http.GetAsync($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/wodapi/obtener/{boxId}/{fechaStr}");
+            var response = await Http.GetAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/wodapi/obtener/{boxId}/{fechaStr}");
 
             if (response.IsSuccessStatusCode) {
                 var data = await response.Content.ReadFromJsonAsync<ProgramacionWodViewModel>();

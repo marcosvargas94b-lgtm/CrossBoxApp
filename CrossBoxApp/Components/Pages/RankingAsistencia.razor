@@ -357,7 +357,7 @@
         {
             var boxId = Sesion.Usuario.BoxID;
             // Al llamar a la API corregida, ya viene con la URL completa
-            ranking = await Http.GetFromJsonAsync<List<RankingItemDto>>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/rankingapi/asistencia-anual/{boxId}");
+            ranking = await Http.GetFromJsonAsync<List<RankingItemDto>>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/rankingapi/asistencia-anual/{boxId}");
         }
         catch (Exception ex)
         {

@@ -683,7 +683,7 @@
 
         try
         {
-            boxTieneMedallas = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/medallasapi/tiene-medallas/{Sesion.Usuario.BoxID}");
+            boxTieneMedallas = await Http.GetFromJsonAsync<bool>($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/medallasapi/tiene-medallas/{Sesion.Usuario.BoxID}");
         }
         catch { boxTieneMedallas = false; }
 
@@ -691,13 +691,13 @@
         {
             Guid idConsulta = TargetUserId ?? Sesion.Usuario.UsuarioID;
 
-            var url = $"https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/gym/{idConsulta}";
+            var url = $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/fichaapi/gym/{idConsulta}";
             ficha = await Http.GetFromJsonAsync<FichaAtletaDto>(url);
 
             // ==============================================================
             // CORRECCIÓN DE LA FOTO DE PERFIL (Igual a ficha-atleta y mi-perfil)
             // ==============================================================
-            string baseUrlPerfiles = "https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/imagenes/perfiles/";
+            string baseUrlPerfiles = "https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/imagenes/perfiles/";
             
             // if (!string.IsNullOrWhiteSpace(ficha?.FotoUrl))
             // {
@@ -773,7 +773,7 @@
         {
             var seleccionados = ficha.PRs.Where(p => p.Seleccionado).Select(p => p.Ejercicio).ToList();
             var payload = new { UsuarioId = Sesion.Usuario.UsuarioID, Ejercicios = seleccionados };
-            var response = await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/guardar-prs", payload);
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/fichaapi/guardar-prs", payload);
             if (response.IsSuccessStatusCode) mostrarModalPRs = false;
         }
         catch (Exception ex) { await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK"); }
@@ -789,7 +789,7 @@
         mostrarModalSubtitulos = true;
         if (listaSubtitulos.Count == 0)
         {
-            try { listaSubtitulos = await Http.GetFromJsonAsync<List<SubtituloDto>>("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/catalogo-subtitulos"); } catch { }
+            try { listaSubtitulos = await Http.GetFromJsonAsync<List<SubtituloDto>>("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/fichaapi/catalogo-subtitulos"); } catch { }
         }
     }
     private void CerrarModalSubtitulos() => mostrarModalSubtitulos = false;
@@ -801,7 +801,7 @@
         try
         {
             var payload = new { UsuarioId = Sesion.Usuario.UsuarioID, Subtitulo = textoFrase };
-            await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/guardar-subtitulo", payload);
+            await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/fichaapi/guardar-subtitulo", payload);
         }
         catch { }
     }
@@ -867,7 +867,7 @@
             form.Add(streamContent, "archivo", archivo.Name);
             form.Add(new StringContent(Sesion.Usuario.UsuarioID.ToString()), "usuarioId");
 
-            var response = await Http.PostAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/subir-fondo", form);
+            var response = await Http.PostAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/fichaapi/subir-fondo", form);
             if (response.IsSuccessStatusCode)
             {
                 var result = await response.Content.ReadFromJsonAsync<RespuestaFondoDto>();
@@ -898,7 +898,7 @@
                 OpacidadFondo = ficha.OpacidadFondo,
                 OpacidadMedallas = ficha.OpacidadMedallas
             };
-            await Http.PostAsJsonAsync("https://api-aftrack-mx-fphnazfmahdedtcj.canadacentral-01.azurewebsites.net/api/fichaapi/guardar-colores", payload);
+            await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/fichaapi/guardar-colores", payload);
             mostrarModalColores = false;
         }
         catch { }
