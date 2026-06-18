@@ -183,7 +183,8 @@
             </div>
 
             <div class="footer-actions">
-                <button class="btn-close-session" @onclick="ProcesarYGuardar" disabled="@guardando">
+                <button class="btn-close-session" @onclick="IntentarGuardar" disabled="@guardando">
+                @* <button class="btn-close-session" @onclick="ProcesarYGuardar" disabled="@guardando"> *@
                     @if (guardando)
                     {
                         <span><i class="fas fa-spinner fa-spin"></i> GUARDANDO...</span>
@@ -196,6 +197,46 @@
             </div>
         </div>
     </div>
+
+
+    @* MODAL DE OPCIONES MANUALES *@
+    @if (mostrarModalOpcionesManual)
+    {
+        <div class="modal-overlay fade-in">
+            <div class="modal-content custom-modal slide-up" style="max-width: 400px;">
+                <div class="modal-header">
+                    <h5 style="margin:0; color:var(--theme-primary); font-family:'Oswald'; font-weight:bold;">
+                        <i class="fas fa-clipboard-list" style="margin-right:8px;"></i> REGISTRO DIFERIDO
+                    </h5>
+                    <button class="btn-icon-header" @onclick="() => mostrarModalOpcionesManual = false"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p style="color: var(--theme-text-muted); font-size: 0.95rem; margin-bottom: 20px;">
+                        Estás guardando solo la asistencia. ¿Quieres que los atletas registren sus resultados desde su App más tarde?
+                    </p>
+
+                    <div style="text-align: left; margin-bottom: 25px;">
+                        <label class="lbl-input">TIPO DE REGISTRO QUE LES PEDIRÁ LA APP:</label>
+                        <select class="form-control input-dark" @bind="tipoRegistroEsperado" style="appearance: auto;">
+                            <option value="TIEMPO">Por Tiempo (For Time)</option>
+                            <option value="REPS">Por Repeticiones (AMRAP)</option>
+                            <option value="RONDAS">Por Rondas y Reps</option>
+                        </select>
+                    </div>
+
+                   <div style="display:flex; flex-direction:column; gap:12px; margin-top: 10px;">
+                        <button class="btn-confirm" @onclick='() => ProcesarYGuardar(true)' style="font-size: 0.95rem; padding: 12px;">
+                            <i class="fas fa-mobile-alt"></i> PEDIR SCORE EN SU APP
+                        </button>
+
+                        <button class="btn-cancel" @onclick='() => ProcesarYGuardar(false)' style="font-size: 0.85rem; padding: 10px;">
+                            SOLO GUARDAR ASISTENCIA
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
     @* --- MODALES Y PODIO --- *@
     @if (mostrarModalCategoria)
@@ -550,6 +591,27 @@
         .podium-area { width: 100%; flex: none; height: auto; margin-top: 40px; margin-bottom: 20px; }
         .the-rest-area { width: 90%; height: 250px; flex: none; margin-top: auto; margin-bottom: 0; }
     }
+
+    .lbl-input { color: var(--theme-text-muted); font-size: 0.75rem; font-weight: bold; margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 1px; }
+    
+    .input-dark { background: rgba(0, 0, 0, 0.4) !important; border: 1px solid var(--theme-border) !important; color: var(--theme-text) !important; border-radius: 10px !important; padding: 12px 15px; font-size: 0.95rem; transition: all 0.3s ease; box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); width: 100%; box-sizing: border-box; }
+    .input-dark:focus { border-color: var(--theme-primary) !important; box-shadow: 0 0 10px rgba(255, 255, 255, 0.05) !important; outline: none; }
+    .input-dark option { background: var(--theme-bg); color: var(--theme-text); }
+
+    /* Botones del Modal */
+    .btn-confirm { background: var(--theme-primary); color: var(--theme-bg); border: none; padding: 14px; font-family: 'Oswald'; font-weight: bold; font-size: 1.1rem; letter-spacing: 1px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.2s; text-align: center; cursor: pointer; width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .btn-confirm:active { transform: scale(0.96); }
+    
+    .btn-cancel { background: transparent; color: var(--theme-text-muted); border: 1px solid var(--theme-border); padding: 12px; font-family: 'Oswald'; font-weight: bold; font-size: 0.95rem; letter-spacing: 1px; border-radius: 10px; transition: 0.2s; text-align: center; cursor: pointer; width: 100%; margin-top: 10px; }
+    .btn-cancel:hover { background: rgba(255,255,255,0.05); color: white; }
+    .btn-cancel:active { transform: scale(0.96); }
+
+    /* Animación de entrada estilo VIP */
+    .slide-up { animation: slideUpModal 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    @@keyframes slideUpModal { 
+        from { transform: scale(0.9) translateY(20px); opacity: 0; } 
+        to { transform: scale(1) translateY(0); opacity: 1; } 
+    }
 </style>
 
 @code {
@@ -589,6 +651,8 @@
     {
         public Guid BoxId { get; set; }
         public Guid WodId { get; set; }
+        public bool RequiereScoreManual { get; set; } // Nuevo
+        public string TipoScoreEsperado { get; set; } // Nuevo
         public List<ResultadoAtletaDto> Resultados { get; set; } = new();
     }
 
@@ -619,6 +683,9 @@
     private bool mostrarModalCategoria = false;
     private Guid idAtletaEditandoCategoria = Guid.Empty; 
     private bool esModoJuezEditando = false;
+
+    private bool mostrarModalOpcionesManual = false;
+    private string tipoRegistroEsperado = "TIEMPO";
 
     protected override async Task OnInitializedAsync()
     {
@@ -653,6 +720,20 @@
         mostrarModalCategoria = true;
     }
 
+    private void IntentarGuardar()
+    {
+        // Si el coach no seleccionó ninguna captura (Solo asistencia), abrimos el modal
+        if (modoCaptura == "NADA" && !LiveState.FueModoJuez)
+        {
+            mostrarModalOpcionesManual = true;
+        }
+        else
+        {
+            // Si ya capturó cosas aquí en vivo, pasa directo sin pedir score posterior
+            ProcesarYGuardar(false);
+        }
+    }
+
     private void AsignarCategoria(string cat)
     {
         if (esModoJuezEditando)
@@ -670,12 +751,19 @@
         mostrarModalCategoria = false;
     }
 
-    private async Task ProcesarYGuardar()
+    private async Task ProcesarYGuardar(bool pedirManualPost)
     {
+        mostrarModalOpcionesManual = false;
         guardando = true;
         StateHasChanged();
 
-        var payload = new GuardarResultadosDto { BoxId = Sesion.Usuario.BoxID, WodId = Guid.Empty };
+        var payload = new GuardarResultadosDto
+        {
+            BoxId = Sesion.Usuario.BoxID,
+            WodId = Guid.Empty,
+            RequiereScoreManual = pedirManualPost, // Asignamos si lo pedirá
+            TipoScoreEsperado = pedirManualPost ? tipoRegistroEsperado : null // Asignamos qué tipo
+        };
 
         if (LiveState.FueModoJuez)
         {

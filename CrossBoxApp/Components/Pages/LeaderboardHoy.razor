@@ -8,86 +8,238 @@
 @* ENVOLVEMOS TODA LA PÁGINA EN EL TEMA *@
 <div style="@EstilosTema">
 
-    <div class="main-layout">
+    @if (mostrarModalSecuestro)
+    {
+        @* 🛑 PANTALLA DE SECUESTRO TOTAL: Reemplaza todo el diseño, es imposible ver el fondo *@
+        <div class="modal-overlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; backdrop-filter: blur(20px); background: #000000; display: flex; justify-content: center; align-items: center; padding: 20px;">
+            <div class="modal-content custom-modal" style="max-width: 380px; border-color: var(--theme-primary); border-top: 5px solid var(--theme-primary); background: var(--theme-card); padding: 30px 20px; text-align: center; border-radius: 15px;">
 
-        <div class="navbar-container">
-            <div class="nav-left" @onclick="Volver">
-                <i class="fas fa-arrow-left"></i> VOLVER
-            </div>
-            <div class="nav-title">LEADERBOARD DIARIO</div>
-            <div class="nav-right"></div>
-        </div>
+                <i class="fas fa-clipboard-check" style="font-size: 3rem; color: var(--theme-primary); margin-bottom: 15px;"></i>
+                <h4 style="color:var(--theme-primary); font-family:'Oswald'; font-weight:bold; letter-spacing: 1px; margin-bottom: 10px;">
+                    ¡REGISTRA TU SCORE!
+                </h4>
+                <p style="color: var(--theme-text-muted); font-size: 0.95rem; margin-bottom: 25px; font-family:'Roboto';">
+                    Tu coach registró tu asistencia. Para ver el Leaderboard y obtener tu Player Card, ingresa tu resultado de hoy.
+                </p>
 
-        <div class="scrollable-content">
-
-            <div class="date-header">
-                @DateTime.Now.ToString("dddd, dd MMMM").ToUpper()
-            </div>
-
-            @* --- SELECTOR DE PESTAÑAS (Ahora son 3) --- *@
-            <div class="filter-tabs fade-in">
-                <button class="tab-btn @(tabActiva == "REPS" ? "active" : "")" @onclick='() => CambiarTab("REPS")'>
-                    <i class="fas fa-redo-alt"></i> REPS
-                </button>
-                <button class="tab-btn @(tabActiva == "RONDAS" ? "active" : "")" @onclick='() => CambiarTab("RONDAS")'>
-                    <i class="fas fa-sync-alt"></i> RONDAS
-                </button>
-                <button class="tab-btn @(tabActiva == "TIEMPO" ? "active" : "")" @onclick='() => CambiarTab("TIEMPO")'>
-                    <i class="fas fa-stopwatch"></i> TIEMPO
-                </button>
-            </div>
-
-            @if (cargando)
-            {
-                <div class="text-center mt-5">
-                    <div class="spinner-border" style="color: var(--theme-primary);" role="status"></div>
-                    <p class="mt-2" style="color: var(--theme-text-muted);">Cargando resultados...</p>
-                </div>
-            }
-            else if (listaActual == null || listaActual.Count == 0)
-            {
-                <div class="empty-state fade-in">
-                    <i class="fas fa-dumbbell" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px; color: var(--theme-text-muted);"></i>
-                    <h3 style="color: var(--theme-text-muted);">SIN RESULTADOS</h3>
-                    <p style="color: var(--theme-text-muted);">Aún no hay registros de @(tabActiva) para hoy.</p>
-                </div>
-            }
-            else
-            {
-                @* LÓGICA DE CATEGORÍAS: Solo si es CrossFit Y al menos alguien tiene categoría real *@
-                @if (!string.IsNullOrEmpty(Sesion.Usuario?.TipoLugar) &&
-                            Sesion.Usuario.TipoLugar.ToUpper().Contains("CROSSFIT") &&
-                            listaActual.Any(x => !string.IsNullOrEmpty(x.Categoria) && x.Categoria.ToUpper() != "SIN ASIGNAR"))
+                @* INPUTS DINÁMICOS *@
+                @if (tipoScoreRequerido == "TIEMPO")
                 {
-                    var grupos = listaActual
-                    .GroupBy(x => string.IsNullOrEmpty(x.Categoria) || x.Categoria.ToUpper() == "SIN ASIGNAR" ? "SIN CATEGORÍA" : x.Categoria.ToUpper())
-                    .OrderBy(g => ObtenerPesoCategoria(g.Key));
-
-                    foreach (var grupo in grupos)
-                    {
-                        <div class="category-header fade-in">
-                            <h4>@grupo.Key</h4>
+                    <div style="margin-bottom: 20px; text-align: left;">
+                        <label class="lbl-input" style="text-align: center; display: block;">TIEMPO (MM:SS)</label>
+                        <input type="text" @bind="inputTiempo" class="form-control input-dark" style="text-align: center; font-size: 1.8rem; font-family: 'Oswald'; letter-spacing: 2px;" placeholder="Ej: 14:30" />
+                    </div>
+                }
+                else if (tipoScoreRequerido == "REPS")
+                {
+                    <div style="margin-bottom: 20px; text-align: left;">
+                        <label class="lbl-input" style="text-align: center; display: block;">TOTAL DE REPETICIONES</label>
+                        <input type="number" @bind="inputReps" class="form-control input-dark" style="text-align: center; font-size: 1.8rem; font-family: 'Oswald';" placeholder="0" min="1" />
+                    </div>
+                }
+                else if (tipoScoreRequerido == "RONDAS")
+                {
+                    <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 20px; text-align: left;">
+                        <div style="flex: 1;">
+                            <label class="lbl-input" style="text-align: center; display: block;">RONDAS</label>
+                            <input type="number" @bind="inputRondas" class="form-control input-dark" style="text-align: center; font-size: 1.5rem; font-family: 'Oswald';" placeholder="0" min="0" />
                         </div>
-                        <div class="podium-list fade-in mb-4">
-                            @{
-                                int pos = 1;
-                            }
-                            @foreach (var item in grupo)
-                            {
-                                <div class="score-row @(pos == 1 ? "gold" : "") @(item.EsEquipo ? "team-border" : "")">
+                        <div style="flex: 1;">
+                            <label class="lbl-input" style="text-align: center; display: block;">REPS</label>
+                            <input type="number" @bind="inputReps" class="form-control input-dark" style="text-align: center; font-size: 1.5rem; font-family: 'Oswald';" placeholder="0" min="0" />
+                        </div>
+                    </div>
+                }
 
-                                    @* 1. POSICIÓN (Calculada por Grupo) *@
+                @* SELECTOR DE CATEGORÍA *@
+                <div style="margin-bottom: 25px; text-align: left;">
+                    <label class="lbl-input" style="text-align: center; display: block;">¿EN QUÉ CATEGORÍA LO HICISTE?</label>
+                    <select class="form-control input-dark" @bind="inputCategoria" style="text-align: center; font-size: 1.1rem; font-family: 'Oswald'; appearance: auto;">
+                        <option value="Sin asignar">Ninguna / Entrenamiento Normal</option>
+                        <option value="PRINCIPIANTE">Principiante</option>
+                        <option value="INTERMEDIO">Intermedio</option>
+                        <option value="AVANZADO">Avanzado</option>
+                        <option value="RX">RX (As Rx'd)</option>
+                    </select>
+                </div>
+
+                <button class="btn-confirm" @onclick="GuardarScoreDiferido" disabled="@guardandoScoreManual" style="width: 100%;">
+                    @if (guardandoScoreManual)
+                    {
+                        <span><i class="fas fa-spinner fa-spin"></i> GUARDANDO...</span>
+                    }
+                    else
+                    {
+                        <span>SUBIR RESULTADO <i class="fas fa-rocket"></i></span>
+                    }
+                </button>
+
+                <button class="btn-cancel" @onclick="Volver" style="width: 100%; margin-top: 15px; background: transparent; border: none; color: var(--theme-text-muted); text-decoration: underline; box-shadow: none;">
+                    No quiero registrarlo ahora (Salir)
+                </button>
+            </div>
+        </div>
+    }
+    else
+    {
+        @* ✅ VISTA NORMAL: Solo se compila y se muestra si "mostrarModalSecuestro" es FALSE *@
+        <div class="main-layout">
+
+            <div class="navbar-container">
+                <div class="nav-left" @onclick="Volver">
+                    <i class="fas fa-arrow-left"></i> VOLVER
+                </div>
+                <div class="nav-title">LEADERBOARD DIARIO</div>
+                <div class="nav-right"></div>
+            </div>
+
+            <div class="scrollable-content">
+
+                <div class="date-header">
+                    @DateTime.Now.ToString("dddd, dd MMMM").ToUpper()
+                </div>
+
+                <div class="filter-tabs fade-in">
+                    <button class="tab-btn @(tabActiva == "REPS" ? "active" : "")" @onclick='() => CambiarTab("REPS")'>
+                        <i class="fas fa-redo-alt"></i> REPS
+                    </button>
+                    <button class="tab-btn @(tabActiva == "RONDAS" ? "active" : "")" @onclick='() => CambiarTab("RONDAS")'>
+                        <i class="fas fa-sync-alt"></i> RONDAS
+                    </button>
+                    <button class="tab-btn @(tabActiva == "TIEMPO" ? "active" : "")" @onclick='() => CambiarTab("TIEMPO")'>
+                        <i class="fas fa-stopwatch"></i> TIEMPO
+                    </button>
+                </div>
+
+                @if (cargando)
+                {
+                    <div class="text-center mt-5">
+                        <div class="spinner-border" style="color: var(--theme-primary);" role="status"></div>
+                        <p class="mt-2" style="color: var(--theme-text-muted);">Cargando resultados...</p>
+                    </div>
+                }
+                else if (listaActual == null || listaActual.Count == 0)
+                {
+                    <div class="empty-state fade-in">
+                        <i class="fas fa-dumbbell" style="opacity: 0.3; font-size: 3rem; margin-bottom: 15px; color: var(--theme-text-muted);"></i>
+                        <h3 style="color: var(--theme-text-muted);">SIN RESULTADOS</h3>
+                        <p style="color: var(--theme-text-muted);">Aún no hay registros de @(tabActiva) para hoy.</p>
+                    </div>
+                }
+                else
+                {
+                    @if (!string.IsNullOrEmpty(Sesion.Usuario?.TipoLugar) &&
+                                Sesion.Usuario.TipoLugar.ToUpper().Contains("CROSSFIT") &&
+                                listaActual.Any(x => !string.IsNullOrEmpty(x.Categoria) && x.Categoria.ToUpper() != "SIN ASIGNAR"))
+                    {
+                        var grupos = listaActual
+                        .GroupBy(x => string.IsNullOrEmpty(x.Categoria) || x.Categoria.ToUpper() == "SIN ASIGNAR" ? "SIN CATEGORÍA" : x.Categoria.ToUpper())
+                        .OrderBy(g => ObtenerPesoCategoria(g.Key));
+
+                        foreach (var grupo in grupos)
+                        {
+                            <div class="category-header fade-in">
+                                <h4>@grupo.Key</h4>
+                            </div>
+                            <div class="podium-list fade-in mb-4">
+                                @{
+                                    int pos = 1;
+                                }
+                                @foreach (var item in grupo)
+                                {
+                                    <div class="score-row @(pos == 1 ? "gold" : "") @(item.EsEquipo ? "team-border" : "")">
+                                        <div class="pos-column">
+                                            @if (pos == 1)
+                                            {
+                                                <i class="fas fa-crown gold-icon"></i>
+                                            }
+                                            else if (pos == 2)
+                                            {
+
+                                                <i class="fas fa-medal silver-icon"></i>
+                                            }
+                                            else if (pos == 3)
+                                            {
+
+                                                <i class="fas fa-medal bronze-icon"></i>
+                                            }
+                                            else
+                                            {
+
+                                                <span>@pos</span>
+                                            }
+                                        </div>
+                                        <div class="avatar-column">
+                                            @if (!string.IsNullOrEmpty(item.Foto))
+                                            {
+                                                <img src="@item.Foto" class="score-avatar" />
+                                            }
+                                            else
+                                            {
+
+                                                <div class="score-placeholder">@(item.EsEquipo ? "T" : item.Nombre.Substring(0, 1).ToUpper())</div>
+                                            }
+                                        </div>
+                                        <div class="name-column">
+                                            <span class="name-text">@item.Nombre</span>
+                                            @if (item.EsEquipo)
+                                            {
+                                                <span class="team-badge">EQUIPO</span>
+                                            }
+                                        </div>
+                                        <div class="reps-column">
+                                            @if (tabActiva == "REPS")
+                                            {
+                                                <span class="reps-val">@item.Reps</span>
+                        
+                                                <small>REPS</small>
+                                            }
+                                            else if (tabActiva == "RONDAS")
+                                            {
+                                                @if (item.Reps > 0)
+                                                {
+                                                    <div class="split-score">
+                                                        <span class="reps-val">@item.Rondas<span class="reps-val-small"> RND</span></span>
+                                                        <span class="reps-plus">+ @item.Reps<span class="reps-val-small"> REP</span></span>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <span class="reps-val">@item.Rondas</span>
+                        
+                                                    <small>RONDAS</small>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="reps-val">@item.Tiempo</span>
+                        
+                                                <small>TIME</small>
+                                            }
+                                        </div>
+                                    </div>
+                                    pos++;
+                                }
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="podium-list fade-in">
+                            @foreach (var item in listaActual)
+                            {
+                                <div class="score-row @(item.Posicion == 1 ? "gold" : "") @(item.EsEquipo ? "team-border" : "")">
                                     <div class="pos-column">
-                                        @if (pos == 1)
+                                        @if (item.Posicion == 1)
                                         {
                                             <i class="fas fa-crown gold-icon"></i>
                                         }
-                                        else if (pos == 2)
+                                        else if (item.Posicion == 2)
                                         {
 
                                             <i class="fas fa-medal silver-icon"></i>
                                         }
-                                        else if (pos == 3)
+                                        else if (item.Posicion == 3)
                                         {
 
                                             <i class="fas fa-medal bronze-icon"></i>
@@ -95,11 +247,9 @@
                                         else
                                         {
 
-                                            <span>@pos</span>
+                                            <span>@item.Posicion</span>
                                         }
                                     </div>
-
-                                    @* 2. AVATAR *@
                                     <div class="avatar-column">
                                         @if (!string.IsNullOrEmpty(item.Foto))
                                         {
@@ -107,13 +257,10 @@
                                         }
                                         else
                                         {
-                                            <div class="score-placeholder">
-                                                @(item.EsEquipo ? "T" : item.Nombre.Substring(0, 1).ToUpper())
-                                            </div>
+
+                                            <div class="score-placeholder">@(item.EsEquipo ? "T" : item.Nombre.Substring(0, 1).ToUpper())</div>
                                         }
                                     </div>
-
-                                    @* 3. NOMBRE *@
                                     <div class="name-column">
                                         <span class="name-text">@item.Nombre</span>
                                         @if (item.EsEquipo)
@@ -121,14 +268,12 @@
                                             <span class="team-badge">EQUIPO</span>
                                         }
                                     </div>
-
-                                    @* 4. RESULTADO *@
                                     <div class="reps-column">
                                         @if (tabActiva == "REPS")
                                         {
                                             <span class="reps-val">@item.Reps</span>
                                             <small>REPS</small>
-                                        }
+                 }
                                         else if (tabActiva == "RONDAS")
                                         {
                                             @if (item.Reps > 0)
@@ -140,113 +285,102 @@
                                             }
                                             else
                                             {
+
                                                 <span class="reps-val">@item.Rondas</span>
                                                 <small>RONDAS</small>
-                                            }
+                     }
                                         }
                                         else
                                         {
                                             <span class="reps-val">@item.Tiempo</span>
                                             <small>TIME</small>
-                                        }
+                 }
                                     </div>
                                 </div>
-                                pos++;
                             }
                         </div>
                     }
                 }
-                else
+                <div style="height: 40px;"></div>
+            </div>
+        </div>
+    }
+</div>
+
+@* 🔥 MODAL DE SECUESTRO (OBLIGA A REGISTRAR SCORE) *@
+@if (mostrarModalSecuestro)
+{
+    <div class="modal-overlay fade-in" style="z-index: 9999; backdrop-filter: blur(15px); background: rgba(0,0,0,0.95);">
+        <div class="modal-content custom-modal slide-up" style="max-width: 380px; border-color: var(--theme-primary); border-top: 5px solid var(--theme-primary);">
+
+            <div class="modal-body text-center" style="padding: 30px 20px;">
+                <i class="fas fa-clipboard-check" style="font-size: 3rem; color: var(--theme-primary); margin-bottom: 15px;"></i>
+                <h4 style="color:var(--theme-primary); font-family:'Oswald'; font-weight:bold; letter-spacing: 1px;">
+                    ¡REGISTRA TU SCORE!
+                </h4>
+                <p style="color: var(--theme-text-muted); font-size: 0.95rem; margin-bottom: 25px; font-family:'Roboto';">
+                    Tu coach registró tu asistencia. Para ver el Leaderboard y obtener tu Player Card, ingresa tu resultado de hoy.
+                </p>
+
+                @* INPUTS DINÁMICOS SEGÚN LO QUE PIDIÓ EL COACH *@
+                @if (tipoScoreRequerido == "TIEMPO")
                 {
-                    @* LÓGICA NORMAL GLOBAL (Funcional / Gym / CrossFit sin categorías asignadas hoy) *@
-                    <div class="podium-list fade-in">
-                        @foreach (var item in listaActual)
-                        {
-                            <div class="score-row @(item.Posicion == 1 ? "gold" : "") @(item.EsEquipo ? "team-border" : "")">
-                                @* 1. POSICIÓN *@
-                                <div class="pos-column">
-                                    @if (item.Posicion == 1)
-                                    {
-                                        <i class="fas fa-crown gold-icon"></i>
-                                    }
-                                    else if (item.Posicion == 2)
-                                    {
-
-                                        <i class="fas fa-medal silver-icon"></i>
-                                    }
-                                    else if (item.Posicion == 3)
-                                    {
-
-                                        <i class="fas fa-medal bronze-icon"></i>
-                                    }
-                                    else
-                                    {
-
-                                        <span>@item.Posicion</span>
-                                    }
-                                </div>
-
-                                @* 2. AVATAR *@
-                                <div class="avatar-column">
-                                    @if (!string.IsNullOrEmpty(item.Foto))
-                                    {
-                                        <img src="@item.Foto" class="score-avatar" />
-                                    }
-                                    else
-                                    {
-                                        <div class="score-placeholder">
-                                            @(item.EsEquipo ? "T" : item.Nombre.Substring(0, 1).ToUpper())
-                                        </div>
-                                    }
-                                </div>
-
-                                @* 3. NOMBRE *@
-                                <div class="name-column">
-                                    <span class="name-text">@item.Nombre</span>
-                                    @if (item.EsEquipo)
-                                    {
-                                        <span class="team-badge">EQUIPO</span>
-                                    }
-                                </div>
-
-                                @* 4. RESULTADO *@
-                                <div class="reps-column">
-                                    @if (tabActiva == "REPS")
-                                    {
-                                        <span class="reps-val">@item.Reps</span>
-                                        <small>REPS</small>
-                                    }
-                                    else if (tabActiva == "RONDAS")
-                                    {
-                                        @if (item.Reps > 0)
-                                        {
-                                            <div class="split-score">
-                                                <span class="reps-val">@item.Rondas<span class="reps-val-small"> RND</span></span>
-                                                <span class="reps-plus">+ @item.Reps<span class="reps-val-small"> REP</span></span>
-                                            </div>
-                                        }
-                                        else
-                                        {
-                                            <span class="reps-val">@item.Rondas</span>
-                                            <small>RONDAS</small>
-                                        }
-                                    }
-                                    else
-                                    {
-                                        <span class="reps-val">@item.Tiempo</span>
-                                        <small>TIME</small>
-                                    }
-                                </div>
-                            </div>
-                        }
+                    <div style="margin-bottom: 20px;">
+                        <label style="color: var(--theme-text-muted); font-size: 0.75rem; font-weight: bold; letter-spacing: 1px;">TIEMPO (MM:SS)</label>
+                        <input type="text" @bind="inputTiempo" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--theme-border); color: white; text-align: center; font-size: 1.8rem; font-family: 'Oswald'; letter-spacing: 2px;" placeholder="Ej: 14:30" />
                     </div>
                 }
-            }
+                else if (tipoScoreRequerido == "REPS")
+                {
+                    <div style="margin-bottom: 20px;">
+                        <label style="color: var(--theme-text-muted); font-size: 0.75rem; font-weight: bold; letter-spacing: 1px;">TOTAL DE REPETICIONES</label>
+                        <input type="number" @bind="inputReps" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--theme-border); color: white; text-align: center; font-size: 1.8rem; font-family: 'Oswald';" placeholder="0" min="1" />
+                    </div>
+                }
+                else if (tipoScoreRequerido == "RONDAS")
+                {
+                    <div style="display: flex; gap: 15px; justify-content: center; margin-bottom: 20px;">
+                        <div style="flex: 1;">
+                            <label style="color: var(--theme-text-muted); font-size: 0.75rem; font-weight: bold;">RONDAS</label>
+                            <input type="number" @bind="inputRondas" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--theme-border); color: white; text-align: center; font-size: 1.5rem; font-family: 'Oswald';" placeholder="0" min="0" />
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="color: var(--theme-text-muted); font-size: 0.75rem; font-weight: bold;">REPS EXTRA</label>
+                            <input type="number" @bind="inputReps" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--theme-border); color: white; text-align: center; font-size: 1.5rem; font-family: 'Oswald';" placeholder="0" min="0" />
+                        </div>
+                    </div>
+                }
 
-            <div style="height: 40px;"></div>
+                <button class="btn-confirm mt-3" @onclick="GuardarScoreDiferido" disabled="@guardandoScoreManual" style="width: 100%; background: var(--theme-primary); color: var(--theme-bg); padding: 12px; border-radius: 8px; font-family: 'Oswald'; font-size: 1.1rem; border: none;">
+                    @if (guardandoScoreManual)
+                    {
+                        <span><i class="fas fa-spinner fa-spin"></i> GUARDANDO...</span>
+                    }
+                    else
+                    {
+                        @* 🔥 NUEVO: SELECTOR DE CATEGORÍA *@
+                        <div style="margin-bottom: 25px;">
+                            <label style="color: var(--theme-text-muted); font-size: 0.75rem; font-weight: bold; letter-spacing: 1px;">¿EN QUÉ CATEGORÍA LO HICISTE?</label>
+                            <select class="form-control mt-2" @bind="inputCategoria" style="background: rgba(255,255,255,0.05); border: 1px solid var(--theme-border); color: white; text-align: center; font-size: 1.2rem; font-family: 'Oswald'; padding: 10px; border-radius: 8px; appearance: auto;">
+                                <option value="Sin asignar">Ninguna / Entrenamiento Normal</option>
+                                <option value="PRINCIPIANTE">Principiante</option>
+                                <option value="INTERMEDIO">Intermedio</option>
+                                <option value="AVANZADO">Avanzado</option>
+                                <option value="RX">RX (As Rx'd)</option>
+                            </select>
+                        </div>
+
+                        <span>SUBIR RESULTADO <i class="fas fa-rocket"></i></span>
+                    }
+                </button>
+
+                <button class="btn-cancel mt-3" @onclick="Volver" style="width: 100%; background: transparent; border: none; color: var(--theme-text-muted); font-size: 0.85rem; text-decoration: underline;">
+                    No quiero registrarlo ahora (Volver al Inicio)
+                </button>
+            </div>
         </div>
     </div>
-</div>
+}
 
 <style>
     /* --- ESTRUCTURA BASE --- */
@@ -301,6 +435,82 @@
     .category-header { text-align: center; margin-top: 30px; margin-bottom: 15px; position: relative; }
     .category-header h4 { font-family: 'Oswald'; color: var(--theme-primary); font-size: 1.2rem; margin: 0; display: inline-block; background: var(--theme-bg); padding: 0 15px; position: relative; z-index: 2; letter-spacing: 1px; font-weight: bold; }
     .category-header::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: var(--theme-border); z-index: 1; }
+
+    /* --- DISEÑO PREMIUM PARA PANTALLA DE SECUESTRO --- */
+    .lbl-input { 
+        color: var(--theme-text-muted); 
+        font-size: 0.75rem; 
+        font-weight: bold; 
+        margin-bottom: 8px; 
+        display: block; 
+        text-transform: uppercase; 
+        letter-spacing: 1px; 
+    }
+    
+    .input-dark { 
+        background: rgba(0, 0, 0, 0.4) !important; 
+        border: 1px solid var(--theme-border) !important; 
+        color: var(--theme-text) !important; 
+        border-radius: 10px !important; 
+        padding: 12px 15px; 
+        font-size: 1.1rem; 
+        transition: all 0.3s ease; 
+        box-shadow: inset 0 2px 5px rgba(0,0,0,0.5); 
+        width: 100%; 
+        box-sizing: border-box; 
+    }
+    .input-dark:focus { 
+        border-color: var(--theme-primary) !important; 
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.05) !important; 
+        outline: none; 
+    }
+    .input-dark option { 
+        background: var(--theme-card); 
+        color: var(--theme-text); 
+    }
+
+    .btn-confirm { 
+        background: var(--theme-primary); 
+        color: var(--theme-bg); 
+        border: none; 
+        padding: 14px; 
+        font-family: 'Oswald'; 
+        font-weight: bold; 
+        font-size: 1.1rem; 
+        letter-spacing: 1px; 
+        border-radius: 10px; 
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3); 
+        transition: 0.2s; 
+        text-align: center; 
+        cursor: pointer; 
+    }
+    .btn-confirm:active { 
+        transform: scale(0.96); 
+    }
+    
+    .btn-cancel { 
+        background: transparent; 
+        color: var(--theme-text-muted); 
+        border: none; 
+        padding: 10px; 
+        font-family: 'Roboto'; 
+        font-size: 0.85rem; 
+        transition: 0.2s; 
+        text-align: center; 
+        cursor: pointer; 
+    }
+    .btn-cancel:hover { 
+        color: var(--theme-text); 
+    }
+
+    /* Animación de entrada fluida */
+    .slide-up { 
+        animation: slideUpLock 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+    }
+@@keyframes slideUpLock { 
+        from { transform: scale(0.9) translateY(30px); opacity: 0; } 
+        to { transform: scale(1) translateY(0); opacity: 1; } 
+    }
 </style>
 
 @code {
@@ -318,6 +528,21 @@
     private string tabActiva = "REPS";
     private bool cargando = true;
     private List<LeaderboardItem> listaActual = new();
+
+    private bool mostrarModalSecuestro = false;
+    private string tipoScoreRequerido = "";
+    private string inputTiempo = "";
+    private int inputRondas = 0;
+    private int inputReps = 0;
+    private bool guardandoScoreManual = false;
+    private string inputCategoria = "Sin asignar";
+
+
+    public class VerificacionScoreDto
+    {
+        public bool Pendiente { get; set; }
+        public string Tipo { get; set; }
+    }
 
     public class LeaderboardItem
     {
@@ -343,20 +568,153 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // LEER EL CACHÉ LOCAL AL INSTANTE
-        try 
-        {
-            var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box");
-            if (!string.IsNullOrEmpty(cache)) 
-            { 
-                EstilosTema = cache; 
-                StateHasChanged(); 
-            }
-        } 
-        catch { }
+        try { var cache = await JS.InvokeAsync<string>("localStorage.getItem", "tema_box"); if (!string.IsNullOrEmpty(cache)) { EstilosTema = cache; StateHasChanged(); } } catch { }
 
         if (Sesion.Usuario == null) { Nav.NavigateTo("/"); return; }
+
+        // 🔥 PREGUNTAMOS AL BACKEND USANDO LA CLASE FUERTE, NO DYNAMIC
+        try
+        {
+            var urlVerificacion = $"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/scoresapi/verificar-score-pendiente/{Sesion.Usuario.UsuarioID}";
+
+            // Usamos la clase nueva en lugar de <dynamic>
+            var verificacion = await Http.GetFromJsonAsync<VerificacionScoreDto>(urlVerificacion);
+
+            if (verificacion != null && verificacion.Pendiente == true)
+            {
+                tipoScoreRequerido = verificacion.Tipo;
+                mostrarModalSecuestro = true;
+                StateHasChanged();
+                return; // 🛑 Detenemos la carga del Leaderboard hasta que ponga su score
+            }
+        }
+        catch (Exception ex)
+        {
+            // Si quieres ver si falla algo en el futuro, quita el comentario de abajo
+            // Console.WriteLine("Error al verificar pendiente: " + ex.Message);
+        }
+
+        // Si no debía score, carga todo normal
         await CargarDatos();
+    }
+
+    private async Task GuardarScoreDiferido()
+    {
+        // =================================================================
+        // 1. 🛡️ VALIDACIONES ESTRICTAS (Lo que pediste)
+        // =================================================================
+        if (tipoScoreRequerido == "TIEMPO")
+        {
+            // Si está vacío o NO tiene los dos puntos (:) lo rechazamos
+            if (string.IsNullOrWhiteSpace(inputTiempo) || !inputTiempo.Contains(":"))
+            {
+                await App.Current.MainPage.DisplayAlert("Atención", "Por favor ingresa un tiempo válido usando los dos puntos (ejemplo: 14:30).", "OK");
+                return;
+            }
+        }
+        else if (tipoScoreRequerido == "REPS")
+        {
+            // Si las reps son 0 o negativas
+            if (inputReps <= 0)
+            {
+                await App.Current.MainPage.DisplayAlert("Atención", "Por favor ingresa un total de repeticiones mayor a cero.", "OK");
+                return;
+            }
+        }
+        else if (tipoScoreRequerido == "RONDAS")
+        {
+            // Si dejaron las rondas y las reps en 0
+            if (inputRondas <= 0 && inputReps <= 0)
+            {
+                await App.Current.MainPage.DisplayAlert("Atención", "Por favor ingresa cuántas rondas o repeticiones extra hiciste.", "OK");
+                return;
+            }
+        }
+
+        // =================================================================
+        // 2. 🚀 PREPARAR ENVÍO AL SERVIDOR
+        // =================================================================
+        guardandoScoreManual = true;
+        StateHasChanged();
+
+        var payload = new GuardarResultadosDiferidoDto
+        {
+            BoxId = Sesion.Usuario.BoxID,
+            WodId = Guid.Empty,
+            RequiereScoreManual = false,
+
+            // 🔥 SOLUCIÓN AL ERROR 400: Enviamos string vacío en lugar de null
+            TipoScoreEsperado = "",
+
+            Resultados = new List<ResultadoAtletaDiferidoDto>
+            {
+                new ResultadoAtletaDiferidoDto
+                {
+                    UsuarioUnoId = Sesion.Usuario.UsuarioID,
+                    EsEquipo = false,
+                    // Si es tiempo, mandamos el dato limpio. Si no, mandamos vacío.
+                    TiempoFinal = tipoScoreRequerido == "TIEMPO" ? inputTiempo.Trim() : "",
+                    Reps = inputReps,
+                    Rondas = inputRondas,
+                    NombreEquipo = "Individual",
+                    Categoria = inputCategoria, // <--- Aquí va tu categoría
+                    ModoCaptura = tipoScoreRequerido
+                }
+            }
+        };
+
+        // =================================================================
+        // 3. 📡 COMUNICACIÓN CON LA API
+        // =================================================================
+        try
+        {
+            var url = "https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/scoresapi/guardar-clase";
+            var response = await Http.PostAsJsonAsync(url, payload);
+
+            if (response.IsSuccessStatusCode)
+            {
+                mostrarModalSecuestro = false;
+                tabActiva = tipoScoreRequerido;
+                await CargarDatos();
+            }
+            else
+            {
+                string errorReal = await response.Content.ReadAsStringAsync();
+                await App.Current.MainPage.DisplayAlert("Error del Servidor", $"Detalle: {errorReal}", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error de Conexión", ex.Message, "OK");
+        }
+        finally
+        {
+            guardandoScoreManual = false;
+            StateHasChanged();
+        }
+    }
+
+    // 🛡️ DTOs EXPLÍCITOS PARA EVITAR TRIMMING EN COMPILACIÓN RELEASE
+    public class GuardarResultadosDiferidoDto
+    {
+        public Guid BoxId { get; set; }
+        public Guid WodId { get; set; }
+        public bool RequiereScoreManual { get; set; }
+        public string TipoScoreEsperado { get; set; }
+        public List<ResultadoAtletaDiferidoDto> Resultados { get; set; } = new();
+    }
+
+    public class ResultadoAtletaDiferidoDto
+    {
+        public Guid UsuarioUnoId { get; set; }
+        public Guid? UsuarioDosId { get; set; }
+        public bool EsEquipo { get; set; }
+        public string TiempoFinal { get; set; }
+        public int Rondas { get; set; }
+        public int Reps { get; set; }
+        public string NombreEquipo { get; set; }
+        public string Categoria { get; set; }
+        public string ModoCaptura { get; set; }
     }
 
     private async Task CargarDatos()

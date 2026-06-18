@@ -129,6 +129,9 @@
                                                 <div class="dropdown-item" style="border-bottom-color: var(--theme-border);" @onclick="() => AbrirModalRenovacion(usuario)">
                                                     <i class="fas fa-calendar-check text-success"></i> Registrar Pago
                                                 </div>
+                                                <div class="dropdown-item" style="border-bottom-color: var(--theme-border);" @onclick="() => AbrirModalPagoFraccional(usuario)">
+                                                    <i class="fas fa-coins text-info"></i> Pago Fraccional
+                                                </div>
                                             }                                           
                                             @if (Sesion.Usuario.TipoUsuarioID == 1 || Sesion.Usuario.TipoUsuarioID == 3)
                                             {
@@ -165,8 +168,75 @@
         </div>
     </div>
 
-    @* MODALES *@
-    @* MODALES *@
+    
+    @if (mostrarModalPagoFraccional)
+    {
+        <div class="modal-overlay fade-in">
+            <div class="modal-content custom-modal slide-up">
+                <div class="modal-header">
+                    <h5 style="color:var(--theme-primary); font-family:'Oswald'; margin:0;">
+                        <i class="fas fa-coins" style="margin-right:8px;"></i> PAGO FRACCIONAL
+                    </h5>
+                    <button class="btn-close-custom" @onclick="() => mostrarModalPagoFraccional = false"><i class="fas fa-times"></i></button>
+                </div>
+
+                <div class="modal-body text-center">
+                    <p style="color: var(--theme-text-muted); font-size: 0.9rem; margin-bottom:5px;">Suscripción parcial para:</p>
+                    <strong style="font-size:1.4rem; color:var(--theme-text); font-family:'Oswald'; letter-spacing:1px; display:block; margin-bottom:15px;">
+                        @usuarioSeleccionado?.NombreCompleto
+                    </strong>
+
+                    <div class="info-vencimiento mb-3" style="background: rgba(255,255,255,0.05); padding:10px; border-radius:10px; border:1px solid var(--theme-border);">
+                        <small style="color: var(--theme-text-muted); text-transform:uppercase; letter-spacing:1px; font-weight:bold;">Vencimiento actual</small><br>
+                        <span style="color:var(--theme-primary); font-weight:bold; font-size:1.1rem;">
+                            @(usuarioSeleccionado.FechaVencimiento == DateTime.MinValue ? "NUNCA HA PAGADO" : usuarioSeleccionado.FechaVencimiento.ToString("dd/MM/yyyy"))
+                        </span>
+                    </div>
+
+                    <div class="filter-tabs mb-3" style="margin: 0 auto; margin-bottom: 20px;">
+                        <button class="tab-btn @(tabFraccional == "DIA" ? "active" : "")" @onclick='() => tabFraccional = "DIA"'>
+                            1 DÍA (VISITA)
+                        </button>
+                        <button class="tab-btn @(tabFraccional == "DIAS" ? "active" : "")" @onclick='() => tabFraccional = "DIAS"'>
+                            MÚLTIPLES DÍAS
+                        </button>
+                    </div>
+
+                    <div style="text-align: left; margin-bottom: 15px;">
+                        <label class="lbl-input">Fecha de Inicio:</label>
+                        <input type="date" @bind="fechaPagoSeleccionada" class="form-control input-dark" />
+                    </div>
+
+                    @if (tabFraccional == "DIAS")
+                    {
+                        <div style="text-align: left; margin-bottom: 15px;">
+                            <label class="lbl-input">Días de Acceso a Otorgar:</label>
+                            <input type="number" @bind="diasAgregadosFraccional" class="form-control input-dark" placeholder="Ej: 15" min="1" />
+                        </div>
+                    }
+
+                    <div style="text-align: left;">
+                        <label class="lbl-input">Cantidad Pagada (MXN):</label>
+                        <div class="input-with-icon" style="position: relative;">
+                            <span style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--theme-primary); font-weight: bold; font-size: 1.2rem; z-index: 10;">$</span>
+                            <input type="number" @bind="montoPagoSeleccionado" class="form-control input-dark" style="padding-left: 35px; font-size: 1.2rem; font-weight: bold;" placeholder="Ej: 100" />
+                        </div>
+                    </div>
+
+                    <div class="mt-3" style="background: rgba(40,167,69,0.1); padding: 8px; border-radius: 8px; border: 1px solid rgba(40,167,69,0.3);">
+                        <small style="color: #28a745; font-weight: bold;">
+                            <i class="fas fa-calendar-plus"></i> Se vencerá el: @(fechaPagoSeleccionada.AddDays(tabFraccional == "DIA" ? 1 : diasAgregadosFraccional).ToString("dd/MM/yyyy"))
+                        </small>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn-cancel" @onclick="() => mostrarModalPagoFraccional = false">Cancelar</button>
+                    <button class="btn-confirm" @onclick="ConfirmarPagoFraccional">CONFIRMAR PAGO</button>
+                </div>
+            </div>
+        </div>
+    }
     @if (mostrarModalCrear)
     {
         <div class="modal-overlay fade-in">
@@ -638,6 +708,73 @@
     private void VerEvaluaciones(AtletaConEstadoDto u) { u.MostrarMenu = false; Nav.NavigateTo($"/evaluaciones/{u.UsuarioID}/{u.NombreCompleto}"); }
     private void IrARunning(AtletaConEstadoDto u) { u.MostrarMenu = false; Nav.NavigateTo($"/running-plan/{u.UsuarioID}/{u.NombreCompleto}"); }
     
+    // --- VARIABLES PAGO FRACCIONAL ---
+    private bool mostrarModalPagoFraccional = false;
+    private string tabFraccional = "DIA"; // "DIA" o "DIAS"
+    private int diasAgregadosFraccional = 15;
+
+    // --- MÉTODOS PAGO FRACCIONAL ---
+    private void AbrirModalPagoFraccional(AtletaConEstadoDto u)
+    {
+        if (!PermisoPago) return;
+        u.MostrarMenu = false;
+        usuarioSeleccionado = u;
+
+        if (u.DiasRestantes > 0 && u.FechaVencimiento > DateTime.MinValue) fechaPagoSeleccionada = u.FechaVencimiento;
+        else fechaPagoSeleccionada = DateTime.Today;
+
+        montoPagoSeleccionado = 0;
+        tabFraccional = "DIA";
+        diasAgregadosFraccional = 15; // Valor por defecto si cambia a la pestaña de días
+        mostrarModalPagoFraccional = true;
+    }
+
+    private async Task ConfirmarPagoFraccional()
+    {
+        if (montoPagoSeleccionado < 0)
+        {
+            await App.Current.MainPage.DisplayAlert("Atención", "Ingresa una cantidad pagada válida.", "OK");
+            return;
+        }
+
+        // Calculamos los días a sumar según la pestaña
+        int diasFinales = tabFraccional == "DIA" ? 1 : diasAgregadosFraccional;
+
+        if (diasFinales <= 0)
+        {
+            await App.Current.MainPage.DisplayAlert("Atención", "Debes otorgar al menos 1 día de acceso.", "OK");
+            return;
+        }
+
+        try
+        {
+            var req = new
+            {
+                UsuarioID = usuarioSeleccionado.UsuarioID,
+                NuevaFechaInicio = fechaPagoSeleccionada,
+                DiasAgregados = diasFinales,
+                MontoPagado = montoPagoSeleccionado
+            };
+
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/pagosapi/renovar-fraccional", req);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await App.Current.MainPage.DisplayAlert("Éxito", "Pago fraccional registrado.", "OK");
+                mostrarModalPagoFraccional = false;
+                await CargarUsuarios();
+            }
+            else
+            {
+                await App.Current.MainPage.DisplayAlert("Error", "No se pudo guardar.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
+    }
+
     private async Task EliminarUsuario(AtletaConEstadoDto u) { 
         u.MostrarMenu = false; 
         bool confirm = await App.Current.MainPage.DisplayAlert("⚠️ ELIMINAR", $"Se borrarán datos de {u.NombreCompleto}. ¿Seguro?", "SÍ, BORRAR", "Cancelar"); 
