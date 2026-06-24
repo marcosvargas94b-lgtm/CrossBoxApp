@@ -27,7 +27,22 @@
                 <div class="qr-frame">
                     <img src="@($"https://quickchart.io/qr?text={Sesion.Usuario.BoxID}&size=400&dark=000000&light=ffffff")" 
                          class="qr-img" />
-                </div>           
+                </div>   
+                
+                <div class="manual-code-area mt-4">
+                    <p style="color: var(--theme-text-muted); font-size: 0.85rem; margin-bottom: 5px; font-family: 'Roboto';">O ingresa el código manual:</p>
+                    <div class="code-display">
+                        @if (string.IsNullOrEmpty(codigoLobbyActual))
+                        {
+                            <span class="spinner-border spinner-border-sm" style="color: var(--theme-primary);"></span>
+                        }
+                        else
+                        {
+                            @codigoLobbyActual
+                        }
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -125,6 +140,24 @@
 </script>
 
 <style>
+
+    /* --- CÓDIGO MANUAL LOBBY --- */
+    .manual-code-area { text-align: center; }
+    .code-display { 
+        background: rgba(0,0,0,0.5); 
+        border: 2px dashed var(--theme-primary); 
+        color: var(--theme-primary); 
+        font-family: 'Courier New', Courier, monospace; 
+        font-size: 2.5rem; 
+        font-weight: bold; 
+        letter-spacing: 8px; 
+        padding: 5px 20px; 
+        border-radius: 10px; 
+        display: inline-block;
+        text-shadow: 0 0 10px rgba(255,255,255,0.2);
+    }
+
+
     /* --- BLOQUEO VERTICAL --- */
     .rotate-warning {
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -253,6 +286,8 @@
         --theme-text-muted: #888888;
     ";
 
+    private string codigoLobbyActual = "";
+
     // Para simplificar la lista de horarios localmente
     public class HorarioSimple { public Guid HorarioID { get; set; } public string Descripcion { get; set; } }
 
@@ -286,7 +321,7 @@
 
         // 1. Cargar Combobox de horarios (usando tu endpoint existente)
         await CargarHorariosDelBox();
-
+        await GenerarCodigoLobby();
         // 2. Conectar SignalR para los QR
         hubConnection = new HubConnectionBuilder()
             .WithUrl("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/livehub")
@@ -294,10 +329,21 @@
             .Build();
 
         hubConnection.Reconnected += async (connectionId) =>
-         {
-             // Si el internet parpadea, nos volvemos a unir a la sala del Box
-             await hubConnection.SendAsync("JoinBoxGroup", Sesion.Usuario.BoxID.ToString());
-         };
+           {
+               // 1. Nos volvemos a unir a la sala del Box
+               await hubConnection.SendAsync("JoinBoxGroup", Sesion.Usuario.BoxID.ToString());
+
+               // 2. 🔥 LA MAGIA: Si el coach ya tenía un horario seleccionado,
+               // forzamos una descarga silenciosa de la base de datos para recuperar a los que
+               // entraron mientras la app estaba minimizada o sin internet.
+               if (HorarioSeleccionado != Guid.Empty)
+               {
+                   await InvokeAsync(async () =>
+                   {
+                       await OnHorarioCambiado();
+                   });
+               }
+           };
 
         hubConnection.On<CheckInDto>("NuevoAtletaEnClase", (atleta) =>
         {
@@ -426,4 +472,25 @@
             await hubConnection.DisposeAsync();
         }
     }
+
+    private async Task GenerarCodigoLobby()
+    {
+        try
+        {
+            // Endpoint que crearemos en la API
+            var response = await Http.GetAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/liveapi/generar-codigo/{Sesion.Usuario.BoxID}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<dynamic>();
+                codigoLobbyActual = result.GetProperty("codigo").GetString();
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error generando código: " + ex.Message);
+        }
+    }
+
 }

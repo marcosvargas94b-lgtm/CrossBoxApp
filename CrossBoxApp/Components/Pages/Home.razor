@@ -83,6 +83,12 @@
                 {
                     <div class="main-dropdown" @onclick:stopPropagation="true">
                         <div class="dropdown-header">GENERAL</div>
+                       
+                            <div class="dropdown-item" @onclick="AbrirModalCodigoClase" style="color: var(--theme-primary) !important; font-weight: bold;">
+                                <i class="fas fa-keyboard"></i> Ingresar Código de Clase
+                            </div>
+                            <div class="dropdown-divider"></div>
+                        
                         <div class="dropdown-item" @onclick="IrAPerfil">
                             <i class="fas fa-user-edit"></i> Modificar Perfil
                         </div>
@@ -519,6 +525,35 @@
         <div style="height: 40px;"></div>
     </div>
 </div>
+
+@* --- MODAL INGRESAR CÓDIGO LOBBY --- *@
+@if (mostrarModalCodigoClase)
+{
+    <div class="modal-overlay fade-in">
+        <div class="modal-content custom-modal slide-up text-center">
+            <div class="modal-header" style="justify-content: center; border-bottom: none;">
+                <h5 style="color:var(--theme-primary); margin:0; font-family:'Oswald'; font-size: 1.5rem;">
+                    <i class="fas fa-keyboard"></i> CÓDIGO DE CLASE
+                </h5>
+                <button class="btn-close-custom" @onclick="CerrarModalCodigoClase" style="position:absolute; right: 20px;"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <div class="modal-body">
+                <p style="color:var(--theme-text-muted); font-size: 0.9rem; margin-bottom: 20px; font-family: 'Roboto';">
+                    Pídele a tu Coach el código de 6 dígitos que aparece en la pantalla del Lobby.
+                </p>
+                
+                <input type="text" @bind="codigoClaseInput" class="form-control input-dark mb-4 text-uppercase" style="text-align: center; font-size: 2rem; font-family: 'Courier New', monospace; letter-spacing: 5px; font-weight: bold; text-transform: uppercase;" maxlength="6" placeholder="------" />
+            </div>
+
+            <div class="modal-footer" style="flex-direction: column; gap: 10px;">
+                <button class="btn-confirm w-100" @onclick="EnviarCodigoClase" disabled="@procesandoCodigo">
+                    @if(procesandoCodigo) { <i class="fas fa-spinner fa-spin"></i> } else { <span>ENTRAR A CLASE</span> }
+                </button>
+            </div>
+        </div>
+    </div>
+}
 
 @* --- MODAL PEDIR CUMPLEAÑOS --- *@
 @if (mostrarModalPedirCumple)
@@ -1594,6 +1629,61 @@
     private List<HorarioDto> listaHorariosAdmin;
     public class HorarioDto { public Guid HorarioID { get; set; } public string Descripcion { get; set; } public Guid BoxID { get; set; } }
     private EstadoRecuperacionDto resumenRecuperacion;
+
+    // --- VARIABLES Y LÓGICA PARA CÓDIGO DE CLASE ---
+    private bool mostrarModalCodigoClase = false;
+    private string codigoClaseInput = "";
+    private bool procesandoCodigo = false;
+
+    private void AbrirModalCodigoClase()
+    {
+        CerrarTodosLosMenus();
+        codigoClaseInput = "";
+        mostrarModalCodigoClase = true;
+    }
+
+    private void CerrarModalCodigoClase()
+    {
+        mostrarModalCodigoClase = false;
+    }
+
+    private async Task EnviarCodigoClase()
+    {
+        if (string.IsNullOrWhiteSpace(codigoClaseInput) || codigoClaseInput.Length < 6)
+        {
+            await App.Current.MainPage.DisplayAlert("Aviso", "El código debe tener 6 caracteres.", "OK");
+            return;
+        }
+
+        procesandoCodigo = true;
+        StateHasChanged();
+
+        try
+        {
+            var payload = new { UsuarioId = Sesion.Usuario.UsuarioID, Codigo = codigoClaseInput.ToUpper() };
+            var response = await Http.PostAsJsonAsync("https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/liveapi/ingresar-codigo", payload);
+
+            if (response.IsSuccessStatusCode)
+            {
+                mostrarModalCodigoClase = false;
+                await App.Current.MainPage.DisplayAlert("¡Listo para entrenar! 💪", "Te has unido a la clase exitosamente.", "A DARLE");
+            }
+            else
+            {
+                string errorMsg = await response.Content.ReadAsStringAsync();
+                await App.Current.MainPage.DisplayAlert("Código Incorrecto", errorMsg, "Intentar de nuevo");
+            }
+        }
+        catch (Exception)
+        {
+            await App.Current.MainPage.DisplayAlert("Error", "Revisa tu conexión a internet.", "OK");
+        }
+        finally
+        {
+            procesandoCodigo = false;
+            StateHasChanged();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
