@@ -459,13 +459,29 @@
         try
         {
             var response = await Http.GetAsync($"https://api-aftrack-linux-dkawb7h7f9dxeff7.canadacentral-01.azurewebsites.net/api/liveapi/generar-codigo/{Sesion.Usuario.BoxID}/{horarioId}");
+
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<dynamic>();
-                codigoLobbyActual = result.GetProperty("codigo").GetString();
+                var result = await response.Content.ReadFromJsonAsync<RespuestaCodigoLobby>();
+                codigoLobbyActual = result?.codigo ?? "ERROR";
+            }
+            else
+            {
+                // Si la API en Azure no tiene el endpoint, mostrará esto en vez de quedarse girando
+                codigoLobbyActual = "API-404";
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            // Si el celular crashea al leer la red, mostrará esto
+            codigoLobbyActual = "ERROR";
+            Console.WriteLine("Fallo generando código: " + ex.Message);
+        }
+        finally
+        {
+            // Obligamos a la pantalla a repintarse sí o sí
+            StateHasChanged();
+        }
     }
 
     // El truco principal: Une los que llegaron por QR con los de la BD, evitando duplicados
@@ -520,4 +536,8 @@
     }
    
 
+    public class RespuestaCodigoLobby
+    {
+        public string codigo { get; set; }
+    }
 }
